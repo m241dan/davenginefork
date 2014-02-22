@@ -61,6 +61,13 @@
 #define COMM_LOCAL             0  /* same room only                  */
 #define COMM_LOG              10  /* admins only                     */
 
+#define MAX_CHARACTER          3
+
+typedef enum
+{
+   TYPE_INT, TYPE_CHAR, YPE_SOCKET, MAX_MEMORY_TYPE
+} memory_types;
+
 /* define simple types */
 typedef  unsigned char     bool;
 typedef  short int         sh_int;
@@ -73,6 +80,28 @@ typedef  short int         sh_int;
 /***********************
  * Defintion of Macros *
  ***********************/
+
+#define CREATE(result, type, number)                                    \
+do                                                                      \
+{                                                                       \
+   if (!((result) = (type *) calloc ((number), sizeof(type))))          \
+   {                                                                    \
+      perror("malloc failure");                                         \
+      fprintf(stderr, "Malloc failure @ %s:%d\n", __FILE__, __LINE__ ); \
+      abort();                                                          \
+   }									\
+} while(0)
+
+#define FREE(point)                      \
+do                                          \
+{                                           \
+   if( (point) )                            \
+   {                                        \
+      free( (void*) (point) );              \
+      (point) = NULL;                       \
+   }                                        \
+} while(0)
+
 
 #define UMIN(a, b)		((a) < (b) ? (a) : (b))
 #define IS_ADMIN(dMob)          ((dMob->level) > LEVEL_PLAYER ? TRUE : FALSE)
@@ -113,7 +142,6 @@ typedef struct  event_data    EVENT_DATA;
 /* the actual structures */
 struct dSocket
 {
-  D_MOBILE      * player;
   LIST          * events;
   char          * hostname;
   char            inbuf[MAX_BUFFER];
@@ -145,7 +173,7 @@ struct lookup_data
 struct typCmd
 {
   char      * cmd_name;
-  void     (* cmd_funct)(D_MOBILE *dMOb, char *arg);
+   void     (* cmd_funct)(void *dMOb, char *arg);
   sh_int      level;
 };
 
@@ -158,7 +186,7 @@ typedef struct buffer_type
 
 /* here we include external structure headers */
 #include "event.h"
-
+#include "strings_table.h"
 /******************************
  * End of new structures      *
  ******************************/
@@ -169,8 +197,6 @@ typedef struct buffer_type
 
 extern  STACK       *   dsock_free;       /* the socket free list               */
 extern  LIST        *   dsock_list;       /* the linked list of active sockets  */
-extern  STACK       *   dmobile_free;     /* the mobile free list               */
-extern  LIST        *   dmobile_list;     /* the mobile list of active mobiles  */
 extern  LIST        *   help_list;        /* the linked list of help files      */
 extern  const struct    typCmd tabCmd[];  /* the command table                  */
 extern  bool            shut_down;        /* used for shutdown                  */
@@ -204,7 +230,6 @@ extern const unsigned char compress_will2[];
 
 /* more compact */
 #define  D_S         D_SOCKET
-#define  D_M         D_MOBILE
 
 #define  buffer_new(size)             __buffer_new     ( size)
 #define  buffer_strcat(buffer,text)   __buffer_strcat  ( buffer, text )
@@ -220,7 +245,6 @@ void  close_socket            ( D_S *dsock, bool reconnect );
 bool  read_from_socket        ( D_S *dsock );
 bool  text_to_socket          ( D_S *dsock, const char *txt );  /* sends the output directly */
 void  text_to_buffer          ( D_S *dsock, const char *txt );  /* buffers the output        */
-void  text_to_mobile          ( D_M *dMob, const char *txt );   /* buffers the output        */
 void  next_cmd_from_buffer    ( D_S *dsock );
 bool  flush_output            ( D_S *dsock );
 void  handle_new_connections  ( D_S *dsock, char *arg );
@@ -262,47 +286,21 @@ int     bprintf               ( BUFFER *buffer, char *fmt, ... );
 /*
  * help.c
  */
-bool  check_help              ( D_M *dMob, char *helpfile );
 void  load_helps              ( void );
 
 /*
  * utils.c
  */
 bool  check_name              ( const char *name );
-void  clear_mobile            ( D_M *dMob );
-void  free_mobile             ( D_M *dMob );
-void  communicate             ( D_M *dMob, char *txt, int range );
 void  load_muddata            ( bool fCopyOver );
 char *get_time                ( void );
 void  copyover_recover        ( void );
-D_M  *check_reconnect         ( char *player );
-
-/*
- * action_safe.c
- */
-void  cmd_say                 ( D_M *dMob, char *arg );
-void  cmd_quit                ( D_M *dMob, char *arg );
-void  cmd_shutdown            ( D_M *dMob, char *arg );
-void  cmd_commands            ( D_M *dMob, char *arg );
-void  cmd_who                 ( D_M *dMob, char *arg );
-void  cmd_help                ( D_M *dMob, char *arg );
-void  cmd_compress            ( D_M *dMob, char *arg );
-void  cmd_save                ( D_M *dMob, char *arg );
-void  cmd_copyover            ( D_M *dMob, char *arg );
-void  cmd_linkdead            ( D_M *dMob, char *arg );
 
 /*
  * mccp.c
  */
 bool  compressStart           ( D_S *dsock, unsigned char teleopt );
 bool  compressEnd             ( D_S *dsock, unsigned char teleopt, bool forced );
-
-/*
- * save.c
- */
-void  save_player             ( D_M *dMob );
-D_M  *load_player             ( char *player );
-D_M  *load_profile            ( char *player );
 
 /*******************************
  * End of prototype declartion *

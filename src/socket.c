@@ -391,14 +391,7 @@ void close_socket(D_SOCKET *dsock, bool reconnect)
   {
     if (reconnect)
       text_to_socket(dsock, "This connection has been taken over.\n\r");
-    else if (dsock->player)
-    {
-      dsock->player->socket = NULL;
-      log_string("Closing link to %s", dsock->player->name);
-    }
   }
-  else if (dsock->player)
-    free_mobile(dsock->player);
 
   /* dequeue all events for this socket */
   AttachIterator(&Iter, dsock->events);
@@ -750,21 +743,6 @@ void text_to_buffer(D_SOCKET *dsock, const char *txt)
   /* add data to buffer */
   strcpy(dsock->outbuf + dsock->top_output, output);
   dsock->top_output += iPtr;
-}
-
-/*
- * Text_to_mobile()
- *
- * If the mobile has a socket, then the data will
- * be send to text_to_buffer().
- */
-void text_to_mobile(D_MOBILE *dMob, const char *txt)
-{
-  if (dMob->socket)
-  {
-    text_to_buffer(dMob->socket, txt);
-    dMob->socket->bust_prompt = TRUE;
-  }
 }
 
 void next_cmd_from_buffer(D_SOCKET *dsock)

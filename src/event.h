@@ -49,8 +49,8 @@ struct event_data
   sh_int             bucket;           /* which bucket is this event in       */
 
   union 
-  {                                    /* this is the owner of the event, we  */
-    D_MOBILE       * dMob;             /* use a union to make sure any of the */
+  {
+    void           * dMob;             /* use a union to make sure any of the */
     D_SOCKET       * dSock;            /* types can be used for an event.     */
   } owner;
 };
@@ -58,17 +58,13 @@ struct event_data
 /* functions which can be accessed outside event-handler.c */
 EVENT_DATA *alloc_event          ( void );
 EVENT_DATA *event_isset_socket   ( D_SOCKET *dSock, int type );
-EVENT_DATA *event_isset_mobile   ( D_MOBILE *dMob, int type );
 void dequeue_event               ( EVENT_DATA *event );
 void init_event_queue            ( int section );
-void init_events_player          ( D_MOBILE *dMob );
 void init_events_socket          ( D_SOCKET *dSock );
 void heartbeat                   ( void );
-void add_event_mobile            ( EVENT_DATA *event, D_MOBILE *dMob, int delay );
 void add_event_socket            ( EVENT_DATA *event, D_SOCKET *dSock, int delay );
 void add_event_game              ( EVENT_DATA *event, int delay );
 void strip_event_socket          ( D_SOCKET *dSock, int type );
-void strip_event_mobile          ( D_MOBILE *dMob, int type );
 
 /* all events should be defined here */
 bool event_mobile_save           ( EVENT_DATA *event );
