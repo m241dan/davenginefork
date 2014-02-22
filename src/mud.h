@@ -106,7 +106,6 @@ typedef  short int         sh_int;
 
 /* type defintions */
 typedef struct  dSocket       D_SOCKET;
-typedef struct  dMobile       D_MOBILE;
 typedef struct  help_data     HELP_DATA;
 typedef struct  lookup_data   LOOKUP_DATA;
 typedef struct  event_data    EVENT_DATA;
@@ -128,15 +127,6 @@ struct dSocket
   unsigned char   compressing;                 /* MCCP support */
   z_stream      * out_compress;                /* MCCP support */
   unsigned char * out_compress_buf;            /* MCCP support */
-};
-
-struct dMobile
-{
-  D_SOCKET      * socket;
-  LIST          * events;
-  char          * name;
-  char          * password;
-  sh_int          level;
 };
 
 struct help_data
