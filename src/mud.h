@@ -61,6 +61,8 @@
 #define COMM_LOCAL             0  /* same room only                  */
 #define COMM_LOG              10  /* admins only                     */
 
+/* account globals */
+#define DEFAULT_PAGEWIDTH     80
 #define MAX_CHARACTER          3
 
 typedef enum
@@ -80,6 +82,16 @@ typedef  short int         sh_int;
 /***********************
  * Defintion of Macros *
  ***********************/
+
+#define DETACHCONTENTS( list, type )
+do									\
+{
+   (type) *to_detach;									\
+   AttachIterator( &Iter, (list) );					\
+   while( ( to_detach = (type *)NextInList( &Iter ) ) != NULL )		\
+      DetachFromList( to_detach, (list) )				\
+   DetachIterator( &Iter );						\
+} while(0)								\
 
 #define CREATE(result, type, number)                                    \
 do                                                                      \
@@ -138,6 +150,7 @@ typedef struct  dSocket       D_SOCKET;
 typedef struct  help_data     HELP_DATA;
 typedef struct  lookup_data   LOOKUP_DATA;
 typedef struct  event_data    EVENT_DATA;
+typedef struct  game_account  ACCOUNT_DATA;
 
 /* the actual structures */
 struct dSocket

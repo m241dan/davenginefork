@@ -23,9 +23,7 @@
 
 /* global variables */
 fd_set     fSet;                  /* the socket list for polling       */
-STACK    * dsock_free = NULL;     /* the socket free list              */
 LIST     * dsock_list = NULL;     /* the linked list of active sockets */
-STACK    * dmobile_free = NULL;   /* the mobile free list              */
 LIST     * dmobile_list = NULL;   /* the mobile list of active mobiles */
 
 /* mccp support */
