@@ -83,15 +83,15 @@ typedef  short int         sh_int;
  * Defintion of Macros *
  ***********************/
 
-#define DETACHCONTENTS( list, type )
+#define DETACHCONTENTS( list, type )					\
 do									\
-{
-   (type) *to_detach;									\
+{									\
+   (type) *to_detach;							\		\
    AttachIterator( &Iter, (list) );					\
    while( ( to_detach = (type *)NextInList( &Iter ) ) != NULL )		\
       DetachFromList( to_detach, (list) )				\
    DetachIterator( &Iter );						\
-} while(0)								\
+} while(0)
 
 #define CREATE(result, type, number)                                    \
 do                                                                      \
