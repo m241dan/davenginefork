@@ -70,6 +70,12 @@ typedef enum
    TYPE_INT, TYPE_CHAR, YPE_SOCKET, MAX_MEMORY_TYPE
 } memory_types;
 
+typedef enum
+{
+   IO_SUCCESS, IO_FAILED_BAD_PATH, IO_FAILED_BAD_FORMAT, IO_FAILED_NULL_DESTINATION,
+   MAX_IO_CODES
+} io_codes;
+
 /* define simple types */
 typedef  unsigned char     bool;
 typedef  short int         sh_int;
@@ -82,6 +88,12 @@ typedef  short int         sh_int;
 /***********************
  * Defintion of Macros *
  ***********************/
+#define BAD_FORMAT( word ) 						\
+do									\
+{									\
+   bug( "%s: BAD FORMAT %s.", (word) );					\
+   ret = IO_FAILED_BAD_FORMAT;						\
+} while(0)
 
 #define DETACHCONTENTS( list, type )					\
 do									\
@@ -275,6 +287,7 @@ void  handle_cmd_input        ( D_S *dsock, char *arg );
  */
 void    log_string            ( const char *txt, ... );
 void    bug                   ( const char *txt, ... );
+void    report_io_ret         ( int ret, const char *function, const char *path, const char *pointers, ... );
 time_t  last_modified         ( char *helpfile );
 char   *read_help_entry       ( const char *helpfile );     /* pointer         */
 char   *fread_line            ( FILE *fp );                 /* pointer         */

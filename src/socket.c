@@ -50,9 +50,7 @@ int main(int argc, char **argv)
   current_time = time(NULL);
 
   /* allocate memory for socket and mobile lists'n'stacks */
-  dsock_free = AllocStack();
   dsock_list = AllocList();
-  dmobile_free = AllocStack();
   dmobile_list = AllocList();
 
   /* note that we are booting up */
