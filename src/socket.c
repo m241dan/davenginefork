@@ -164,11 +164,8 @@ void GameLoop(int control)
           default:
             bug("Descriptor in bad state.");
             break;
-          case STATE_NEW_NAME:
-          case STATE_NEW_PASSWORD:
-          case STATE_VERIFY_PASSWORD:
-          case STATE_ASK_PASSWORD:
-            handle_new_connections(dsock, dsock->next_command);
+          case STATE_NANNY:
+            handle_nanny_input( dsock->nanny, dsock->next_command );
             break;
           case STATE_PLAYING:
             handle_cmd_input(dsock, dsock->next_command);
@@ -348,8 +345,9 @@ bool new_socket(int sock)
   {
      NANNY_DATA *nanny = init_nanny();
      nanny->type = NANNY_LOGIN;
-     control_nanny( dsock, nanny );
      change_nanny_state( nanny, 0, TRUE );
+     control_nanny( dsock, nanny );
+     change_socket_state( sock_new, STATE_NANNY );
   }
 
   /* initialize socket events */
@@ -1071,4 +1069,29 @@ void recycle_sockets()
     PushStack(dsock, dsock_free);
   }
   DetachIterator(&Iter);
+}
+
+int change_socket_state( D_SOCKET *dsock, int state )
+{
+   int ret = RET_SUCCESS;
+
+   if( dsock == NULL )
+   {
+      BAD_POINTER( "dsock" );
+      return ret;
+   }
+
+   dsock->state = state;
+   switch( state )
+   {
+      default:
+         bug( "%s: BAD STATE %d.", __FUNCTION__, state );
+         return RET_FAILED_OTHER;
+      case STATE_NANNY:
+         log_string( "changing socket state to nanny" );
+         break;
+      case STATE_PLAYING:
+         break;
+   }
+   return ret;
 }

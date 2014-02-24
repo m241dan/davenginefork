@@ -3,11 +3,13 @@
 #include "mud.h"
 
 const char *const nanny_messages[MAX_NANNY_TYPE][MAX_NANNY_STATE] = {
-   { "What's your name?" },
+   { "What's your account name?", "Password: " },
+   { "Please enter a password for your account: ", "Repeat the Password: " }
 };
 
 const nanny_fun *const nanny_code[MAX_NANNY_TYPE][MAX_NANNY_STATE] = {
-
+   { nanny_login, nanny_password },
+   { nanny_new_password, nanny_confirm_new_password }
 };
 
 
@@ -138,3 +140,7 @@ int uncontrol_nanny( D_SOCKET *dsock )
    return ret;
 }
 
+void nanny_login( NANNY_DATA *nanny, char *arg )
+{
+
+}
