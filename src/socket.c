@@ -294,18 +294,7 @@ bool new_socket(int sock)
    * allocate some memory for a new socket if
    * there is no free socket in the free_list
    */
-  if (StackSize(dsock_free) <= 0)
-  {
-    if ((sock_new = malloc(sizeof(*sock_new))) == NULL)
-    {
-      bug("New_socket: Cannot allocate memory for socket.");
-      abort();
-    }
-  }
-  else
-  {
-    sock_new = (D_SOCKET *) PopStack(dsock_free);
-  }
+   CREATE( sock_new, D_SOCKET, 1 );
 
   /* attach the new connection to the socket list */
   FD_SET(sock, &fSet);
@@ -356,7 +345,12 @@ bool new_socket(int sock)
 
   /* send the greeting */
   text_to_buffer(sock_new, greeting);
-  text_to_buffer(sock_new, "What is your name? ");
+  {
+     NANNY_DATA *nanny = init_nanny();
+     nanny->type = NANNY_LOGIN;
+     control_nanny( dsock, nanny );
+     change_nanny_state( nanny, 0, TRUE );
+  }
 
   /* initialize socket events */
   init_events_socket(sock_new);
@@ -846,8 +840,9 @@ bool flush_output(D_SOCKET *dsock)
 
 void handle_new_connections(D_SOCKET *dsock, char *arg)
 {
-  D_MOBILE *p_new;
-  int i;
+  ACCOUNT_DATA *a_new;
+  char aFile[MAX_BUFFER];
+  int ret, i;
 
   switch(dsock->state)
   {
@@ -865,28 +860,17 @@ void handle_new_connections(D_SOCKET *dsock, char *arg)
         text_to_buffer(dsock, "Sorry, that's not a legal name, please pick another.\n\rWhat is your name? ");
         break;
       }
-      arg[0] = toupper(arg[0]);
-      log_string("%s is trying to connect.", arg);
 
-      /* Check for a new Player */
-      if ((p_new = load_profile(arg)) == NULL)
+      mud_printf( aFile, "../accounts/%s/account.afile", capitalize( arg ) );
+      log_string("%s is trying to connect.", aFile);
+
+      a_new = init_account();
+
+      if( ( ret = load_account_file( aFile, a_new ) ) != RET_SUCCESS )
       {
-        if (StackSize(dmobile_free) <= 0)
-        {
-          if ((p_new = malloc(sizeof(*p_new))) == NULL)
-          {
-            bug("Handle_new_connection: Cannot allocate memory.");
-            abort();
-          }
-        }
-        else
-        {
-          p_new = (D_MOBILE *) PopStack(dmobile_free);
-        }
-        clear_mobile(p_new);
-
         /* give the player it's name */
-        p_new->name = strdup(arg);
+        FREE( a_new->name );
+        a_new->name = strdup( capitalize( arg ) );
 
         /* prepare for next step */
         text_to_buffer(dsock, "Please enter a new password: ");

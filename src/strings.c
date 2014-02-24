@@ -66,21 +66,28 @@ char *one_arg(char *fStr, char *bStr)
 
 char *capitalize(char *txt)
 {
-  static char buf[MAX_BUFFER];
-  int size, i;
+   static char buf[MAX_BUFFER];
+   buf = downcase( txt );
+   buf[0] = toupper( buf[0] );
+   return buf;
+}
 
-  buf[0] = '\0';
+char *downcase( char *txt )
+{
+   static char buf[MAX_BUFFER];
+   int size, x;
+   memset( &buf[0], 0, sizeof( buf ) );
 
-  if (txt == NULL || txt[0] == '\0')
-    return buf;
+   if( !txt || txt[0] == '\0' )
+      return buf;
 
-  size = strlen(txt);
+   size = strlen( txt );
 
-  for (i = 0; i < size; i++)
-    buf[i] = toupper(txt[i]);
-  buf[size] = '\0';
+   for( x = 0; x < size; x++ )
+      buf[x] = tolower( txt[x] );
+   buf[size] = '\0';
 
-  return buf;
+   return buf; 
 }
 
 /*  
@@ -212,3 +219,22 @@ int strcasecmp(const char *s1, const char *s2)
   /* s2 is less than s1 */
   return 1;
 }
+
+int mud_printf( char *dest, const char *format, ... )
+{
+   va_list va;
+   int res;
+
+   va_start( va, format );
+   res = vsnprintf( dest, MAX_BUFFER, format, va );
+   va_end( va );
+
+   if( res >= MAX_BUFFER -1 )
+   {
+      dest[0] = '\0';
+      bug( "Overflow when printing string %s", format );
+   }
+
+   return res;
+}
+

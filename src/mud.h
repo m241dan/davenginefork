@@ -39,12 +39,10 @@
 #define EXE_FILE           "../src/SocketMud"     /* the name of the mud binary         */
 
 /* Connection states */
-#define STATE_NEW_NAME         0
-#define STATE_NEW_PASSWORD     1
-#define STATE_VERIFY_PASSWORD  2
-#define STATE_ASK_PASSWORD     3
-#define STATE_PLAYING          4
-#define STATE_CLOSED           5
+typedef enum
+{
+   STATE_NANNY, STATE_ACCOUNT, STATE_OLC, STATE_PLAYING, MAX_STATE
+} socket_states;
 
 /* Thread states - please do not change the order of these states    */
 #define TSTATE_LOOKUP          0  /* Socket is in host_lookup        */
@@ -77,10 +75,19 @@ typedef enum
    MAX_RET_CODES
 } ret_codes;
 
+/* Nanny States and Types */
+typedef enum
+{
+   NANNY_LOGIN, NANNY_NEW_ACCOUNT, MAX_NANNY_TYPE;
+} nanny_types;
+
+#define MAX_NANNY_STATE 10
+
 /* define simple types */
 typedef  unsigned char     bool;
 typedef  short int         sh_int;
-
+typedef  unsigned long int VALUE;
+typedef  void              nanny_fun( NANNY_DATA *nanny, char *arg );
 
 /******************************
  * End of standard definitons *
@@ -178,10 +185,12 @@ typedef struct  help_data     HELP_DATA;
 typedef struct  lookup_data   LOOKUP_DATA;
 typedef struct  event_data    EVENT_DATA;
 typedef struct  game_account  ACCOUNT_DATA;
+typedef struct  nanny_data    NANNY_DATA;
 
 /* the actual structures */
 struct dSocket
 {
+  NANNY_DATA    * nanny;
   LIST          * events;
   char          * hostname;
   char            inbuf[MAX_BUFFER];
@@ -226,7 +235,10 @@ typedef struct buffer_type
 
 /* here we include external structure headers */
 #include "event.h"
+#include "account.h"
 #include "strings_table.h"
+#include "nanny.h"
+
 /******************************
  * End of new structures      *
  ******************************/
@@ -317,11 +329,13 @@ char   *strdup                ( const char *s );
 int     strcasecmp            ( const char *s1, const char *s2 );
 bool    is_prefix             ( const char *aStr, const char *bStr );
 char   *capitalize            ( char *txt );
+char   *downcase              ( char *txt );
 BUFFER *__buffer_new          ( int size );
 void    __buffer_strcat       ( BUFFER *buffer, const char *text );
 void    buffer_free           ( BUFFER *buffer );
 void    buffer_clear          ( BUFFER *buffer );
 int     bprintf               ( BUFFER *buffer, char *fmt, ... );
+int     mud_printf            ( char *dest, const char *format, ... );
 
 /*
  * help.c

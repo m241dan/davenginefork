@@ -184,3 +184,49 @@ int fread_account_base( ACCOUNT_DATA *account, FILE *fp )
       fclose( fp );
       return ret;
 }
+
+/* setting */
+void set_account( ACCOUNT *account, VALUE value, int type )
+{
+   switch( type )
+   {
+      default:
+         bug( "%s: invalid type %s passed.", __FUNCTION__, type );
+         return;
+      case ACT_SOCKET:
+         account->socket = (D_SOCKET *)value;
+         break;
+      case ACT_LEVEL:
+         account->level = (sh_int)value;
+         break;
+      case ACT_CHARACTERS:
+         clear_char_sheet_list( account );
+         FreeList( account->characters );
+         account->characters = (LIST *)value;
+         break;
+      case ACT_NAME:
+         if( account->name )
+            free( account->name );
+         account->name = strdup( (char *)value );
+         break;
+      case ACT_PASSWORD:
+         if( account->password )
+            free( account->password );
+         account->password = strdup( (char *)value );
+         break;
+      case ACT_COMMANDS:
+         clear_account_command_list( account );
+         FreeList( account->commands );
+         account->commands = (LIST *)value;
+         break;
+      case ACT_PAGEWIDTH:
+         account->pagewidth = (sh_int)value;
+         break;
+      case ACT_SETTINGS:
+         account->settings_loaded = (bool)value;
+         break;
+   }
+   save_account( account );
+   return;
+}
+

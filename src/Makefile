@@ -4,7 +4,7 @@ L_FLAGS = -lz -lpthread -lcrypt -lm -ldl
 
 O_FILES = socket.o io.o strings.o utils.o interpret.o help.o  \
 	  list.o stack .o mccp.o save.o event.o event-handler.o \
-          account.o strings_table.o
+          account.o strings_table.o nanny.o
 
 all: $(O_FILES)
 	rm -f SocketMud
