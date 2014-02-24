@@ -80,32 +80,6 @@ void bug(const char *txt, ...)
   communicate(NULL, buf, COMM_LOG);
 }
 
-void report_io_ret( int ret, const char *function, const char *path, const char *pointers, ... )
-{
-   char ptrbuf[MAX_BUFFER];
-   va_list pAddresses;
-
-   va_start( pAddresses, pointers );
-   vsnprintf( ptrbuf, MAX_BUFER, pointers, pAddresses );
-   va_end( pAddresses );
-
-   switch( ret )
-   {
-      default:
-         return;
-      case IO_FAILED_BAD_PATH:
-         bug( "%s used a bad path %s.", function, path );
-         return;
-      case IO_FAILED_BAD_FORMAT:
-         bug( "File at %s had bad format.", path );
-         return;
-      case IO_FAILED_NULL_DESTINATION:
-         bug( "Tried to use these null pointers: %s", ptrbuf );
-         return;
-   }
-   return;
-}
-
 /*
  * This function will return the time of
  * the last modification made to helpfile.

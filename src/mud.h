@@ -8,6 +8,7 @@
 #include <zlib.h>
 #include <pthread.h>
 #include <arpa/telnet.h>
+#include <dirent.h>
 
 #include "list.h"
 #include "stack.h"
@@ -72,9 +73,9 @@ typedef enum
 
 typedef enum
 {
-   IO_SUCCESS, IO_FAILED_BAD_PATH, IO_FAILED_BAD_FORMAT, IO_FAILED_NULL_DESTINATION,
-   MAX_IO_CODES
-} io_codes;
+   RET_SUCCESS, RET_FAILED_BAD_PATH, RET_FAILED_BAD_FORMAT, RET_FAILED_NULL_POINTER, RET_FAILED_OTHER,
+   MAX_RET_CODES
+} ret_codes;
 
 /* define simple types */
 typedef  unsigned char     bool;
@@ -88,11 +89,25 @@ typedef  short int         sh_int;
 /***********************
  * Defintion of Macros *
  ***********************/
+#define BAD_POINTER( pointer )						\
+do									\
+{									\
+   bug( "%s: BAD POINTER %s.", __FUNCTION__, (pointer) );		\
+   ret = RET_FAILED_NULL_POINTER;					\
+} while(0)
+
+#define BAD_PATH( path )						\
+do									\
+{									\
+   bug( "%s: BAD PATH %s.", __FUNCTION__, (path) );			\
+   ret = RET_FAILED_BAD_PATH;						\
+} while(0)
+
 #define BAD_FORMAT( word ) 						\
 do									\
 {									\
-   bug( "%s: BAD FORMAT %s.", (word) );					\
-   ret = IO_FAILED_BAD_FORMAT;						\
+   bug( "%s: BAD FORMAT %s.", __FUNCTION__, (word) );					\
+   ret = RET_FAILED_BAD_FORMAT;						\
 } while(0)
 
 #define DETACHCONTENTS( list, type )					\
@@ -287,7 +302,6 @@ void  handle_cmd_input        ( D_S *dsock, char *arg );
  */
 void    log_string            ( const char *txt, ... );
 void    bug                   ( const char *txt, ... );
-void    report_io_ret         ( int ret, const char *function, const char *path, const char *pointers, ... );
 time_t  last_modified         ( char *helpfile );
 char   *read_help_entry       ( const char *helpfile );     /* pointer         */
 char   *fread_line            ( FILE *fp );                 /* pointer         */
