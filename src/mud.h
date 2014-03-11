@@ -78,7 +78,7 @@ typedef enum
 /* Nanny States and Types */
 typedef enum
 {
-   NANNY_LOGIN, NANNY_NEW_ACCOUNT, MAX_NANNY_TYPE;
+   NANNY_LOGIN, NANNY_NEW_ACCOUNT, MAX_NANNY_TYPE
 } nanny_types;
 
 #define MAX_NANNY_STATE 10
@@ -87,7 +87,6 @@ typedef enum
 typedef  unsigned char     bool;
 typedef  short int         sh_int;
 typedef  unsigned long int VALUE;
-typedef  void              nanny_fun( NANNY_DATA *nanny, char *arg );
 
 /******************************
  * End of standard definitons *
@@ -186,6 +185,7 @@ typedef struct  lookup_data   LOOKUP_DATA;
 typedef struct  event_data    EVENT_DATA;
 typedef struct  game_account  ACCOUNT_DATA;
 typedef struct  nanny_data    NANNY_DATA;
+typedef int     nanny_fun( NANNY_DATA *nanny, char *arg );
 
 /* the actual structures */
 struct dSocket

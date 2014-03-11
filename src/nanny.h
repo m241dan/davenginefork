@@ -1,7 +1,7 @@
 /* header file for nanny.c written by Davenge */
 
 extern const char *const nanny_messages[MAX_NANNY_TYPE][MAX_NANNY_STATE];
-extern const nanny_fun *const nanny_code[MAX_NANNY_TYPE[MAX_NANNY_STATE];
+extern const nanny_fun *const nanny_code[MAX_NANNY_TYPE][MAX_NANNY_STATE];
 
 struct nanny_data
 {
