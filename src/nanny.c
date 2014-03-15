@@ -2,17 +2,44 @@
 
 #include "mud.h"
 
-const char *const nanny_messages[MAX_NANNY_TYPE][MAX_NANNY_STATE] = {
-   { "What's your account name?", "Password: " },
-   { "Please enter a password for your account: ", "Repeat the Password: " }
+/*****************
+ * NANNY LIBRARY *
+ *****************/
+const nanny_lib_entry *const nanny_lib[] = {
+   { "login", nanny_login_messages, nanny_login_code },
+   { "new account", nanny_new_account_messages, nanny_new_account_code },
+   { NULL, NULL, NULL } /* gandalf */
 };
 
-const nanny_fun *const nanny_code[MAX_NANNY_TYPE][MAX_NANNY_STATE] = {
-   { nanny_login, nanny_password },
-   { nanny_new_password, nanny_confirm_new_password }
+/***************
+ * NANNY LOGIN *
+ ***************/
+const char *const nanny_login_messages[] = {
+   "What's your account name?", "Password:",
+   NULL /* gandalf */
 };
 
+const nanny_fun *const nanny_code[] = {
+   nanny_login, nanny_password,
+   NULL /* gandalf */
+};
 
+/*********************
+ * NANNY NEW ACCOUNT *
+ *********************/
+const char *const nanny_new_account_messages[] = {
+   "Please enter a password for your account: ", "Repeat the Password:",
+   NULL /* gandalf */
+};
+
+const nanny_fun *const nanny_new_account_code[] = {
+   nanny_new_password, nanny_confirm_new_password,
+   NULL /* gandalf */
+};
+
+/***********************
+ * NANNY SPECIFIC CODE *
+ ***********************/
 
 /* creation */
 NANNY_DATA *init_nanny( void )

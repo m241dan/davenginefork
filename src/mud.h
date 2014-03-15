@@ -41,7 +41,7 @@
 /* Connection states */
 typedef enum
 {
-   STATE_NANNY, STATE_ACCOUNT, STATE_OLC, STATE_PLAYING, MAX_STATE
+   STATE_NANNY, STATE_ACCOUNT, STATE_OLC, STATE_PLAYING, STATE_CLOSED, MAX_STATE
 } socket_states;
 
 /* Thread states - please do not change the order of these states    */

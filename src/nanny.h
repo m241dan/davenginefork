@@ -1,16 +1,21 @@
 /* header file for nanny.c written by Davenge */
 
-extern const char *const nanny_messages[MAX_NANNY_TYPE][MAX_NANNY_STATE];
-extern const nanny_fun *const nanny_code[MAX_NANNY_TYPE][MAX_NANNY_STATE];
+extern const nanny_lib_entry *const nanny_lib[];
 
 struct nanny_data
 {
    D_SOCKET *socket;
    void *content;
-   nanny_fun *input_handler;
 
-   int type;
+   const nanny_lib_entry *nanny_data;
    int state;
+};
+
+struct nanny_lib_entry
+{
+   char *name;
+   const nanny_fun *const nanny_code[];
+   const char *const nanny_messages[];
 };
 
 /* creation */
@@ -33,9 +38,9 @@ int control_nanny( D_SOCKET *dsock, NANNY_DATA *nanny );
 int uncontrol_nanny( D_SOCLET *dsock );
 
 /* login */
-NANNY_FUN nanny_login;
-NANNY_FUN nanny_password;
+nanny_fun nanny_login;
+nanny_fun nanny_password;
 
 /* new account */
-NANNY_FUN nanny_new_password;
-NANNY_FUN nanny_confirm_new_password;
+nanny_fun nanny_new_password;
+nanny_fun nanny_confirm_new_password;
