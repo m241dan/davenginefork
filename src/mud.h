@@ -75,13 +75,13 @@ typedef enum
    MAX_RET_CODES
 } ret_codes;
 
-/* Nanny States and Types */
+/*****************
+ * NANNY INDEXES *
+ *****************/
 typedef enum
 {
-   NANNY_LOGIN, NANNY_NEW_ACCOUNT, MAX_NANNY_TYPE
-} nanny_types;
-
-#define MAX_NANNY_STATE 10
+   NANNY_LOGIN, NANNY_NEW_ACCOUNT, MAX_NANNY
+} nanny_indexes;
 
 /* define simple types */
 typedef  unsigned char     bool;
@@ -320,6 +320,11 @@ char   *fread_line            ( FILE *fp );                 /* pointer         *
 char   *fread_string          ( FILE *fp );                 /* allocated data  */
 char   *fread_word            ( FILE *fp );                 /* pointer         */
 int     fread_number          ( FILE *fp );                 /* just an integer */
+
+/*
+ * socket.c
+ */
+int change_socket_state( D_SOCKET *dsock, int state );
 
 /* 
  * strings.c

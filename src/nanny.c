@@ -51,21 +51,27 @@ NANNY_DATA *init_nanny( void )
    return nanny;
 }
 
-void clear_nanny( NANNY_DATA *nanny )
+int clear_nanny( NANNY_DATA *nanny )
 {
+   int ret = RET_SUCCESS;
+
    nanny->socket = NULL;
    nanny->content = NULL;
-   nanny->input_handler = NULL;
-
-   nanny->type = -1;
+   nanny->info = NULL
    nanny->state = -1;
+
+   return ret;
 }
 
 /* deletion */
-void free_nanny( NANNY_DATA *nanny )
+int free_nanny( NANNY_DATA *nanny )
 {
+   int ret = RET_SUCCESS;
+
    clear_nanny( nanny );
    free_nanny( nanny );
+
+   return ret;
 }
 
 /* input handling */
@@ -80,10 +86,10 @@ int handle_nanny_input( D_SOCKET *dsock, char *arg )
       return ret;
    }
 
-   if( nanny->type < 0 || nanny->type >= MAX_NANNY_TYPE )
+   if( !nanny->info )
    {
-      bug( "%s: BAD TYPE %d.", __FUCNTION__, nanny->type );
-      return RET_FAILED_OTHER;
+      BAD_POINTER( "info" );
+      return ret;
    }
 
    if( nanny->state < 0 || nanny->state >= MAX_NANNY_STATE )
@@ -97,34 +103,36 @@ int handle_nanny_input( D_SOCKET *dsock, char *arg )
       nanny_state_prev( nanny, TRUE );
       return ret;
    }
-
-   (*nanny_code[nanny->type][nanny->state])( nanny, arg );
+   (*nanny->info.nanny_code[nanny->state]) nanny, arg );
    return ret;
 
 }
 
-void change_nanny_state( NANNY_DATA *nanny, int state, bool message )
+int change_nanny_state( NANNY_DATA *nanny, int state, bool message )
 {
+   int ret = RET_SUCCESS;
    nanny->state = state;
    if( message )
       text_to_nanny( nanny, nanny_messages[nanny->type][nanny->state] );
-   return;
+   return ret;
 }
 
-void nanny_state_next( NANNY_DATA *nanny, bool message )
+int nanny_state_next( NANNY_DATA *nanny, bool message )
 {
+   int ret = RET_SUCCESS;
    nanny->state++;
    if( message )
       text_to_nanny( nanny, nanny_messages[nanny->type][nanny->state] );
-   return;
+   return ret;
 }
 
-void nanny_state_prev( NANNY_DATA *nanny, bool message )
+int nanny_state_prev( NANNY_DATA *nanny, bool message )
 {
+   int ret = RET_SUCCESS;
    nanny->state--;
    if( message )
       text_to_nanny( nanny, nanny_messages[nanny->type][nanny->state] );
-   return;
+   return ret;
 }
 
 /* controlling */
@@ -167,7 +175,8 @@ int uncontrol_nanny( D_SOCKET *dsock )
    return ret;
 }
 
-void nanny_login( NANNY_DATA *nanny, char *arg )
+int nanny_login( NANNY_DATA *nanny, char *arg )
 {
-
+   int ret = RET_SUCCESS;
+   return ret;
 }

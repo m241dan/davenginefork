@@ -165,7 +165,7 @@ void GameLoop(int control)
             bug("Descriptor in bad state.");
             break;
           case STATE_NANNY:
-            handle_nanny_input( dsock->nanny, dsock->next_command );
+            handle_nanny_input( dsock, dsock->next_command );
             break;
           case STATE_PLAYING:
             handle_cmd_input(dsock, dsock->next_command);
@@ -344,9 +344,9 @@ bool new_socket(int sock)
   text_to_buffer(sock_new, greeting);
   {
      NANNY_DATA *nanny = init_nanny();
-     nanny->type = NANNY_LOGIN;
+     nanny->info = nanny_lib[NANNY_LOGIN];
      change_nanny_state( nanny, 0, TRUE );
-     control_nanny( dsock, nanny );
+     control_nanny( sock_new, nanny );
      change_socket_state( sock_new, STATE_NANNY );
   }
 
@@ -836,176 +836,13 @@ bool flush_output(D_SOCKET *dsock)
   return TRUE;
 }
 
-void handle_new_connections(D_SOCKET *dsock, char *arg)
-{
-  ACCOUNT_DATA *a_new;
-  char aFile[MAX_BUFFER];
-  int ret, i;
-
-  switch(dsock->state)
-  {
-    default:
-      bug("Handle_new_connections: Bad state.");
-      break;
-    case STATE_NEW_NAME:
-      if (dsock->lookup_status != TSTATE_DONE)
-      {
-        text_to_buffer(dsock, "Making a dns lookup, please have patience.\n\rWhat is your name? ");
-        return;
-      }
-      if (!check_name(arg)) /* check for a legal name */
-      {
-        text_to_buffer(dsock, "Sorry, that's not a legal name, please pick another.\n\rWhat is your name? ");
-        break;
-      }
-
-      mud_printf( aFile, "../accounts/%s/account.afile", capitalize( arg ) );
-      log_string("%s is trying to connect.", aFile);
-
-      a_new = init_account();
-
-      if( ( ret = load_account_file( aFile, a_new ) ) != RET_SUCCESS )
-      {
-        /* give the player it's name */
-        FREE( a_new->name );
-        a_new->name = strdup( capitalize( arg ) );
-
-        /* prepare for next step */
-        text_to_buffer(dsock, "Please enter a new password: ");
-        dsock->state = STATE_NEW_PASSWORD;
-      }
-      else /* old player */
-      {
-        /* prepare for next step */
-        text_to_buffer(dsock, "What is your password? ");
-        dsock->state = STATE_ASK_PASSWORD;
-      }
-      text_to_buffer(dsock, (char *) dont_echo);
-
-      /* socket <-> player */
-      p_new->socket = dsock;
-      dsock->player = p_new;
-      break;
-    case STATE_NEW_PASSWORD:
-      if (strlen(arg) < 5 || strlen(arg) > 12)
-      {
-        text_to_buffer(dsock, "Between 5 and 12 chars please!\n\rPlease enter a new password: ");
-        return;
-      }
-
-      free(dsock->player->password);
-      dsock->player->password = strdup(crypt(arg, dsock->player->name));
-
-      for (i = 0; dsock->player->password[i] != '\0'; i++)
-      {
-	if (dsock->player->password[i] == '~')
-	{
-	  text_to_buffer(dsock, "Illegal password!\n\rPlease enter a new password: ");
-	  return;
-	}
-      }
-
-      text_to_buffer(dsock, "Please verify the password: ");
-      dsock->state = STATE_VERIFY_PASSWORD;
-      break;
-    case STATE_VERIFY_PASSWORD:
-      if (!strcmp(crypt(arg, dsock->player->name), dsock->player->password))
-      {
-        text_to_buffer(dsock, (char *) do_echo);
-
-        /* put him in the list */
-        AttachToList(dsock->player, dmobile_list);
-
-        log_string("New player: %s has entered the game.", dsock->player->name);
-
-        /* and into the game */
-        dsock->state = STATE_PLAYING;
-        text_to_buffer(dsock, motd);
-
-        /* initialize events on the player */
-        init_events_player(dsock->player);
-
-        /* strip the idle event from this socket */
-        strip_event_socket(dsock, EVENT_SOCKET_IDLE);
-      }
-      else
-      {
-        free(dsock->player->password);
-        dsock->player->password = NULL;
-        text_to_buffer(dsock, "Password mismatch!\n\rPlease enter a new password: ");
-        dsock->state = STATE_NEW_PASSWORD;
-      }
-      break;
-    case STATE_ASK_PASSWORD:
-      text_to_buffer(dsock, (char *) do_echo);
-      if (!strcmp(crypt(arg, dsock->player->name), dsock->player->password))
-      {
-        if ((p_new = check_reconnect(dsock->player->name)) != NULL)
-        {
-          /* attach the new player */
-          free_mobile(dsock->player);
-          dsock->player = p_new;
-          p_new->socket = dsock;
-
-          log_string("%s has reconnected.", dsock->player->name);
-
-          /* and let him enter the game */
-          dsock->state = STATE_PLAYING;
-          text_to_buffer(dsock, "You take over a body already in use.\n\r");
-
-          /* strip the idle event from this socket */
-          strip_event_socket(dsock, EVENT_SOCKET_IDLE);
-        }
-        else if ((p_new = load_player(dsock->player->name)) == NULL)
-        {
-          text_to_socket(dsock, "ERROR: Your pfile is missing!\n\r");
-          free_mobile(dsock->player);
-          dsock->player = NULL;
-          close_socket(dsock, FALSE);
-          return;
-        }
-        else
-        {
-          /* attach the new player */
-          free_mobile(dsock->player);
-          dsock->player = p_new;
-          p_new->socket = dsock;
-
-          /* put him in the active list */
-          AttachToList(p_new, dmobile_list);
-
-          log_string("%s has entered the game.", dsock->player->name);
-
-          /* and let him enter the game */
-          dsock->state = STATE_PLAYING;
-          text_to_buffer(dsock, motd);
-
-	  /* initialize events on the player */
-	  init_events_player(dsock->player);
-
-	  /* strip the idle event from this socket */
-	  strip_event_socket(dsock, EVENT_SOCKET_IDLE);
-        }
-      }
-      else
-      {
-        text_to_socket(dsock, "Bad password!\n\r");
-        free_mobile(dsock->player);
-        dsock->player = NULL;
-        close_socket(dsock, FALSE);
-      }
-      break;
-  }
-}
-
 void clear_socket(D_SOCKET *sock_new, int sock)
 {
   memset(sock_new, 0, sizeof(*sock_new));
 
   sock_new->control        =  sock;
-  sock_new->state          =  STATE_NEW_NAME;
+  sock_new->state          =  -1;
   sock_new->lookup_status  =  TSTATE_LOOKUP;
-  sock_new->player         =  NULL;
   sock_new->top_output     =  0;
   sock_new->events         =  AllocList();
 }
