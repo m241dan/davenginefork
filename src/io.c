@@ -40,7 +40,7 @@ void log_string(const char *txt, ...)
   /* try to open logfile */
   if ((fp = fopen(logfile, "a")) == NULL)
   {
-    communicate(NULL, "log: cannot open logfile", COMM_LOG);
+    communicate();
     return;
   }
 
@@ -48,7 +48,7 @@ void log_string(const char *txt, ...)
   fclose(fp);
 
   puts( buf );
-  communicate(NULL, buf, COMM_LOG);
+  communicate();
 }
 
 /*
@@ -71,7 +71,7 @@ void bug(const char *txt, ...)
   /* try to open logfile */
   if ((fp = fopen("../log/bugs.txt", "a")) == NULL)
   {
-    communicate(NULL, "bug: cannot open bugfile", COMM_LOG);
+    communicate();
     return;
   }
 
@@ -79,7 +79,7 @@ void bug(const char *txt, ...)
   fclose(fp);
 
   puts( buf );
-  communicate(NULL, buf, COMM_LOG);
+  communicate();
 }
 
 /*

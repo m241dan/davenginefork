@@ -1,6 +1,5 @@
 /* account.h written by Davenge */
 
-
 struct game_account
 {
    D_SOCKET *socket;
@@ -30,4 +29,3 @@ int fwrite_account_base( ACCOUNT_DATA *account, FILE *fp );
 int fread_account_base( ACCOUNT_DATA *account, FILE *fp );
 
 /* setting */
-void set_account( ACCOUNT_DATA *account, VALUE value, int type );

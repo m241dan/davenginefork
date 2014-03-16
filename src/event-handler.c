@@ -76,7 +76,7 @@ void dequeue_event(EVENT_DATA *event)
       DetachFromList(event, global_events);
       break;
     case EVENT_OWNER_DMOB:
-      DetachFromList(event, event->owner.dMob->events);
+/*      DetachFromList(event, event->owner.dMob->events); */
       break;
     case EVENT_OWNER_DSOCKET:
       DetachFromList(event, event->owner.dSock->events);
@@ -197,34 +197,35 @@ void heartbeat()
  * all the correct values, and makes sure it is enqueued
  * into the event queue.
  */
+/*
 void add_event_mobile(EVENT_DATA *event, D_MOBILE *dMob, int delay)
 {
-  /* check to see if the event has a type */
+  * check to see if the event has a type *
   if (event->type == EVENT_NONE)
   {
     bug("add_event_mobile: no type.");
     return;
   }
 
-  /* check to see of the event has a callback function */
+  * check to see of the event has a callback function *
   if (event->fun == NULL)
   {
     bug("add_event_mobile: event type %d has no callback function.", event->type);
     return;
   }
 
-  /* set the correct variables for this event */
+  * set the correct variables for this event *
   event->ownertype  = EVENT_OWNER_DMOB;
   event->owner.dMob = dMob;
 
-  /* attach the event to the mobiles local list */
+  * attach the event to the mobiles local list *
   AttachToList(event, dMob->events);
 
-  /* attempt to enqueue the event */
+  * attempt to enqueue the event *
   if (enqueue_event(event, delay) == FALSE)
     bug("add_event_mobile: event type %d failed to be enqueued.", event->type);
 }
-
+*/
 /* function   :: add_event_socket()
  * arguments  :: the event, the owner and the delay
  * ======================================================
@@ -324,6 +325,7 @@ EVENT_DATA *event_isset_socket(D_SOCKET *dSock, int type)
  * is enqueued/attached to a given mobile, and if it is,
  * it will return a pointer to this event.
  */
+/*
 EVENT_DATA *event_isset_mobile(D_MOBILE *dMob, int type)
 {
   EVENT_DATA *event;
@@ -339,7 +341,7 @@ EVENT_DATA *event_isset_mobile(D_MOBILE *dMob, int type)
 
   return event;
 }
-
+*/
 /* function   :: strip_event_socket()
  * arguments  :: the socket and the type of event
  * ======================================================
@@ -366,6 +368,7 @@ void strip_event_socket(D_SOCKET *dSock, int type)
  * This function will dequeue all events of a given type
  * from the given mobile.
  */
+/*
 void strip_event_mobile(D_MOBILE *dMob, int type)
 {
   EVENT_DATA *event;
@@ -379,24 +382,25 @@ void strip_event_mobile(D_MOBILE *dMob, int type)
   }
   DetachIterator(&Iter);
 }
-
+*/
 /* function   :: init_events_mobile()
  * arguments  :: the mobile
  * ======================================================
  * this function should be called when a player is loaded,
  * it will initialize all updating events for that player.
  */
+/*
 void init_events_player(D_MOBILE *dMob)
 {
   EVENT_DATA *event;
 
-  /* save the player every 2 minutes */
+  * save the player every 2 minutes *
   event = alloc_event();
   event->fun = &event_mobile_save;
   event->type = EVENT_MOBILE_SAVE;
   add_event_mobile(event, dMob, 2 * 60 * PULSES_PER_SECOND);
 }
-
+*/
 /* function   :: init_events_socket()
  * arguments  :: the mobile
  * ======================================================

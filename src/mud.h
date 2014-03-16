@@ -9,6 +9,12 @@
 #include <pthread.h>
 #include <arpa/telnet.h>
 #include <dirent.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <dirent.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <string.h>
 
 #include "list.h"
 #include "stack.h"
@@ -353,8 +359,7 @@ void  load_helps              ( void );
 bool  check_name              ( const char *name );
 void  load_muddata            ( bool fCopyOver );
 char *get_time                ( void );
-void  copyover_recover        ( void );
-
+void communicate( void );
 /*
  * mccp.c
  */

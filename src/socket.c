@@ -344,7 +344,7 @@ bool new_socket(int sock)
   text_to_buffer(sock_new, greeting);
   {
      NANNY_DATA *nanny = init_nanny();
-     nanny->info = nanny_lib[NANNY_LOGIN];
+     nanny->info = &nanny_lib[NANNY_LOGIN];
      change_nanny_state( nanny, 0, TRUE );
      control_nanny( sock_new, nanny );
      change_socket_state( sock_new, STATE_NANNY );

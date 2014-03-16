@@ -5,7 +5,8 @@
 /*****************
  * NANNY LIBRARY *
  *****************/
-const nanny_lib_entry *const nanny_lib[] = {
+
+const struct nanny_lib_entry nanny_lib[] = {
    { "login", nanny_login_messages, nanny_login_code },
    { "new account", nanny_new_account_messages, nanny_new_account_code },
    { NULL, NULL, NULL } /* gandalf */
@@ -19,7 +20,7 @@ const char *const nanny_login_messages[] = {
    NULL /* gandalf */
 };
 
-const nanny_fun *const nanny_code[] = {
+nanny_fun *nanny_login_code[] = {
    nanny_login, nanny_password,
    NULL /* gandalf */
 };
@@ -32,7 +33,7 @@ const char *const nanny_new_account_messages[] = {
    NULL /* gandalf */
 };
 
-const nanny_fun *const nanny_new_account_code[] = {
+nanny_fun *nanny_new_account_code[] = {
    nanny_new_password, nanny_confirm_new_password,
    NULL /* gandalf */
 };
@@ -57,7 +58,7 @@ int clear_nanny( NANNY_DATA *nanny )
 
    nanny->socket = NULL;
    nanny->content = NULL;
-   nanny->info = NULL
+   nanny->info = NULL;
    nanny->state = -1;
 
    return ret;
@@ -92,7 +93,7 @@ int handle_nanny_input( D_SOCKET *dsock, char *arg )
       return ret;
    }
 
-   if( nanny->state < 0 || nanny->state >= MAX_NANNY_STATE )
+   if( nanny->state < 0 )
    {
       bug( "%s: BAD STATE %d.", __FUNCTION__, nanny->state );
       return RET_FAILED_OTHER;
@@ -112,8 +113,6 @@ int change_nanny_state( NANNY_DATA *nanny, int state, bool message )
 {
    int ret = RET_SUCCESS;
    nanny->state = state;
-   if( message )
-      text_to_nanny( nanny, nanny_messages[nanny->type][nanny->state] );
    return ret;
 }
 
@@ -121,8 +120,6 @@ int nanny_state_next( NANNY_DATA *nanny, bool message )
 {
    int ret = RET_SUCCESS;
    nanny->state++;
-   if( message )
-      text_to_nanny( nanny, nanny_messages[nanny->type][nanny->state] );
    return ret;
 }
 
@@ -130,8 +127,6 @@ int nanny_state_prev( NANNY_DATA *nanny, bool message )
 {
    int ret = RET_SUCCESS;
    nanny->state--;
-   if( message )
-      text_to_nanny( nanny, nanny_messages[nanny->type][nanny->state] );
    return ret;
 }
 

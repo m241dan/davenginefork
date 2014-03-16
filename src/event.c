@@ -9,12 +9,13 @@
 /* event_game_tick is just to show how to make global events
  * which can be used to update the game.
  */
+/*
 bool event_game_tick(EVENT_DATA *event)
 {
   ITERATOR Iter;
   D_MOBILE *dMob;
 
-  /* send a tick message to everyone */
+  * send a tick message to everyone *
   AttachIterator(&Iter, dmobile_list);
   while ((dMob = (D_MOBILE *) NextInList(&Iter)) != NULL)
   {
@@ -22,7 +23,7 @@ bool event_game_tick(EVENT_DATA *event)
   }
   DetachIterator(&Iter);
 
-  /* enqueue another game tick in 10 minutes */
+  * enqueue another game tick in 10 minutes *
   event = alloc_event();
   event->fun = &event_game_tick;
   event->type = EVENT_GAME_TICK;
@@ -30,25 +31,26 @@ bool event_game_tick(EVENT_DATA *event)
 
   return FALSE;
 }
-
+*/
+/*
 bool event_mobile_save(EVENT_DATA *event)
 {
   D_MOBILE *dMob;
 
-  /* Check to see if there is an owner of this event.
+  * Check to see if there is an owner of this event.
    * If there is no owner, we return TRUE, because
    * it's the safest - and post a bug message.
-   */
+   *
   if ((dMob = event->owner.dMob) == NULL)
   {
     bug("event_mobile_save: no owner.");
     return TRUE;
   }
 
-  /* save the actual player file */
+  * save the actual player file *
   save_player(dMob);
 
-  /* enqueue a new event to save the pfile in 2 minutes */
+  * enqueue a new event to save the pfile in 2 minutes *
   event = alloc_event();
   event->fun = &event_mobile_save;
   event->type = EVENT_MOBILE_SAVE;
@@ -56,7 +58,7 @@ bool event_mobile_save(EVENT_DATA *event)
 
   return FALSE;
 }
-
+*/
 bool event_socket_idle(EVENT_DATA *event)
 {
   D_SOCKET *dSock;

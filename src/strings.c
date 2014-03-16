@@ -67,7 +67,7 @@ char *one_arg(char *fStr, char *bStr)
 char *capitalize(char *txt)
 {
    static char buf[MAX_BUFFER];
-   buf = downcase( txt );
+   mud_printf( buf, "%s", downcase( txt ) );
    buf[0] = toupper( buf[0] );
    return buf;
 }

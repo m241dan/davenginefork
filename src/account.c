@@ -27,7 +27,6 @@ void clear_account( ACCOUNT_DATA *account )
 /* deletion */
 void free_account( ACCOUNT_DATA *account )
 {
-   ITERATOR Iter;
    account->socket = NULL;
    FreeList( account->characters );
    account->characters = NULL;
@@ -35,7 +34,7 @@ void free_account( ACCOUNT_DATA *account )
    account->command_tables = NULL;
    FreeList( account->commands );
    account->commands = NULL;
-   FREE( account->namne );
+   FREE( account->name );
    FREE( account->command_tables );
    FREE( account->commands );
    return;
@@ -62,7 +61,7 @@ int load_account_file( const char *path, ACCOUNT_DATA *account )
    if( strcmp( word, "#ACCOUNT" ) )
    {
       BAD_FORMAT( word );
-      goto to_return:
+      goto to_return;
    }
 
    while( !done )
@@ -78,7 +77,7 @@ int load_account_file( const char *path, ACCOUNT_DATA *account )
             if( !strcmp( word, "#ACCOUNT" ) )
             {
                if( ( ret = fread_account_base( account, fp ) ) != RET_SUCCESS )
-                  goto to_return:
+                  goto to_return;
                found = TRUE;
                break;
             }
@@ -183,50 +182,5 @@ int fread_account_base( ACCOUNT_DATA *account, FILE *fp )
    to_return:
       fclose( fp );
       return ret;
-}
-
-/* setting */
-void set_account( ACCOUNT *account, VALUE value, int type )
-{
-   switch( type )
-   {
-      default:
-         bug( "%s: invalid type %s passed.", __FUNCTION__, type );
-         return;
-      case ACT_SOCKET:
-         account->socket = (D_SOCKET *)value;
-         break;
-      case ACT_LEVEL:
-         account->level = (sh_int)value;
-         break;
-      case ACT_CHARACTERS:
-         clear_char_sheet_list( account );
-         FreeList( account->characters );
-         account->characters = (LIST *)value;
-         break;
-      case ACT_NAME:
-         if( account->name )
-            free( account->name );
-         account->name = strdup( (char *)value );
-         break;
-      case ACT_PASSWORD:
-         if( account->password )
-            free( account->password );
-         account->password = strdup( (char *)value );
-         break;
-      case ACT_COMMANDS:
-         clear_account_command_list( account );
-         FreeList( account->commands );
-         account->commands = (LIST *)value;
-         break;
-      case ACT_PAGEWIDTH:
-         account->pagewidth = (sh_int)value;
-         break;
-      case ACT_SETTINGS:
-         account->settings_loaded = (bool)value;
-         break;
-   }
-   save_account( account );
-   return;
 }
 

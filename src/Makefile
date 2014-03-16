@@ -3,7 +3,7 @@ C_FLAGS = -Wall -g -pedantic
 L_FLAGS = -lz -lpthread -lcrypt -lm -ldl
 
 O_FILES = socket.o io.o strings.o utils.o interpret.o help.o  \
-	  list.o stack .o mccp.o save.o event.o event-handler.o \
+	  list.o stack.o mccp.o event.o event-handler.o \
           account.o strings_table.o nanny.o
 
 all: $(O_FILES)

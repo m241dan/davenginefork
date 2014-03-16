@@ -1,7 +1,5 @@
 /* header file for nanny.c written by Davenge */
 
-extern const struct nanny_lib_entry *const nanny_lib[];
-
 struct nanny_data
 {
    D_SOCKET *socket;
@@ -12,11 +10,23 @@ struct nanny_data
 
 struct nanny_lib_entry
 {
-   char *name;
-   const int **const nanny_code;
-   const char **const nanny_messages;
+   const char *name;
+   const char *const *nanny_messages;
+   nanny_fun **nanny_code;
 };
 
+/* LIBRARY */
+extern const struct nanny_lib_entry nanny_lib[];
+
+/* NANNY LOGIN */
+extern const char *const nanny_login_messages[];
+extern nanny_fun *nanny_login_code[];
+
+/* NANNY NEW ACCOUNT */
+extern const char *const nanny_new_account_messages[];
+extern nanny_fun *nanny_new_account_code[];
+
+/* NANNY SPECIFIC CODE */
 /* creation */
 NANNY_DATA *init_nanny( void );
 int clear_nanny( NANNY_DATA *nanny );

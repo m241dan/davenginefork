@@ -21,77 +21,6 @@ char     *  greeting;           /* the welcome greeting              */
 char     *  motd;               /* the MOTD help file                */
 
 /*
- * Check_help()
- *
- * This function first sees if there is a valid
- * help file in the help_list, should there be
- * no helpfile in the help_list, it will check
- * the ../help/ directory for a suitable helpfile
- * entry. Even if it finds the helpfile in the
- * help_list, it will still check the ../help/
- * directory, and should the file be newer than
- * the currently loaded helpfile, it will reload
- * the helpfile.
- */
-bool check_help(D_MOBILE *dMob, char *helpfile)
-{
-  HELP_DATA *pHelp;
-  ITERATOR Iter;
-  char buf[MAX_HELP_ENTRY + 80];
-  char *entry, *hFile;
-  bool found = FALSE;
-
-  hFile = capitalize(helpfile);
-
-  AttachIterator(&Iter, help_list);
-  while ((pHelp = (HELP_DATA *) NextInList(&Iter)) != NULL)
-  {
-    if (is_prefix(helpfile, pHelp->keyword))
-    {
-      found = TRUE;
-      break;
-    }
-  }
-  DetachIterator(&Iter);
-
-  /* If there is an updated version we load it */
-  if (found)
-  {
-    if (last_modified(hFile) > pHelp->load_time)
-    {
-      free(pHelp->text);
-      pHelp->text = strdup(read_help_entry(hFile));
-    }
-  }
-  else /* is there a version at all ?? */
-  {
-    /* helpfiles do not contain double dots (no moving out of the helpdir) */
-    if (strstr(hFile, "..") != NULL)
-      return FALSE;
-
-    if ((entry = read_help_entry(hFile)) == NULL)
-      return FALSE;
-    else
-    {
-      if ((pHelp = malloc(sizeof(*pHelp))) == NULL)
-      { 
-        bug("Check_help: Cannot allocate memory.");
-        abort();
-      }
-      pHelp->keyword    =  strdup(hFile);
-      pHelp->text       =  strdup(entry);
-      pHelp->load_time  =  time(NULL);
-      AttachToList(pHelp, help_list);
-    }
-  }
-
-  snprintf(buf, MAX_HELP_ENTRY + 80, "=== %s ===\n\r%s", pHelp->keyword, pHelp->text);
-  text_to_mobile(dMob, buf);
-
-  return TRUE;
-}
-
-/*
  * Loads all the helpfiles found in ../help/
  */
 void load_helps()
@@ -139,3 +68,4 @@ void load_helps()
   }
   closedir(directory);
 }
+
