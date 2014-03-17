@@ -168,7 +168,7 @@ void GameLoop(int control)
             handle_nanny_input( dsock, dsock->next_command );
             break;
           case STATE_PLAYING:
-            handle_cmd_input(dsock, dsock->next_command);
+/*            handle_cmd_input(dsock, dsock->next_command); */
             break;
         }
 
@@ -342,11 +342,12 @@ bool new_socket(int sock)
 
   /* send the greeting */
   text_to_buffer(sock_new, greeting);
+
   {
      NANNY_DATA *nanny = init_nanny();
      nanny->info = &nanny_lib[NANNY_LOGIN];
-     change_nanny_state( nanny, 0, TRUE );
      control_nanny( sock_new, nanny );
+     change_nanny_state( nanny, 0, TRUE );
      change_socket_state( sock_new, STATE_NANNY );
   }
 
@@ -902,8 +903,7 @@ void recycle_sockets()
     /* stop compression */
     compressEnd(dsock, dsock->compressing, TRUE);
 
-    /* put the socket in the free stack */
-    PushStack(dsock, dsock_free);
+    free(dsock);
   }
   DetachIterator(&Iter);
 }

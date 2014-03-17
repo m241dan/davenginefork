@@ -12,7 +12,7 @@ struct nanny_lib_entry
 {
    const char *name;
    const char *const *nanny_messages;
-   nanny_fun **nanny_code;
+   nanny_fun *const *nanny_code;
 };
 
 /* LIBRARY */
@@ -20,7 +20,7 @@ extern const struct nanny_lib_entry nanny_lib[];
 
 /* NANNY LOGIN */
 extern const char *const nanny_login_messages[];
-extern nanny_fun *nanny_login_code[];
+extern nanny_fun *const nanny_login_code[];
 
 /* NANNY NEW ACCOUNT */
 extern const char *const nanny_new_account_messages[];

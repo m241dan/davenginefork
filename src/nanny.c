@@ -20,10 +20,22 @@ const char *const nanny_login_messages[] = {
    NULL /* gandalf */
 };
 
-nanny_fun *nanny_login_code[] = {
+nanny_fun *const nanny_login_code[] = {
    nanny_login, nanny_password,
    NULL /* gandalf */
 };
+
+int nanny_login( NANNY_DATA *nanny, char *arg )
+{
+   int ret = RET_SUCCESS;
+   return ret;
+}
+
+int nanny_password( NANNY_DATA *nanny, char *arg )
+{
+   int ret = RET_SUCCESS;
+   return ret;
+}
 
 /*********************
  * NANNY NEW ACCOUNT *
@@ -38,6 +50,17 @@ nanny_fun *nanny_new_account_code[] = {
    NULL /* gandalf */
 };
 
+int nanny_new_password( NANNY_DATA *nanny, char *arg )
+{
+   int ret = RET_SUCCESS;
+   return ret;
+}
+
+int nanny_confirm_new_password( NANNY_DATA *nanny, char *arg )
+{
+   int ret = RET_SUCCESS;
+   return ret;
+}
 /***********************
  * NANNY SPECIFIC CODE *
  ***********************/
@@ -104,7 +127,7 @@ int handle_nanny_input( D_SOCKET *dsock, char *arg )
       nanny_state_prev( nanny, TRUE );
       return ret;
    }
-   (*nanny->info.nanny_code[nanny->state]) nanny, arg );
+   (*nanny->info->nanny_code[nanny->state])( nanny, arg );
    return ret;
 
 }
@@ -113,6 +136,8 @@ int change_nanny_state( NANNY_DATA *nanny, int state, bool message )
 {
    int ret = RET_SUCCESS;
    nanny->state = state;
+   if( message )
+      text_to_buffer( nanny->socket, nanny->info->nanny_messages[nanny->state] );
    return ret;
 }
 
@@ -120,6 +145,8 @@ int nanny_state_next( NANNY_DATA *nanny, bool message )
 {
    int ret = RET_SUCCESS;
    nanny->state++;
+   if( message )
+      text_to_buffer( nanny->socket, nanny->info->nanny_messages[nanny->state] );
    return ret;
 }
 
@@ -127,6 +154,8 @@ int nanny_state_prev( NANNY_DATA *nanny, bool message )
 {
    int ret = RET_SUCCESS;
    nanny->state--;
+   if( message )
+      text_to_buffer( nanny->socket, nanny->info->nanny_messages[nanny->state] );
    return ret;
 }
 
@@ -160,7 +189,7 @@ int uncontrol_nanny( D_SOCKET *dsock )
       BAD_POINTER( "dsock" );
       return ret;
    }
-   if( dsock->nanny = NULL )
+   if( dsock->nanny == NULL )
    {
       BAD_POINTER( "dsock->nanny" );
       return ret;
@@ -170,8 +199,3 @@ int uncontrol_nanny( D_SOCKET *dsock )
    return ret;
 }
 
-int nanny_login( NANNY_DATA *nanny, char *arg )
-{
-   int ret = RET_SUCCESS;
-   return ret;
-}

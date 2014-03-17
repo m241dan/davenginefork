@@ -145,7 +145,6 @@ void init_event_queue(int section)
   else if (section == 2)
   {
     event = alloc_event();
-    event->fun = &event_game_tick;
     event->type = EVENT_GAME_TICK;
     add_event_game(event, 10 * 60 * PULSES_PER_SECOND);
   }
