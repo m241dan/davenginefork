@@ -237,4 +237,20 @@ int mud_printf( char *dest, const char *format, ... )
 
    return res;
 }
+/*
+char *colorize( const char *to_color )
+{
+   static char buf[MAX_BUFFER];
+   char *ptr;
+   memset( &buf[0], 0 sizeof( buf ) );
 
+   ptr = buf;
+
+   while( *to_color )
+   {
+      
+   }
+
+
+}
+*/

@@ -165,7 +165,8 @@ void GameLoop(int control)
             bug("Descriptor in bad state.");
             break;
           case STATE_NANNY:
-            handle_nanny_input( dsock, dsock->next_command );
+            if( handle_nanny_input( dsock, dsock->next_command ) != RET_SUCCESS )
+               bug( "handle_nanny_input failed to interpret the input." );
             break;
           case STATE_PLAYING:
 /*            handle_cmd_input(dsock, dsock->next_command); */
@@ -710,7 +711,7 @@ void text_to_buffer(D_SOCKET *dsock, const char *txt)
           else
             txt++;
         }
-        break;   
+        break;
     }
   }
 

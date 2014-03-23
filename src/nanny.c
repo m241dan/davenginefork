@@ -16,7 +16,7 @@ const struct nanny_lib_entry nanny_lib[] = {
  * NANNY LOGIN *
  ***************/
 const char *const nanny_login_messages[] = {
-   "What's your account name?", "Password:",
+   "What's your account name? ", "Password: ",
    NULL /* gandalf */
 };
 
@@ -28,6 +28,23 @@ nanny_fun *const nanny_login_code[] = {
 int nanny_login( NANNY_DATA *nanny, char *arg )
 {
    int ret = RET_SUCCESS;
+   ACCOUNT_DATA *a_new = NULL;
+
+/*   if( ( a_new = get_account( arg ) ) == NULL ) */
+   {
+      if( !check_name( arg ) )
+      {
+         text_to_nanny( nanny, "%s is a bad name, please try again: ", arg );
+         return ret;
+      }
+
+      ret = init_account( a_new );
+      a_new->name = strdup( arg );
+      nanny->info = &
+
+
+   }
+
    return ret;
 }
 
@@ -41,7 +58,7 @@ int nanny_password( NANNY_DATA *nanny, char *arg )
  * NANNY NEW ACCOUNT *
  *********************/
 const char *const nanny_new_account_messages[] = {
-   "Please enter a password for your account: ", "Repeat the Password:",
+   "Please enter a password for your account: ", "Repeat the Password: ",
    NULL /* gandalf */
 };
 
@@ -132,6 +149,16 @@ int handle_nanny_input( D_SOCKET *dsock, char *arg )
 
 }
 
+int change_nanny( D_SOCKET *dsock, const char name )
+{
+   int ret = RET_SUCCESS;
+   const struct nanny_lib_entry *change_to;
+
+   if( ( change_to = get_nanny_lib_from_name( name ) ) == NULL )
+      return 
+
+}
+
 int change_nanny_state( NANNY_DATA *nanny, int state, bool message )
 {
    int ret = RET_SUCCESS;
@@ -199,3 +226,34 @@ int uncontrol_nanny( D_SOCKET *dsock )
    return ret;
 }
 
+/* communication */
+int text_to_nanny( NANNY_DATA *nanny, const char *fmt, ... )
+{
+   va_list va;
+   int res;
+   char dest[MAX_BUFFER];
+
+   va_start( va, fmt );
+   res = vsnprintf( dest, MAX_BUFFER, fmt, va );
+   va_end( va );
+
+   if( res >= MAX_BUFFER -1 )
+   {
+      dest[0] = '\0';
+      bug( "Overflow when attempting to format string for message." );
+   }
+
+   text_to_buffer( nanny->socket, dest );
+   return res;
+}
+
+const struct nanny_lib_entry *get_nanny_lib_from_name( const char *name )
+{
+   int x;
+
+   for( x = 0; nanny_lib[x].name == NULL || nanny_lib[x].name[0] == '\0'; x++ )
+      if( !strcmp( nanny_lib[x].name, name ) )
+         return &nanny_lib[x];
+
+   return NULL;
+}

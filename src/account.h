@@ -16,11 +16,11 @@ struct game_account
 };
 
 /* creation */
-ACCOUNT_DATA *init_account( void );
-void clear_account( ACCOUNT_DATA *account );
+int init_account( ACCOUNT_DATA *account );
+int clear_account( ACCOUNT_DATA *account );
 
 /* deletion */
-void free_account( ACCOUNT_DATA *account );
+int free_account( ACCOUNT_DATA *account );
 
 /* i/o */
 int load_account_file( const char *path, ACCOUNT_DATA *account );

@@ -4,29 +4,35 @@
 
 /* creation */
 
-ACCOUNT_DATA *init_account( void )
+int init_account( ACCOUNT_DATA *account )
 {
-   ACCOUNT_DATA *account;
+   int ret = RET_SUCCESS;
 
    CREATE( account, ACCOUNT_DATA, 1 );
-   clear_account( account );
+   if( ( ret = clear_account( account ) ) != RET_SUCCESS )
+      return ret;
    account->command_tables = AllocList();
    account->commands = AllocList();
-   return account;
+   return ret;
 }
 
-void clear_account( ACCOUNT_DATA *account )
+int clear_account( ACCOUNT_DATA *account )
 {
+   int ret = RET_SUCCESS;
+
    account->name = "new_account";
    account->password = "new_password";
    account->level = 1;
    account->pagewidth = DEFAULT_PAGEWIDTH;
-   return;
+
+   return ret;
 }
 
 /* deletion */
-void free_account( ACCOUNT_DATA *account )
+int free_account( ACCOUNT_DATA *account )
 {
+   int ret = RET_SUCCESS;
+
    account->socket = NULL;
    FreeList( account->characters );
    account->characters = NULL;
@@ -37,7 +43,8 @@ void free_account( ACCOUNT_DATA *account )
    FREE( account->name );
    FREE( account->command_tables );
    FREE( account->commands );
-   return;
+
+   return ret;
 }
 
 /* i/o */

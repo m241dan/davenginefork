@@ -22,9 +22,15 @@ extern const struct nanny_lib_entry nanny_lib[];
 extern const char *const nanny_login_messages[];
 extern nanny_fun *const nanny_login_code[];
 
+nanny_fun nanny_login;
+nanny_fun nanny_password;
+
 /* NANNY NEW ACCOUNT */
 extern const char *const nanny_new_account_messages[];
 extern nanny_fun *nanny_new_account_code[];
+
+nanny_fun nanny_new_password;
+nanny_fun nanny_confirm_new_password;
 
 /* NANNY SPECIFIC CODE */
 /* creation */
@@ -46,10 +52,9 @@ int nanny_state_prev( NANNY_DATA *nanny, bool message );
 int control_nanny( D_SOCKET *dsock, NANNY_DATA *nanny );
 int uncontrol_nanny( D_SOCKET *dsock );
 
-/* login */
-nanny_fun nanny_login;
-nanny_fun nanny_password;
+/* communication */
+int text_to_nanny( NANNY_DATA *nanny, const char *fmt, ... );
 
-/* new account */
-nanny_fun nanny_new_password;
-nanny_fun nanny_confirm_new_password;
+/* retrieval */
+const struct nanny_lib_entry *get_nanny_lib_from_name( const char *name );
+
