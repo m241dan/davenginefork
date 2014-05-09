@@ -78,8 +78,9 @@ typedef enum
 
 typedef enum
 {
-   RET_SUCCESS, RET_FAILED_BAD_PATH, RET_FAILED_BAD_FORMAT, RET_FAILED_NULL_POINTER, RET_FAILED_OTHER,
-   MAX_RET_CODES
+   RET_SUCCESS, RET_FAILED_BAD_PATH, RET_FAILED_BAD_FORMAT, RET_FAILED_NULL_POINTER,
+   RET_FAILED_NO_LIB_ENTRY,
+   RET_FAILED_OTHER, MAX_RET_CODES
 } ret_codes;
 
 /*****************
@@ -193,7 +194,7 @@ typedef struct  event_data    EVENT_DATA;
 typedef struct  game_account  ACCOUNT_DATA;
 typedef struct  nanny_data    NANNY_DATA;
 typedef int     nanny_fun( NANNY_DATA *nanny, char *arg );
-
+typedef const struct nanny_lib_entry NANNY_LIB_ENTRY;
 /* the actual structures */
 struct dSocket
 {

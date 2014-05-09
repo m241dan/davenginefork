@@ -4,16 +4,19 @@
 
 /* creation */
 
-int init_account( ACCOUNT_DATA *account )
+ACCOUNT_DATA *init_account( void )
 {
-   int ret = RET_SUCCESS;
+   ACCOUNT_DATA *account;
 
    CREATE( account, ACCOUNT_DATA, 1 );
-   if( ( ret = clear_account( account ) ) != RET_SUCCESS )
-      return ret;
+   if( clear_account( account ) != RET_SUCCESS )
+   {
+      free_account( account );
+      return NULL;
+   }
    account->command_tables = AllocList();
    account->commands = AllocList();
-   return ret;
+   return account;
 }
 
 int clear_account( ACCOUNT_DATA *account )

@@ -56,5 +56,4 @@ int uncontrol_nanny( D_SOCKET *dsock );
 int text_to_nanny( NANNY_DATA *nanny, const char *fmt, ... );
 
 /* retrieval */
-const struct nanny_lib_entry *get_nanny_lib_from_name( const char *name );
-
+int set_nanny_lib_from_name( NANNY_DATA *dest, const char *name );

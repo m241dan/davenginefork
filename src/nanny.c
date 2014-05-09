@@ -28,7 +28,7 @@ nanny_fun *const nanny_login_code[] = {
 int nanny_login( NANNY_DATA *nanny, char *arg )
 {
    int ret = RET_SUCCESS;
-   ACCOUNT_DATA *a_new = NULL;
+   ACCOUNT_DATA *a_new;
 
 /*   if( ( a_new = get_account( arg ) ) == NULL ) */
    {
@@ -38,10 +38,19 @@ int nanny_login( NANNY_DATA *nanny, char *arg )
          return ret;
       }
 
-      ret = init_account( a_new );
+      if( ( a_new = init_account() ) == NULL )
+      {
+         bug( "%s: could not allocate new account." );
+         return ret;
+      }
       a_new->name = strdup( arg );
-      nanny->info = &
-
+      if( set_nanny_lib_from_name( nanny, "new account" ) != RET_SUCCESS )
+      {
+         text_to_nanny( nanny, "Something is really messed up." );
+         close_socket( nanny->socket, FALSE );
+         return RET_FAILED_OTHER;
+      }
+      change_nanny_state( nanny, 0, TRUE );
 
    }
 
@@ -149,16 +158,6 @@ int handle_nanny_input( D_SOCKET *dsock, char *arg )
 
 }
 
-int change_nanny( D_SOCKET *dsock, const char name )
-{
-   int ret = RET_SUCCESS;
-   const struct nanny_lib_entry *change_to;
-
-   if( ( change_to = get_nanny_lib_from_name( name ) ) == NULL )
-      return 
-
-}
-
 int change_nanny_state( NANNY_DATA *nanny, int state, bool message )
 {
    int ret = RET_SUCCESS;
@@ -247,13 +246,20 @@ int text_to_nanny( NANNY_DATA *nanny, const char *fmt, ... )
    return res;
 }
 
-const struct nanny_lib_entry *get_nanny_lib_from_name( const char *name )
+int set_nanny_lib_from_name( NANNY_DATA *dest, const char *name )
 {
    int x;
 
-   for( x = 0; nanny_lib[x].name == NULL || nanny_lib[x].name[0] == '\0'; x++ )
+   for( x = 0; nanny_lib[x].name != NULL || nanny_lib[x].name[0] != '\0'; x++ )
+   {
       if( !strcmp( nanny_lib[x].name, name ) )
-         return &nanny_lib[x];
+      {
+         dest->info = &nanny_lib[x];
+         return RET_SUCCESS;
+      }
+   }
 
-   return NULL;
+   bug( "%s: could not find library entry titled %s.", __FUNCTION__, name );
+   return RET_FAILED_NO_LIB_ENTRY;
 }
+

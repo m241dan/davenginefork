@@ -7,16 +7,16 @@ struct game_account
    LIST *command_tables;
    LIST *commands;
 
+   int accountID;
    char *name;
    char *password;
    sh_int level;
    sh_int pagewidth;
 
-
 };
 
 /* creation */
-int init_account( ACCOUNT_DATA *account );
+ACCOUNT_DATA *init_account( void );
 int clear_account( ACCOUNT_DATA *account );
 
 /* deletion */
