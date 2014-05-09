@@ -1,6 +1,6 @@
-CC      = gcc
-C_FLAGS = -Wall -g -pedantic
-L_FLAGS = -lz -lpthread -lcrypt -lm -ldl
+CC      = gcc -std=c99
+C_FLAGS = -Wall -pedantic `mysql_config --cflags`
+L_FLAGS = -lcrypt `mysql_config --libs`
 
 O_FILES = socket.o io.o strings.o utils.o interpret.o help.o  \
 	  list.o stack.o mccp.o event.o event-handler.o \

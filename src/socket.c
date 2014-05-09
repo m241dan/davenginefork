@@ -4,6 +4,8 @@
  * sockets, and closing down unused sockets.
  */
 
+#include <my_global.h>
+#include <mysql.h>
 #include <sys/time.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -13,7 +15,6 @@
 #include <string.h>
 #include <netdb.h>
 #include <unistd.h>
-#include <ctype.h>
 #include <time.h>
 #include <sys/ioctl.h>
 #include <errno.h>
@@ -55,7 +56,7 @@ int main(int argc, char **argv)
 
   /* note that we are booting up */
   log_string("Program starting.");
-
+   log_string( "Connectign to Database" );
   /* initialize the event queue - part 1 */
   init_event_queue(1);
 

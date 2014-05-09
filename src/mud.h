@@ -16,6 +16,7 @@
 #include <sys/stat.h>
 #include <string.h>
 #include <stdarg.h>
+#include <ctype.h>
 
 #include "list.h"
 #include "stack.h"
