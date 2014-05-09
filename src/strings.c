@@ -254,3 +254,50 @@ char *colorize( const char *to_color )
 
 }
 */
+
+const char *print_header( const char *title, const char *pattern, int width )
+{
+   static char buf[MAX_BUFFER];
+   const char *pat_ptr;
+   char *buf_ptr;
+   int title_len = strlen( title );
+   int pattern_len = strlen( pattern );
+   int each_sides_pattern_len, side_pattern_remainder, loop_limit, extra, x;
+
+   memset( &buf, 0, sizeof( buf ) );
+   buf_ptr = buf;
+
+   each_sides_pattern_len = ( width - title_len - 2 ) / 2; /* minus two for preceeding and appending spaces to the title */
+   side_pattern_remainder = each_sides_pattern_len % pattern_len;
+   loop_limit = each_sides_pattern_len - side_pattern_remainder;
+   extra = title_len % 2;
+
+   pat_ptr = pattern;
+   for( x = 0; x < loop_limit; x++ )
+   {
+      *buf_ptr++ = *pat_ptr++;
+      if( ( x + 1 ) % pattern_len == 0 )
+         pat_ptr = pattern;
+   }
+
+   for( x = -1 ; x < side_pattern_remainder; x++ )
+      *buf_ptr++ = ' ';
+
+   for( x = 0; x < title_len; x++ )
+      *buf_ptr++ = *title++;
+
+   for( x = -1; x < ( side_pattern_remainder + extra ); x++ )
+      *buf_ptr++ = ' ';
+
+   pat_ptr = pattern;
+   for( x = 0; x < loop_limit; x++ )
+   {
+      *buf_ptr++ = *pat_ptr++;
+      if( ( x + 1 ) % pattern_len == 0 )
+         pat_ptr = pattern;
+   }
+
+   buf[strlen( buf )] = '\0';
+   return buf;
+}
+

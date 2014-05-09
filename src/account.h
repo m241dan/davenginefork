@@ -28,4 +28,8 @@ int save_account( ACCOUNT_DATA *account );
 int fwrite_account_base( ACCOUNT_DATA *account, FILE *fp );
 int fread_account_base( ACCOUNT_DATA *account, FILE *fp );
 
+/* prompt */
+int account_prompt( D_SOCKET *dsock );
+
+
 /* setting */

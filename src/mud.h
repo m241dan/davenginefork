@@ -212,6 +212,8 @@ struct dSocket
   unsigned char   compressing;                 /* MCCP support */
   z_stream      * out_compress;                /* MCCP support */
   unsigned char * out_compress_buf;            /* MCCP support */
+
+   ACCOUNT_DATA *account;
 };
 
 struct help_data
@@ -349,6 +351,7 @@ void    buffer_free           ( BUFFER *buffer );
 void    buffer_clear          ( BUFFER *buffer );
 int     bprintf               ( BUFFER *buffer, char *fmt, ... );
 int     mud_printf            ( char *dest, const char *format, ... );
+const char *print_header( const char *title, const char *pattern, int width );
 
 /*
  * help.c

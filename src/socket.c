@@ -818,9 +818,17 @@ bool flush_output(D_SOCKET *dsock)
     return TRUE;
 
   /* bust a prompt */
-  if (dsock->state == STATE_PLAYING && dsock->bust_prompt)
+  if( dsock->bust_prompt )
   {
-    text_to_buffer(dsock, "\n\rSocketMud:> ");
+     switch( dsock->state )
+     {
+        default:
+        text_to_buffer(dsock, "\n\rSocketMud:> ");
+        break;
+        case STATE_ACCOUNT:
+           account_prompt( dsock );
+           break;
+     }
     dsock->bust_prompt = FALSE;
   }
 
