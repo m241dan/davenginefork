@@ -18,7 +18,7 @@
 #include <stdarg.h>
 #include <ctype.h>
 
-#include "list.h"
+#include "llist.h"
 #include "stack.h"
 
 /************************
@@ -125,13 +125,13 @@ do									\
    ret = RET_FAILED_BAD_FORMAT;						\
 } while(0)
 
-#define DETACHCONTENTS( list, type )					\
+#define DETACHCONTENTS( LLIST, type )					\
 do									\
 {									\
    (type) *to_detach;							\		\
-   AttachIterator( &Iter, (list) );					\
-   while( ( to_detach = (type *)NextInList( &Iter ) ) != NULL )		\
-      DetachFromList( to_detach, (list) )				\
+   AttachIterator( &Iter, (LLIST) );					\
+   while( ( to_detach = (type *)NextInLLIST( &Iter ) ) != NULL )		\
+      DetachFromLLIST( to_detach, (LLIST) )				\
    DetachIterator( &Iter );						\
 } while(0)
 
@@ -200,7 +200,7 @@ typedef const struct nanny_lib_entry NANNY_LIB_ENTRY;
 struct dSocket
 {
   NANNY_DATA    * nanny;
-  LIST          * events;
+  LLIST          * events;
   char          * hostname;
   char            inbuf[MAX_BUFFER];
   char            outbuf[MAX_OUTPUT];
@@ -258,9 +258,9 @@ typedef struct buffer_type
  * Global Variables        *
  ***************************/
 
-extern  STACK       *   dsock_free;       /* the socket free list               */
-extern  LIST        *   dsock_list;       /* the linked list of active sockets  */
-extern  LIST        *   help_list;        /* the linked list of help files      */
+extern  STACK       *   dsock_free;       /* the socket free LLIST               */
+extern  LLIST        *   dsock_LLIST;       /* the linked LLIST of active sockets  */
+extern  LLIST        *   help_LLIST;        /* the linked LLIST of help files      */
 extern  const struct    typCmd tabCmd[];  /* the command table                  */
 extern  bool            shut_down;        /* used for shutdown                  */
 extern  char        *   greeting;         /* the welcome greeting               */

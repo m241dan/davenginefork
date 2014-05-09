@@ -4,7 +4,6 @@
  * sockets, and closing down unused sockets.
  */
 
-#include <my_global.h>
 #include <mysql.h>
 #include <sys/time.h>
 #include <stdlib.h>
@@ -18,14 +17,15 @@
 #include <time.h>
 #include <sys/ioctl.h>
 #include <errno.h>
+#include <ctype.h>
 
 /* including main header file */
 #include "mud.h"
 
 /* global variables */
-fd_set     fSet;                  /* the socket list for polling       */
-LIST     * dsock_list = NULL;     /* the linked list of active sockets */
-LIST     * dmobile_list = NULL;   /* the mobile list of active mobiles */
+fd_set     fSet;                  /* the socket LLISTfor polling       */
+LLIST    * dsock_list= NULL;     /* the linked LLISTof active sockets */
+LLIST    * dmobile_list= NULL;   /* the mobile LLISTof active mobiles */
 
 /* mccp support */
 const unsigned char compress_will   [] = { IAC, WILL, TELOPT_COMPRESS,  '\0' };
@@ -51,8 +51,8 @@ int main(int argc, char **argv)
   current_time = time(NULL);
 
   /* allocate memory for socket and mobile lists'n'stacks */
-  dsock_list = AllocList();
-  dmobile_list = AllocList();
+  dsock_list= AllocList();
+  dmobile_list= AllocList();
 
   /* note that we are booting up */
   log_string("Program starting.");
@@ -140,7 +140,7 @@ void GameLoop(int control)
         new_socket(newConnection);
     }
 
-    /* poll sockets in the socket list */
+    /* poll sockets in the socket LLIST*/
     AttachIterator(&Iter ,dsock_list);
     while ((dsock = (D_SOCKET *) NextInList(&Iter)) != NULL)
     {
@@ -295,7 +295,7 @@ bool new_socket(int sock)
    */
    CREATE( sock_new, D_SOCKET, 1 );
 
-  /* attach the new connection to the socket list */
+  /* attach the new connection to the socket LLIST*/
   FD_SET(sock, &fSet);
 
   /* clear out the socket */
@@ -304,7 +304,7 @@ bool new_socket(int sock)
   /* set the socket as non-blocking */
   ioctl(sock, FIONBIO, &argp);
 
-  /* update the linked list of sockets */
+  /* update the linked LLISTof sockets */
   AttachToList(sock_new, dsock_list);
 
   /* do a host lookup */
@@ -375,7 +375,7 @@ void close_socket(D_SOCKET *dsock, bool reconnect)
   if (dsock->lookup_status > TSTATE_DONE) return;
   dsock->lookup_status += 2;
 
-  /* remove the socket from the polling list */
+  /* remove the socket from the polling LLIST*/
   FD_CLR(dsock->control, &fSet);
 
   if (dsock->state == STATE_PLAYING)
@@ -898,7 +898,7 @@ void recycle_sockets()
   {
     if (dsock->lookup_status != TSTATE_CLOSED) continue;
 
-    /* remove the socket from the socket list */
+    /* remove the socket from the socket LLIST*/
     DetachFromList(dsock, dsock_list);
 
     /* close the socket */
@@ -907,7 +907,7 @@ void recycle_sockets()
     /* free the memory */
     free(dsock->hostname);
 
-    /* free the list of events */
+    /* free the LLISTof events */
     FreeList(dsock->events);
 
     /* stop compression */

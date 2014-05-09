@@ -3,9 +3,9 @@
 struct game_account
 {
    D_SOCKET *socket;
-   LIST *characters;
-   LIST *command_tables;
-   LIST *commands;
+   LLIST *characters;
+   LLIST *command_tables;
+   LLIST *commands;
 
    int accountID;
    char *name;
