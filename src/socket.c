@@ -401,6 +401,9 @@ void close_socket(D_SOCKET *dsock, bool reconnect)
       text_to_socket(dsock, "This connection has been taken over.\n\r");
   }
 
+   if( dsock->nanny )
+      free_nanny( dsock->nanny );
+
   /* dequeue all events for this socket */
   AttachIterator(&Iter, dsock->events);
   while ((pEvent = (EVENT_DATA *) NextInList(&Iter)) != NULL)
