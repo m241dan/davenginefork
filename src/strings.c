@@ -301,3 +301,30 @@ const char *print_header( const char *title, const char *pattern, int width )
    return buf;
 }
 
+void bprint_commandline( BUFFER *buf, COMMAND *com, int sublevel, int pagewidth )
+{
+   char symbol[3];
+   int subindent, commandspace;
+
+   if( com->can_sub )
+   {
+      if( com->subcommands )
+         snprintf( symbol, 3, "(+)" );
+      else
+         snprintf( symbol, 3, "(-)" );
+   }
+
+   subindent = sublevel * 3;
+   commandspace = pagewidth - 8 - subindent;
+   if( commandspace < 1 )
+   {
+      bprintf( buf, "| COMMAND SPACING PROBLEM\r\n" );
+      return;
+   }
+   bprintf( buf, "| %-*.*s%-3.3s %-*.*s |\r\n",
+                  subindent, subindent, "   ",
+                  com->can_sub ? symbol : "   ",
+                  commandspace, commandspace, com->cmd_name );
+
+   return;
+}

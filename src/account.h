@@ -27,9 +27,13 @@ int load_account( ACCOUNT_DATA *account, const char *name );
 int new_account( ACCOUNT_DATA *account );
 int save_account( ACCOUNT_DATA *account );
 
-/* prompt */
+/* utility */
+ACCOUNT_DATA *check_account_reconnect(const char *act_name);
+int text_to_account( ACCOUNT_DATA *account, const char *fmt, ... );
 int account_prompt( D_SOCKET *dsock );
 
-ACCOUNT_DATA *check_account_reconnect(const char *act_name);
+/* commands */
+void account_quit( void *passed, char *arg );
+void account_settings( void *passed, char *arg );
 
 /* setting */

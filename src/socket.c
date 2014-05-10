@@ -186,6 +186,10 @@ void GameLoop(int control)
             if( handle_nanny_input( dsock, dsock->next_command ) != RET_SUCCESS )
                bug( "handle_nanny_input failed to interpret the input." );
             break;
+          case STATE_ACCOUNT:
+             if( account_handle_cmd( dsock->account, dsock->next_command ) != RET_SUCCESS )
+                bug( "account_handle_cmd failed to interpret the input." );
+             break;
           case STATE_PLAYING:
 /*            handle_cmd_input(dsock, dsock->next_command); */
             break;
@@ -959,6 +963,7 @@ int change_socket_state( D_SOCKET *dsock, int state )
       case STATE_NANNY:
          log_string( "changing socket state to nanny" );
          break;
+      case STATE_ACCOUNT:
       case STATE_PLAYING:
          break;
    }

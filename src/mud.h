@@ -70,6 +70,11 @@ typedef enum
 #define LEVEL_ADMIN            3  /* Any admin without shell access  */
 #define LEVEL_GOD              4  /* Any admin with shell access     */
 
+typedef enum
+{
+   LEVEL_BASIC, MAX_ACCOUNT_LEVEL
+} account_leves;
+
 /* Communication Ranges */
 #define COMM_LOCAL             0  /* same room only                  */
 #define COMM_LOG              10  /* admins only                     */
@@ -80,7 +85,7 @@ typedef enum
 
 typedef enum
 {
-   TYPE_INT, TYPE_CHAR, YPE_SOCKET, MAX_MEMORY_TYPE
+   TYPE_INT, TYPE_CHAR, TYPE_SOCKET, MAX_MEMORY_TYPE
 } memory_types;
 
 typedef enum
@@ -205,6 +210,7 @@ typedef struct  lookup_data   LOOKUP_DATA;
 typedef struct  event_data    EVENT_DATA;
 typedef struct  game_account  ACCOUNT_DATA;
 typedef struct  nanny_data    NANNY_DATA;
+typedef struct  typCmd        COMMAND;
 typedef int     nanny_fun( NANNY_DATA *nanny, char *arg );
 typedef const struct nanny_lib_entry NANNY_LIB_ENTRY;
 /* the actual structures */
@@ -243,9 +249,11 @@ struct lookup_data
 
 struct typCmd
 {
-  char      * cmd_name;
-   void     (* cmd_funct)(void *dMOb, char *arg);
-  sh_int      level;
+   char      * cmd_name;
+   void     (* cmd_funct)(void *passed, char *arg);
+   sh_int      level;
+   LLIST     *subcommands;
+   bool      can_sub;
 };
 
 typedef struct buffer_type
@@ -260,6 +268,7 @@ typedef struct buffer_type
 #include "account.h"
 #include "strings_table.h"
 #include "nanny.h"
+#include "interpret.h"
 
 /******************************
  * End of new structures      *
@@ -366,7 +375,7 @@ void    buffer_clear          ( BUFFER *buffer );
 int     bprintf               ( BUFFER *buffer, char *fmt, ... );
 int     mud_printf            ( char *dest, const char *format, ... );
 const char *print_header( const char *title, const char *pattern, int width );
-
+void bprint_commandline( BUFFER *buf, COMMAND *com, int sublevel, int pagewidth );
 /*
  * help.c
  */
