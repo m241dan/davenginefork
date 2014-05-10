@@ -7,9 +7,9 @@
  *****************/
 
 const struct nanny_lib_entry nanny_lib[] = {
-   { "login", nanny_login_messages, nanny_login_code },
-   { "new account", nanny_new_account_messages, nanny_new_account_code },
-   { NULL, NULL, NULL } /* gandalf */
+   { "login", nanny_login_messages, nanny_login_code, FALSE },
+   { "new account", nanny_new_account_messages, nanny_new_account_code, FALSE },
+   { NULL, NULL, NULL, FALSE } /* gandalf */
 };
 
 /***************
@@ -30,7 +30,7 @@ int nanny_login( NANNY_DATA *nanny, char *arg )
    int ret = RET_SUCCESS;
    ACCOUNT_DATA *a_new;
 
-/*   if( ( a_new = get_account( arg ) ) == NULL ) */
+   if( ( ret = load_account( a_new, arg ) ) == RET_DB_NO_ENTRY ) */
    {
       if( !check_name( arg ) )
       {
@@ -46,6 +46,7 @@ int nanny_login( NANNY_DATA *nanny, char *arg )
       a_new->name = strdup( arg );
       if( set_nanny_lib_from_name( nanny, "new account" ) != RET_SUCCESS )
       {
+         bug( "%s: 'new account' nanny lib missing.", __FUNCTION__ );
          text_to_nanny( nanny, "Something is really messed up." );
          close_socket( nanny->socket, FALSE );
          return RET_FAILED_OTHER;
@@ -53,7 +54,18 @@ int nanny_login( NANNY_DATA *nanny, char *arg )
       change_nanny_state( nanny, 0, TRUE );
 
    }
-
+   else if( ret = RET_SUCCESS )
+   {
+      nanny->socket->account = a_new;
+      a_new->socket = nanny->socket;
+      change_socket_state( nanny->socket, STATE_ACCOUNT );
+   }
+   else if( ret = RET_FAILED_OTHER )
+   {
+      text_to_nanny( nanny, "There's been a major error." );
+      close_socket( nanny->socket, FALSE );
+      return ret;
+   }
    return ret;
 }
 
@@ -150,6 +162,11 @@ int handle_nanny_input( D_SOCKET *dsock, char *arg )
 
    if( !strcmp( arg, "/back" ) )
    {
+      if( !nanny->info->back_allowed )
+      {
+         text_to_socket( dsock, "Going back is not allowed.\r\n" );
+         return ret;
+      }
       nanny_state_prev( nanny, TRUE );
       return ret;
    }

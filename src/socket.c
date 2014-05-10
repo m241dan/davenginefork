@@ -26,7 +26,7 @@
 fd_set     fSet;                  /* the socket LLISTfor polling       */
 LLIST    * dsock_list= NULL;     /* the linked LLISTof active sockets */
 LLIST    * dmobile_list= NULL;   /* the mobile LLISTof active mobiles */
-
+MYSQL    * sql_handle = NULL;
 /* mccp support */
 const unsigned char compress_will   [] = { IAC, WILL, TELOPT_COMPRESS,  '\0' };
 const unsigned char compress_will2  [] = { IAC, WILL, TELOPT_COMPRESS2, '\0' };
@@ -56,7 +56,22 @@ int main(int argc, char **argv)
 
   /* note that we are booting up */
   log_string("Program starting.");
+
    log_string( "Connectign to Database" );
+
+   if( ( sql_handle = mysql_init(NULL) ) == NULL )
+   {
+      bug( "Could not initialize mysql connection: %s", mysql_error( sql_handle ) );
+      exit(1);
+   }
+
+   if( mysql_real_connect( sql_handle, DB_ADDR, DB_LOGIN, DB_PASSWORD, NULL, 0, NULL, 0 ) == NULL )
+   {
+      bug( "Could not connectto database: %s", mysql_error( sql_handle ) );
+      mysql_close( sql_handle );
+      exit(1);
+   }
+
   /* initialize the event queue - part 1 */
   init_event_queue(1);
 
@@ -824,10 +839,12 @@ bool flush_output(D_SOCKET *dsock)
      switch( dsock->state )
      {
         default:
-        text_to_buffer(dsock, "\n\rSocketMud:> ");
+        text_to_buffer(dsock, "\r\nPrompt Error...\r\n");
         break;
         case STATE_ACCOUNT:
            account_prompt( dsock );
+           break;
+        case STATE_NANNY:
            break;
      }
     dsock->bust_prompt = FALSE;

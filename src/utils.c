@@ -57,3 +57,14 @@ char *get_time()
 
   return buf;
 }
+
+bool check_sql( void )
+{
+   if( sql_handle == NULL )
+   {
+      bug( "%s has found that the SQL handle is NULL.", __FUNCTION__ );
+      return FALSE;
+    }
+
+   return TRUE;
+}

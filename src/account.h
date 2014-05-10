@@ -23,10 +23,7 @@ int clear_account( ACCOUNT_DATA *account );
 int free_account( ACCOUNT_DATA *account );
 
 /* i/o */
-int load_account_file( const char *path, ACCOUNT_DATA *account );
-int save_account( ACCOUNT_DATA *account );
-int fwrite_account_base( ACCOUNT_DATA *account, FILE *fp );
-int fread_account_base( ACCOUNT_DATA *account, FILE *fp );
+int load_account( ACCOUNT_DATA *account, const char *name );
 
 /* prompt */
 int account_prompt( D_SOCKET *dsock );

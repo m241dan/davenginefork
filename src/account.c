@@ -50,6 +50,24 @@ int free_account( ACCOUNT_DATA *account )
    return ret;
 }
 
+/* i/o */
+int load_account( ACCOUNT_DATA *account, const char *name )
+{
+   int ret = RET_SUCCESS;
+   char query[MAX_BUFFER];
+
+   if( !check_sql() )
+      return NULL;
+
+   mud_printf( query, "SELECT * FROM accounts WHERE name=%s;", name );
+
+   if( mysql_query( sql_handle, query ) )
+   {
+      report_sql_error( sql_handle );
+      return RET_DB_NO_ENTRY;
+   }
+}
+
 int account_prompt( D_SOCKET *dsock )
 {
    BUFFER *buf = buffer_new(MAX_BUFFER);

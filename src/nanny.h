@@ -13,6 +13,7 @@ struct nanny_lib_entry
    const char *name;
    const char *const *nanny_messages;
    nanny_fun *const *nanny_code;
+   bool back_allowed;
 };
 
 /* LIBRARY */

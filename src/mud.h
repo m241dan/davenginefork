@@ -45,6 +45,10 @@
 #define FILE_TERMINATOR    "EOF"                  /* end of file marker                 */
 #define COPYOVER_FILE      "../txt/copyover.dat"  /* tempfile to store copyover data    */
 #define EXE_FILE           "../src/SocketMud"     /* the name of the mud binary         */
+#define DB_ADDR            "localhost"
+#define DB_LOGIN           "m241dan"
+#define DB_PASSWORD        "Grc937!"
+
 
 /* Connection states */
 typedef enum
@@ -81,6 +85,7 @@ typedef enum
 {
    RET_SUCCESS, RET_FAILED_BAD_PATH, RET_FAILED_BAD_FORMAT, RET_FAILED_NULL_POINTER,
    RET_FAILED_NO_LIB_ENTRY,
+   RET_DB_NO_ENTRY,
    RET_FAILED_OTHER, MAX_RET_CODES
 } ret_codes;
 
@@ -96,6 +101,10 @@ typedef enum
 typedef  unsigned char     bool;
 typedef  short int         sh_int;
 typedef  unsigned long int VALUE;
+
+
+extern const unsigned char do_echo       [];
+extern const unsigned char dont_echo       [];
 
 /******************************
  * End of standard definitons *
@@ -366,6 +375,7 @@ bool  check_name              ( const char *name );
 void  load_muddata            ( bool fCopyOver );
 char *get_time                ( void );
 void communicate( void );
+bool check_sql( void );
 /*
  * mccp.c
  */
