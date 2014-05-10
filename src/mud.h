@@ -17,6 +17,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <ctype.h>
+#include <mysql.h>
 
 #include "llist.h"
 #include "stack.h"
@@ -45,6 +46,7 @@
 #define FILE_TERMINATOR    "EOF"                  /* end of file marker                 */
 #define COPYOVER_FILE      "../txt/copyover.dat"  /* tempfile to store copyover data    */
 #define EXE_FILE           "../src/SocketMud"     /* the name of the mud binary         */
+#define DB_NAME            "muddb"
 #define DB_ADDR            "localhost"
 #define DB_LOGIN           "m241dan"
 #define DB_PASSWORD        "Grc937!"
@@ -85,7 +87,7 @@ typedef enum
 {
    RET_SUCCESS, RET_FAILED_BAD_PATH, RET_FAILED_BAD_FORMAT, RET_FAILED_NULL_POINTER,
    RET_FAILED_NO_LIB_ENTRY,
-   RET_DB_NO_ENTRY,
+   RET_NO_SQL, RET_DB_NO_ENTRY,
    RET_FAILED_OTHER, MAX_RET_CODES
 } ret_codes;
 
@@ -268,8 +270,9 @@ typedef struct buffer_type
  ***************************/
 
 extern  STACK       *   dsock_free;       /* the socket free LLIST               */
-extern  LLIST        *   dsock_LLIST;       /* the linked LLIST of active sockets  */
-extern  LLIST        *   help_LLIST;        /* the linked LLIST of help files      */
+extern  LLIST        *   dsock_list;       /* the linked LLIST of active sockets  */
+extern  LLIST        *   help_list;        /* the linked LLIST of help files      */
+extern  MYSQL        *   sql_handle;       /* global connection to sql database */
 extern  const struct    typCmd tabCmd[];  /* the command table                  */
 extern  bool            shut_down;        /* used for shutdown                  */
 extern  char        *   greeting;         /* the welcome greeting               */
@@ -376,6 +379,7 @@ void  load_muddata            ( bool fCopyOver );
 char *get_time                ( void );
 void communicate( void );
 bool check_sql( void );
+void report_sql_error( MYSQL *con );
 /*
  * mccp.c
  */

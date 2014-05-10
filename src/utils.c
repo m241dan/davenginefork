@@ -68,3 +68,9 @@ bool check_sql( void )
 
    return TRUE;
 }
+
+void report_sql_error( MYSQL *con )
+{
+   bug( "%s: %s", __FUNCTION__, mysql_error( con ) );
+   return;
+}

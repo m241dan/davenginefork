@@ -28,9 +28,9 @@ nanny_fun *const nanny_login_code[] = {
 int nanny_login( NANNY_DATA *nanny, char *arg )
 {
    int ret = RET_SUCCESS;
-   ACCOUNT_DATA *a_new;
+   ACCOUNT_DATA *a_new = init_account();
 
-   if( ( ret = load_account( a_new, arg ) ) == RET_DB_NO_ENTRY ) */
+   if( ( ret = load_account( a_new, arg ) ) == RET_DB_NO_ENTRY )
    {
       if( !check_name( arg ) )
       {
@@ -54,13 +54,13 @@ int nanny_login( NANNY_DATA *nanny, char *arg )
       change_nanny_state( nanny, 0, TRUE );
 
    }
-   else if( ret = RET_SUCCESS )
+   else if( ret == RET_SUCCESS )
    {
       nanny->socket->account = a_new;
       a_new->socket = nanny->socket;
-      change_socket_state( nanny->socket, STATE_ACCOUNT );
+      nanny_state_next( nanny, TRUE );
    }
-   else if( ret = RET_FAILED_OTHER )
+   else if( ret == RET_FAILED_OTHER )
    {
       text_to_nanny( nanny, "There's been a major error." );
       close_socket( nanny->socket, FALSE );

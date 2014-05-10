@@ -53,19 +53,51 @@ int free_account( ACCOUNT_DATA *account )
 /* i/o */
 int load_account( ACCOUNT_DATA *account, const char *name )
 {
-   int ret = RET_SUCCESS;
+   MYSQL_RES *result;
+   MYSQL_ROW row;
+   int num_row;
    char query[MAX_BUFFER];
 
    if( !check_sql() )
-      return NULL;
+      return RET_NO_SQL;
 
-   mud_printf( query, "SELECT * FROM accounts WHERE name=%s;", name );
+   mud_printf( query, "SELECT * FROM accounts WHERE name='%s';", name );
 
    if( mysql_query( sql_handle, query ) )
    {
       report_sql_error( sql_handle );
+      return RET_NO_SQL;
+   }
+
+   if( ( result = mysql_store_result( sql_handle ) ) == NULL )
+   {
+      report_sql_error( sql_handle );
+      return RET_NO_SQL;
+   }
+
+   num_row = mysql_num_rows( result );
+   if( num_row > 1 )
+   {
+      bug( "%s: Query for account %s turned up more than one entry...", __FUNCTION__, name );
+      mysql_free_result( result );
+      return RET_FAILED_OTHER;
+   }
+   else if( num_row == 0 )
+   {
+      mysql_free_result( result );
       return RET_DB_NO_ENTRY;
    }
+
+   row = mysql_fetch_row( result );
+   account->accountID = atoi( row[0] );
+   account->name = strdup( row[1] );
+   account->password = strdup( row[2] );
+   account->level = atoi( row[3] );
+   account->pagewidth = atoi( row[4] );
+
+
+   mysql_free_result( result );
+   return RET_SUCCESS;
 }
 
 int account_prompt( D_SOCKET *dsock )
