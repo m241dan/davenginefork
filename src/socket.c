@@ -26,6 +26,7 @@
 fd_set     fSet;                  /* the socket LLISTfor polling       */
 LLIST    * dsock_list= NULL;     /* the linked LLISTof active sockets */
 LLIST    * dmobile_list= NULL;   /* the mobile LLISTof active mobiles */
+LLIST    * account_list = NULL;
 MYSQL    * sql_handle = NULL;
 /* mccp support */
 const unsigned char compress_will   [] = { IAC, WILL, TELOPT_COMPRESS,  '\0' };
@@ -50,9 +51,10 @@ int main(int argc, char **argv)
   /* get the current time */
   current_time = time(NULL);
 
-  /* allocate memory for socket and mobile lists'n'stacks */
-  dsock_list= AllocList();
-  dmobile_list= AllocList();
+   /* allocate memory for socket and mobile lists'n'stacks */
+   dsock_list= AllocList();
+   dmobile_list= AllocList();
+   account_list = AllocList();
 
   /* note that we are booting up */
   log_string("Program starting.");

@@ -14,6 +14,7 @@ ACCOUNT_DATA *init_account( void )
       free_account( account );
       return NULL;
    }
+   account->characters = AllocList();
    account->command_tables = AllocList();
    account->commands = AllocList();
    return account;
@@ -23,8 +24,8 @@ int clear_account( ACCOUNT_DATA *account )
 {
    int ret = RET_SUCCESS;
 
-   account->name = "new_account";
-   account->password = "new_password";
+   account->name = strdup( "new_account" );
+   account->password = strdup( "new_password" );
    account->level = 1;
    account->pagewidth = DEFAULT_PAGEWIDTH;
 
@@ -100,6 +101,41 @@ int load_account( ACCOUNT_DATA *account, const char *name )
    return RET_SUCCESS;
 }
 
+int new_account( ACCOUNT_DATA *account )
+{
+   char query[MAX_BUFFER];
+   int ret = RET_SUCCESS;
+
+   if( !account )
+   {
+      BAD_POINTER( "account" );
+      return ret;
+   }
+
+   mud_printf( query, "INSERT INTO accounts VALUES( %d, '%s', '%s', %d, %d );",
+              account->accountID, account->name, account->password, account->level,
+              account->pagewidth );
+
+   if( mysql_query( sql_handle, query ) )
+   {
+      report_sql_error( sql_handle );
+      return RET_FAILED_OTHER;
+   }
+
+   return ret;
+}
+
+int save_account( ACCOUNT_DATA *account )
+{
+   int ret = RET_SUCCESS;
+
+   if( !account )
+   {
+      BAD_POINTER( "account" );
+      return ret;
+   }
+   return ret;
+}
 int account_prompt( D_SOCKET *dsock )
 {
    BUFFER *buf = buffer_new(MAX_BUFFER);
@@ -113,4 +149,25 @@ int account_prompt( D_SOCKET *dsock )
    text_to_buffer( dsock, buf->data );
    buffer_free( buf );
    return RET_SUCCESS; 
+}
+
+ACCOUNT_DATA *check_account_reconnect(const char *act_name)
+{
+  ACCOUNT_DATA *account;
+  ITERATOR Iter;
+
+  AttachIterator(&Iter, account_list);
+  while ((account = (ACCOUNT_DATA *) NextInList(&Iter)) != NULL)
+  {
+    if (!strcasecmp(account->name, act_name))
+    {
+      if (account->socket)
+        close_socket(account->socket, TRUE);
+
+      break;
+    }
+  }
+  DetachIterator(&Iter);
+
+  return account;
 }

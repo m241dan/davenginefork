@@ -271,6 +271,7 @@ typedef struct buffer_type
 
 extern  STACK       *   dsock_free;       /* the socket free LLIST               */
 extern  LLIST        *   dsock_list;       /* the linked LLIST of active sockets  */
+extern  LLIST        *   account_list;     /* the linked List of active accounts */
 extern  LLIST        *   help_list;        /* the linked LLIST of help files      */
 extern  MYSQL        *   sql_handle;       /* global connection to sql database */
 extern  const struct    typCmd tabCmd[];  /* the command table                  */

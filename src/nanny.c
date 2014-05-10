@@ -38,12 +38,9 @@ int nanny_login( NANNY_DATA *nanny, char *arg )
          return ret;
       }
 
-      if( ( a_new = init_account() ) == NULL )
-      {
-         bug( "%s: could not allocate new account." );
-         return ret;
-      }
+      free( a_new->name );
       a_new->name = strdup( arg );
+
       if( set_nanny_lib_from_name( nanny, "new account" ) != RET_SUCCESS )
       {
          bug( "%s: 'new account' nanny lib missing.", __FUNCTION__ );
@@ -52,26 +49,57 @@ int nanny_login( NANNY_DATA *nanny, char *arg )
          return RET_FAILED_OTHER;
       }
       change_nanny_state( nanny, 0, TRUE );
-
    }
    else if( ret == RET_SUCCESS )
-   {
-      nanny->socket->account = a_new;
-      a_new->socket = nanny->socket;
       nanny_state_next( nanny, TRUE );
-   }
    else if( ret == RET_FAILED_OTHER )
    {
       text_to_nanny( nanny, "There's been a major error." );
       close_socket( nanny->socket, FALSE );
       return ret;
    }
+
+   nanny->socket->account = a_new;
+   a_new->socket = nanny->socket;
+   text_to_nanny( nanny, (char *) dont_echo );
    return ret;
 }
 
 int nanny_password( NANNY_DATA *nanny, char *arg )
 {
    int ret = RET_SUCCESS;
+   ACCOUNT_DATA *account;
+
+   if( !strcmp( crypt( arg, nanny->socket->account->name ), nanny->socket->account->password )  )
+   {
+      text_to_nanny( nanny, (char *) do_echo );
+
+      if( ( account = check_account_reconnect( nanny->socket->account->name ) ) != NULL )
+      {
+         free_account( nanny->socket->account );
+         nanny->socket->account = account;
+         account->socket = nanny->socket;
+         log_string( "%s has reconnected.", account->name );
+         text_to_nanny( nanny, "You take over your account already in use.\r\n" );
+      }
+      else
+      {
+         log_string( "Account: %s has logged in.", nanny->socket->account->name );
+         AttachToList( nanny->socket->account, account_list );
+      }
+
+      change_socket_state( nanny->socket, STATE_ACCOUNT );
+      strip_event_socket( nanny->socket, EVENT_SOCKET_IDLE );
+      nanny->socket->nanny = NULL;
+      free_nanny( nanny );
+    }
+    else
+    {
+       text_to_socket( nanny->socket, "Bad password!\r\n" );
+       free_account( nanny->socket->account );
+       nanny->socket->account = NULL;
+       close_socket( nanny->socket, FALSE );
+    }
    return ret;
 }
 
@@ -91,12 +119,51 @@ nanny_fun *nanny_new_account_code[] = {
 int nanny_new_password( NANNY_DATA *nanny, char *arg )
 {
    int ret = RET_SUCCESS;
+   int i;
+
+   if( strlen( arg ) < 5 || strlen( arg ) > 20 )
+   {
+      text_to_nanny( nanny, "Passwords should be between 5 and 20 characters please!\n\rPlease enter a new password: " );
+      return ret;
+   }
+
+   free( nanny->socket->account->password );
+   nanny->socket->account->password = strdup( crypt( arg, nanny->socket->account->name ) );
+
+   for( i = 0; nanny->socket->account->password[i] != '\0'; i++ )
+   {
+      if( nanny->socket->account->password[i] == '~' )
+      {
+         text_to_nanny( nanny, "Illegal password!\n\rPlease enter a new password: " );
+         return ret;
+      }
+   }
+   nanny_state_next( nanny, TRUE );
    return ret;
 }
 
 int nanny_confirm_new_password( NANNY_DATA *nanny, char *arg )
 {
    int ret = RET_SUCCESS;
+
+   if( !strcmp( crypt( arg, nanny->socket->account->name ), nanny->socket->account->password ) )
+   {
+      text_to_nanny( nanny, (char *) do_echo );
+      AttachToList( nanny->socket->account, account_list );
+      log_string( "A new account: %s has entered the game.", nanny->socket->account->name );
+
+      new_account( nanny->socket->account );
+      change_socket_state( nanny->socket, STATE_ACCOUNT );
+      strip_event_socket( nanny->socket, EVENT_SOCKET_IDLE );
+      nanny->socket->nanny = NULL;
+      free_nanny( nanny );
+   }
+   else
+   {
+      text_to_nanny( nanny, "Password mismatch!\n\r" );
+      nanny_state_prev( nanny, TRUE );
+   }
+
    return ret;
 }
 /***********************
@@ -131,7 +198,7 @@ int free_nanny( NANNY_DATA *nanny )
    int ret = RET_SUCCESS;
 
    clear_nanny( nanny );
-   free_nanny( nanny );
+   free( nanny );
 
    return ret;
 }
