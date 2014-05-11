@@ -138,24 +138,11 @@ int save_account( ACCOUNT_DATA *account )
 }
 int account_prompt( D_SOCKET *dsock )
 {
-   COMMAND *com;
-   ITERATOR Iter;
-   ITERATOR IterTwo;
    BUFFER *buf = buffer_new(MAX_BUFFER);
    int width = dsock->account->pagewidth;
 
    bprintf( buf, "/%s\\\r\n", print_header( "Account Menu", "-", width - 2 ) );
-
-   AttachIterator( &Iter, dsock->account->commands );
-   while( ( com = (COMMAND *)NextInList( &Iter ) ) != NULL )
-   {
-      bprint_commandline( buf, com, 0, dsock->account->pagewidth );
-      if( !com->subcommands )
-         continue;
-      AttachIterator( &IterTwo, com->subcommands );
-      while( ( com = (COMMAND *)NextInList( &IterTwo ) ) != NULL ) 
-         bprint_commandline( buf, com, 1, dsock->account->pagewidth );
-   }
+   print_commands( dsock->account->commands, buf, 0, dsock->account->pagewidth );
    bprintf( buf, "\\%s/\r\n", print_header( "End Menu", "-", width -2 ) );
    bprintf( buf, "What is your choice?: " );
 
@@ -212,6 +199,11 @@ void account_quit( void *passed, char *arg )
 }
 
 void account_settings( void *passed, char *arg )
+{
+
+}
+
+void set_pagewidth( void *passed, char *arg )
 {
 
 }

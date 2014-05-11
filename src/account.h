@@ -37,3 +37,4 @@ void account_quit( void *passed, char *arg );
 void account_settings( void *passed, char *arg );
 
 /* setting */
+void set_pagewidth( void *passed, char *arg );

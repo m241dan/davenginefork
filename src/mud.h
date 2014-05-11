@@ -252,7 +252,7 @@ struct typCmd
    char      * cmd_name;
    void     (* cmd_funct)(void *passed, char *arg);
    sh_int      level;
-   LLIST     *subcommands;
+   LLIST     *sub_commands;
    bool      can_sub;
 };
 
@@ -376,6 +376,8 @@ int     bprintf               ( BUFFER *buffer, char *fmt, ... );
 int     mud_printf            ( char *dest, const char *format, ... );
 const char *print_header( const char *title, const char *pattern, int width );
 void bprint_commandline( BUFFER *buf, COMMAND *com, int sublevel, int pagewidth );
+void print_commands( LLIST *commands, BUFFER *buf, int sublevel, int pagewidth );
+
 /*
  * help.c
  */

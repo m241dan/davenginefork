@@ -308,7 +308,7 @@ void bprint_commandline( BUFFER *buf, COMMAND *com, int sublevel, int pagewidth 
 
    if( com->can_sub )
    {
-      if( com->subcommands )
+      if( !com->sub_commands )
          snprintf( symbol, 3, "(+)" );
       else
          snprintf( symbol, 3, "(-)" );
@@ -326,5 +326,21 @@ void bprint_commandline( BUFFER *buf, COMMAND *com, int sublevel, int pagewidth 
                   com->can_sub ? symbol : "   ",
                   commandspace, commandspace, com->cmd_name );
 
+   return;
+}
+
+void print_commands( LLIST *commands, BUFFER *buf, int sublevel, int pagewidth )
+{
+   ITERATOR Iter;
+   COMMAND *com;
+
+   AttachIterator( &Iter, commands );
+   while( ( com = (COMMAND *)NextInList( &Iter ) ) != NULL )
+   {
+      bprint_commandline( buf, com, sublevel, pagewidth );
+      if( com->can_sub && com->sub_commands )
+         print_commands( com->sub_commands, buf, ( sublevel + 1 ), pagewidth );
+   }
+   DetachIterator( &Iter );
    return;
 }
