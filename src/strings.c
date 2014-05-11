@@ -309,9 +309,9 @@ void bprint_commandline( BUFFER *buf, COMMAND *com, int sublevel, int pagewidth 
    if( com->can_sub )
    {
       if( !com->sub_commands )
-         snprintf( symbol, 3, "(+)" );
+         snprintf( symbol, 4, "(+)" );
       else
-         snprintf( symbol, 3, "(-)" );
+         snprintf( symbol, 4, "(-)" );
    }
 
    subindent = sublevel * 3;

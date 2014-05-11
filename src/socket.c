@@ -964,6 +964,8 @@ int change_socket_state( D_SOCKET *dsock, int state )
          log_string( "changing socket state to nanny" );
          break;
       case STATE_ACCOUNT:
+         load_account_commands( dsock->account );
+         break;
       case STATE_PLAYING:
          break;
    }

@@ -8,8 +8,8 @@
 #include "mud.h"
 
 struct typCmd account_commands[] = {
-   { "settings", account_settings, LEVEL_BASIC, NULL, TRUE },
    { "quit", account_quit, LEVEL_BASIC, NULL, FALSE },
+   { "settings", account_settings, LEVEL_BASIC, NULL, TRUE },
    { "", NULL, 0 } /* gandalf */
 };
 
@@ -75,6 +75,15 @@ int load_account_commands( ACCOUNT_DATA *account )
          AttachToList( com, account->commands );
       }
    }
+   {
+      ITERATOR Iter;
+      COMMAND *command;
+      AttachIterator( &Iter, account->commands );
+      while( ( command = (COMMAND *)NextInList( &Iter ) ) != NULL )
+         puts( command->cmd_name );
+      DetachIterator( &Iter );
+   }
+
    return ret;
 }
 
