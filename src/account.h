@@ -7,6 +7,9 @@ struct game_account
    LLIST *command_tables;
    LLIST *commands;
 
+   COMMAND *executing_command;
+   char *last_command;
+
    int accountID;
    char *name;
    char *password;

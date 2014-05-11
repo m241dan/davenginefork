@@ -84,7 +84,7 @@ void dequeue_event(EVENT_DATA *event)
   }
 
   /* free argument */
-  free(event->argument);
+  FREE(event->argument);
 
   /* attach to free stack */
   PushStack(event, event_free);

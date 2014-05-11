@@ -38,7 +38,7 @@ int nanny_login( NANNY_DATA *nanny, char *arg )
          return ret;
       }
 
-      free( a_new->name );
+      FREE( a_new->name );
       a_new->name = strdup( arg );
 
       if( set_nanny_lib_from_name( nanny, "new account" ) != RET_SUCCESS )
@@ -127,7 +127,7 @@ int nanny_new_password( NANNY_DATA *nanny, char *arg )
       return ret;
    }
 
-   free( nanny->socket->account->password );
+   FREE( nanny->socket->account->password );
    nanny->socket->account->password = strdup( crypt( arg, nanny->socket->account->name ) );
 
    for( i = 0; nanny->socket->account->password[i] != '\0'; i++ )
@@ -202,7 +202,7 @@ int free_nanny( NANNY_DATA *nanny )
    int ret = RET_SUCCESS;
 
    clear_nanny( nanny );
-   free( nanny );
+   FREE( nanny );
 
    return ret;
 }

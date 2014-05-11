@@ -254,6 +254,7 @@ struct typCmd
    sh_int      level;
    LLIST     *sub_commands;
    bool      can_sub;
+   COMMAND   *from_table;
 };
 
 typedef struct buffer_type

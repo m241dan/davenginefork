@@ -899,7 +899,7 @@ void *lookup_address(void *arg)
   /* did we get anything ? */
   if (from && from->h_name)
   {
-    free(lData->dsock->hostname);
+    FREE(lData->dsock->hostname);
     lData->dsock->hostname = strdup(from->h_name);
   }
 
@@ -907,8 +907,8 @@ void *lookup_address(void *arg)
   lData->dsock->lookup_status++;
 
   /* free the lookup data */
-  free(lData->buf);
-  free(lData);
+  FREE(lData->buf);
+  FREE(lData);
 
   /* and kill the thread */
   pthread_exit(0);
@@ -931,7 +931,7 @@ void recycle_sockets()
     close(dsock->control);
 
     /* free the memory */
-    free(dsock->hostname);
+    FREE(dsock->hostname);
 
     /* free the LLISTof events */
     FreeList(dsock->events);
@@ -939,7 +939,7 @@ void recycle_sockets()
     /* stop compression */
     compressEnd(dsock, dsock->compressing, TRUE);
 
-    free(dsock);
+    FREE(dsock);
   }
   DetachIterator(&Iter);
 }
@@ -961,10 +961,11 @@ int change_socket_state( D_SOCKET *dsock, int state )
          bug( "%s: BAD STATE %d.", __FUNCTION__, state );
          return RET_FAILED_OTHER;
       case STATE_NANNY:
-         log_string( "changing socket state to nanny" );
          break;
       case STATE_ACCOUNT:
-         load_account_commands( dsock->account );
+         if( SizeOfList( dsock->account->commands ) > 0 )
+            free_command_list( dsock->account->commands );
+         load_commands( dsock->account->commands, account_commands, dsock->account->level );
          break;
       case STATE_PLAYING:
          break;

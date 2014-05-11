@@ -28,6 +28,8 @@ int clear_account( ACCOUNT_DATA *account )
    account->password = strdup( "new_password" );
    account->level = 1;
    account->pagewidth = DEFAULT_PAGEWIDTH;
+   account->last_command = strdup( "none" );
+   account->executing_command = NULL;
 
    return ret;
 }
@@ -45,8 +47,10 @@ int free_account( ACCOUNT_DATA *account )
    FreeList( account->commands );
    account->commands = NULL;
    FREE( account->name );
+   FREE( account->password );
    FREE( account->command_tables );
    FREE( account->commands );
+   FREE( account->last_command );
 
    return ret;
 }
@@ -200,7 +204,25 @@ void account_quit( void *passed, char *arg )
 
 void account_settings( void *passed, char *arg )
 {
+   ACCOUNT_DATA *account = (ACCOUNT_DATA *)passed;
+   COMMAND *settings_command;
 
+   if( ( settings_command = account->executing_command ) == NULL )
+      return;
+
+   if( settings_command->sub_commands )
+   {
+      free_command_list( settings_command->sub_commands );
+      FreeList( settings_command->sub_commands );
+      settings_command->sub_commands = NULL;
+   }
+   else
+   {
+      settings_command->sub_commands = AllocList();
+      load_commands( settings_command->sub_commands, settings_sub_commands, account->level );
+   }
+   text_to_account( account, "Settings Opened.\r\n" );
+   return;
 }
 
 void set_pagewidth( void *passed, char *arg )

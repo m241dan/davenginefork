@@ -133,7 +133,7 @@ void __buffer_strcat(BUFFER *buffer, const char *text)
   
     /* Copy the current buffer to the new buffer */
     memcpy(new_data, buffer->data, buffer->len);
-    free(buffer->data);
+    FREE(buffer->data);
     buffer->data = new_data;  
     buffer->size = new_size;
   }
@@ -146,10 +146,10 @@ void __buffer_strcat(BUFFER *buffer, const char *text)
 void buffer_free(BUFFER *buffer)
 {
   /* Free data */
-  free(buffer->data);
+  FREE(buffer->data);
  
   /* Free buffer */
-  free(buffer);
+  FREE(buffer);
 }
 
 /* Clear a buffer's contents, but do not deallocate anything */
@@ -303,7 +303,7 @@ const char *print_header( const char *title, const char *pattern, int width )
 
 void bprint_commandline( BUFFER *buf, COMMAND *com, int sublevel, int pagewidth )
 {
-   char symbol[3];
+   char symbol[4];
    int subindent, commandspace;
 
    if( com->can_sub )
@@ -313,6 +313,10 @@ void bprint_commandline( BUFFER *buf, COMMAND *com, int sublevel, int pagewidth 
       else
          snprintf( symbol, 4, "(-)" );
    }
+   else if( sublevel > 0 )
+      snprintf( symbol, 4, "  -" );
+   else
+      snprintf( symbol, 4, "   " );
 
    subindent = sublevel * 3;
    commandspace = pagewidth - 8 - subindent;
@@ -323,7 +327,7 @@ void bprint_commandline( BUFFER *buf, COMMAND *com, int sublevel, int pagewidth 
    }
    bprintf( buf, "| %-*.*s%-3.3s %-*.*s |\r\n",
                   subindent, subindent, "   ",
-                  com->can_sub ? symbol : "   ",
+                  symbol,
                   commandspace, commandspace, com->cmd_name );
 
    return;
