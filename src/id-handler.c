@@ -2,7 +2,7 @@
 
 #include "mud.h"
 
-ID_HANDLER handlers[MAX_ID_HANDLER];
+ID_HANDLER *handlers[MAX_ID_HANDLER];
 
 ID_HANDLER *init_handler( void )
 {
@@ -94,5 +94,51 @@ int free_tag( ID_TAG *tag )
    FREE( tag->modified_by );
    FREE( tag->modified_on);
    FREE( tag );
+   return ret;
+}
+
+int load_id_handlers( void )
+{
+   MYSQL_RES *result;
+   MYSQL_ROW row;
+   ID_HANDLER *handler;
+   char query[MAX_BUFFER];
+   int ret = RET_SUCCESS;
+
+   mud_printf( query, "SELECT * FROM `id-handlers`;" );
+
+   if( mysql_query( sql_handle, query) )
+   {
+      report_sql_error( sql_handle );
+      return RET_FAILED_OTHER;
+   }
+
+   if( ( result = mysql_store_result( sql_handle ) ) == NULL )
+   {
+      report_sql_error( sql_handle );
+      return RET_DB_NO_ENTRY;
+   }
+
+   while( ( row = mysql_fetch_row( result ) ) != NULL )
+   {
+      if( ( handler = init_handler() ) == NULL )
+      {
+         BAD_POINTER( "handler" );
+         return ret;
+      }
+
+      handler->type = atoi( row[0] );
+      handler->name = strdup( row[1] );
+      handler->top_id = atoi( row[2] );
+      handler->recycled_ids = strdup( row[3] );
+      handler->can_recycle = (bool)atoi( row[4] );
+      if( handlers[handler->type] != NULL )
+      {
+         bug( "%s: two handlers have identitical IDs", __FUNCTION__ );
+         free_handler( handler );
+         return RET_FAILED_OTHER;
+      }
+      handlers[handler->type] = handler;
+   }
    return ret;
 }
