@@ -31,3 +31,4 @@ int free_tag( ID_TAG *tag );
 int recycle_tag( ID_TAG *tag );
 
 int load_id_handlers( void );
+int get_new_id( int type );

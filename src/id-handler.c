@@ -142,3 +142,17 @@ int load_id_handlers( void )
    }
    return ret;
 }
+
+int get_new_id( int type )
+{
+   ID_HANDLER *handler;
+
+   if( ( handler = handlers[type] ) == NULL )
+   {
+      bug( "%s: %d is a bad handler type.", __FUNCTION__, type );
+      return -1;
+   }
+
+
+
+}
