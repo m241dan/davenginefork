@@ -73,7 +73,12 @@ typedef enum
 typedef enum
 {
    LEVEL_BASIC, MAX_ACCOUNT_LEVEL
-} account_leves;
+} account_levels;
+
+typedef enum
+{
+   ACCOUNT_IDS, MAX_ID_HANDLER
+} id_handler_types;
 
 /* Communication Ranges */
 #define COMM_LOCAL             0  /* same room only                  */
@@ -213,6 +218,8 @@ typedef struct  nanny_data    NANNY_DATA;
 typedef struct  typCmd        COMMAND;
 typedef int     nanny_fun( NANNY_DATA *nanny, char *arg );
 typedef const struct nanny_lib_entry NANNY_LIB_ENTRY;
+typedef struct  id_handler    ID_HANDLER;
+typedef struct  id_tag        ID_TAG;
 /* the actual structures */
 struct dSocket
 {
@@ -270,7 +277,7 @@ typedef struct buffer_type
 #include "strings_table.h"
 #include "nanny.h"
 #include "interpret.h"
-
+#include "id-handler.h"
 /******************************
  * End of new structures      *
  ******************************/
