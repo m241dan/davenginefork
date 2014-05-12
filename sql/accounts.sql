@@ -3,8 +3,13 @@ SET FOREIGN_KEY_CHECKS=0;
 DROP TABLE IF EXISTS `accounts`;
 CREATE TABLE IF NOT EXISTS `accounts` (
    `accountID` int NOT NULL DEFAULT '-1',
+   `typeID` smallint NOT NULL DEFAULT '-1',
+   `created_by` varchar(25) NOT NULL DEFAULT 'system',
+   `created_on` varchar(30) NOT NULL DEFAULT '',
+   `modified_by` varchar(25) NOT NULL DEFAULT 'system',
+   `modified_on` varchar(30) NOT NULL DEFAULT '',
    `name` varchar(25) NOT NULL DEFAULT '',
-   `password` varchar(255) NOT NULL DEFAULT '',
+   `password` varchar(30) NOT NULL DEFAULT '',
    `level` smallint NOT NULL DEFAULT '0',
    `pagewidth` smallint NOT NULL DEFAULT '80',
    PRIMARY KEY (`accountID`),

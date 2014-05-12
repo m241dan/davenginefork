@@ -10,7 +10,7 @@ struct game_account
    COMMAND *executing_command;
    char *last_command;
 
-   int accountID;
+   ID_TAG *idtag;
    char *name;
    char *password;
    sh_int level;

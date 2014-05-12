@@ -2,7 +2,7 @@
 
 const char *const data_types[MAX_MEMORY_TYPE+1] = {
    "int", "char", "D_SOCKET",
-   "" /* gandalf */
+   '\0' /* gandalf */
 };
 
 /* match from from given table */

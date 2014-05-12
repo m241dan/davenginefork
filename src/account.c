@@ -14,6 +14,7 @@ ACCOUNT_DATA *init_account( void )
       free_account( account );
       return NULL;
    }
+   account->idtag = init_tag();
    account->characters = AllocList();
    account->command_tables = AllocList();
    account->commands = AllocList();
@@ -39,6 +40,7 @@ int free_account( ACCOUNT_DATA *account )
 {
    int ret = RET_SUCCESS;
 
+   free_tag( account->idtag );
    account->socket = NULL;
    FreeList( account->characters );
    account->characters = NULL;
@@ -94,11 +96,16 @@ int load_account( ACCOUNT_DATA *account, const char *name )
    }
 
    row = mysql_fetch_row( result );
-   account->accountID = atoi( row[0] );
-   account->name = strdup( row[1] );
-   account->password = strdup( row[2] );
-   account->level = atoi( row[3] );
-   account->pagewidth = atoi( row[4] );
+   account->idtag->id = atoi( row[0] );
+   account->idtag->type = atoi( row[1] );
+   account->idtag->created_by = strdup( row[2] );
+   account->idtag->created_on = strdup( row[3] );
+   account->idtag->modified_by = strdup( row[4] );
+   account->idtag->modified_on = strdup( row[5] );
+   account->name = strdup( row[6] );
+   account->password = strdup( row[7] );
+   account->level = atoi( row[8] );
+   account->pagewidth = atoi( row[9] );
 
 
    mysql_free_result( result );
@@ -116,9 +123,10 @@ int new_account( ACCOUNT_DATA *account )
       return ret;
    }
 
-   mud_printf( query, "INSERT INTO accounts VALUES( %d, '%s', '%s', %d, %d );",
-              account->accountID, account->name, account->password, account->level,
-              account->pagewidth );
+   mud_printf( query, "INSERT INTO accounts VALUES( %d, %d, '%s', '%s', '%s', '%s', '%s', '%s', %d, %d );",
+              account->idtag->id, account->idtag->type, account->idtag->created_by,
+              account->idtag->created_on, account->idtag->modified_by, account->idtag->modified_on,
+              account->name, account->password, account->level, account->pagewidth );
 
    if( mysql_query( sql_handle, query ) )
    {
