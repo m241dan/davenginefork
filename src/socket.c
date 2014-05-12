@@ -74,6 +74,17 @@ int main(int argc, char **argv)
       exit(1);
    }
 
+   log_string( "Loading ID Handlers" );
+
+   if( load_id_handlers() != RET_SUCCESS )
+   {
+      bug( "%s: There was a problem loading ID Handlers from Database", __FUNCTION__ );
+      mysql_close( sql_handle );
+      exit(1);
+   }
+
+   bug( "First loaded handlers: %s", handlers[0]->name );
+
   /* initialize the event queue - part 1 */
   init_event_queue(1);
 
