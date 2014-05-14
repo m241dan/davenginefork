@@ -9,17 +9,19 @@ ID_HANDLER *init_handler( void )
    ID_HANDLER *handler;
 
    CREATE( handler, ID_HANDLER, 1 );
+   handler->recycled_ids = AllocList();
    if( clear_handler( handler ) != RET_SUCCESS )
    {
       free_handler( handler );
       return NULL;
    }
-
    return handler;
 }
 
 int clear_handler( ID_HANDLER *handler )
 {
+   ITERATOR Iter;
+   int *rec_id;
    int ret = RET_SUCCESS;
 
    if( !handler )
@@ -32,10 +34,15 @@ int clear_handler( ID_HANDLER *handler )
    FREE( handler->name );
    handler->name = strdup( "new handler" );
    handler->top_id = 0;
-   FREE( handler->recycled_ids );
-   handler->recycled_ids = NULL;
    handler->can_recycle = FALSE;
 
+   if( SizeOfList( handler->recycled_ids ) > 0 )
+   {
+      AttachIterator( &Iter, handler->recycled_ids );
+      while( ( rec_id = (int *)NextInList( &Iter ) ) != NULL )
+         FREE( rec_id );
+      DetachIterator( &Iter );
+   }
    return ret;
 }
 
@@ -43,7 +50,10 @@ int free_handler( ID_HANDLER *handler )
 {
    int ret = RET_SUCCESS;
    FREE( handler->name );
-   FREE( handler->recycled_ids );
+   if( SizeOfList( handler->recycled_ids ) > 0 )
+      clear_handler( handler );
+   FreeList( handler->recycled_ids );
+   handler->recycled_ids = NULL;
    FREE( handler );
    return ret;
 }
@@ -97,6 +107,11 @@ int free_tag( ID_TAG *tag )
    return ret;
 }
 
+int delete_tag( ID_TAG *tag )
+{
+   int ret = RET_SUCCESS;
+   return ret;
+}
 int load_id_handlers( void )
 {
    MYSQL_RES *result;
@@ -130,8 +145,7 @@ int load_id_handlers( void )
       handler->type = atoi( row[0] );
       handler->name = strdup( row[1] );
       handler->top_id = atoi( row[2] );
-      handler->recycled_ids = strdup( row[3] );
-      handler->can_recycle = (bool)atoi( row[4] );
+      handler->can_recycle = (bool)atoi( row[3] );
       if( handlers[handler->type] != NULL )
       {
          bug( "%s: two handlers have identitical IDs", __FUNCTION__ );
@@ -140,12 +154,52 @@ int load_id_handlers( void )
       }
       handlers[handler->type] = handler;
    }
+
+   mysql_free_result( result );
+   return ret;
+}
+
+int load_recycled_ids( void )
+{
+   MYSQL_RES *result;
+   MYSQL_ROW row;
+   char query[MAX_BUFFER];
+   int ret = RET_SUCCESS;
+
+   mud_printf( query, "SELECT * FROM `id-recycled`;" );
+
+   if( mysql_query( sql_handle, query ) )
+   {
+     report_sql_error( sql_handle );
+     return RET_FAILED_OTHER;
+   }
+
+   if( ( result = mysql_store_result( sql_handle ) ) == NULL )
+   {
+      report_sql_error( sql_handle );
+      return RET_DB_NO_ENTRY;
+   }
+
+   while( ( row = mysql_fetch_row( result ) ) != NULL )
+   {
+      int type;
+      int *id;
+      CREATE( id, int, 1 );
+      type = atoi( row[0] );
+      *id = atoi( row[1] );
+      AttachToList( id, handlers[type]->recycled_ids );
+   }
+
+   mysql_free_result( result );
    return ret;
 }
 
 int get_new_id( int type )
 {
    ID_HANDLER *handler;
+   int *id;     /* have to use a pointer to remove from list, cannot use locally allocated memory */
+   int rec_id; /* must use this integer as storage because the recycled id memory will need to be deleted before return */
+
 
    if( ( handler = handlers[type] ) == NULL )
    {
@@ -153,6 +207,22 @@ int get_new_id( int type )
       return -1;
    }
 
+   if( handler->can_recycle && SizeOfList( handler->recycled_ids ) > 0 )
+   {
+      ITERATOR Iter;
 
+      AttachIterator( &Iter, handler->recycled_ids );
+      if( ( id = (int *)NextInList( &Iter ) ) == NULL )
+      {
+         bug( "%s: could not get id from recycled list of handler %s.", __FUNCTION__, handler->name);
+         return -1;
+      }
+      DetachFromList( id, handler->recycled_ids );
+      rec_id = *id;
+      FREE( id );
+      DetachIterator( &Iter );
+      return rec_id;
+   }
 
+   return handler->top_id++;
 }

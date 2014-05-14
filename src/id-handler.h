@@ -5,8 +5,8 @@ struct id_handler
    int type;
    char *name;
    int top_id;
-   char *recycled_ids;
    bool can_recycle;
+   LLIST *recycled_ids;
 };
 
 struct id_tag
@@ -28,7 +28,9 @@ int free_handler( ID_HANDLER *handler );
 ID_TAG *init_tag( void );
 int clear_tag( ID_TAG *tag );
 int free_tag( ID_TAG *tag );
-int recycle_tag( ID_TAG *tag );
+int delete_tag( ID_TAG *tag );
 
 int load_id_handlers( void );
+int load_recycled_ids( void );
 int get_new_id( int type );
+int recycle_tag( ID_TAG *tag );

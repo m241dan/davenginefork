@@ -78,7 +78,14 @@ int main(int argc, char **argv)
 
    if( load_id_handlers() != RET_SUCCESS )
    {
-      bug( "%s: There was a problem loading ID Handlers from Database", __FUNCTION__ );
+      bug( "%s: There was a problem loading ID Handlers from Database.", __FUNCTION__ );
+      mysql_close( sql_handle );
+      exit(1);
+   }
+
+   if( load_recycled_ids() != RET_SUCCESS )
+   {
+      bug( "%s: There was a problem loading recycled IDs from Database.", __FUNCTION__ );
       mysql_close( sql_handle );
       exit(1);
    }
