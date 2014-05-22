@@ -61,6 +61,7 @@ int nanny_login( NANNY_DATA *nanny, char *arg )
       return ret;
    }
 
+   nanny->content = a_new;
    nanny->socket->account = a_new;
    a_new->socket = nanny->socket;
    text_to_nanny( nanny, (char *) dont_echo );
@@ -124,6 +125,12 @@ int nanny_new_password( NANNY_DATA *nanny, char *arg )
    {
       text_to_nanny( nanny, "Passwords should be between 5 and 20 characters please!\n\rPlease enter a new password: " );
       return ret;
+   }
+
+   if( !a_new )
+   {
+      puts( "a_new is NULL" );
+      exit(1);
    }
 
    FREE( a_new->password );
