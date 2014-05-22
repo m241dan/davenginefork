@@ -161,8 +161,9 @@ int nanny_confirm_new_password( NANNY_DATA *nanny, char *arg )
       AttachToList( a_new, account_list );
       log_string( "A new account: %s has entered the game.", nanny->socket->account->name );
 
-      if( ( ret = new_account( a_new ) ) != RET_SUCCESS );
+      if( ( ret = new_account( a_new ) ) != RET_SUCCESS )
       {
+         bug( "%s: the return code is %d", __FUNCTION__, ret );
          text_to_socket( nanny->socket, "There's been a problem with the database.\r\n" );
          close_socket( nanny->socket, FALSE );
          return ret;
