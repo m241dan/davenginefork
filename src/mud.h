@@ -404,7 +404,7 @@ char *get_time                ( void );
 void communicate( void );
 bool check_sql( void );
 void report_sql_error( MYSQL *con );
-bool db_query( const char *format, ...);
+bool quick_query( const char *format, ...);
 /*
  * mccp.c
  */

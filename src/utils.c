@@ -75,7 +75,7 @@ void report_sql_error( MYSQL *con )
    return;
 }
 
-bool db_query( const char *format, ... )
+bool quick_query( const char *format, ... )
 {
    char query[MAX_BUFFER];
    va_list va;
