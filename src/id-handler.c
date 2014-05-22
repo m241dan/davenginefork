@@ -113,19 +113,14 @@ int delete_tag( ID_TAG *tag )
 
    if( handlers[tag->type]->can_recycle )
    {
-      char query[MAX_BUFFER];
       int *to_recycle;
 
       CREATE( to_recycle, int, 1 );
       *to_recycle = tag->id;
       AttachToList( to_recycle, handlers[tag->type]->recycled_ids );
 
-      mud_printf( query, "INSERT INTO `id-recycled` VALUES( '%d', '%d' );", tag->type, tag->id );
-      if( mysql_query( sql_handle, query ) )
-      {
-         report_sql_error( sql_handle );
+      if( !quick_query( "INSERT INTO `id-recycled` VALUES( '%d', '%d' );", tag->type, tag->id ) )
          bug( "%s: did not update recycled ids database with tag %d of type %d.", __FUNCTION__, tag->id, tag->type );
-      }
    }
    free_tag( tag );
    return ret;
@@ -152,7 +147,6 @@ int new_tag( ID_TAG *tag, const char *creator )
 
 int update_tag( ID_TAG *tag, const char *effector )
 {
-   char query[MAX_BUFFER];
    int ret = RET_SUCCESS;
 
    tag->modified_by = strdup( effector );
@@ -164,16 +158,10 @@ int load_id_handlers( void )
    MYSQL_RES *result;
    MYSQL_ROW row;
    ID_HANDLER *handler;
-   char query[MAX_BUFFER];
    int ret = RET_SUCCESS;
 
-   mud_printf( query, "SELECT * FROM `id-handlers`;" );
-
-   if( mysql_query( sql_handle, query) )
-   {
-      report_sql_error( sql_handle );
+   if( !quick_query( "SELECT * FROM `id-handlers`;" ) )
       return RET_FAILED_OTHER;
-   }
 
    if( ( result = mysql_store_result( sql_handle ) ) == NULL )
    {
@@ -210,16 +198,10 @@ int load_recycled_ids( void )
 {
    MYSQL_RES *result;
    MYSQL_ROW row;
-   char query[MAX_BUFFER];
    int ret = RET_SUCCESS;
 
-   mud_printf( query, "SELECT * FROM `id-recycled`;" );
-
-   if( mysql_query( sql_handle, query ) )
-   {
-     report_sql_error( sql_handle );
-     return RET_FAILED_OTHER;
-   }
+   if( !quick_query( "SELECT * FROM `id-recycled`;" ) )
+      return RET_FAILED_OTHER;
 
    if( ( result = mysql_store_result( sql_handle ) ) == NULL )
    {
@@ -244,7 +226,6 @@ int load_recycled_ids( void )
 int get_new_id( int type )
 {
    ID_HANDLER *handler;
-   char query[MAX_BUFFER];
    int *id;     /* have to use a pointer to remove from list, cannot use locally allocated memory */
    int rec_id; /* must use this integer as storage because the recycled id memory will need to be deleted before return */
 
@@ -270,22 +251,14 @@ int get_new_id( int type )
       FREE( id );
       DetachIterator( &Iter );
 
-      mud_printf( query, "DELETE FROM `id-recycled` WHERE type='%d' AND rec_id='%d';", type, rec_id );
-      if( mysql_query( sql_handle, query ) )
-      {
-         report_sql_error( sql_handle );
+      if( !quick_query( "DELETE FROM `id-recycled` WHERE type='%d' AND rec_id='%d';", type, rec_id ) )
          bug( "%s: ID %d of type %d was not properly deleted from database of recycled ids.", rec_id, type );
-      }
 
       return rec_id;
    }
 
-   mud_printf( query, "UPDATE `id-handlers` SET top_id='%d' WHERE type='%d';", ( handler->top_id + 1 ), handler->type );
-   if( mysql_query( sql_handle, query ) )
-   {
-      report_sql_error( sql_handle);
+   if( !quick_query( "UPDATE `id-handlers` SET top_id='%d' WHERE type='%d';", ( handler->top_id + 1 ), handler->type ) )
       bug( "%s: handler of type %d was not incremented in database properly.", __FUNCTION__, type );
-   }
 
    return handler->top_id++;
 }

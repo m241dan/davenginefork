@@ -64,18 +64,9 @@ int load_account( ACCOUNT_DATA *account, const char *name )
    MYSQL_RES *result;
    MYSQL_ROW row;
    int num_row;
-   char query[MAX_BUFFER];
 
-   if( !check_sql() )
-      return RET_NO_SQL;
-
-   mud_printf( query, "SELECT * FROM accounts WHERE name='%s';", name );
-
-   if( mysql_query( sql_handle, query ) )
-   {
-      report_sql_error( sql_handle );
-      return RET_NO_SQL;
-   }
+   if( !quick_query( "SELECT * FROM accounts WHERE name='%s';", name ) )
+      return RET_FAILED_OTHER;
 
    if( ( result = mysql_store_result( sql_handle ) ) == NULL )
    {
@@ -115,7 +106,6 @@ int load_account( ACCOUNT_DATA *account, const char *name )
 
 int new_account( ACCOUNT_DATA *account )
 {
-   char query[MAX_BUFFER];
    int ret = RET_SUCCESS;
 
    if( !account )
@@ -131,16 +121,11 @@ int new_account( ACCOUNT_DATA *account )
       return ret;
    }
 
-   mud_printf( query, "INSERT INTO accounts VALUES( %d, %d, '%s', '%s', '%s', '%s', '%s', '%s', %d, %d );",
+   if( !quick_query( "INSERT INTO accounts VALUES( %d, %d, '%s', '%s', '%s', '%s', '%s', '%s', %d, %d );",
               account->idtag->id, account->idtag->type, account->idtag->created_by,
               account->idtag->created_on, account->idtag->modified_by, account->idtag->modified_on,
-              account->name, account->password, account->level, account->pagewidth );
-
-   if( mysql_query( sql_handle, query ) )
-   {
-      report_sql_error( sql_handle );
+              account->name, account->password, account->level, account->pagewidth ) )
       return RET_FAILED_OTHER;
-   }
 
    return ret;
 }
@@ -244,7 +229,6 @@ void account_settings( void *passed, char *arg )
 void set_pagewidth( void *passed, char *arg )
 {
    ACCOUNT_DATA *account = (ACCOUNT_DATA *)passed;
-   char query[MAX_BUFFER];
    int value;
 
    if( !account )
@@ -273,11 +257,6 @@ void set_pagewidth( void *passed, char *arg )
 
    account->pagewidth = value;
 
-   mud_printf( query, "UPDATE `accounts` SET pagewidth='%d' WHERE accountID='%d';", value, account->idtag->id );
-   if( mysql_query( sql_handle, query ) )
-   {
-      report_sql_error( sql_handle );
-      bug( "%s: could not update the new pagewidth for %s.", __FUNCTION__, account->name );
-   }
+   quick_query( "UPDATE `accounts` SET pagewidth='%d' WHERE accountID='%d';", value, account->idtag->id );
    return;
 }
