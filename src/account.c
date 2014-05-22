@@ -25,6 +25,7 @@ int clear_account( ACCOUNT_DATA *account )
 {
    int ret = RET_SUCCESS;
 
+   account->socket = NULL;
    account->name = strdup( "new_account" );
    account->password = strdup( "new_password" );
    account->level = 1;

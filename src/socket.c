@@ -423,6 +423,11 @@ void close_socket(D_SOCKET *dsock, bool reconnect)
 
    if( dsock->nanny )
       free_nanny( dsock->nanny );
+   dsock->nanny = NULL;
+
+   if( dsock->account )
+      free_account( dsock->account );
+   dsock->account = NULL;
 
   /* dequeue all events for this socket */
   AttachIterator(&Iter, dsock->events);
