@@ -46,8 +46,7 @@ int free_account( ACCOUNT_DATA *account )
    account->socket = NULL;
    FreeList( account->characters );
    account->characters = NULL;
-   FreeList( account->command_tables );
-   account->command_tables = NULL;
+   free_command_list( account->commands );
    FreeList( account->commands );
    account->commands = NULL;
    FREE( account->name );
@@ -244,5 +243,41 @@ void account_settings( void *passed, char *arg )
 
 void set_pagewidth( void *passed, char *arg )
 {
+   ACCOUNT_DATA *account = (ACCOUNT_DATA *)passed;
+   char query[MAX_BUFFER];
+   int value;
 
+   if( !account )
+   {
+      bug( "%s: Account passed is a bad pointer.", __FUNCTION__ );
+      return;
+   }
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_account( account, "Current Pagewidth: %d\r\n", account->pagewidth );
+      return;
+   }
+
+   if( !is_number( arg ) )
+   {
+      text_to_account( account, "Pagewidth can only take a number.\r\n" );
+      return;
+   }
+
+   if( ( value = atoi( arg ) ) < 40 )
+   {
+      text_to_account( account, "Pagewidths have an absolute minimum of 40, for sanity reasons.\r\n" );
+      return;
+   }
+
+   account->pagewidth = value;
+
+   mud_printf( query, "UPDATE `accounts` SET pagewidth='%d' WHERE accountID='%d';", value, account->idtag->id );
+   if( mysql_query( sql_handle, query ) )
+   {
+      report_sql_error( sql_handle );
+      bug( "%s: could not update the new pagewidth for %s.", __FUNCTION__, account->name );
+   }
+   return;
 }

@@ -152,6 +152,7 @@ int new_tag( ID_TAG *tag, const char *creator )
 
 int update_tag( ID_TAG *tag, const char *effector )
 {
+   char query[MAX_BUFFER];
    int ret = RET_SUCCESS;
 
    tag->modified_by = strdup( effector );

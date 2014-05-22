@@ -387,6 +387,8 @@ void bprint_commandline( BUFFER *buf, COMMAND *com, int sublevel, int pagewidth 
 void print_commands( LLIST *commands, BUFFER *buf, int sublevel, int pagewidth );
 char *strip_cr( const char *str );
 char *strip_nl( const char *str );
+const char *handle_pagewidth( int width, const char *txt );
+bool is_number( const char *arg );
 
 /*
  * help.c
@@ -402,6 +404,7 @@ char *get_time                ( void );
 void communicate( void );
 bool check_sql( void );
 void report_sql_error( MYSQL *con );
+bool db_query( const char *format, ...);
 /*
  * mccp.c
  */
