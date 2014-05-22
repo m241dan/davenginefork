@@ -41,7 +41,8 @@ int free_account( ACCOUNT_DATA *account )
 {
    int ret = RET_SUCCESS;
 
-   free_tag( account->idtag );
+   if( account->idtag )
+      free_tag( account->idtag );
    account->socket = NULL;
    FreeList( account->characters );
    account->characters = NULL;

@@ -88,9 +88,9 @@ int clear_tag( ID_TAG *tag )
    FREE( tag->modified_by );
    FREE( tag->modified_on );
    tag->created_by = strdup( "system" );
-   tag->created_on = ctime( &current_time );
+   tag->created_on = strdup( ctime( &current_time ) );
    tag->modified_by = strdup( "system" );
-   tag->modified_on = ctime( &current_time );
+   tag->modified_on = strdup( ctime( &current_time ) );
 
    return ret;
 }
@@ -144,8 +144,8 @@ int new_tag( ID_TAG *tag, const char *creator )
    tag->id = get_new_id( tag->type );
    tag->created_by = strdup( creator );
    tag->modified_by = strdup( creator );
-   tag->created_on = ctime( &current_time );
-   tag->modified_on = ctime( &current_time );
+   tag->created_on = strdup( ctime( &current_time ) );
+   tag->modified_on = strdup( ctime( &current_time ) );
 
    return ret;
 }
