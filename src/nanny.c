@@ -93,6 +93,8 @@ int nanny_password( NANNY_DATA *nanny, char *arg )
 
       change_socket_state( nanny->socket, STATE_ACCOUNT );
       strip_event_socket( nanny->socket, EVENT_SOCKET_IDLE );
+      nanny->socket = NULL;
+      free_nanny( nanny );
     }
     else
     {
