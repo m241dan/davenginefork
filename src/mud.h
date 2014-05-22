@@ -385,7 +385,7 @@ int     mud_printf            ( char *dest, const char *format, ... );
 const char *print_header( const char *title, const char *pattern, int width );
 void bprint_commandline( BUFFER *buf, COMMAND *com, int sublevel, int pagewidth );
 void print_commands( LLIST *commands, BUFFER *buf, int sublevel, int pagewidth );
-
+char *strip_cr( const char *str );
 /*
  * help.c
  */

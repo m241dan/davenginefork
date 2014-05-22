@@ -116,7 +116,6 @@ int load_account( ACCOUNT_DATA *account, const char *name )
 
 int new_account( ACCOUNT_DATA *account )
 {
-   ID_TAG *tag;
    char query[MAX_BUFFER];
    int ret = RET_SUCCESS;
 
@@ -126,13 +125,8 @@ int new_account( ACCOUNT_DATA *account )
       return ret;
    }
 
-   if( ( tag = init_tag() ) == NULL )
-   {
-      bug( "%s: could not allocate memory for a new ID tag.", __FUNCTION__ );
-      return RET_FAILED_OTHER;
-   }
-
-   if( ( ret = new_tag( tag, "system" ) ) != RET_SUCCESS )
+   account->idtag->type = ACCOUNT_IDS; /* set type before trying to get new tag */
+   if( ( ret = new_tag( account->idtag, "system" ) ) != RET_SUCCESS )
    {
       bug( "%s: could not set parameters for a new ID tag.", __FUNCTION__ );
       return ret;
