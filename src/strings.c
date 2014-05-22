@@ -370,3 +370,21 @@ char *strip_cr( const char *str )
   return newstr;
 }
 
+char *strip_nl( const char *str )
+{
+   static char newstr[MAX_BUFFER];
+   int i, j;
+
+   if( !str || str[0] == '\0' )
+   {
+      newstr[0] = '\0';
+      return newstr;
+   }
+
+   for( i = j = 0; str[i] != '\0'; i++ )
+      if( str[i] != '\n' )
+         newstr[j++] = str[i];
+
+   newstr[j] = '\0';
+   return newstr;
+}

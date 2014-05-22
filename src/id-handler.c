@@ -88,9 +88,9 @@ int clear_tag( ID_TAG *tag )
    FREE( tag->modified_by );
    FREE( tag->modified_on );
    tag->created_by = strdup( "system" );
-   tag->created_on = strdup( strip_cr( ctime( &current_time ) ) );
+   tag->created_on = strdup( strip_nl( ctime( &current_time ) ) );
    tag->modified_by = strdup( "system" );
-   tag->modified_on = strdup( strip_cr( ctime( &current_time ) ) );
+   tag->modified_on = strdup( strip_nl( ctime( &current_time ) ) );
 
    return ret;
 }
@@ -144,8 +144,8 @@ int new_tag( ID_TAG *tag, const char *creator )
    tag->id = get_new_id( tag->type );
    tag->created_by = strdup( creator );
    tag->modified_by = strdup( creator );
-   tag->created_on = strdup( strip_cr( ctime( &current_time ) ) );
-   tag->modified_on = strdup( strip_cr( ctime( &current_time ) ) );
+   tag->created_on = strdup( strip_nl( ctime( &current_time ) ) );
+   tag->modified_on = strdup( strip_nl( ctime( &current_time ) ) );
 
    return ret;
 }
@@ -155,7 +155,7 @@ int update_tag( ID_TAG *tag, const char *effector )
    int ret = RET_SUCCESS;
 
    tag->modified_by = strdup( effector );
-   tag->modified_on = strdup( strip_cr( ctime( &current_time ) ) );
+   tag->modified_on = strdup( strip_nl( ctime( &current_time ) ) );
    return ret;
 }
 int load_id_handlers( void )
