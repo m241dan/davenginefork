@@ -80,6 +80,7 @@ typedef enum
    ACCOUNT_IDS, MAX_ID_HANDLER
 } id_handler_types;
 
+
 /* Communication Ranges */
 #define COMM_LOCAL             0  /* same room only                  */
 #define COMM_LOG              10  /* admins only                     */

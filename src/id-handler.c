@@ -151,6 +151,11 @@ int update_tag( ID_TAG *tag, const char *effector )
 
    tag->modified_by = strdup( effector );
    tag->modified_on = strdup( strip_nl( ctime( &current_time ) ) );
+
+   if( !quick_query( "UPDATE `%s` SET modified_by='%s', modified_on='%s' WHERE %s='%d';", 
+      tag_table_strings[tag->type], tag->modified_by, tag->modified_on, tag_table_whereID[tag->type], tag->id ) )
+      bug( "%s: could not save the update to the database.", __FUNCTION__ );
+
    return ret;
 }
 int load_id_handlers( void )
@@ -262,3 +267,4 @@ int get_new_id( int type )
 
    return handler->top_id++;
 }
+
