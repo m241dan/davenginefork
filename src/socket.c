@@ -842,7 +842,7 @@ void next_cmd_from_buffer(D_SOCKET *dsock)
   dsock->next_command[j] = '\0';
 
   /* skip forward to the next line */
-  while (dsock->inbuf[size] == '\n' || dsock->inbuf[size] == '\r')
+  while ( ( dsock->inbuf[size] == '\n' || dsock->inbuf[size] == '\r' ) )
   {
     dsock->bust_prompt = TRUE;   /* seems like a good place to check */
     size++;
