@@ -200,7 +200,16 @@ int text_to_account( ACCOUNT_DATA *account, const char *fmt, ... )
 
 void account_quit( void *passed, char *arg )
 {
+   ACCOUNT_DATA *account = (ACCOUNT_DATA *)passed;
 
+   if( account->socket->state != STATE_ACCOUNT )
+      return;
+
+   DetachFromList( account, account_list );
+
+   text_to_socket( account->socket, "Quitting...\r\n" );
+   close_socket( account->socket, FALSE );
+   return;
 }
 
 void account_settings( void *passed, char *arg )
