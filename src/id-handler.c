@@ -145,11 +145,24 @@ int new_tag( ID_TAG *tag, const char *creator )
    return ret;
 }
 
-int update_tag( ID_TAG *tag, const char *effector )
+int update_tag( ID_TAG *tag, const char *effector, ... )
 {
+   char buf[50];
    int ret = RET_SUCCESS;
+   va_list va;
+   int res;
 
-   tag->modified_by = strdup( effector );
+   va_start( va, effector );
+   res = vsnprintf( buf, 50, effector, va );
+   va_end( va );
+
+   if( res >= 50 - 1 )
+   {
+      bug( "%s: effector name too long. Length produced = %d", __FUNCTION__, res );
+      return RET_FAILED_OTHER;
+   }
+
+   tag->modified_by = strdup( buf );
    tag->modified_on = strdup( strip_nl( ctime( &current_time ) ) );
 
    if( !quick_query( "UPDATE `%s` SET modified_by='%s', modified_on='%s' WHERE %s='%d';", 

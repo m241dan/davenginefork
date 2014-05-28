@@ -30,7 +30,7 @@ int clear_tag( ID_TAG *tag );
 int free_tag( ID_TAG *tag );
 int delete_tag( ID_TAG *tag );
 int new_tag( ID_TAG *tag, const char *creator );
-int update_tag( ID_TAG *tag, const char *effector );
+int update_tag( ID_TAG *tag, const char *effector, ... );
 
 int load_id_handlers( void );
 int load_recycled_ids( void );

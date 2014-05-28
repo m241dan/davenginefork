@@ -258,5 +258,6 @@ void set_pagewidth( void *passed, char *arg )
    account->pagewidth = value;
 
    quick_query( "UPDATE `accounts` SET pagewidth='%d' WHERE accountID='%d';", value, account->idtag->id );
+   update_tag( account->idtag, "%s-pagewidthCommand", account->name );
    return;
 }
