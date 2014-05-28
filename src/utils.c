@@ -30,11 +30,6 @@ bool check_name(const char *name)
   return TRUE;
 }
 
-void communicate(void)
-{
-   return;
-}
-
 /*
  * Loading of help files, areas, etc, at boot time.
  */

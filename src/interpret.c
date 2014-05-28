@@ -9,6 +9,7 @@
 
 struct typCmd account_commands[] = {
    { "quit", account_quit, LEVEL_BASIC, NULL, FALSE, account_commands },
+   { "chat", account_chat, LEVEL_BASIC, NULL, FALSE, account_commands },
    { "settings", account_settings, LEVEL_BASIC, NULL, TRUE, account_commands },
    { '\0', NULL, 0, NULL, FALSE, NULL } /* gandalf */
 };
@@ -26,7 +27,7 @@ int account_handle_cmd( ACCOUNT_DATA *account, char *arg )
 
    if( !account )
    {
-      BAD_PONTER( "account" );
+      BAD_POINTER( "account" );
       return ret;
    }
 

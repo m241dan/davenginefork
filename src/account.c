@@ -273,7 +273,7 @@ void set_pagewidth( void *passed, char *arg )
    return;
 }
 
-void account_chat( void *passed, char arg )
+void account_chat( void *passed, char *arg )
 {
    ACCOUNT_DATA *account = (ACCOUNT_DATA *)passed;
 

@@ -41,7 +41,7 @@ int communicate( int level, ACCOUNT_DATA *speaker, const char *message )
       if( act_level > account->level )
          continue;
 
-      if( accout == speaker )
+      if( account == speaker )
       {
          text_to_account( account, "You %s, '%s'\r\n", comm_tag_self, message );
          continue;
