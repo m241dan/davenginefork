@@ -80,7 +80,10 @@ typedef enum
    ACCOUNT_IDS, MAX_ID_HANDLER
 } id_handler_types;
 
-
+typedef enum
+{
+   CHAT_LEVEL, MAX_COMM_LEVEL
+}
 /* Communication Ranges */
 #define COMM_LOCAL             0  /* same room only                  */
 #define COMM_LOG              10  /* admins only                     */
@@ -279,6 +282,7 @@ typedef struct buffer_type
 #include "nanny.h"
 #include "interpret.h"
 #include "id-handler.h"
+#include "communication.h"
 /******************************
  * End of new structures      *
  ******************************/
