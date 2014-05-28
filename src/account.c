@@ -279,7 +279,10 @@ void account_chat( void *passed, char arg )
 
    if( !arg || arg[0] == '\0' )
    {
-      text_to_account( "Chat what?\r\n" );
+      text_to_account( account, "Chat what?\r\n" );
       return;
    }
+
+   communicate( CHAT_LEVEL, account, arg );
+   return;
 }
