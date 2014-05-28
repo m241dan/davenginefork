@@ -1,3 +1,3 @@
 /* communications.h written by Davenge */
 
-int communicate( int level, const char *speaker, const char *txt );
+int communicate( int level, ACCOUNT_DATA *speaker, const char *txt );

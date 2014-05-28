@@ -38,6 +38,8 @@ int account_prompt( D_SOCKET *dsock );
 /* commands */
 void account_quit( void *passed, char *arg );
 void account_settings( void *passed, char *arg );
+void account_chat( void *passed, char *arg );
 
 /* setting */
 void set_pagewidth( void *passed, char *arg );
+

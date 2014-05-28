@@ -272,3 +272,14 @@ void set_pagewidth( void *passed, char *arg )
    text_to_account( account, "Pagewidth set to %d.\r\n", value );
    return;
 }
+
+void account_chat( void *passed, char arg )
+{
+   ACCOUNT_DATA *account = (ACCOUNT_DATA *)passed;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_account( "Chat what?\r\n" );
+      return;
+   }
+}

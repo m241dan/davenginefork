@@ -24,6 +24,12 @@ int account_handle_cmd( ACCOUNT_DATA *account, char *arg )
    char command[MAX_BUFFER];
    int ret = RET_SUCCESS;
 
+   if( !account )
+   {
+      BAD_PONTER( "account" );
+      return ret;
+   }
+
    arg = one_arg( arg, command );
 
    if( ( com = find_loaded_command( account->commands, command ) ) == NULL )

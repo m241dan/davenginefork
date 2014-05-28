@@ -2,34 +2,53 @@
 
 #include "mud.h"
 
-int communicate( int level, const char *speaker, const char *message )
+int communicate( int level, ACCOUNT_DATA *speaker, const char *message )
 {
-   D_SOCKET *socket;
+   ACCOUNT_DATA *account;
    ITERATOR Iter;
-   char comm_tag[MAX_BUFFER];
+   char comm_tag_self[MAX_BUFFER];
+   char comm_tag_oth[MAX_BUFFER];
+   int act_level;
    int ret = RET_SUCCESS;
 
    if( !message || message[0] == '\0' )
    {
-      bug( "%s: received a blank message.", __FUNCTION__ );
-      return 0;
+      BAD_POINTER( "message" );
+      return ret;
    }
 
-   if( !speaker || speaker[0] == '\0' )
+   if( !speaker )
    {
-      bug( "%s: received a blank speaker.", __FUNCTION__ );
+      BAD_POINTER( "speaker" );
+      return ret;
    }
+
    switch( level )
    {
       default:
          bug( "%s: unknown global communication level: %d", __FUNCTION__, level );
          return RET_FAILED_OTHER;
       case CHAT_LEVEL:
-         AttachIterator( &Iter, dsock_list );
-         while( ( socket = NextInList( &Iter ) ) != NULL )
-         {
-            
-         }
+         mud_printf( comm_tag_oth, "chats" );
+         mud_printf( comm_tag_self, "chat" );
+         act_level = LEVEL_BASIC;
+         break;
    }
+
+   AttachIterator( &Iter, account_list );
+   while( ( account = NextInList( &Iter ) ) != NULL )
+   {
+      if( act_level > account->level )
+         continue;
+
+      if( accout == speaker )
+      {
+         text_to_account( account, "You %s, '%s'\r\n", comm_tag_self, message );
+         continue;
+      }
+
+      text_to_account( account, "%s %s, '%s'\r\n", speaker->name, comm_tag_oth, message );
+   }
+
    return ret;
 }

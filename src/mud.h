@@ -83,7 +83,8 @@ typedef enum
 typedef enum
 {
    CHAT_LEVEL, MAX_COMM_LEVEL
-}
+} global_chat_levels;
+
 /* Communication Ranges */
 #define COMM_LOCAL             0  /* same room only                  */
 #define COMM_LOG              10  /* admins only                     */
@@ -406,7 +407,6 @@ void  load_helps              ( void );
 bool  check_name              ( const char *name );
 void  load_muddata            ( bool fCopyOver );
 char *get_time                ( void );
-void communicate( void );
 bool check_sql( void );
 void report_sql_error( MYSQL *con );
 bool quick_query( const char *format, ...);
