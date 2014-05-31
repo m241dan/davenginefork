@@ -30,11 +30,6 @@ bool check_name(const char *name)
   return TRUE;
 }
 
-void communicate(void)
-{
-   return;
-}
-
 /*
  * Loading of help files, areas, etc, at boot time.
  */
@@ -74,3 +69,32 @@ void report_sql_error( MYSQL *con )
    bug( "%s: %s", __FUNCTION__, mysql_error( con ) );
    return;
 }
+
+bool quick_query( const char *format, ... )
+{
+   char query[MAX_BUFFER];
+   va_list va;
+   int res;
+
+   va_start( va, format );
+   res = vsnprintf( query, MAX_BUFFER, format, va );
+   va_end( va );
+
+   if( res >= MAX_BUFFER )
+   {
+      bug( "%s: received a long or unusable format: %s", __FUNCTION__, format );
+      return FALSE;
+   }
+
+   if( !check_sql() )
+      return FALSE;
+
+   if( mysql_query( sql_handle, query ) )
+   {
+      report_sql_error( sql_handle );
+      return FALSE;
+   }
+
+   return TRUE;
+}
+

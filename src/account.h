@@ -10,7 +10,7 @@ struct game_account
    COMMAND *executing_command;
    char *last_command;
 
-   int accountID;
+   ID_TAG *idtag;
    char *name;
    char *password;
    sh_int level;
@@ -38,6 +38,8 @@ int account_prompt( D_SOCKET *dsock );
 /* commands */
 void account_quit( void *passed, char *arg );
 void account_settings( void *passed, char *arg );
+void account_chat( void *passed, char *arg );
 
 /* setting */
 void set_pagewidth( void *passed, char *arg );
+

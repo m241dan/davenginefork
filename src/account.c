@@ -14,6 +14,7 @@ ACCOUNT_DATA *init_account( void )
       free_account( account );
       return NULL;
    }
+   account->idtag = init_tag();
    account->characters = AllocList();
    account->command_tables = AllocList();
    account->commands = AllocList();
@@ -24,6 +25,7 @@ int clear_account( ACCOUNT_DATA *account )
 {
    int ret = RET_SUCCESS;
 
+   account->socket = NULL;
    account->name = strdup( "new_account" );
    account->password = strdup( "new_password" );
    account->level = 1;
@@ -39,11 +41,12 @@ int free_account( ACCOUNT_DATA *account )
 {
    int ret = RET_SUCCESS;
 
+   if( account->idtag )
+      free_tag( account->idtag );
    account->socket = NULL;
    FreeList( account->characters );
    account->characters = NULL;
-   FreeList( account->command_tables );
-   account->command_tables = NULL;
+   free_command_list( account->commands );
    FreeList( account->commands );
    account->commands = NULL;
    FREE( account->name );
@@ -61,18 +64,9 @@ int load_account( ACCOUNT_DATA *account, const char *name )
    MYSQL_RES *result;
    MYSQL_ROW row;
    int num_row;
-   char query[MAX_BUFFER];
 
-   if( !check_sql() )
-      return RET_NO_SQL;
-
-   mud_printf( query, "SELECT * FROM accounts WHERE name='%s';", name );
-
-   if( mysql_query( sql_handle, query ) )
-   {
-      report_sql_error( sql_handle );
-      return RET_NO_SQL;
-   }
+   if( !quick_query( "SELECT * FROM accounts WHERE name='%s';", name ) )
+      return RET_FAILED_OTHER;
 
    if( ( result = mysql_store_result( sql_handle ) ) == NULL )
    {
@@ -94,11 +88,16 @@ int load_account( ACCOUNT_DATA *account, const char *name )
    }
 
    row = mysql_fetch_row( result );
-   account->accountID = atoi( row[0] );
-   account->name = strdup( row[1] );
-   account->password = strdup( row[2] );
-   account->level = atoi( row[3] );
-   account->pagewidth = atoi( row[4] );
+   account->idtag->id = atoi( row[0] );
+   account->idtag->type = atoi( row[1] );
+   account->idtag->created_by = strdup( row[2] );
+   account->idtag->created_on = strdup( row[3] );
+   account->idtag->modified_by = strdup( row[4] );
+   account->idtag->modified_on = strdup( row[5] );
+   account->name = strdup( row[6] );
+   account->password = strdup( row[7] );
+   account->level = atoi( row[8] );
+   account->pagewidth = atoi( row[9] );
 
 
    mysql_free_result( result );
@@ -107,7 +106,6 @@ int load_account( ACCOUNT_DATA *account, const char *name )
 
 int new_account( ACCOUNT_DATA *account )
 {
-   char query[MAX_BUFFER];
    int ret = RET_SUCCESS;
 
    if( !account )
@@ -116,15 +114,18 @@ int new_account( ACCOUNT_DATA *account )
       return ret;
    }
 
-   mud_printf( query, "INSERT INTO accounts VALUES( %d, '%s', '%s', %d, %d );",
-              account->accountID, account->name, account->password, account->level,
-              account->pagewidth );
-
-   if( mysql_query( sql_handle, query ) )
+   account->idtag->type = ACCOUNT_IDS; /* set type before trying to get new tag */
+   if( ( ret = new_tag( account->idtag, "system" ) ) != RET_SUCCESS )
    {
-      report_sql_error( sql_handle );
-      return RET_FAILED_OTHER;
+      bug( "%s: could not set parameters for a new ID tag.", __FUNCTION__ );
+      return ret;
    }
+
+   if( !quick_query( "INSERT INTO accounts VALUES( %d, %d, '%s', '%s', '%s', '%s', '%s', '%s', %d, %d );",
+              account->idtag->id, account->idtag->type, account->idtag->created_by,
+              account->idtag->created_on, account->idtag->modified_by, account->idtag->modified_on,
+              account->name, account->password, account->level, account->pagewidth ) )
+      return RET_FAILED_OTHER;
 
    return ret;
 }
@@ -199,7 +200,16 @@ int text_to_account( ACCOUNT_DATA *account, const char *fmt, ... )
 
 void account_quit( void *passed, char *arg )
 {
+   ACCOUNT_DATA *account = (ACCOUNT_DATA *)passed;
 
+   if( account->socket->state != STATE_ACCOUNT )
+      return;
+
+   DetachFromList( account, account_list );
+
+   text_to_socket( account->socket, "Quitting...\r\n" );
+   close_socket( account->socket, FALSE );
+   return;
 }
 
 void account_settings( void *passed, char *arg )
@@ -227,5 +237,54 @@ void account_settings( void *passed, char *arg )
 
 void set_pagewidth( void *passed, char *arg )
 {
+   ACCOUNT_DATA *account = (ACCOUNT_DATA *)passed;
+   int value;
 
+   if( !account )
+   {
+      bug( "%s: Account passed is a bad pointer.", __FUNCTION__ );
+      return;
+   }
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_account( account, "Current Pagewidth: %d\r\n", account->pagewidth );
+      return;
+   }
+
+   if( !is_number( arg ) )
+   {
+      text_to_account( account, "Pagewidth can only take a number.\r\n" );
+      return;
+   }
+
+   if( ( value = atoi( arg ) ) < 40 )
+   {
+      text_to_account( account, "Pagewidths have an absolute minimum of 40, for sanity reasons.\r\n" );
+      return;
+   }
+
+   account->pagewidth = value;
+
+   quick_query( "UPDATE `accounts` SET pagewidth='%d' WHERE accountID='%d';", value, account->idtag->id );
+   update_tag( account->idtag, "%s-pagewidthCommand", account->name );
+
+   text_to_account( account, "Pagewidth set to %d.\r\n", value );
+   return;
+}
+
+void account_chat( void *passed, char *arg )
+{
+   ACCOUNT_DATA *account = (ACCOUNT_DATA *)passed;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_account( account, "Chat what?\r\n" );
+      return;
+   }
+
+   communicate( CHAT_LEVEL, account, arg );
+   account->socket->bust_prompt = FALSE;
+   text_to_account( account, "What is your choice? " );
+   return;
 }

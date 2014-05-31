@@ -73,7 +73,17 @@ typedef enum
 typedef enum
 {
    LEVEL_BASIC, MAX_ACCOUNT_LEVEL
-} account_leves;
+} account_levels;
+
+typedef enum
+{
+   ACCOUNT_IDS, MAX_ID_HANDLER
+} id_handler_types;
+
+typedef enum
+{
+   CHAT_LEVEL, MAX_COMM_LEVEL
+} global_chat_levels;
 
 /* Communication Ranges */
 #define COMM_LOCAL             0  /* same room only                  */
@@ -213,6 +223,8 @@ typedef struct  nanny_data    NANNY_DATA;
 typedef struct  typCmd        COMMAND;
 typedef int     nanny_fun( NANNY_DATA *nanny, char *arg );
 typedef const struct nanny_lib_entry NANNY_LIB_ENTRY;
+typedef struct  id_handler    ID_HANDLER;
+typedef struct  id_tag        ID_TAG;
 /* the actual structures */
 struct dSocket
 {
@@ -270,7 +282,8 @@ typedef struct buffer_type
 #include "strings_table.h"
 #include "nanny.h"
 #include "interpret.h"
-
+#include "id-handler.h"
+#include "communication.h"
 /******************************
  * End of new structures      *
  ******************************/
@@ -378,6 +391,10 @@ int     mud_printf            ( char *dest, const char *format, ... );
 const char *print_header( const char *title, const char *pattern, int width );
 void bprint_commandline( BUFFER *buf, COMMAND *com, int sublevel, int pagewidth );
 void print_commands( LLIST *commands, BUFFER *buf, int sublevel, int pagewidth );
+char *strip_cr( const char *str );
+char *strip_nl( const char *str );
+const char *handle_pagewidth( int width, const char *txt );
+bool is_number( const char *arg );
 
 /*
  * help.c
@@ -390,9 +407,9 @@ void  load_helps              ( void );
 bool  check_name              ( const char *name );
 void  load_muddata            ( bool fCopyOver );
 char *get_time                ( void );
-void communicate( void );
 bool check_sql( void );
 void report_sql_error( MYSQL *con );
+bool quick_query( const char *format, ...);
 /*
  * mccp.c
  */

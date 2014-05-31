@@ -45,6 +45,7 @@ int nanny_login( NANNY_DATA *nanny, char *arg )
       {
          bug( "%s: 'new account' nanny lib missing.", __FUNCTION__ );
          text_to_nanny( nanny, "Something is really messed up." );
+         free_account( a_new );
          close_socket( nanny->socket, FALSE );
          return RET_FAILED_OTHER;
       }
@@ -55,10 +56,12 @@ int nanny_login( NANNY_DATA *nanny, char *arg )
    else if( ret == RET_FAILED_OTHER )
    {
       text_to_nanny( nanny, "There's been a major error." );
+      free_account( a_new );
       close_socket( nanny->socket, FALSE );
       return ret;
    }
 
+   nanny->content = a_new;
    nanny->socket->account = a_new;
    a_new->socket = nanny->socket;
    text_to_nanny( nanny, (char *) dont_echo );
@@ -96,8 +99,6 @@ int nanny_password( NANNY_DATA *nanny, char *arg )
     else
     {
        text_to_socket( nanny->socket, "Bad password!\r\n" );
-       free_account( nanny->socket->account );
-       nanny->socket->account = NULL;
        close_socket( nanny->socket, FALSE );
     }
    return ret;
@@ -118,6 +119,7 @@ nanny_fun *nanny_new_account_code[] = {
 
 int nanny_new_password( NANNY_DATA *nanny, char *arg )
 {
+   ACCOUNT_DATA *a_new = (ACCOUNT_DATA *)nanny->content;
    int ret = RET_SUCCESS;
    int i;
 
@@ -127,12 +129,18 @@ int nanny_new_password( NANNY_DATA *nanny, char *arg )
       return ret;
    }
 
-   FREE( nanny->socket->account->password );
-   nanny->socket->account->password = strdup( crypt( arg, nanny->socket->account->name ) );
-
-   for( i = 0; nanny->socket->account->password[i] != '\0'; i++ )
+   if( !a_new )
    {
-      if( nanny->socket->account->password[i] == '~' )
+      puts( "a_new is NULL" );
+      exit(1);
+   }
+
+   FREE( a_new->password );
+   a_new->password = strdup( crypt( arg, a_new->name ) );
+
+   for( i = 0; a_new->password[i] != '\0'; i++ )
+   {
+      if( a_new->password[i] == '~' )
       {
          text_to_nanny( nanny, "Illegal password!\n\rPlease enter a new password: " );
          return ret;
@@ -144,16 +152,18 @@ int nanny_new_password( NANNY_DATA *nanny, char *arg )
 
 int nanny_confirm_new_password( NANNY_DATA *nanny, char *arg )
 {
+   ACCOUNT_DATA *a_new = (ACCOUNT_DATA *)nanny->content;
    int ret = RET_SUCCESS;
 
-   if( !strcmp( crypt( arg, nanny->socket->account->name ), nanny->socket->account->password ) )
+   if( !strcmp( crypt( arg, a_new->name ), a_new->password ) )
    {
       text_to_nanny( nanny, (char *) do_echo );
-      AttachToList( nanny->socket->account, account_list );
+      AttachToList( a_new, account_list );
       log_string( "A new account: %s has entered the game.", nanny->socket->account->name );
 
-      if( ( ret = new_account( nanny->socket->account ) ) != RET_SUCCESS )
+      if( ( ret = new_account( a_new ) ) != RET_SUCCESS )
       {
+         bug( "%s: the return code is %d", __FUNCTION__, ret );
          text_to_socket( nanny->socket, "There's been a problem with the database.\r\n" );
          close_socket( nanny->socket, FALSE );
          return ret;

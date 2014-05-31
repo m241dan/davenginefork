@@ -348,3 +348,104 @@ void print_commands( LLIST *commands, BUFFER *buf, int sublevel, int pagewidth )
    DetachIterator( &Iter );
    return;
 }
+
+char *strip_cr( const char *str )
+{
+  static char newstr[MAX_BUFFER];
+  int i, j;
+
+  if( !str || str[0] == '\0' )
+    {
+      newstr[0] = '\0';
+      return newstr;
+    }
+
+  for( i = j = 0; str[i] != '\0'; i++ )
+    if( str[i] != '\r' )
+      {
+        newstr[j++] = str[i];
+      }
+
+  newstr[j] = '\0';
+  return newstr;
+}
+
+char *strip_nl( const char *str )
+{
+   static char newstr[MAX_BUFFER];
+   int i, j;
+
+   if( !str || str[0] == '\0' )
+   {
+      newstr[0] = '\0';
+      return newstr;
+   }
+
+   for( i = j = 0; str[i] != '\0'; i++ )
+      if( str[i] != '\n' )
+         newstr[j++] = str[i];
+
+   newstr[j] = '\0';
+   return newstr;
+}
+
+const char *handle_pagewidth( int width, const char *txt )
+{
+   static char buf[MAX_BUFFER * 2];
+   bool color = FALSE;
+   char *ptr;
+   int x;
+
+   memset( &buf[0], 0, sizeof(buf) );
+   ptr = buf;
+   x = 0;
+
+   while( *txt != '\0' )
+   {
+      if( *txt == '#' && !color )
+         color = TRUE;
+      else if( *txt == '#' && color )
+      {
+         x++;
+         color = FALSE;
+      }
+
+      if( *txt != '#' )
+      {
+         if( color )
+            color = FALSE;
+         else
+            x++;
+      }
+
+      if( *txt == '\n' || *txt == '\r' )
+         x = 0;
+
+      if( x > width )
+      {
+         x = 0;
+         *ptr++ = '\n';
+         *ptr++ = '\r';
+      }
+      *ptr++ = *txt++;
+   }
+
+   buf[strlen(buf)] = '\0';
+
+   return buf;
+}
+
+bool is_number( const char *arg )
+{
+   if( *arg == '\0' )
+      return FALSE;
+
+   for( ; *arg != '\0'; arg++ )
+   {
+      if( !isdigit( *arg ) )
+         return FALSE;
+   }
+
+   return TRUE;
+}
+

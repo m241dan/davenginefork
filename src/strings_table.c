@@ -2,7 +2,17 @@
 
 const char *const data_types[MAX_MEMORY_TYPE+1] = {
    "int", "char", "D_SOCKET",
-   "" /* gandalf */
+   '\0' /* gandalf */
+};
+
+const char *const tag_table_strings[MAX_ID_HANDLER+1] = {
+   "accounts",
+   '\0'
+};
+
+const char *const tag_table_whereID[MAX_ID_HANDLER+1] = {
+   "accountID",
+   '\0'
 };
 
 /* match from from given table */

@@ -74,6 +74,22 @@ int main(int argc, char **argv)
       exit(1);
    }
 
+   log_string( "Loading ID Handlers" );
+
+   if( load_id_handlers() != RET_SUCCESS )
+   {
+      bug( "%s: There was a problem loading ID Handlers from Database.", __FUNCTION__ );
+      mysql_close( sql_handle );
+      exit(1);
+   }
+
+   if( load_recycled_ids() != RET_SUCCESS )
+   {
+      bug( "%s: There was a problem loading recycled IDs from Database.", __FUNCTION__ );
+      mysql_close( sql_handle );
+      exit(1);
+   }
+
   /* initialize the event queue - part 1 */
   init_event_queue(1);
 
@@ -407,6 +423,11 @@ void close_socket(D_SOCKET *dsock, bool reconnect)
 
    if( dsock->nanny )
       free_nanny( dsock->nanny );
+   dsock->nanny = NULL;
+
+   if( dsock->account )
+      free_account( dsock->account );
+   dsock->account = NULL;
 
   /* dequeue all events for this socket */
   AttachIterator(&Iter, dsock->events);
@@ -553,6 +574,9 @@ void text_to_buffer(D_SOCKET *dsock, const char *txt)
   bool underline = FALSE, bold = FALSE;
   int iPtr = 0, last = -1, j, k;
   int length = strlen(txt);
+
+   if( dsock->account )
+      txt = handle_pagewidth( dsock->account->pagewidth, txt );
 
   /* the color struct */
   struct sAnsiColor
@@ -818,7 +842,7 @@ void next_cmd_from_buffer(D_SOCKET *dsock)
   dsock->next_command[j] = '\0';
 
   /* skip forward to the next line */
-  while (dsock->inbuf[size] == '\n' || dsock->inbuf[size] == '\r')
+  while ( ( dsock->inbuf[size] == '\n' || dsock->inbuf[size] == '\r' ) )
   {
     dsock->bust_prompt = TRUE;   /* seems like a good place to check */
     size++;
