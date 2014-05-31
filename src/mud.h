@@ -395,6 +395,8 @@ char *strip_cr( const char *str );
 char *strip_nl( const char *str );
 const char *handle_pagewidth( int width, const char *txt );
 bool is_number( const char *arg );
+char *smash_color( const char *str );
+int color_count( const char *str );
 
 /*
  * help.c

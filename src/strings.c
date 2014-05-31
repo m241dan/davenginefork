@@ -260,9 +260,11 @@ const char *print_header( const char *title, const char *pattern, int width )
    static char buf[MAX_BUFFER];
    const char *pat_ptr;
    char *buf_ptr;
-   int title_len = strlen( title );
-   int pattern_len = strlen( pattern );
-   int each_sides_pattern_len, side_pattern_remainder, loop_limit, extra, x;
+   int title_len = strlen( smash_color( title ) );
+   int raw_title_len = strlen( title );
+   int pattern_len = strlen( smash_color( pattern ) );
+   int raw_pattern_len = strlen( pattern );
+   int each_sides_pattern_len, side_pattern_remainder, loop_limit, extra, x, y;
 
    memset( &buf, 0, sizeof( buf ) );
    buf_ptr = buf;
@@ -273,28 +275,40 @@ const char *print_header( const char *title, const char *pattern, int width )
    extra = title_len % 2;
 
    pat_ptr = pattern;
-   for( x = 0; x < loop_limit; x++ )
+   for( x = 0, y = 0; x < loop_limit; x++ )
    {
+      if( *pat_ptr == '#' )
+         x -= 2;
       *buf_ptr++ = *pat_ptr++;
-      if( ( x + 1 ) % pattern_len == 0 )
+
+      if( ++y % raw_pattern_len == 0 )
+      {
          pat_ptr = pattern;
+         y = 0;
+      }
    }
 
    for( x = -1 ; x < side_pattern_remainder; x++ )
       *buf_ptr++ = ' ';
 
-   for( x = 0; x < title_len; x++ )
+   for( x = 0; x < raw_title_len; x++ )
       *buf_ptr++ = *title++;
 
    for( x = -1; x < ( side_pattern_remainder + extra ); x++ )
       *buf_ptr++ = ' ';
 
    pat_ptr = pattern;
-   for( x = 0; x < loop_limit; x++ )
+   for( x = 0, y = 0; x < loop_limit; x++ )
    {
+      if( *pat_ptr == '#' )
+         x -= 2;
       *buf_ptr++ = *pat_ptr++;
-      if( ( x + 1 ) % pattern_len == 0 )
+
+      if( ++y % raw_pattern_len == 0 )
+      {
          pat_ptr = pattern;
+         y = 0;
+      }
    }
 
    buf[strlen( buf )] = '\0';
@@ -449,3 +463,41 @@ bool is_number( const char *arg )
    return TRUE;
 }
 
+char *smash_color( const char *str )
+{
+   static char ret[MAX_BUFFER];
+   char *retptr;
+
+   retptr = ret;
+
+   if(str == NULL)
+      return NULL;
+
+   for ( ; *str != '\0'; str++ )
+   {
+      if (*str == '#' && *(str + 1) != '\0' )
+         str++;
+      else
+      {
+         *retptr = *str;
+
+         retptr++;
+      }
+   }
+   *retptr = '\0';
+   return ret;
+}
+
+int color_count( const char *str )
+{
+   int count = 0;
+
+   if( str == NULL )
+      return 0;
+
+   for( ; *str != '\0'; str++ )
+      if( *str == '#' )
+         count++;
+
+   return count;
+}
