@@ -7,6 +7,9 @@
 /* include main header file */
 #include "mud.h"
 
+/****************************************************************************
+* ACCOUNT COMMAND TABLE                                                     *
+****************************************************************************/
 struct typCmd account_commands[] = {
    { "quit", account_quit, LEVEL_BASIC, NULL, FALSE, NULL, account_commands },
    { "chat", account_chat, LEVEL_BASIC, NULL, FALSE, NULL, account_commands },
@@ -14,11 +17,33 @@ struct typCmd account_commands[] = {
    { '\0', NULL, 0, NULL, FALSE, NULL } /* gandalf */
 };
 
+/******************************************************************************
+* DESC_FUNC METHODS                                                           *
+******************************************************************************/
+
+const char *chat_desc( void *extra )
+{
+   return " - global chat";
+}
+
+const char * settings_desc( void *extra )
+{
+   return " - settings, pagewidth, chat stuff, etc";
+}
+/*****************************************************************************
+* SETTINGS SUB COMMANDS TABLE                                                *
+*****************************************************************************/
+
 struct typCmd settings_sub_commands[] = {
    { "pagewidth", set_pagewidth, LEVEL_BASIC, NULL, FALSE, pagewidth_desc, settings_sub_commands },
    { "chat_as", account_chatas, LEVEL_BASIC, NULL, FALSE, chatas_desc, settings_sub_commands },
    { '\0', NULL, 0, NULL, FALSE, NULL }
 };
+
+/******************************************************************************
+* DESC_FUNC METHODS                                                           *
+******************************************************************************/
+
 const char *pagewidth_desc( void *extra )
 {
    ACCOUNT_DATA *account = (ACCOUNT_DATA *)extra;

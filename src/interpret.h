@@ -1,6 +1,8 @@
 /* interpret.h written by Davenge */
 
 extern struct typCmd account_commands[];
+const char *settings_desc( void *extra );
+const char *chat_desc( void *extra );
 
 extern struct typCmd settings_sub_commands[];
 const char *pagewidth_desc( void *extra );
