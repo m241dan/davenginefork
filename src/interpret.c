@@ -8,16 +8,48 @@
 #include "mud.h"
 
 struct typCmd account_commands[] = {
-   { "quit", account_quit, LEVEL_BASIC, NULL, FALSE, account_commands },
-   { "chat", account_chat, LEVEL_BASIC, NULL, FALSE, account_commands },
-   { "settings", account_settings, LEVEL_BASIC, NULL, TRUE, account_commands },
+   { "quit", account_quit, LEVEL_BASIC, NULL, FALSE, NULL, account_commands },
+   { "chat", account_chat, LEVEL_BASIC, NULL, FALSE, NULL, account_commands },
+   { "settings", account_settings, LEVEL_BASIC, NULL, TRUE, NULL, account_commands },
    { '\0', NULL, 0, NULL, FALSE, NULL } /* gandalf */
 };
 
 struct typCmd settings_sub_commands[] = {
-   { "pagewidth", set_pagewidth, LEVEL_BASIC, NULL, FALSE, settings_sub_commands },
+   { "pagewidth", set_pagewidth, LEVEL_BASIC, NULL, FALSE, pagewidth_desc, settings_sub_commands },
+   { "chat_as", account_chatas, LEVEL_BASIC, NULL, FALSE, chatas_desc, settings_sub_commands },
    { '\0', NULL, 0, NULL, FALSE, NULL }
 };
+const char *pagewidth_desc( void *extra )
+{
+   ACCOUNT_DATA *account = (ACCOUNT_DATA *)extra;
+   static char buf[MAX_BUFFER];
+   memset( &buf, 0, sizeof( buf ) );
+
+   if( !extra )
+   {
+      bug( "%s: passed a bad account pointer.", __FUNCTION__ );
+      return "";
+   }
+
+   mud_printf( buf, "#R: #B%d#n", account->pagewidth );
+   return buf;
+}
+
+const char *chatas_desc( void *extra )
+{
+   ACCOUNT_DATA *account = (ACCOUNT_DATA *)extra;
+   static char buf[MAX_BUFFER];
+   memset( &buf, 0, sizeof( buf ) );
+
+   if( !extra )
+   {
+     bug( "%s: passed a bad account pointer.", __FUNCTION__ );
+     return "";
+   }
+
+   mud_printf( buf, ": %s", account->chatting_as[0] != ' ' ? account->chatting_as : "none" );
+   return buf;
+}
 
 int account_handle_cmd( ACCOUNT_DATA *account, char *arg )
 {
@@ -113,6 +145,7 @@ int copy_command( COMMAND *to_copy, COMMAND *command )
    command->cmd_funct = to_copy->cmd_funct;
    command->sub_commands = NULL;
    command->can_sub = to_copy->can_sub;
+   command->desc_func = to_copy->desc_func;
    command->from_table = to_copy->from_table;
    return ret;
 }

@@ -16,6 +16,7 @@ struct game_account
    sh_int level;
    sh_int pagewidth;
 
+   char *chatting_as;
 };
 
 /* creation */
@@ -42,4 +43,4 @@ void account_chat( void *passed, char *arg );
 
 /* setting */
 void set_pagewidth( void *passed, char *arg );
-
+void account_chatas( void *passed, char *arg );

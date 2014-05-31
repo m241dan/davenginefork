@@ -266,6 +266,7 @@ struct typCmd
    sh_int      level;
    LLIST     *sub_commands;
    bool      can_sub;
+   const char *(*desc_func)( void *extra );
    COMMAND   *from_table;
 };
 
@@ -389,14 +390,15 @@ void    buffer_clear          ( BUFFER *buffer );
 int     bprintf               ( BUFFER *buffer, char *fmt, ... );
 int     mud_printf            ( char *dest, const char *format, ... );
 const char *print_header( const char *title, const char *pattern, int width );
-void bprint_commandline( BUFFER *buf, COMMAND *com, int sublevel, int pagewidth );
-void print_commands( LLIST *commands, BUFFER *buf, int sublevel, int pagewidth );
+void bprint_commandline( void *extra, BUFFER *buf, COMMAND *com, int sublevel, int pagewidth );
+void print_commands( void *extra, LLIST *commands, BUFFER *buf, int sublevel, int pagewidth );
 char *strip_cr( const char *str );
 char *strip_nl( const char *str );
 const char *handle_pagewidth( int width, const char *txt );
 bool is_number( const char *arg );
 char *smash_color( const char *str );
 int color_count( const char *str );
+void add_spaces( char *str, int amount );
 
 /*
  * help.c

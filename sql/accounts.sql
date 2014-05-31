@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS `accounts` (
    `password` varchar(30) NOT NULL DEFAULT '',
    `level` smallint NOT NULL DEFAULT '0',
    `pagewidth` smallint NOT NULL DEFAULT '80',
+   `chatting_as` varchar(25) NOT NULL DEFAULT '',
    PRIMARY KEY (`accountID`),
    UNIQUE INDEX `name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

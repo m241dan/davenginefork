@@ -47,7 +47,7 @@ int communicate( int level, ACCOUNT_DATA *speaker, const char *message )
          continue;
       }
 
-      text_to_account( account, "%s %s, '%s'\r\n", speaker->name, comm_tag_oth, message );
+      text_to_account( account, "%s %s, '%s'\r\n", speaker->chatting_as[0] != ' ' ? speaker->chatting_as : speaker->name, comm_tag_oth, message );
    }
 
    return ret;

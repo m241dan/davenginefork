@@ -315,10 +315,11 @@ const char *print_header( const char *title, const char *pattern, int width )
    return buf;
 }
 
-void bprint_commandline( BUFFER *buf, COMMAND *com, int sublevel, int pagewidth )
+void bprint_commandline( void *extra, BUFFER *buf, COMMAND *com, int sublevel, int pagewidth )
 {
+   char command_desc[MAX_BUFFER];
    char symbol[4];
-   int subindent, commandspace;
+   int subindent, commandspace, commanddescspace = 0;
 
    if( com->can_sub )
    {
@@ -333,21 +334,34 @@ void bprint_commandline( BUFFER *buf, COMMAND *com, int sublevel, int pagewidth 
       snprintf( symbol, 4, "   " );
 
    subindent = sublevel * 3;
-   commandspace = pagewidth - 8 - subindent;
+   commandspace = strlen( com->cmd_name );
+   if( commandspace > ( pagewidth - 8 - subindent ) )
+      commandspace = pagewidth - 8 - subindent;
+
    if( commandspace < 1 )
    {
       bprintf( buf, "| COMMAND SPACING PROBLEM\r\n" );
       return;
    }
-   bprintf( buf, "| %-*.*s%-3.3s %-*.*s |\r\n",
+
+   if( com->desc_func )
+      mud_printf( command_desc, "%s", (*com->desc_func)( extra ) );
+   else
+      mud_printf( command_desc, "" );
+
+   commanddescspace = pagewidth - 8 - subindent - commandspace;
+   add_spaces( command_desc, ( commanddescspace - strlen( smash_color( command_desc ) ) ) );
+
+   bprintf( buf, "| %-*.*s%-3.3s %-*.*s%s |\r\n",
                   subindent, subindent, "   ",
                   symbol,
-                  commandspace, commandspace, com->cmd_name );
+                  commandspace, commandspace, com->cmd_name,
+                  command_desc );
 
    return;
 }
 
-void print_commands( LLIST *commands, BUFFER *buf, int sublevel, int pagewidth )
+void print_commands( void *extra, LLIST *commands, BUFFER *buf, int sublevel, int pagewidth )
 {
    ITERATOR Iter;
    COMMAND *com;
@@ -355,9 +369,9 @@ void print_commands( LLIST *commands, BUFFER *buf, int sublevel, int pagewidth )
    AttachIterator( &Iter, commands );
    while( ( com = (COMMAND *)NextInList( &Iter ) ) != NULL )
    {
-      bprint_commandline( buf, com, sublevel, pagewidth );
+      bprint_commandline( extra, buf, com, sublevel, pagewidth );
       if( com->can_sub && com->sub_commands )
-         print_commands( com->sub_commands, buf, ( sublevel + 1 ), pagewidth );
+         print_commands( extra, com->sub_commands, buf, ( sublevel + 1 ), pagewidth );
    }
    DetachIterator( &Iter );
    return;
@@ -468,6 +482,7 @@ char *smash_color( const char *str )
    static char ret[MAX_BUFFER];
    char *retptr;
 
+   memset( &ret[0], 0, sizeof(ret) );
    retptr = ret;
 
    if(str == NULL)
@@ -501,3 +516,14 @@ int color_count( const char *str )
 
    return count;
 }
+
+void add_spaces( char *str, int amount )
+{
+   int x;
+
+   for( x = 0; x < amount; x++ )
+      strcat( str, " " );
+
+   return;
+}
+

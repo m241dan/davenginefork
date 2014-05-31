@@ -32,6 +32,7 @@ int clear_account( ACCOUNT_DATA *account )
    account->pagewidth = DEFAULT_PAGEWIDTH;
    account->last_command = strdup( "none" );
    account->executing_command = NULL;
+   account->chatting_as = strdup( " " );
 
    return ret;
 }
@@ -98,7 +99,7 @@ int load_account( ACCOUNT_DATA *account, const char *name )
    account->password = strdup( row[7] );
    account->level = atoi( row[8] );
    account->pagewidth = atoi( row[9] );
-
+   account->chatting_as = strdup( row[10] );
 
    mysql_free_result( result );
    return RET_SUCCESS;
@@ -121,10 +122,10 @@ int new_account( ACCOUNT_DATA *account )
       return ret;
    }
 
-   if( !quick_query( "INSERT INTO accounts VALUES( %d, %d, '%s', '%s', '%s', '%s', '%s', '%s', %d, %d );",
+   if( !quick_query( "INSERT INTO accounts VALUES( %d, %d, '%s', '%s', '%s', '%s', '%s', '%s', %d, %d, '%s' );",
               account->idtag->id, account->idtag->type, account->idtag->created_by,
               account->idtag->created_on, account->idtag->modified_by, account->idtag->modified_on,
-              account->name, account->password, account->level, account->pagewidth ) )
+              account->name, account->password, account->level, account->pagewidth, account->chatting_as ) )
       return RET_FAILED_OTHER;
 
    return ret;
@@ -147,8 +148,8 @@ int account_prompt( D_SOCKET *dsock )
    int width = dsock->account->pagewidth;
 
    bprintf( buf, "/%s\\\r\n", print_header( "Account Menu", "-", width - 2 ) );
-   print_commands( dsock->account->commands, buf, 0, dsock->account->pagewidth );
-   bprintf( buf, "\\%s/\r\n", print_header( "End Menu", "-", width -2 ) );
+   print_commands( dsock->account, dsock->account->commands, buf, 0, dsock->account->pagewidth );
+   bprintf( buf, "\\%s/\r\n", print_header( "End Menu", "-", width - 2 ) );
    bprintf( buf, "What is your choice?: " );
 
    text_to_buffer( dsock, buf->data );
@@ -286,5 +287,24 @@ void account_chat( void *passed, char *arg )
    communicate( CHAT_LEVEL, account, arg );
    account->socket->bust_prompt = FALSE;
    text_to_account( account, "What is your choice? " );
+   return;
+}
+
+void account_chatas( void *passed, char *arg )
+{
+   ACCOUNT_DATA *account = (ACCOUNT_DATA *)passed;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_account( account, "You must input something.\r\n" );
+      return;
+   }
+
+   while( isspace( arg[0] ) )
+      arg++;
+
+   account->chatting_as = strdup( arg );
+   quick_query( "UPDATE `accounts` SET chatting_as='%s' WHERE accountID='%d';", account->chatting_as, account->idtag->id );
+   text_to_account( account, "New name set.\r\n" );
    return;
 }
