@@ -70,8 +70,9 @@ int nanny_login( NANNY_DATA *nanny, char *arg )
 
 int nanny_password( NANNY_DATA *nanny, char *arg )
 {
-   int ret = RET_SUCCESS;
+   D_SOCKET *socket = nanny->socket;
    ACCOUNT_DATA *account;
+   int ret = RET_SUCCESS;
 
    if( !strcmp( crypt( arg, nanny->socket->account->name ), nanny->socket->account->password )  )
    {
@@ -79,9 +80,10 @@ int nanny_password( NANNY_DATA *nanny, char *arg )
 
       if( ( account = check_account_reconnect( nanny->socket->account->name ) ) != NULL )
       {
-         free_account( nanny->socket->account );
-         nanny->socket->account = account;
+         free_account( socket->account );
+         socket->account = account;
          account->socket = nanny->socket;
+         nanny->content = account;
          log_string( "%s has reconnected.", account->name );
          text_to_nanny( nanny, "You take over your account already in use.\r\n" );
       }

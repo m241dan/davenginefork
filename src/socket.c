@@ -425,7 +425,7 @@ void close_socket(D_SOCKET *dsock, bool reconnect)
       free_nanny( dsock->nanny );
    dsock->nanny = NULL;
 
-   if( dsock->account )
+   if( !reconnect && dsock->account )
       free_account( dsock->account );
    dsock->account = NULL;
 

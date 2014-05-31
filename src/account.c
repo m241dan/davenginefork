@@ -55,6 +55,7 @@ int free_account( ACCOUNT_DATA *account )
    FREE( account->command_tables );
    FREE( account->commands );
    FREE( account->last_command );
+   FREE( account );
 
    return ret;
 }
