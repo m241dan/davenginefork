@@ -17,6 +17,8 @@ struct game_account
    sh_int pagewidth;
 
    char *chatting_as;
+
+   INCEPTION *olc;
 };
 
 /* creation */

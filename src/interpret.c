@@ -12,6 +12,7 @@
 ****************************************************************************/
 struct typCmd account_commands[] = {
    { "quit", account_quit, LEVEL_BASIC, NULL, FALSE, NULL, account_commands },
+   { "inception", inception_open, LEVEL_BASIC, NULL, FALSE, NULL, account_commands },
    { "chat", account_chat, LEVEL_BASIC, NULL, FALSE, NULL, account_commands },
    { "settings", account_settings, LEVEL_BASIC, NULL, TRUE, NULL, account_commands },
    { '\0', NULL, 0, NULL, FALSE, NULL } /* gandalf */

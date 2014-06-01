@@ -266,6 +266,12 @@ void set_pagewidth( void *passed, char *arg )
       return;
    }
 
+   if( value % 2 != 0 )
+   {
+      text_to_account( account, "Pagewidths must be an even number, it's just easier this way.\r\n" );
+      return;
+   }
+
    account->pagewidth = value;
 
    quick_query( "UPDATE `accounts` SET pagewidth='%d' WHERE accountID='%d';", value, account->idtag->id );

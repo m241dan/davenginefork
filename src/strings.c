@@ -527,3 +527,71 @@ void add_spaces( char *str, int amount )
    return;
 }
 
+void add_lead_space( char *str, int amount )
+{
+   char padding[MAX_BUFFER];
+   char *pad_ptr;
+
+   memset( &padding, 0, sizeof( padding ) );
+
+   add_spaces( padding, amount );
+
+   if( ( strlen( padding ) + strlen( str ) ) > MAX_BUFFER  - 1 )
+   {
+      bug( "%s: buffer overflow, not adding lead spaces", __FUNCTION__ );
+      return;
+   }
+
+   strcat( padding, str );
+   pad_ptr = padding;
+
+   while( *pad_ptr != '\0' )
+      *str++ = *pad_ptr++;
+
+   str[strlen(str)] = '\0';
+   return;
+}
+
+char *center_string( const char *to_center, int length )
+{
+   static char buf[MAX_BUFFER];
+   char *buf_ptr;
+   int string_size;
+   int to_add;
+   int extra_space;
+
+   memset( &buf, 0, sizeof( buf ) );
+
+   if( !to_center || to_center[0] == '\0' )
+   {
+      bug( "%s: attempting to center a blank string.", __FUNCTION__ );
+      return buf;
+   }
+
+   string_size = strlen( smash_color( to_center ) );
+
+   to_add = ( length - string_size ) / 2;
+   extra_space = ( length - string_size ) % 2;
+
+   bug( "%s: to_add = %d", __FUNCTION__, to_add );
+
+   extra_space = string_size % 2;
+
+   bug( "%s: extra space = %d", __FUNCTION__, extra_space );
+
+   bug( "%s: buf before adding lead space = '%s'", __FUNCTION__, buf );
+
+   add_lead_space( buf, to_add );
+
+   bug( "%s: buf after lead space = '%s'", __FUNCTION__, buf );
+
+   buf_ptr = &buf[strlen(buf)];
+
+   while( *to_center != '\0' )
+      *buf_ptr++ = *to_center++;
+
+   add_spaces( buf, to_add + extra_space );
+   buf[strlen(buf)] = '\0';
+
+   return buf;
+}

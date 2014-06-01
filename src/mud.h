@@ -226,8 +226,8 @@ typedef const struct nanny_lib_entry NANNY_LIB_ENTRY;
 typedef struct  id_handler    ID_HANDLER;
 typedef struct  id_tag        ID_TAG;
 typedef struct  entity_framework ENTITY_FRAMEWORK;
-typedef struct  inception_olc  OLC;
-
+typedef struct  inception_olc  INCEPTION;
+typedef struct  workspace      WORKSPACE;
 /* the actual structures */
 struct dSocket
 {
@@ -405,6 +405,8 @@ bool is_number( const char *arg );
 char *smash_color( const char *str );
 int color_count( const char *str );
 void add_spaces( char *str, int amount );
+void add_lead_space( char *str, int amount );
+char *center_string( const char *to_center, int length );
 
 /*
  * help.c

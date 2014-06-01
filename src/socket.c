@@ -877,6 +877,9 @@ bool flush_output(D_SOCKET *dsock)
         case STATE_ACCOUNT:
            account_prompt( dsock );
            break;
+        case STATE_OLC:
+           olc_prompt( dsock );
+           break;
         case STATE_NANNY:
            break;
      }
@@ -990,6 +993,8 @@ int change_socket_state( D_SOCKET *dsock, int state )
          if( SizeOfList( dsock->account->commands ) > 0 )
             free_command_list( dsock->account->commands );
          load_commands( dsock->account->commands, account_commands, dsock->account->level );
+         break;
+      case STATE_OLC:
          break;
       case STATE_PLAYING:
          break;
