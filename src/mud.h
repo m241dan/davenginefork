@@ -225,6 +225,9 @@ typedef int     nanny_fun( NANNY_DATA *nanny, char *arg );
 typedef const struct nanny_lib_entry NANNY_LIB_ENTRY;
 typedef struct  id_handler    ID_HANDLER;
 typedef struct  id_tag        ID_TAG;
+typedef struct  entity_framework ENTITY_FRAMEWORK;
+typedef struct  inception_olc  OLC;
+
 /* the actual structures */
 struct dSocket
 {
@@ -285,6 +288,9 @@ typedef struct buffer_type
 #include "interpret.h"
 #include "id-handler.h"
 #include "communication.h"
+#include "olc.h"
+#include "frameworks.h"
+
 /******************************
  * End of new structures      *
  ******************************/
