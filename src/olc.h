@@ -4,7 +4,7 @@ struct inception_olc
 {
    ACCOUNT_DATA *account;
    LLIST *commands;
-   WORKSPACE *wSpace;
+   LLIST *wSpaces;
 };
 
 struct workspace

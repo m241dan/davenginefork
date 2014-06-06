@@ -13,13 +13,13 @@ INCEPTION *init_olc( void )
       return NULL;
    }
    olc->commands = AllocList();
+   olc->wSpaces = AllocList();
    return olc;
 }
 
 int clear_olc( INCEPTION *olc )
 {
    int ret = RET_SUCCESS;
-   olc->wSpace = NULL;
    return ret;
 }
 
@@ -28,8 +28,10 @@ int free_olc( INCEPTION *olc )
    int ret = RET_SUCCESS;
 
    olc->account = NULL;
-   olc->wSpace = NULL;
+   FreeList( olc->wSpaces );
+   olc->wSpaces = NULL;
    FreeList( olc->commands );
+   olc->commands = NULL;
    FREE( olc );
 
    return ret;
