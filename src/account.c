@@ -227,13 +227,14 @@ void account_settings( void *passed, char *arg )
       free_command_list( settings_command->sub_commands );
       FreeList( settings_command->sub_commands );
       settings_command->sub_commands = NULL;
+      text_to_account( account, "Settings Closed.\r\n" );
    }
    else
    {
       settings_command->sub_commands = AllocList();
       load_commands( settings_command->sub_commands, settings_sub_commands, account->level );
+      text_to_account( account, "Settings Opened.\r\n" );
    }
-   text_to_account( account, "Settings Opened.\r\n" );
    return;
 }
 
