@@ -263,30 +263,19 @@ const char *print_header( const char *title, const char *pattern, int width )
    int title_len = strlen( smash_color( title ) );
    int raw_title_len = strlen( title );
    int pattern_len = strlen( smash_color( pattern ) );
-   int raw_pattern_len = strlen( pattern );
-   int each_sides_pattern_len, side_pattern_remainder, loop_limit, extra, x, y;
+   int each_sides_pattern_len, side_pattern_remainder, loop_limit, extra, x;
 
    memset( &buf, 0, sizeof( buf ) );
-   buf_ptr = buf;
 
    each_sides_pattern_len = ( width - title_len - 2 ) / 2; /* minus two for preceeding and appending spaces to the title */
    side_pattern_remainder = each_sides_pattern_len % pattern_len;
    loop_limit = each_sides_pattern_len - side_pattern_remainder;
    extra = title_len % 2;
 
-   pat_ptr = pattern;
-   for( x = 0, y = 0; x < loop_limit; x++ )
-   {
-      if( *pat_ptr == '#' )
-         x -= 2;
-      *buf_ptr++ = *pat_ptr++;
+   pat_ptr = print_bar( pattern, loop_limit );
+   strcat( buf, pat_ptr );
 
-      if( ++y % raw_pattern_len == 0 )
-      {
-         pat_ptr = pattern;
-         y = 0;
-      }
-   }
+   buf_ptr = &buf[strlen(buf)];
 
    for( x = -1 ; x < side_pattern_remainder; x++ )
       *buf_ptr++ = ' ';
@@ -297,21 +286,7 @@ const char *print_header( const char *title, const char *pattern, int width )
    for( x = -1; x < ( side_pattern_remainder + extra ); x++ )
       *buf_ptr++ = ' ';
 
-   pat_ptr = pattern;
-   for( x = 0, y = 0; x < loop_limit; x++ )
-   {
-      if( *pat_ptr == '#' )
-         x -= 2;
-      *buf_ptr++ = *pat_ptr++;
-
-      if( ++y % raw_pattern_len == 0 )
-      {
-         pat_ptr = pattern;
-         y = 0;
-      }
-   }
-
-   buf[strlen( buf )] = '\0';
+   strcat( buf, pat_ptr );
    return buf;
 }
 
@@ -573,17 +548,7 @@ char *center_string( const char *to_center, int length )
    to_add = ( length - string_size ) / 2;
    extra_space = ( length - string_size ) % 2;
 
-   bug( "%s: to_add = %d", __FUNCTION__, to_add );
-
-   extra_space = string_size % 2;
-
-   bug( "%s: extra space = %d", __FUNCTION__, extra_space );
-
-   bug( "%s: buf before adding lead space = '%s'", __FUNCTION__, buf );
-
    add_lead_space( buf, to_add );
-
-   bug( "%s: buf after lead space = '%s'", __FUNCTION__, buf );
 
    buf_ptr = &buf[strlen(buf)];
 
@@ -592,6 +557,96 @@ char *center_string( const char *to_center, int length )
 
    add_spaces( buf, to_add + extra_space );
    buf[strlen(buf)] = '\0';
+   return buf;
+}
 
+char *fit_string_to_space( const char *orig, int space )
+{
+   static char buf[MAX_BUFFER];
+   char *buf_ptr;
+   int length, to_add, x;
+
+   memset( &buf[0], 0, sizeof( buf ) );
+
+   if( !orig || orig[0] == '\0' )
+   {
+      bug( "%s: passed a null string.", __FUNCTION__ );
+      return buf;
+   }
+
+   if( ( length = strlen( smash_color( orig ) ) ) < space )
+   {
+      to_add = space - length;
+      strcat( buf, orig );
+      add_spaces( buf, to_add );
+      return buf;
+   }
+
+   buf_ptr = buf;
+
+   for( x = 0; x < space; )
+   {
+      if( *orig == '\0' )
+         break;
+
+      if( *orig == '#' )
+      {
+         *buf_ptr++ = *orig++;
+         if( *orig == '\0' )
+            break;
+         *buf_ptr++ = *orig++;
+         continue;
+      }
+      *buf_ptr++ = *orig++;
+      x++;
+   }
+   buf[strlen( buf )] = '\0';
+   return buf;
+}
+
+char *print_bar( const char *pattern, int width )
+{
+   static char buf[MAX_BUFFER];
+   const char *pat_ptr;
+   char *buf_ptr;
+   int x;
+
+   memset( &buf[0], 0, sizeof( buf ) );
+
+   if( !pattern || pattern[0] == '\0' )
+   {
+      bug( "%s: passed a NULL pattern string.", __FUNCTION__ );
+      return buf;
+   }
+
+   if( ( strlen( pattern ) * width ) > MAX_BUFFER )
+   {
+      bug( "%s: buffer overflow.", __FUNCTION__ );
+      return buf;
+   }
+
+   buf_ptr = buf;
+   pat_ptr = pattern;
+
+   for( x = 0; x < width; )
+   {
+      if( *pat_ptr == '\0' )
+         pat_ptr = pattern;
+
+      if( *pat_ptr == '#' )
+      {
+         *buf_ptr++ = *pat_ptr++;
+         if( *pat_ptr == '\0' )
+         {
+            x++;
+            continue;
+         }
+         *buf_ptr++ = *pat_ptr++;
+         continue;
+      }
+      *buf_ptr++ = *pat_ptr++;
+      x++;
+   }
+   buf[strlen(buf)] = '\0';
    return buf;
 }

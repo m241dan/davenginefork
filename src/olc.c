@@ -20,6 +20,7 @@ INCEPTION *init_olc( void )
 int clear_olc( INCEPTION *olc )
 {
    int ret = RET_SUCCESS;
+   olc->displaying_workspace = NULL;
    return ret;
 }
 
@@ -32,6 +33,7 @@ int free_olc( INCEPTION *olc )
    olc->wSpaces = NULL;
    FreeList( olc->commands );
    olc->commands = NULL;
+   olc->displaying_workspace = NULL;
    FREE( olc );
 
    return ret;
@@ -52,6 +54,7 @@ int olc_prompt( D_SOCKET *dsock )
    BUFFER *buf = buffer_new( MAX_BUFFER );
    ACCOUNT_DATA *account = dsock->account;
    INCEPTION *olc;
+   char tempstring[MAX_BUFFER];
    int ret = RET_SUCCESS;
    int center;
 
@@ -68,6 +71,8 @@ int olc_prompt( D_SOCKET *dsock )
    }
 
    bprintf( buf, "/%s\\\r\n", print_header( "Inception OLC", "-", account->pagewidth - 2 ) );
+   mud_printf( tempstring, " You have %d workspaces loaded.", SizeOfList( olc->wSpaces ) );
+   bprintf( buf, "|%s|\r\n", fit_string_to_space( tempstring, 78 ) );
    center = ( account->pagewidth - 7 ) / 2;
    bprintf( buf, "| %s  |", center_string( "Frameworks", center ) );
    bprintf( buf, " %s |\r\n", center_string( "Instances", center ) );

@@ -407,7 +407,8 @@ int color_count( const char *str );
 void add_spaces( char *str, int amount );
 void add_lead_space( char *str, int amount );
 char *center_string( const char *to_center, int length );
-
+char *fit_string_to_space( const char *orig, int space );
+char *print_bar( const char *pattern, int width );
 /*
  * help.c
  */
