@@ -610,7 +610,7 @@ void text_to_buffer(D_SOCKET *dsock, const char *txt)
     { '\0',  "",   eTHIN }
   };
 
-  if (length >= MAX_BUFFER)
+  if (length >= ( MAX_BUFFER * 8 ) - 1 )
   {
     log_string("text_to_buffer: buffer overflow.");
     return;
