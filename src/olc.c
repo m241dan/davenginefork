@@ -56,8 +56,7 @@ int olc_prompt( D_SOCKET *dsock )
    INCEPTION *olc;
    char tempstring[MAX_BUFFER];
    int ret = RET_SUCCESS;
-   int center;
-
+   int center, space_after_pipes;
    if( !account )
    {
       BAD_POINTER( "account" );
@@ -70,14 +69,31 @@ int olc_prompt( D_SOCKET *dsock )
       return ret;
    }
 
-   bprintf( buf, "/%s\\\r\n", print_header( "Inception OLC", "-", account->pagewidth - 2 ) );
-   mud_printf( tempstring, " You have %d workspaces loaded.", SizeOfList( olc->wSpaces ) );
-   bprintf( buf, "|%s|\r\n", fit_string_to_space( tempstring, 78 ) );
-   center = ( account->pagewidth - 7 ) / 2;
-   bprintf( buf, "| %s  |", center_string( "Frameworks", center ) );
-   bprintf( buf, " %s |\r\n", center_string( "Instances", center ) );
+   space_after_pipes = account->pagewidth - 2;
 
+   bprintf( buf, "/%s\\\r\n", print_header( "Inception OLC", "-", space_after_pipes ) );
+   mud_printf( tempstring, " You have %d workspaces loaded.", SizeOfList( olc->wSpaces ) );
+   bprintf( buf, "|%s|\r\n", fit_string_to_space( tempstring, space_after_pipes ) );
+   bprintf( buf, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
+   if( olc->displaying_workspace )
+   {
+      center = ( account->pagewidth - 7 ) / 2;
+      bprintf( buf, "| %s  |", center_string( "Frameworks", center ) );
+      bprintf( buf, " %s |\r\n", center_string( "Instances", center ) );
+      if( SizeOfList( olc->displaying_workspace->frameworks ) < 1 )
+         bprintf( buf, "| %s |", center_string( "(empty)", center ) );
+      /* else print the first entry in frameworks list */
+      if( SizeOfList( olc->displaying_workspace->instances )  < 1 )
+         bprintf( buf, "| %s |\r\n", center_string( "(empty)", center ) );
+      /* else ibid for instances */
+
+      /* print the reminder of the contents */ 
+   }
+   bprintf( buf, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
+   print_commands( dsock->account->olc, dsock->account->olc->commands, buf, 0, account->pagewidth );
+   bprintf( buf, "\\%s/\r\n", print_header( "Version 0.1", "-", space_after_pipes ) );
    text_to_buffer( dsock, buf->data );
+
    buffer_free( buf );
    return ret;
 }
