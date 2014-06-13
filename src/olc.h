@@ -10,6 +10,11 @@ struct inception_olc
 
 struct workspace
 {
+   ID_TAG *tag;
+   char *name;
+   char *description;
+   bool Public;
+
    LLIST *frameworks;
    bool hide_frameworks;
 
@@ -20,6 +25,10 @@ struct workspace
 INCEPTION *init_olc( void );
 int free_olc( INCEPTION *olc );
 int clear_olc( INCEPTION *olc );
+
+WORKSPACE *init_workspace( void );
+int free_workspace( WORKSPACE *wSpace );
+int clear_workspace( WORKSPACE *wSpace );
 
 void inception_open( void *passed, char *arg );
 int olc_prompt( D_SOCKET *dsock );

@@ -9,15 +9,15 @@ ACCOUNT_DATA *init_account( void )
    ACCOUNT_DATA *account;
 
    CREATE( account, ACCOUNT_DATA, 1 );
+   account->idtag = init_tag();
+   account->characters = AllocList();
+   account->command_tables = AllocList();
+   account->commands = AllocList();
    if( clear_account( account ) != RET_SUCCESS )
    {
       free_account( account );
       return NULL;
    }
-   account->idtag = init_tag();
-   account->characters = AllocList();
-   account->command_tables = AllocList();
-   account->commands = AllocList();
    return account;
 }
 
@@ -26,13 +26,18 @@ int clear_account( ACCOUNT_DATA *account )
    int ret = RET_SUCCESS;
 
    account->socket = NULL;
+   FREE( account->name );
    account->name = strdup( "new_account" );
+   FREE( account->password );
    account->password = strdup( "new_password" );
    account->level = 1;
    account->pagewidth = DEFAULT_PAGEWIDTH;
+   FREE( account->last_command );
    account->last_command = strdup( "none" );
    account->executing_command = NULL;
    account->chatting_as = strdup( " " );
+
+   /* this needs to eventually clear any lists */
 
    return ret;
 }

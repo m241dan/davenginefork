@@ -7,13 +7,13 @@ INCEPTION *init_olc( void )
    INCEPTION *olc;
 
    CREATE( olc, INCEPTION, 1 );
+   olc->commands = AllocList();
+   olc->wSpaces = AllocList();
    if( clear_olc( olc ) != RET_SUCCESS )
    {
       free_olc( olc );
       return NULL;
    }
-   olc->commands = AllocList();
-   olc->wSpaces = AllocList();
    return olc;
 }
 
@@ -35,6 +35,57 @@ int free_olc( INCEPTION *olc )
    olc->commands = NULL;
    olc->displaying_workspace = NULL;
    FREE( olc );
+
+   return ret;
+}
+
+WORKSPACE *init_workspace( void )
+{
+   WORKSPACE *wSpace;
+
+   CREATE( wSpace, WORKSPACE, 1 );
+   wSpace->tag = init_tag();
+   wSpace->frameworks = AllocList();
+   wSpace->instances = AllocList();
+   if( clear_workspace( WORKSPACE *wSpace ) != RET_SUCCESS )
+   {
+      free_workspace( WORKSPACE *wSpace );
+      return NULL;
+   }
+   return wSpace;
+
+}
+
+int clear_workspace( WORKSPACE *wSpace )
+{
+   int ret = RET_SUCCESS;
+
+   FREE( wSpace->name );
+   wSpace->name = strdup( "new workspace" );
+   FREE( wSpace->description );
+   wSpace->description = strdup( "blank description" );
+   wSpace->Public = FALSE;
+
+   /* this needs to eventually clear lists */
+
+   return ret;
+}
+
+int free_workspace( WORKSPACE *wSpace )
+{
+   int ret = RET_SUCCESS;
+
+   if( wSpace->tag )
+      free_tag( wSpace->tag );
+
+   FreeList( wSpace->frameworks );
+   wSpace->frameworks = NULL;
+   FreeList( wSpace->instances );
+   wSpace->instances = NULL;
+
+   FREE( wSpace->name );
+   FREE( wSpace->description );
+   FREE( wSpace );
 
    return ret;
 }

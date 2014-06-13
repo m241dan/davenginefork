@@ -3,7 +3,6 @@ SET FOREIGN_KEY_CHECKS=0;
 DROP TABLE IF EXISTS `accounts`;
 CREATE TABLE IF NOT EXISTS `accounts` (
    `accountID` int NOT NULL DEFAULT '-1',
-   `typeID` smallint NOT NULL DEFAULT '-1',
    `created_by` varchar(50) NOT NULL DEFAULT 'system',
    `created_on` varchar(35) NOT NULL DEFAULT '',
    `modified_by` varchar(50) NOT NULL DEFAULT 'system',
