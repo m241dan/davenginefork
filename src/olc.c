@@ -47,9 +47,9 @@ WORKSPACE *init_workspace( void )
    wSpace->tag = init_tag();
    wSpace->frameworks = AllocList();
    wSpace->instances = AllocList();
-   if( clear_workspace( WORKSPACE *wSpace ) != RET_SUCCESS )
+   if( clear_workspace( wSpace ) != RET_SUCCESS )
    {
-      free_workspace( WORKSPACE *wSpace );
+      free_workspace( wSpace );
       return NULL;
    }
    return wSpace;
