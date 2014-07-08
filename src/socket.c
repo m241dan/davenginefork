@@ -27,6 +27,7 @@ fd_set     fSet;                  /* the socket LLISTfor polling       */
 LLIST    * dsock_list= NULL;     /* the linked LLISTof active sockets */
 LLIST    * dmobile_list= NULL;   /* the mobile LLISTof active mobiles */
 LLIST    * account_list = NULL;
+LLIST    * wSpaces_list = NULL;
 MYSQL    * sql_handle = NULL;
 /* mccp support */
 const unsigned char compress_will   [] = { IAC, WILL, TELOPT_COMPRESS,  '\0' };
@@ -55,11 +56,12 @@ int main(int argc, char **argv)
    dsock_list= AllocList();
    dmobile_list= AllocList();
    account_list = AllocList();
+   wSpaces_list = AllocList();
 
   /* note that we are booting up */
   log_string("Program starting.");
 
-   log_string( "Connectign to Database" );
+   log_string( "Connecting to Database" );
 
    if( ( sql_handle = mysql_init(NULL) ) == NULL )
    {
@@ -86,6 +88,14 @@ int main(int argc, char **argv)
    if( load_recycled_ids() != RET_SUCCESS )
    {
       bug( "%s: There was a problem loading recycled IDs from Database.", __FUNCTION__ );
+      mysql_close( sql_handle );
+      exit(1);
+   }
+
+   log_string( "Loading Workspaces" );
+   if( load_workspaces() != RET_SUCCESS )
+   {
+      bug( "%s: There was a problem loading worksapces from Database.", __FUNCTION__ );
       mysql_close( sql_handle );
       exit(1);
    }

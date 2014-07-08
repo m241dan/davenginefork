@@ -90,6 +90,45 @@ int free_workspace( WORKSPACE *wSpace )
    return ret;
 }
 
+int load_workspaces( void )
+{
+   WORKSPACE *wSpace;
+   MYSQL_RES *result;
+   MYSQL_ROW row;
+
+   int ret = RET_SUCCESS;
+
+   if( !quick_query( "SELECT * FROM workspaces;" ) )
+      return RET_FAILED_OTHER;
+
+   if( ( result = mysql_store_result( sql_handle ) ) == NULL )
+      return RET_DB_NO_ENTRY;
+
+   if( !wSpaces_list )
+   {
+      BAD_POINTER( "wSpaces_list" );
+      return ret;
+   }
+
+   while( ( row = mysql_fetch_row( result ) ) )
+   {
+      wSpace = init_workspace();
+
+      wSpace->tag->id = atoi( row[0] );
+      wSpace->tag->type = atoi( row[1] );
+      wSpace->tag->created_by = strdup( row[2] );
+      wSpace->tag->created_on = strdup( row[3] );
+      wSpace->tag->modified_by = strdup( row[4] );
+      wSpace->tag->modified_on = strdup( row[5] );
+      wSpace->name = strdup( row[6] );
+      wSpace->description = strdup( row[7] );
+      wSpace->Public = (bool)atoi( row[8] );
+
+      AttachToList( wSpace, wSpaces_list );
+   }
+   return ret;
+}
+
 void inception_open( void *passed, char *arg )
 {
    ACCOUNT_DATA *account = (ACCOUNT_DATA *)passed;
@@ -106,6 +145,8 @@ int olc_prompt( D_SOCKET *dsock )
    BUFFER *buf = buffer_new( MAX_BUFFER );
    ACCOUNT_DATA *account = dsock->account;
    INCEPTION *olc;
+   WORKSPACE *wSpace;
+   ITERATOR Iter;
    char tempstring[MAX_BUFFER];
    int ret = RET_SUCCESS;
    int center, space_after_pipes;
@@ -126,9 +167,19 @@ int olc_prompt( D_SOCKET *dsock )
    bprintf( buf, "/%s\\\r\n", print_header( "Inception OLC", "-", space_after_pipes ) );
    mud_printf( tempstring, " You have %d workspaces loaded.", SizeOfList( olc->wSpaces ) );
    bprintf( buf, "|%s|\r\n", fit_string_to_space( tempstring, space_after_pipes ) );
+   if( SizeOfList( olc->wSpaces ) > 0 )
+   {
+      AttachIterator( &Iter, olc->wSpaces );
+      while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
+      {
+         mud_printf( tempstring, "- %s", wSpace->name );
+         bprintf( buf, "|%s|", fit_string_to_space( tempstring, space_after_pipes ) ); 
+      }
+      DetachIterator( &Iter );
+  }
    bprintf( buf, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
    if( olc->displaying_workspace )
-   { 
+   {
       center = ( account->pagewidth - 7 ) / 2;
       bprintf( buf, "| %s  |", center_string( "Frameworks", center ) );
       bprintf( buf, "| %s  |", print_header( "Frameworks", " ", center ) );
@@ -140,8 +191,8 @@ int olc_prompt( D_SOCKET *dsock )
          bprintf( buf, "| %s |\r\n", center_string( "(empty)", center ) );
       /* else ibid for instances */
 
-      /* print the reminder of the contents */ 
-   } 
+      /* print the reminder of the contents */
+   }
    bprintf( buf, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
    print_commands( dsock->account->olc, dsock->account->olc->commands, buf, 0, account->pagewidth );
    bprintf( buf, "\\%s/\r\n", print_header( "Version 0.1", "-", space_after_pipes ) );
@@ -263,8 +314,40 @@ void workspace_new( void *passed, char *arg )
    AttachToList( wSpace, olc->wSpaces );
    text_to_olc( olc, "New Workspace Created.\r\n" );
    return;
+}
 
+void workspace_load( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   WORKSPACE *wSpace;
+   ITERATOR Iter;
+   char buf[MAX_BUFFER];
 
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "What's the name of the workspace you want to load?\r\n" );
+      return;
+   }
+
+   arg = one_arg( arg, buf );
+
+   AttachIterator( &Iter, wSpaces_list );
+   while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
+   {
+      if( strcasecmp( buf, wSpace->name ) < 0 )
+      {
+         if( !wSpace->Public && strcmp( wSpace->tag->created_by, olc->account->name ) )
+            text_to_olc( olc, "That is a private space and you did not create it.\r\n" );
+         else
+         {
+            text_to_olc( olc, "Workspace %s loaded into your OLC.\r\n", wSpace->name );
+            AttachToList( wSpace, olc->wSpaces );
+         }
+      }
+   }
+   DetachIterator( &Iter );
+
+   return;
 }
 
 void olc_quit( void *passed, char *arg )
