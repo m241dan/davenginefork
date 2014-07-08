@@ -151,6 +151,35 @@ int olc_prompt( D_SOCKET *dsock )
    return ret;
 }
 
+int new_workspace( WORKSPACE *wSpace )
+{
+   int ret = RET_SUCCESS;
+
+   if( !wSpace )
+   {
+      BAD_POINTER( "wSpace" );
+      return ret;
+   }
+
+   if( wSpace->tag->type == -1 )
+   {
+      wSpace->tag->type = WORKSPACE_IDS;
+      if( ( ret = new_tag( wSpace->tag, "system" ) ) != RET_SUCCESS )
+      {
+         bug( "%s: called to new_tag failed giving back the returned code.", __FUNCTION__ );
+         return ret;
+      }
+   }
+
+   if( !quick_query( "INSERT INTO workspaces VALUES( %d, %d, '%s', '%s', '%s', '%s', '%s', '%s', %d );",
+              wSpace->tag->id, wSpace->tag->type, wSpace->tag->created_by,
+              wSpace->tag->created_on, wSpace->tag->modified_by, wSpace->tag->modified_on,
+              wSpace->name, wSpace->description, (int)wSpace->Public ) )
+      return RET_FAILED_OTHER;
+
+   return ret;
+}
+
 int text_to_olc( INCEPTION *olc, const char *fmt, ... )
 {
    va_list va;
@@ -178,6 +207,64 @@ void olc_file( void *passed, char *arg )
 
    text_to_olc( olc, "You used the file command.\r\n" );
    return;
+}
+
+void olc_workspace( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   COMMAND *workspace_command;
+
+   if( ( workspace_command = olc->account->executing_command ) == NULL )
+      return;
+
+   if( workspace_command->sub_commands )
+   {
+      free_command_list( workspace_command->sub_commands );
+      FreeList( workspace_command->sub_commands );
+      workspace_command->sub_commands = NULL;
+      text_to_olc( olc, "Workspace Commands Menu Closed.\r\n" );
+   }
+   else
+   {
+      workspace_command->sub_commands = AllocList();
+      load_commands( workspace_command->sub_commands, workspace_sub_commands, olc->account->level );
+      text_to_olc( olc, "Workspace Commands Menu Opened.\r\n" );
+   }
+}
+
+void workspace_new( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   WORKSPACE *wSpace;
+   char buf[MAX_BUFFER];
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "You need to enter a name for your new workspace.\r\n" );
+      return;
+   }
+
+   arg = one_arg( arg, buf );
+   wSpace = init_workspace();
+   wSpace->tag->type = WORKSPACE_IDS;
+   if( new_tag( wSpace->tag, olc->account->name ) != RET_SUCCESS )
+   {
+      text_to_olc( olc, "You could not get a new tag for your workspace, therefore, it was not created.\r\n" );
+      free_workspace( wSpace );
+      return;
+   }
+   wSpace->name = strdup( buf );
+   if( new_workspace( wSpace ) != RET_SUCCESS )
+   {
+      text_to_olc( olc, "Your new workspace could not be saved to the database it will not be created.\r\n" );
+      free_workspace( wSpace );
+      return;
+   }
+   AttachToList( wSpace, olc->wSpaces );
+   text_to_olc( olc, "New Workspace Created.\r\n" );
+   return;
+
+
 }
 
 void olc_quit( void *passed, char *arg )

@@ -35,4 +35,6 @@ int olc_prompt( D_SOCKET *dsock );
 int text_to_olc( INCEPTION *olc, const char *fmt, ... );
 
 void olc_file( void *passed, char *arg );
+void olc_workspace( void *passed, char *arg );
+void workspace_new( void *passed, char *arg );
 void olc_quit( void *passed, char *arg );

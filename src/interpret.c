@@ -83,10 +83,19 @@ const char *chatas_desc( void *extra )
 *******************************************************************************/
 struct typCmd olc_commands[] = {
    { "quit", olc_quit, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
+   { "workspace", olc_workspace, LEVEL_BASIC, NULL, TRUE, NULL, olc_commands },
    { "file", olc_file, LEVEL_BASIC, NULL, TRUE, NULL, olc_commands },
    { '\0', NULL, 0, NULL, FALSE, NULL }
 };
 
+/*******************************************************************************
+* WORKSPACE SUB COMMANDS TABLE                                                 *
+* NAME, CMD_FUNC, LEVEL, SUB_COMMANDS, CAN_SUB, DESC_FUN, FROM_TABLE           *
+*******************************************************************************/
+struct typCmd workspace_sub_commands[] = {
+   { "wnew", workspace_new, LEVEL_BASIC, NULL, FALSE, NULL, workspace_sub_commands },
+   { '\0', NULL, 0, NULL, FALSE, NULL }
+};
 
 
 int account_handle_cmd( ACCOUNT_DATA *account, char *arg )

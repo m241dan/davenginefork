@@ -10,6 +10,8 @@ const char *chatas_desc( void *extra );
 
 extern struct typCmd olc_commands[];
 
+extern struct typCmd workspace_sub_commands[];
+
 int account_handle_cmd( ACCOUNT_DATA *account, char *arg );
 int olc_handle_cmd( INCEPTION *olc, char *arg );
 
