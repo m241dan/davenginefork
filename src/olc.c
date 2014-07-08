@@ -287,6 +287,7 @@ void workspace_new( void *passed, char *arg )
 {
    INCEPTION *olc = (INCEPTION *)passed;
    WORKSPACE *wSpace;
+   ITERATOR Iter;
    char buf[MAX_BUFFER];
 
    if( !arg || arg[0] == '\0' )
@@ -296,6 +297,20 @@ void workspace_new( void *passed, char *arg )
    }
 
    arg = one_arg( arg, buf );
+
+   AttachIterator( &Iter, wSpaces_list );
+   while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
+   {
+      if( !strcasecmp( wSpace->name, buf ) )
+      {
+         text_to_olc( olc, "A workspace with that name already exists.\r\n" );
+         olc->account->socket->bust_prompt = FALSE;
+         DetachIterator( &Iter );
+         return;
+      }
+   }
+   DetachIterator( &Iter );
+
    wSpace = init_workspace();
    wSpace->tag->type = WORKSPACE_IDS;
    if( new_tag( wSpace->tag, olc->account->name ) != RET_SUCCESS )
@@ -312,6 +327,7 @@ void workspace_new( void *passed, char *arg )
       return;
    }
    AttachToList( wSpace, olc->wSpaces );
+   AttachToList( wSpace, wSpaces_list );
    text_to_olc( olc, "New Workspace Created.\r\n" );
    return;
 }
@@ -322,6 +338,8 @@ void workspace_load( void *passed, char *arg )
    WORKSPACE *wSpace;
    ITERATOR Iter;
    char buf[MAX_BUFFER];
+   bool found = FALSE;
+   int x;
 
    if( !arg || arg[0] == '\0' )
    {
@@ -334,8 +352,9 @@ void workspace_load( void *passed, char *arg )
    AttachIterator( &Iter, wSpaces_list );
    while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
    {
-      if( strcasecmp( buf, wSpace->name ) < 0 )
+      if(  ( x = strcasecmp( buf, wSpace->name ) ) == 0 || x == -110 )
       {
+         found = TRUE;
          if( !wSpace->Public && strcmp( wSpace->tag->created_by, olc->account->name ) )
             text_to_olc( olc, "That is a private space and you did not create it.\r\n" );
          else
@@ -346,6 +365,9 @@ void workspace_load( void *passed, char *arg )
       }
    }
    DetachIterator( &Iter );
+
+   if( !found )
+      text_to_olc( olc, "No workspaces with that name exist.\r\n" );
 
    return;
 }
