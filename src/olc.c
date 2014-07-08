@@ -96,6 +96,7 @@ void inception_open( void *passed, char *arg )
 
    text_to_account( account, "Opening Inception OLC...\r\n\r\n" );
    account->olc = init_olc();
+   account->olc->account = account;
    change_socket_state( account->socket, STATE_OLC );
    return;
 }
@@ -127,9 +128,10 @@ int olc_prompt( D_SOCKET *dsock )
    bprintf( buf, "|%s|\r\n", fit_string_to_space( tempstring, space_after_pipes ) );
    bprintf( buf, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
    if( olc->displaying_workspace )
-   {
+   { 
       center = ( account->pagewidth - 7 ) / 2;
       bprintf( buf, "| %s  |", center_string( "Frameworks", center ) );
+      bprintf( buf, "| %s  |", print_header( "Frameworks", " ", center ) );
       bprintf( buf, " %s |\r\n", center_string( "Instances", center ) );
       if( SizeOfList( olc->displaying_workspace->frameworks ) < 1 )
          bprintf( buf, "| %s |", center_string( "(empty)", center ) );
@@ -139,7 +141,7 @@ int olc_prompt( D_SOCKET *dsock )
       /* else ibid for instances */
 
       /* print the reminder of the contents */ 
-   }
+   } 
    bprintf( buf, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
    print_commands( dsock->account->olc, dsock->account->olc->commands, buf, 0, account->pagewidth );
    bprintf( buf, "\\%s/\r\n", print_header( "Version 0.1", "-", space_after_pipes ) );
@@ -169,3 +171,23 @@ int text_to_olc( INCEPTION *olc, const char *fmt, ... )
    return res;
 }
 
+
+void olc_file( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+
+   text_to_olc( olc, "You used the file command.\r\n" );
+   return;
+}
+
+void olc_quit( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+
+   text_to_olc( olc, "You close the Inception OLC.\r\n" );
+   change_socket_state( olc->account->socket, STATE_ACCOUNT );
+   olc->account->olc = NULL;
+   free_olc( olc );
+
+   return;
+}

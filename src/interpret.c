@@ -77,6 +77,18 @@ const char *chatas_desc( void *extra )
    return buf;
 }
 
+/*******************************************************************************
+* INCEPTION OLC COMMAND TABLE                                                  *
+* NAME, CMD_FUNC, LVL, SUB_COMMANDS, CAN_SUB, DESC_FUN, FROM_TABLE             *
+*******************************************************************************/
+struct typCmd olc_commands[] = {
+   { "quit", olc_quit, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
+   { "file", olc_file, LEVEL_BASIC, NULL, TRUE, NULL, olc_commands },
+   { '\0', NULL, 0, NULL, FALSE, NULL }
+};
+
+
+
 int account_handle_cmd( ACCOUNT_DATA *account, char *arg )
 {
    COMMAND *com;
@@ -94,15 +106,42 @@ int account_handle_cmd( ACCOUNT_DATA *account, char *arg )
    if( ( com = find_loaded_command( account->commands, command ) ) == NULL )
       text_to_account( account, "No such command.\r\n" );
    else
+      execute_command( account, com, account, arg );
+
+   return ret;
+}
+
+int olc_handle_cmd( INCEPTION *olc, char *arg )
+{
+   COMMAND *com;
+   char command[MAX_BUFFER];
+   int ret = RET_SUCCESS;
+
+   if( !olc )
    {
+      BAD_POINTER( "olc" );
+      return ret;
+   }
+
+   arg = one_arg( arg, command );
+
+   if( ( com = find_loaded_command( olc->commands, command ) ) == NULL )
+      text_to_olc( olc, "No such command.\r\n" );
+   else
+      execute_command( olc->account, com, olc, arg );
+
+   return ret;
+}
+
+void execute_command( ACCOUNT_DATA *account, COMMAND *com, void *passed, char *arg )
+{
       account->executing_command = com;
-      (*com->cmd_funct)( account, arg );
+      (*com->cmd_funct)( passed, arg );
       FREE( account->last_command );
       account->last_command = strdup( account->executing_command->cmd_name );
       account->executing_command = NULL;
-   }
-   return ret;
 }
+
 
 COMMAND *find_loaded_command( LLIST *loaded_list, const char *command )
 {

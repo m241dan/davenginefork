@@ -8,7 +8,12 @@ extern struct typCmd settings_sub_commands[];
 const char *pagewidth_desc( void *extra );
 const char *chatas_desc( void *extra );
 
+extern struct typCmd olc_commands[];
+
 int account_handle_cmd( ACCOUNT_DATA *account, char *arg );
+int olc_handle_cmd( INCEPTION *olc, char *arg );
+
+void execute_command( ACCOUNT_DATA *account, COMMAND *com, void *passed, char *arg );
 COMMAND *find_loaded_command( LLIST *loaded_list, const char *command );
 int load_commands( LLIST *command_list, COMMAND command_table[], int level_compare );
 int copy_command( COMMAND *to_copy, COMMAND *command );

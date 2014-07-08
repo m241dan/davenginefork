@@ -206,6 +206,10 @@ void GameLoop(int control)
              if( account_handle_cmd( dsock->account, dsock->next_command ) != RET_SUCCESS )
                 bug( "account_handle_cmd failed to interpret the input." );
              break;
+          case STATE_OLC:
+             if( olc_handle_cmd( dsock->account->olc, dsock->next_command ) != RET_SUCCESS )
+                bug( "olc_handle_cmd failed to interpret the input." );
+             break;
           case STATE_PLAYING:
 /*            handle_cmd_input(dsock, dsock->next_command); */
             break;
@@ -995,6 +999,9 @@ int change_socket_state( D_SOCKET *dsock, int state )
          load_commands( dsock->account->commands, account_commands, dsock->account->level );
          break;
       case STATE_OLC:
+         if( SizeOfList( dsock->account->olc->commands ) > 0 )
+            free_command_list( dsock->account->olc->commands );
+         load_commands( dsock->account->olc->commands, olc_commands, dsock->account->level );
          break;
       case STATE_PLAYING:
          break;

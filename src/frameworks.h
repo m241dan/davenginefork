@@ -8,4 +8,5 @@ struct entity_framework
    char *description;
 
    LLIST *contents;
+   LLIST *specifications;
 };
