@@ -173,7 +173,7 @@ int olc_prompt( D_SOCKET *dsock )
       while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
       {
          mud_printf( tempstring, "- %s", wSpace->name );
-         bprintf( buf, "|%s|", fit_string_to_space( tempstring, space_after_pipes ) ); 
+         bprintf( buf, "|%s|\r\n", fit_string_to_space( tempstring, space_after_pipes ) );
       }
       DetachIterator( &Iter );
   }
