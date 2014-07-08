@@ -101,7 +101,8 @@ int nanny_password( NANNY_DATA *nanny, char *arg )
     else
     {
        text_to_socket( nanny->socket, "Bad password!\r\n" );
-       close_socket( nanny->socket, FALSE );
+       nanny_state_prev( nanny, TRUE );
+
     }
    return ret;
 }
