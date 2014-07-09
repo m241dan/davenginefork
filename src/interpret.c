@@ -83,6 +83,7 @@ const char *chatas_desc( void *extra )
 *******************************************************************************/
 struct typCmd olc_commands[] = {
    { "quit", olc_quit, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
+   { "using", olc_using, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
    { "workspace", olc_workspace, LEVEL_BASIC, NULL, TRUE, NULL, olc_commands },
    { "file", olc_file, LEVEL_BASIC, NULL, TRUE, NULL, olc_commands },
    { '\0', NULL, 0, NULL, FALSE, NULL }

@@ -20,7 +20,7 @@ INCEPTION *init_olc( void )
 int clear_olc( INCEPTION *olc )
 {
    int ret = RET_SUCCESS;
-   olc->displaying_workspace = NULL;
+   olc->using_workspace = NULL;
    return ret;
 }
 
@@ -33,7 +33,7 @@ int free_olc( INCEPTION *olc )
    olc->wSpaces = NULL;
    FreeList( olc->commands );
    olc->commands = NULL;
-   olc->displaying_workspace = NULL;
+   olc->using_workspace = NULL;
    FREE( olc );
 
    return ret;
@@ -176,19 +176,19 @@ int olc_prompt( D_SOCKET *dsock )
          bprintf( buf, "|%s|\r\n", fit_string_to_space( tempstring, space_after_pipes ) );
       }
       DetachIterator( &Iter );
-  }
-   bprintf( buf, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
-   if( olc->displaying_workspace )
+   }
+   if( olc->using_workspace )
    {
+      mud_printf( tempstring, "%s Workspace", olc->using_workspace->name );
+      bprintf( buf, "|%s|\r\n", print_header( tempstring, "-", space_after_pipes ) );
       center = ( account->pagewidth - 7 ) / 2;
-      bprintf( buf, "| %s  |", center_string( "Frameworks", center ) );
       bprintf( buf, "| %s  |", print_header( "Frameworks", " ", center ) );
       bprintf( buf, " %s |\r\n", center_string( "Instances", center ) );
-      if( SizeOfList( olc->displaying_workspace->frameworks ) < 1 )
-         bprintf( buf, "| %s |", center_string( "(empty)", center ) );
+      if( SizeOfList( olc->using_workspace->frameworks ) < 1 )
+         bprintf( buf, "| %s  |", center_string( "(empty)", center ) );
       /* else print the first entry in frameworks list */
-      if( SizeOfList( olc->displaying_workspace->instances )  < 1 )
-         bprintf( buf, "| %s |\r\n", center_string( "(empty)", center ) );
+      if( SizeOfList( olc->using_workspace->instances )  < 1 )
+         bprintf( buf, " %s |\r\n", center_string( "(empty)", center ) );
       /* else ibid for instances */
 
       /* print the reminder of the contents */
@@ -249,6 +249,14 @@ int text_to_olc( INCEPTION *olc, const char *fmt, ... )
 
    text_to_buffer( olc->account->socket, dest );
    return res;
+}
+
+void olc_no_prompt( INCEPTION *olc )
+{
+   if( !olc->account || !olc->account->socket )
+      return;
+   olc->account->socket->bust_prompt = FALSE;
+   return;
 }
 
 
@@ -372,6 +380,37 @@ void workspace_load( void *passed, char *arg )
    return;
 }
 
+void olc_using( void *passed, char *arg )
+{
+   INCEPTION * olc = (INCEPTION *)passed;
+   WORKSPACE *wSpace;
+   ITERATOR Iter;
+
+   if( SizeOfList( olc->wSpaces ) < 1 )
+   {
+      text_to_olc( olc, "You have no workspaces loaded.\r\n" );
+      return;
+   }
+
+   AttachIterator( &Iter, olc->wSpaces );
+   while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
+      if( !strcasecmp( arg, wSpace->name ) )
+         break;
+   DetachIterator( &Iter );
+
+   if( !wSpace )
+   {
+      text_to_olc( olc, "You have no such workspace loaded. Remember, be specific!\r\n" );
+      olc_no_prompt( olc );
+   }
+   else
+   {
+      olc->using_workspace = wSpace;
+      text_to_olc( olc, "Using %s.\r\n", wSpace->name );
+   }
+   return;
+}
+
 void olc_quit( void *passed, char *arg )
 {
    INCEPTION *olc = (INCEPTION *)passed;
@@ -383,3 +422,4 @@ void olc_quit( void *passed, char *arg )
 
    return;
 }
+
