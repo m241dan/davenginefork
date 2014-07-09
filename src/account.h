@@ -31,7 +31,6 @@ int free_account( ACCOUNT_DATA *account );
 /* i/o */
 int load_account( ACCOUNT_DATA *account, const char *name );
 int new_account( ACCOUNT_DATA *account );
-int save_account( ACCOUNT_DATA *account );
 
 /* utility */
 ACCOUNT_DATA *check_account_reconnect(const char *act_name);

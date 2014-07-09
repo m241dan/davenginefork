@@ -77,7 +77,7 @@ typedef enum
 
 typedef enum
 {
-   ACCOUNT_IDS, WORKSPACE_IDS, MAX_ID_HANDLER
+   ACCOUNT_IDS, WORKSPACE_IDS, ENTITY_FRAMEWORK_IDS, MAX_ID_HANDLER
 } id_handler_types;
 
 typedef enum

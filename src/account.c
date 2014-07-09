@@ -137,17 +137,6 @@ int new_account( ACCOUNT_DATA *account )
    return ret;
 }
 
-int save_account( ACCOUNT_DATA *account )
-{
-   int ret = RET_SUCCESS;
-
-   if( !account )
-   {
-      BAD_POINTER( "account" );
-      return ret;
-   }
-   return ret;
-}
 int account_prompt( D_SOCKET *dsock )
 {
    BUFFER *buf = buffer_new(MAX_BUFFER);
