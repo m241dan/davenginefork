@@ -10,6 +10,7 @@ ACCOUNT_DATA *init_account( void )
 
    CREATE( account, ACCOUNT_DATA, 1 );
    account->idtag = init_tag();
+   account->idtag->type = ACCOUNT_IDS;
    account->characters = AllocList();
    account->command_tables = AllocList();
    account->commands = AllocList();
@@ -121,7 +122,6 @@ int new_account( ACCOUNT_DATA *account )
       return ret;
    }
 
-   account->idtag->type = ACCOUNT_IDS; /* set type before trying to get new tag */
    if( ( ret = new_tag( account->idtag, "system" ) ) != RET_SUCCESS )
    {
       bug( "%s: could not set parameters for a new ID tag.", __FUNCTION__ );

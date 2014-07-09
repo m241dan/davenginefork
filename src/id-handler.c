@@ -87,9 +87,9 @@ int clear_tag( ID_TAG *tag )
    FREE( tag->created_on );
    FREE( tag->modified_by );
    FREE( tag->modified_on );
-   tag->created_by = strdup( "system" );
+   tag->created_by = strdup( "null" );
    tag->created_on = strdup( strip_nl( ctime( &current_time ) ) );
-   tag->modified_by = strdup( "system" );
+   tag->modified_by = strdup( "null" );
    tag->modified_on = strdup( strip_nl( ctime( &current_time ) ) );
 
    return ret;

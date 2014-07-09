@@ -45,6 +45,7 @@ WORKSPACE *init_workspace( void )
 
    CREATE( wSpace, WORKSPACE, 1 );
    wSpace->tag = init_tag();
+   wSpace->tag->type = WORKSPACE_IDS;
    wSpace->frameworks = AllocList();
    wSpace->instances = AllocList();
    if( clear_workspace( wSpace ) != RET_SUCCESS )
@@ -212,9 +213,8 @@ int new_workspace( WORKSPACE *wSpace )
       return ret;
    }
 
-   if( wSpace->tag->type == -1 )
+   if( !strcmp( wSpace->tag->created_on, "null" ) )
    {
-      wSpace->tag->type = WORKSPACE_IDS;
       if( ( ret = new_tag( wSpace->tag, "system" ) ) != RET_SUCCESS )
       {
          bug( "%s: called to new_tag failed giving back the returned code.", __FUNCTION__ );
@@ -320,7 +320,6 @@ void workspace_new( void *passed, char *arg )
    DetachIterator( &Iter );
 
    wSpace = init_workspace();
-   wSpace->tag->type = WORKSPACE_IDS;
    if( new_tag( wSpace->tag, olc->account->name ) != RET_SUCCESS )
    {
       text_to_olc( olc, "You could not get a new tag for your workspace, therefore, it was not created.\r\n" );
@@ -380,6 +379,34 @@ void workspace_load( void *passed, char *arg )
    return;
 }
 
+void olc_frameworks( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   COMMAND *frameworks_command;
+
+   if( ( frameworks_command = olc->account->executing_command ) == NULL )
+      return;
+
+   if( frameworks_command->sub_commands )
+   {
+      free_command_list( frameworks_command->sub_commands );
+      FreeList( frameworks_command->sub_commands );
+      frameworks_command->sub_commands = NULL;
+      text_to_olc( olc, "Frameworks Commands Menu Closed.\r\n" );
+   }
+   else
+   {
+      frameworks_command->sub_commands = AllocList();
+      load_commands( frameworks_command->sub_commands, frameworks_sub_commands, olc->account->level );
+      text_to_olc( olc, "Frameworks Commands Menu Opened.\r\n" );
+   }
+}
+
+void framework_create( void *passed, char *arg )
+{
+   return;
+}
+
 void olc_using( void *passed, char *arg )
 {
    INCEPTION * olc = (INCEPTION *)passed;
@@ -389,6 +416,13 @@ void olc_using( void *passed, char *arg )
    if( SizeOfList( olc->wSpaces ) < 1 )
    {
       text_to_olc( olc, "You have no workspaces loaded.\r\n" );
+      return;
+   }
+
+   if( !strcasecmp( arg, "none" ) )
+   {
+      text_to_olc( olc, "You are no longer using any workspace.\r\n" );
+      olc->using_workspace = NULL;
       return;
    }
 
