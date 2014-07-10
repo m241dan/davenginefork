@@ -162,6 +162,28 @@ int olc_handle_cmd( INCEPTION *olc, char *arg )
    return ret;
 }
 
+int eFrame_editor_handle_command( INCEPTION *olc, char *arg )
+{
+   COMMAND *com;
+   char command[MAX_BUFFER];
+   int ret = RET_SUCCESS;
+
+   if( !olc )
+   {
+      BAD_POINTER( "olc" );
+      return ret;
+   }
+
+   arg = one_arg( arg, command );
+
+   if( ( com = find_loaded_command( olc->editor_commands, command ) ) == NULL )
+      text_to_olc( olc, "No such command.\r\n" );
+   else
+      execute_command( olc->account, com, olc, arg );
+
+   return ret;
+}
+
 void execute_command( ACCOUNT_DATA *account, COMMAND *com, void *passed, char *arg )
 {
       account->executing_command = com;
@@ -273,6 +295,7 @@ int free_command( COMMAND *command )
    {
       free_command_list( command->sub_commands );
       FreeList( command->sub_commands );
+      command->sub_commands = NULL;
    }
    command->from_table = NULL;
    FREE( command );

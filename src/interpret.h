@@ -18,6 +18,7 @@ extern struct typCmd create_eFramework_commands[];
 
 int account_handle_cmd( ACCOUNT_DATA *account, char *arg );
 int olc_handle_cmd( INCEPTION *olc, char *arg );
+int eFrame_editor_handle_command( INCEPTION *olc, char *arg );
 
 void execute_command( ACCOUNT_DATA *account, COMMAND *com, void *passed, char *arg );
 COMMAND *find_loaded_command( LLIST *loaded_list, const char *command );

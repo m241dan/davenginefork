@@ -220,6 +220,10 @@ void GameLoop(int control)
              if( olc_handle_cmd( dsock->account->olc, dsock->next_command ) != RET_SUCCESS )
                 bug( "olc_handle_cmd failed to interpret the input." );
              break;
+          case STATE_EFRAME_EDITOR:
+             if( eFrame_editor_handle_command( dsock->account->olc, dsock->next_command ) != RET_SUCCESS )
+                bug( "eFrame_editor_handle_command failed to interpret the input." );
+             break;
           case STATE_PLAYING:
 /*            handle_cmd_input(dsock, dsock->next_command); */
             break;
@@ -1007,19 +1011,16 @@ int change_socket_state( D_SOCKET *dsock, int state )
       case STATE_NANNY:
          break;
       case STATE_ACCOUNT:
-         if( SizeOfList( dsock->account->commands ) > 0 )
-            free_command_list( dsock->account->commands );
-         load_commands( dsock->account->commands, account_commands, dsock->account->level );
+         if( SizeOfList( dsock->account->commands ) < 1 )
+            load_commands( dsock->account->commands, account_commands, dsock->account->level );
          break;
       case STATE_OLC:
-         if( SizeOfList( dsock->account->olc->commands ) > 0 )
-            free_command_list( dsock->account->olc->commands );
-         load_commands( dsock->account->olc->commands, olc_commands, dsock->account->level );
+         if( SizeOfList( dsock->account->olc->commands ) < 1 )
+            load_commands( dsock->account->olc->commands, olc_commands, dsock->account->level );
          break;
       case STATE_EFRAME_EDITOR:
-         if( SizeOfList( dsock->account->olc->editor_commands ) > 0 )
-            free_command_list( dsock->account->olc->editor_commands );
-         load_commands( dsock->account->olc->editor_commands, create_eFramework_commands, dsock->account->level );
+         if( SizeOfList( dsock->account->olc->editor_commands ) < 1 )
+           load_commands( dsock->account->olc->editor_commands, create_eFramework_commands, dsock->account->level );
          break;
       case STATE_PLAYING:
          break;
