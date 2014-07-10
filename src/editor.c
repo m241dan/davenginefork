@@ -34,6 +34,9 @@ int editor_eFramework_prompt( D_SOCKET *dsock )
    mud_printf( tempstring, " Desc : %s", frame->description );
    bprintf( buf, "|%s|\r\n", fit_string_to_space( tempstring, space_after_pipes ) );
    bprintf( buf, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
+   bprintf( buf, "|%s|", print_header( "Specifications Here", " ", ( space_after_pipes - 1 ) / 2 ) );
+   bprintf( buf, "%s |\r\n", print_header( "Stats Here", " ", ( space_after_pipes - 1 ) / 2 ) );
+   bprintf( buf, "|%s|", print_bar( "-", space_after_pipes ) );
    print_commands( dsock->account->olc, dsock->account->olc->editor_commands, buf, 0, dsock->account->pagewidth );
    bprintf( buf, "\\%s/\r\n", print_bar( "-", space_after_pipes ) );
 
@@ -67,6 +70,14 @@ void eFramework_description( void *passed, char *arg )
 void eFramework_done( void *passed, char *arg )
 {
    INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_FRAMEWORK *frame = (ENTITY_FRAMEWORK *)olc->editing;
+
+   if( !frame->tag )
+   {
+      new_tag( frame->tag, olc->account->name );
+      new_eFramework( frame );
+   }
+
    FREE( olc->editing );
    free_command_list( olc->editor_commands );
    FreeList( olc->editor_commands );
@@ -74,5 +85,6 @@ void eFramework_done( void *passed, char *arg )
    olc->editing_state = STATE_OLC;
    change_socket_state( olc->account->socket, STATE_OLC );
    text_to_olc( olc, "Exiting Entity Framework Editor.\r\n" ); 
+
    return;
 }

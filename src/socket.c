@@ -27,7 +27,10 @@ fd_set     fSet;                  /* the socket LLISTfor polling       */
 LLIST    * dsock_list= NULL;     /* the linked LLISTof active sockets */
 LLIST    * dmobile_list= NULL;   /* the mobile LLISTof active mobiles */
 LLIST    * account_list = NULL;
-LLIST    * wSpaces_list = NULL;
+LLIST    * active_wSpaces = NULL;
+LLIST    * active_OLCs = NULL;
+LLIST    * active_frameworks = NULL;
+
 MYSQL    * sql_handle = NULL;
 /* mccp support */
 const unsigned char compress_will   [] = { IAC, WILL, TELOPT_COMPRESS,  '\0' };
@@ -56,8 +59,9 @@ int main(int argc, char **argv)
    dsock_list= AllocList();
    dmobile_list= AllocList();
    account_list = AllocList();
-   wSpaces_list = AllocList();
-
+   active_wSpaces = AllocList();
+   active_OLCs = AllocList();
+   active_frameworks = AllocList();
   /* note that we are booting up */
   log_string("Program starting.");
 
@@ -91,7 +95,7 @@ int main(int argc, char **argv)
       mysql_close( sql_handle );
       exit(1);
    }
-
+/*
    log_string( "Loading Workspaces" );
    if( load_workspaces() != RET_SUCCESS )
    {
@@ -99,7 +103,7 @@ int main(int argc, char **argv)
       mysql_close( sql_handle );
       exit(1);
    }
-
+*/
   /* initialize the event queue - part 1 */
   init_event_queue(1);
 

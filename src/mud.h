@@ -313,7 +313,9 @@ typedef struct buffer_type
 extern  STACK        *  dsock_free;       /* the socket free LLIST               */
 extern  LLIST        *  dsock_list;       /* the linked LLIST of active sockets  */
 extern  LLIST        *  account_list;     /* the linked List of active accounts */
-extern  LLIST        *  wSpaces_list;     /* the linked List of all workspaces */
+extern  LLIST        *  active_wSpaces;   /* a linked list for active work spaces */
+extern  LLIST	     *	active_OLCs;	  /* a linked list of active OLCs */
+extern  LLIST        *  active_frameworks; /* a linked list of active frameworks */
 extern  LLIST        *  help_list;        /* the linked LLIST of help files      */
 extern  MYSQL        *  sql_handle;       /* global connection to sql database */
 extern  const struct    typCmd tabCmd[];  /* the command table                  */
@@ -323,7 +325,7 @@ extern  char        *   motd;             /* the MOTD help file                 
 extern  int             control;          /* boot control socket thingy         */
 extern  time_t          current_time;     /* let's cut down on calls to time()  */
 
-/*************************** 
+/***************************
  * End of Global Variables *
  ***************************/
 

@@ -23,6 +23,8 @@ struct workspace
 
    LLIST *instances;
    bool hide_instances;
+
+   LLIST *who_using;
 };
 
 INCEPTION *init_olc( void );
@@ -33,11 +35,13 @@ WORKSPACE *init_workspace( void );
 int free_workspace( WORKSPACE *wSpace );
 int clear_workspace( WORKSPACE *wSpace );
 int load_workspaces( void );
+void db_load_workspace( WORKSPACE *wSpace, MYSQL_ROW *row );
 
 void inception_open( void *passed, char *arg );
 int olc_prompt( D_SOCKET *dsock );
 int text_to_olc( INCEPTION *olc, const char *fmt, ... );
 void olc_no_prompt( INCEPTION *olc );
+bool workspace_list_has_name( LLIST *wSpaces, const char *name );
 
 void olc_file( void *passed, char *arg );
 void olc_workspace( void *passed, char *arg );

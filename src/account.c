@@ -97,20 +97,25 @@ int load_account( ACCOUNT_DATA *account, const char *name )
    }
 
    row = mysql_fetch_row( result );
-   account->idtag->id = atoi( row[0] );
-   account->idtag->type = atoi( row[1] );
-   account->idtag->created_by = strdup( row[2] );
-   account->idtag->created_on = strdup( row[3] );
-   account->idtag->modified_by = strdup( row[4] );
-   account->idtag->modified_on = strdup( row[5] );
-   account->name = strdup( row[6] );
-   account->password = strdup( row[7] );
-   account->level = atoi( row[8] );
-   account->pagewidth = atoi( row[9] );
-   account->chatting_as = strdup( row[10] );
+   db_load_account( account, &row );
 
    mysql_free_result( result );
    return RET_SUCCESS;
+}
+
+void db_load_account( ACCOUNT_DATA *account, MYSQL_ROW *row )
+{
+   account->idtag->id = atoi( (*row)[0] );
+   account->idtag->type = atoi( (*row)[1] );
+   account->idtag->created_by = strdup( (*row)[2] );
+   account->idtag->created_on = strdup( (*row)[3] );
+   account->idtag->modified_by = strdup( (*row)[4] );
+   account->idtag->modified_on = strdup( (*row)[5] );
+   account->name = strdup( (*row)[6] );
+   account->password = strdup( (*row)[7] );
+   account->level = atoi( (*row)[8] );
+   account->pagewidth = atoi( (*row)[9] );
+   account->chatting_as = strdup( (*row)[10] );
 }
 
 int new_account( ACCOUNT_DATA *account )
