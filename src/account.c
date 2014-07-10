@@ -51,6 +51,7 @@ int free_account( ACCOUNT_DATA *account )
    if( account->idtag )
       free_tag( account->idtag );
    account->socket = NULL;
+   CLEARLIST( account->characters, char );
    FreeList( account->characters );
    account->characters = NULL;
    free_command_list( account->commands );

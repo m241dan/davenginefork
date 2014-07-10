@@ -13,7 +13,7 @@ struct entity_framework
 };
 
 /* creation */
-ENTITY_FRAMEWORK *init_framework( void );
+ENTITY_FRAMEWORK *init_eFramework( void );
 int clear_eFramework( ENTITY_FRAMEWORK *frame );
 
 /* deletion */

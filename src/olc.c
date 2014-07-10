@@ -21,6 +21,12 @@ int clear_olc( INCEPTION *olc )
 {
    int ret = RET_SUCCESS;
    olc->using_workspace = NULL;
+   olc->editing = NULL;
+   if( olc->editor_commands )
+   {
+      free_command_list( olc->editor_commands );
+      olc->editor_commands = NULL;
+   }
    return ret;
 }
 
@@ -31,9 +37,15 @@ int free_olc( INCEPTION *olc )
    olc->account = NULL;
    FreeList( olc->wSpaces );
    olc->wSpaces = NULL;
+   free_command_list( olc->commands );
    FreeList( olc->commands );
    olc->commands = NULL;
    olc->using_workspace = NULL;
+   if( olc->editor_commands )
+   {
+      free_command_list( olc->editor_commands );
+      olc->editor_commands = NULL;
+   }
    FREE( olc );
 
    return ret;
@@ -404,6 +416,21 @@ void olc_frameworks( void *passed, char *arg )
 
 void framework_create( void *passed, char *arg )
 {
+   INCEPTION *olc = (INCEPTION *)passed;
+
+   if( olc->editing )
+   {
+      text_to_olc( olc, "There's already something loaded in your editor, finish that first.\r\n" );
+      change_socket_state( olc->account->socket, olc->editing_state );
+      return;
+   }
+
+   CREATE( olc->editing, ENTITY_FRAMEWORK, 1 );
+   olc->editing = init_eFramework();
+   olc->editing_state = STATE_EFRAME_EDITOR;
+   text_to_olc( olc, "Creating a new Entity Framework.\r\n" );
+   olc->editor_commands = AllocList();
+   change_socket_state( olc->account->socket, olc->editing_state );
    return;
 }
 

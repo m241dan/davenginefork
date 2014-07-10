@@ -4,8 +4,11 @@ struct inception_olc
 {
    ACCOUNT_DATA *account;
    LLIST *commands;
+   LLIST *editor_commands;
    LLIST *wSpaces;
    WORKSPACE *using_workspace;
+   void *editing;
+   int editing_state;
 };
 
 struct workspace

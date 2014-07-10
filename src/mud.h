@@ -55,7 +55,7 @@
 /* Connection states */
 typedef enum
 {
-   STATE_NANNY, STATE_ACCOUNT, STATE_OLC, STATE_PLAYING, STATE_CLOSED, MAX_STATE
+   STATE_NANNY, STATE_ACCOUNT, STATE_OLC, STATE_EFRAME_EDITOR, STATE_PLAYING, STATE_CLOSED, MAX_STATE
 } socket_states;
 
 /* Thread states - please do not change the order of these states    */
@@ -182,6 +182,16 @@ do                                          \
    }                                        \
 } while(0)
 
+#define CLEARLIST( list, type )						\
+do									\
+{									\
+   type  *cell; 							\
+   ITERATOR clearlist_iter;						\
+   AttachIterator( &clearlist_iter, (list) );				\
+   while( ( cell = (type *)NextInList( &clearlist_iter ) ) != NULL )	\
+      DetachFromList( cell, list );					\
+   DetachIterator( &clearlist_iter );					\
+} while (0)								\
 
 #define UMIN(a, b)		((a) < (b) ? (a) : (b))
 #define IS_ADMIN(dMob)          ((dMob->level) > LEVEL_PLAYER ? TRUE : FALSE)
@@ -290,6 +300,7 @@ typedef struct buffer_type
 #include "communication.h"
 #include "olc.h"
 #include "frameworks.h"
+#include "editor.h"
 
 /******************************
  * End of new structures      *

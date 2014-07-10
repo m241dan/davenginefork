@@ -109,6 +109,15 @@ struct typCmd frameworks_sub_commands[] = {
    { '\0', NULL, 0, NULL, FALSE, NULL }
 };
 
+struct typCmd create_eFramework_commands[] = {
+   { "name", eFramework_name, LEVEL_BASIC, NULL, FALSE, NULL, create_eFramework_commands },
+   { "short", eFramework_short, LEVEL_BASIC, NULL, FALSE, NULL, create_eFramework_commands },
+   { "long", eFramework_long, LEVEL_BASIC, NULL, FALSE, NULL, create_eFramework_commands },
+   { "description", eFramework_description, LEVEL_BASIC, NULL, FALSE, NULL, create_eFramework_commands },
+   { "done", eFramework_done, LEVEL_BASIC, NULL, FALSE, NULL, create_eFramework_commands },
+   { '\0', NULL, 0, NULL, FALSE, NULL }
+};
+
 int account_handle_cmd( ACCOUNT_DATA *account, char *arg )
 {
    COMMAND *com;

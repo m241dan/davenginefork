@@ -894,6 +894,9 @@ bool flush_output(D_SOCKET *dsock)
         case STATE_OLC:
            olc_prompt( dsock );
            break;
+        case STATE_EFRAME_EDITOR:
+           editor_eFramework_prompt( dsock );
+           break;
         case STATE_NANNY:
            break;
      }
@@ -1012,6 +1015,11 @@ int change_socket_state( D_SOCKET *dsock, int state )
          if( SizeOfList( dsock->account->olc->commands ) > 0 )
             free_command_list( dsock->account->olc->commands );
          load_commands( dsock->account->olc->commands, olc_commands, dsock->account->level );
+         break;
+      case STATE_EFRAME_EDITOR:
+         if( SizeOfList( dsock->account->olc->editor_commands ) > 0 )
+            free_command_list( dsock->account->olc->editor_commands );
+         load_commands( dsock->account->olc->editor_commands, create_eFramework_commands, dsock->account->level );
          break;
       case STATE_PLAYING:
          break;

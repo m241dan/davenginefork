@@ -14,6 +14,8 @@ extern struct typCmd workspace_sub_commands[];
 
 extern struct typCmd frameworks_sub_commands[];
 
+extern struct typCmd create_eFramework_commands[];
+
 int account_handle_cmd( ACCOUNT_DATA *account, char *arg );
 int olc_handle_cmd( INCEPTION *olc, char *arg );
 
