@@ -424,6 +424,7 @@ void workspace_load( void *passed, char *arg )
                      strcat( who_using, ", " );
                   strcat( who_using, account->name );
                }
+               DetachFromList( &IterTwo, wSpace->who_using );
                text_to_olc( olc, " These users(%s) are already using this workspace.", who_using );
             }
             text_to_olc( olc, "\r\n" );
@@ -451,6 +452,7 @@ void workspace_load( void *passed, char *arg )
                AttachToList( wSpace, active_wSpaces );
                AttachToList( wSpace, olc->wSpaces );
                AttachToList( olc->account, wSpace->who_using );
+               puts( olc->account->name );
                text_to_olc( olc, "Workspace %s loaded from database.\r\n", wSpace->name );
             }
          }
