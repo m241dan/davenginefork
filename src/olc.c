@@ -166,6 +166,8 @@ void db_load_workspace( WORKSPACE *wSpace, MYSQL_ROW *row )
 
 void unuse_workspace( WORKSPACE *wSpace, ACCOUNT_DATA *account )
 {
+   if( account->olc->using_workspace == wSpace )
+      account->olc->using_workspace = NULL;
    DetachFromList( account, wSpace->who_using );
    if( SizeOfList( wSpace->who_using ) < 1 )
    {
