@@ -35,3 +35,4 @@ int update_tag( ID_TAG *tag, const char *effector, ... );
 int load_id_handlers( void );
 int load_recycled_ids( void );
 int get_new_id( int type );
+int get_potential_id( int type );

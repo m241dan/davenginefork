@@ -210,7 +210,7 @@ int olc_prompt( D_SOCKET *dsock )
    ITERATOR Iter;
    char tempstring[MAX_BUFFER];
    int ret = RET_SUCCESS;
-   int center, space_after_pipes;
+   int center, space_after_pipes, x;
    if( !account )
    {
       BAD_POINTER( "account" );
@@ -245,11 +245,17 @@ int olc_prompt( D_SOCKET *dsock )
       center = ( account->pagewidth - 7 ) / 2;
       bprintf( buf, "| %s  |", print_header( "Frameworks", " ", center ) );
       bprintf( buf, " %s |\r\n", center_string( "Instances", center ) );
+
       if( SizeOfList( olc->using_workspace->frameworks ) < 1 )
-         bprintf( buf, "| %s  |", center_string( "(empty)", center ) );
+         bprintf( buf, "|%s|", print_header( "(empty)", " ", space_after_pipes / 2 ) );
+      else
+      {
+         
+         bprintf( buf, "|%s|, print_header( tempstring, " ", space_after_pipes / 2 ) );
+      }
       /* else print the first entry in frameworks list */
       if( SizeOfList( olc->using_workspace->instances )  < 1 )
-         bprintf( buf, " %s |\r\n", center_string( "(empty)", center ) );
+         bprintf( buf, "%s|", print_header( "(empty)", " ", ( space_after_pipes ) -1 ) / 2 ) );
       /* else ibid for instances */
 
       /* print the reminder of the contents */
@@ -323,6 +329,12 @@ bool workspace_list_has_name( LLIST *wSpaces, const char *name )
 {
    WORKSPACE *wSpace;
    ITERATOR Iter;
+
+   if( !name || name[0] == '\0' )
+      return FALSE;
+
+   if( !wSpaces || SizeOfList( wSpaces ) < 1 )
+      return FALSE;
 
    AttachIterator( &Iter, wSpaces );
    while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
@@ -537,6 +549,83 @@ void workspace_unload( void *passed, char *arg )
    return;
 }
 
+void workspace_grab( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_FRAMEWORK *frame;
+   ITERATOR Iter;
+   char buf[MAX_BUFFER];
+   bool found = FALSE;
+   int search_id = -1;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Grab what?\r\n" );
+      return;
+   }
+
+   if( !olc->using_workspace )
+   {
+      text_to_olc( olc, "You have to be using a workspace to grab.\r\n" );
+      return;
+   }
+
+   while( arg && arg[0] != '\0' )
+   {
+      found = FALSE;
+      arg = one_arg( arg, buf );
+
+      if( buf[0] == 'f' )
+      {
+         if( !is_number( buf+1 ) )
+         {
+            text_to_olc( olc, "%s is an inproperly formatted ID.\r\n", buf );
+            continue;
+         }
+         search_id = atoi( buf+1 );
+         if( framework_list_has_by_id( olc->using_workspace->frameworks, search_id ) )
+         {
+            text_to_olc( olc, "You already have that framework with an ID of %d grabbed into this workspace.\r\n", search_id );
+            continue;
+         }
+         if( SizeOfList( active_frameworks ) > 0 )
+         {
+            AttachIterator( &Iter, active_frameworks );
+            while( ( frame = (ENTITY_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
+               if( frame->tag->id == search_id )
+               {
+                  found = TRUE;
+                  AttachToList( frame, olc->using_workspace->frameworks );
+               }
+            DetachIterator( &Iter );
+         }
+         else if( !found )
+         {
+            MYSQL_RES *result;
+            MYSQL_ROW row;
+
+            if( !quick_query( "SELECT * FROM entity_frameworks WHERE entityFrameworkID=%d;", search_id ) )
+               continue;
+            if( ( result = mysql_store_result( sql_handle ) ) == NULL )
+               continue;
+            if( mysql_num_rows( result ) == 0 )
+            {
+               text_to_olc( olc, "No framework with an ID of %d exists.\r\n", search_id );
+               continue;
+            }
+            row = mysql_fetch_row( result );
+            frame = init_eFramework();
+            db_load_eFramework( frame, &row );
+            AttachToList( frame, olc->using_workspace->frameworks );
+            AttachToList( frame, active_frameworks );
+            mysql_free_result( result );
+            text_to_olc( olc, "Framework %d:%s loaded into %s workspace.\r\n", frame->tag->id, frame->name, olc->using_workspace->name );
+         }
+      }
+   }
+   return;
+
+}
 void olc_frameworks( void *passed, char *arg )
 {
    INCEPTION *olc = (INCEPTION *)passed;

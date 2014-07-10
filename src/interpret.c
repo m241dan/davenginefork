@@ -95,6 +95,7 @@ struct typCmd olc_commands[] = {
 * NAME, CMD_FUNC, LEVEL, SUB_COMMANDS, CAN_SUB, DESC_FUN, FROM_TABLE           *
 *******************************************************************************/
 struct typCmd workspace_sub_commands[] = {
+   { "grab", workspace_grab, LEVEL_BASIC, NULL, FALSE, NULL, workspace_sub_commands },
    { "wunload", workspace_unload, LEVEL_BASIC, NULL, FALSE, NULL, workspace_sub_commands },
    { "wload", workspace_load, LEVEL_BASIC, NULL, FALSE, NULL, workspace_sub_commands },
    { "wnew", workspace_new, LEVEL_BASIC, NULL, FALSE, NULL, workspace_sub_commands },

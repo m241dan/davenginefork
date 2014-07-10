@@ -24,7 +24,11 @@ int editor_eFramework_prompt( D_SOCKET *dsock )
 
    space_after_pipes = dsock->account->pagewidth - 2;
 
-   bprintf( buf, "/%s\\\r\n", print_bar( "-", space_after_pipes ) );
+   if( !strcmp( frame->tag->created_by, "null" ) )
+      mud_printf( tempstring, "Potential Framework ID: %d", get_potential_id( frame->tag->type ) );
+   else
+      mud_printf( tempstring, "Framework ID: %d", frame->tag->id );
+   bprintf( buf, "/%s\\\r\n", print_header( tempstring, "-", space_after_pipes ) );
    mud_printf( tempstring, " Name : %s", frame->name );
    bprintf( buf, "|%s|\r\n", fit_string_to_space( tempstring, space_after_pipes ) );
    mud_printf( tempstring, " Short: %s", frame->short_descr );
@@ -72,10 +76,11 @@ void eFramework_done( void *passed, char *arg )
    INCEPTION *olc = (INCEPTION *)passed;
    ENTITY_FRAMEWORK *frame = (ENTITY_FRAMEWORK *)olc->editing;
 
-   if( !frame->tag )
+   if( !strcmp( frame->tag->created_by, "null" ) )
    {
       new_tag( frame->tag, olc->account->name );
       new_eFramework( frame );
+      AttachToList( frame, active_frameworks );
    }
 
    FREE( olc->editing );

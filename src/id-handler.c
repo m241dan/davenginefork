@@ -281,3 +281,34 @@ int get_new_id( int type )
    return handler->top_id++;
 }
 
+int get_potential_id( int type )
+{
+   ID_HANDLER *handler;
+   int *id;     /* have to use a pointer to remove from list, cannot use locally allocated memory */
+   int rec_id; 
+
+
+   if( ( handler = handlers[type] ) == NULL )
+   {
+      bug( "%s: %d is a bad handler type.", __FUNCTION__, type );
+      return -1;
+   }
+
+   if( handler->can_recycle && SizeOfList( handler->recycled_ids ) > 0 )
+   {
+      ITERATOR Iter;
+
+      AttachIterator( &Iter, handler->recycled_ids );
+      if( ( id = (int *)NextInList( &Iter ) ) == NULL )
+      {
+         bug( "%s: could not get id from recycled list of handler %s.", __FUNCTION__, handler->name );
+         return -1;
+      }
+      rec_id = *id;
+      id = NULL;
+      DetachIterator( &Iter );
+
+      return rec_id;
+   }
+   return handler->top_id+1;
+}

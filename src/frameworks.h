@@ -22,4 +22,6 @@ int free_eFramework( ENTITY_FRAMEWORK *frame );
 /* i/o */
 int load_eFramework( ENTITY_FRAMEWORK *frame, const char *name );
 int new_eFramework( ENTITY_FRAMEWORK *frame );
+void db_load_eFramework( ENTITY_FRAMEWORK *frame, MYSQL_ROW *row );
 
+bool framework_list_has_by_id( LLIST *frameworks, int id );
