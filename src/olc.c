@@ -32,15 +32,25 @@ int clear_olc( INCEPTION *olc )
 
 int free_olc( INCEPTION *olc )
 {
+   WORKSPACE *wSpace;
+   ITERATOR Iter;
    int ret = RET_SUCCESS;
 
-   olc->account = NULL;
+   AttachIterator( &Iter, olc->wSpaces );
+   while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
+      DetachFromList( olc->account, wSpace->who_using );
+   DetachIterator( &Iter );
+   CLEARLIST( olc->wSpaces, WORKSPACE );
    FreeList( olc->wSpaces );
    olc->wSpaces = NULL;
+
    free_command_list( olc->commands );
    FreeList( olc->commands );
    olc->commands = NULL;
+
+   olc->account = NULL;
    olc->using_workspace = NULL;
+
    if( olc->editor_commands )
    {
       free_command_list( olc->editor_commands );
@@ -377,6 +387,7 @@ void workspace_new( void *passed, char *arg )
    }
    AttachToList( wSpace, olc->wSpaces );
    AttachToList( wSpace, active_wSpaces );
+   AttachToList( olc->account, wSpace->who_using );
    text_to_olc( olc, "New Workspace Created.\r\n" );
    mysql_free_result( result );
    return;
@@ -417,14 +428,14 @@ void workspace_load( void *passed, char *arg )
             if( SizeOfList( wSpace->who_using ) > 0 )
             {
                memset( &who_using[0], 0, sizeof( who_using ) );
-               AttachToList( &IterTwo, wSpace->who_using );
+               AttachIterator( &IterTwo, wSpace->who_using );
                while( ( account = (ACCOUNT_DATA *)NextInList( &IterTwo ) ) != NULL )
                {
                   if( who_using[0] != '\0' )
                      strcat( who_using, ", " );
                   strcat( who_using, account->name );
                }
-               DetachFromList( &IterTwo, wSpace->who_using );
+               DetachIterator( &IterTwo );
                text_to_olc( olc, " These users(%s) are already using this workspace.", who_using );
             }
             text_to_olc( olc, "\r\n" );
@@ -550,9 +561,6 @@ void olc_quit( void *passed, char *arg )
 
    text_to_olc( olc, "You close the Inception OLC.\r\n" );
    change_socket_state( olc->account->socket, STATE_ACCOUNT );
-   olc->account->olc = NULL;
-   free_olc( olc );
-
    return;
 }
 

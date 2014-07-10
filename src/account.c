@@ -50,6 +50,9 @@ int free_account( ACCOUNT_DATA *account )
 
    if( account->idtag )
       free_tag( account->idtag );
+   if( account->olc )
+      free_olc( account->olc );
+   account->olc = NULL;
    account->socket = NULL;
    CLEARLIST( account->characters, char );
    FreeList( account->characters );
