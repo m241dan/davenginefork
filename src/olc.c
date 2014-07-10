@@ -168,8 +168,11 @@ void inception_open( void *passed, char *arg )
    ACCOUNT_DATA *account = (ACCOUNT_DATA *)passed;
 
    text_to_account( account, "Opening Inception OLC...\r\n\r\n" );
-   account->olc = init_olc();
-   account->olc->account = account;
+   if( !account->olc )
+   {
+      account->olc = init_olc();
+      account->olc->account = account;
+   }
    change_socket_state( account->socket, STATE_OLC );
    return;
 }
