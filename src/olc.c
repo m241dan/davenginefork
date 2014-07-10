@@ -38,8 +38,9 @@ int free_olc( INCEPTION *olc )
 
    AttachIterator( &Iter, olc->wSpaces );
    while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
-      DetachFromList( olc->account, wSpace->who_using );
+      unuse_workspace( wSpace, olc->account );
    DetachIterator( &Iter );
+
    CLEARLIST( olc->wSpaces, WORKSPACE );
    FreeList( olc->wSpaces );
    olc->wSpaces = NULL;
@@ -160,6 +161,27 @@ void db_load_workspace( WORKSPACE *wSpace, MYSQL_ROW *row )
    wSpace->name = strdup( (*row)[6] );
    wSpace->description = strdup( (*row)[7] );
    wSpace->Public = (bool)atoi( (*row)[8] );
+   return;
+}
+
+void unuse_workspace( WORKSPACE *wSpace, ACCOUNT_DATA *account )
+{
+   DetachFromList( account, wSpace->who_using );
+   if( SizeOfList( wSpace->who_using ) < 1 )
+   {
+      DetachFromList( wSpace, active_wSpaces );
+      free_workspace( wSpace );
+   }
+   else
+   {
+      ACCOUNT_DATA *other_accounts_using;
+      ITERATOR Iter;
+
+      AttachIterator( &Iter, wSpace->who_using );
+      while( ( other_accounts_using = (ACCOUNT_DATA *)NextInList( &Iter ) ) != NULL )
+         text_to_account( other_accounts_using, "%s is no longer using %s workspace.\r\n", account->name, wSpace->name );
+      DetachIterator( &Iter );
+   }
    return;
 }
 
@@ -474,6 +496,41 @@ void workspace_load( void *passed, char *arg )
    {
       text_to_olc( olc, "No workspaces with that name exist.\r\n" );
    }
+   return;
+}
+
+void workspace_unload( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   WORKSPACE *wSpace;
+   ITERATOR Iter;
+
+   if( SizeOfList( olc->wSpaces ) < 1 )
+   {
+      text_to_olc( olc, "You have no workspaces to unload.\r\n" );
+      return;
+   }
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Unload which workspace?\r\n" );
+      return;
+   }
+
+   AttachIterator( &Iter, olc->wSpaces );
+   while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
+      if( !strcmp( arg, wSpace->name ) )
+         break;
+   DetachIterator( &Iter );
+
+   if( !wSpace )
+   {
+      text_to_olc( olc, "You have no such workspace loaded.\r\n" );
+      return;
+   }
+
+   unuse_workspace( wSpace, olc->account );
+   text_to_olc( olc, "Workspace unloaded.\r\n" );
    return;
 }
 
