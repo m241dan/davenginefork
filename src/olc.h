@@ -42,6 +42,9 @@ void inception_open( void *passed, char *arg );
 int olc_prompt( D_SOCKET *dsock );
 int text_to_olc( INCEPTION *olc, const char *fmt, ... );
 void olc_no_prompt( INCEPTION *olc );
+int new_workspace( WORKSPACE *wSpace );
+int new_workspace_entry( WORKSPACE *wSpace, ID_TAG *tag );
+int load_workspace_entries( WORKSPACE *wSpace );
 bool workspace_list_has_name( LLIST *wSpaces, const char *name );
 
 void olc_file( void *passed, char *arg );

@@ -343,6 +343,29 @@ int new_workspace( WORKSPACE *wSpace )
    return ret;
 }
 
+int new_workspace_entry( WORKSPACE *wSpace, ID_TAG *tag )
+{
+   int ret = RET_SUCCESS;
+
+   if( !wSpace )
+   {
+      BAD_POINTER( "wSpace" );
+      return ret;
+   }
+
+   if( !tag )
+   {
+      BAD_POINTER( "tag" );
+      return ret;
+   }
+
+   if( !quick_query( "INSERT INTO workspace_entries VALUES ( %d, '%c%d' );", wSpace->tag->id, tag->type == ENTITY_FRAMEWORK_IDS ? "f" : "", tag->id ) )
+      return RET_FAILED_OTHER;
+
+   return ret;
+}
+
+
 int text_to_olc( INCEPTION *olc, const char *fmt, ... )
 {
    va_list va;
@@ -642,6 +665,7 @@ void workspace_grab( void *passed, char *arg )
                {
                   found = TRUE;
                   AttachToList( frame, olc->using_workspace->frameworks );
+                  new_workspace_entry( olc->using_workspace, frame->tag );
                }
             DetachIterator( &Iter );
          }
@@ -664,6 +688,7 @@ void workspace_grab( void *passed, char *arg )
             db_load_eFramework( frame, &row );
             AttachToList( frame, olc->using_workspace->frameworks );
             AttachToList( frame, active_frameworks );
+            new_workspace_entry( olc->using_workspace, frame->tag );
             mysql_free_result( result );
             text_to_olc( olc, "Framework %d:%s loaded into %s workspace.\r\n", frame->tag->id, frame->name, olc->using_workspace->name );
          }
