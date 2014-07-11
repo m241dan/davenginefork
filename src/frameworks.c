@@ -57,6 +57,50 @@ int free_eFramework( ENTITY_FRAMEWORK *frame )
    return ret;
 }
 
+ENTITY_FRAMEWORK *get_active_framework( int id )
+{
+   ENTITY_FRAMEWORK *frame;
+   ITERATOR Iter;
+
+   if( SizeOfList( active_frameworks ) < 1 )
+      return NULL;
+   if( id < 0 )
+      return NULL;
+
+   AttachIterator( &Iter, active_frameworks );
+   while( ( frame = (ENTITY_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
+      if( frame->tag->id == id )
+         break;
+   DetachIterator( &Iter );
+
+   return frame;
+}
+
+ENTITY_FRAMEWORK *load_eFramework( int id )
+{
+   ENTITY_FRAMEWORK *frame;
+   MYSQL_RES *result;
+   MYSQL_ROW row;
+
+   if( !quick_query( "SELECT * FROM entity_frameworks WHERE entityFrameworkID=%d;", id ) )
+      return NULL;
+   if( ( result = mysql_store_result( sql_handle ) ) == NULL )
+      return NULL;
+   if( mysql_num_rows( result ) == 0 )
+      return NULL;
+   if( ( row = mysql_fetch_row( result ) ) == NULL )
+   {
+      mysql_free_result( result );
+      return NULL;
+   }
+   if( ( frame = init_eFramework() ) == NULL )
+      return NULL;
+
+   db_load_eFramework( frame, &row );
+   mysql_free_result( result );
+   return frame;
+}
+
 int new_eFramework( ENTITY_FRAMEWORK *frame )
 {
    int ret = RET_SUCCESS;

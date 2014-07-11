@@ -120,34 +120,49 @@ int free_workspace( WORKSPACE *wSpace )
    return ret;
 }
 
-int load_workspaces( void )
+WORKSPACE *get_active_workspace( const char *name )
+{
+   WORKSPACE *wSpace;
+   ITERATOR Iter;
+
+   if( !name || name[0] == '\0' )
+      return NULL;
+   if( SizeOfList( active_wSpaces ) < 1 )
+      return NULL;
+
+   AttachIterator( &Iter, active_wSpaces );
+   while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
+      if( !strcmp( name, wSpace->name ) )
+         break;
+   DetachIterator( &Iter );
+
+   return wSpace;
+}
+
+WORKSPACE *load_workspace( const char *name )
 {
    WORKSPACE *wSpace;
    MYSQL_RES *result;
    MYSQL_ROW row;
 
-   int ret = RET_SUCCESS;
-
-   if( !quick_query( "SELECT * FROM workspaces;" ) )
-      return RET_FAILED_OTHER;
-
+   if( !name || name[0] == '\0' )
+      return NULL;
+   if( !quick_query( "SELECT * FROM workspaces WHERE name='%s';", name ) )
+      return NULL;
    if( ( result = mysql_store_result( sql_handle ) ) == NULL )
-      return RET_DB_NO_ENTRY;
-
-   if( !active_wSpaces )
+      return NULL;
+   if( mysql_num_rows( result ) < 1 )
+      return NULL;
+   if( ( row = mysql_fetch_row( result ) ) == NULL )
    {
-      BAD_POINTER( "active_wSpaces" );
-      return ret;
+      mysql_free_result( result );
+      return NULL;
    }
 
-   while( ( row = mysql_fetch_row( result ) ) )
-   {
-      wSpace = init_workspace();
-      db_load_workspace( wSpace, &row );
-      AttachToList( wSpace, active_wSpaces );
-   }
-   mysql_free_result( result );
-   return ret;
+   wSpace = init_workspace();
+   db_load_workspace( wSpace, &row );
+   load_workspace_entries( wSpace );
+   return wSpace;
 }
 
 void db_load_workspace( WORKSPACE *wSpace, MYSQL_ROW *row )
@@ -358,10 +373,52 @@ int new_workspace_entry( WORKSPACE *wSpace, ID_TAG *tag )
       BAD_POINTER( "tag" );
       return ret;
    }
-
-   if( !quick_query( "INSERT INTO workspace_entries VALUES ( %d, '%c%d' );", wSpace->tag->id, tag->type == ENTITY_FRAMEWORK_IDS ? "f" : "", tag->id ) )
+   if( !quick_query( "INSERT INTO workspace_entries VALUES ( %d, '%s%d' );", wSpace->tag->id, tag->type == ENTITY_FRAMEWORK_IDS ? "f" : "", tag->id ) )
       return RET_FAILED_OTHER;
 
+   return ret;
+}
+
+int load_workspace_entries( WORKSPACE *wSpace )
+{
+   ENTITY_FRAMEWORK *frame;
+   MYSQL_RES *result;
+   MYSQL_ROW row;
+   int ret = RET_SUCCESS;
+   int framework_id;
+
+   if( !wSpace )
+   {
+      BAD_POINTER( "wSpace" );
+      return ret;
+   }
+
+   if( !quick_query( "SELECT entry FROM workspace_entries WHERE workspaceID=%d;", wSpace->tag->id ) )
+      return RET_FAILED_OTHER;
+   if( ( result = mysql_store_result( sql_handle ) ) == NULL )
+     return RET_FAILED_OTHER;
+   if( mysql_num_rows( result ) < 1 )
+      return RET_DB_NO_ENTRY;
+   while( ( row = mysql_fetch_row( result ) ) != NULL )
+   {
+      if( row[0][0] == 'f' )
+      {
+         framework_id = atoi( row[0]+1 );
+         if( ( frame = get_active_framework( framework_id ) ) == NULL )
+         {
+            if( ( frame = load_eFramework( framework_id ) ) == NULL )
+            {
+               bug( "%s: bad entry in workspace_entries %d", __FUNCTION__, framework_id );
+               continue;
+            }
+         }
+         AttachToList( frame, wSpace->frameworks );
+      }
+   /* else
+      {
+         instance stuff
+      } */
+   }
    return ret;
 }
 
@@ -567,6 +624,7 @@ void workspace_load( void *passed, char *arg )
                   free_workspace( wSpace );
                   continue;
                }
+               load_workspace_entries( wSpace );
                found = TRUE;
                AttachToList( wSpace, active_wSpaces );
                AttachToList( wSpace, olc->wSpaces );
@@ -622,9 +680,7 @@ void workspace_grab( void *passed, char *arg )
 {
    INCEPTION *olc = (INCEPTION *)passed;
    ENTITY_FRAMEWORK *frame;
-   ITERATOR Iter;
    char buf[MAX_BUFFER];
-   bool found = FALSE;
    int search_id = -1;
 
    if( !arg || arg[0] == '\0' )
@@ -641,7 +697,6 @@ void workspace_grab( void *passed, char *arg )
 
    while( arg && arg[0] != '\0' )
    {
-      found = FALSE;
       arg = one_arg( arg, buf );
 
       if( buf[0] == 'f' )
@@ -659,37 +714,22 @@ void workspace_grab( void *passed, char *arg )
          }
          if( SizeOfList( active_frameworks ) > 0 )
          {
-            AttachIterator( &Iter, active_frameworks );
-            while( ( frame = (ENTITY_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
-               if( frame->tag->id == search_id )
-               {
-                  found = TRUE;
-                  AttachToList( frame, olc->using_workspace->frameworks );
-                  new_workspace_entry( olc->using_workspace, frame->tag );
-               }
-            DetachIterator( &Iter );
+            if( ( frame = get_active_framework( search_id ) ) == NULL )
+            {
+               AttachToList( frame, olc->using_workspace->frameworks );
+               new_workspace_entry( olc->using_workspace, frame->tag );
+            }
          }
-         else if( !found )
+         else if( !frame )
          {
-            MYSQL_RES *result;
-            MYSQL_ROW row;
-
-            if( !quick_query( "SELECT * FROM entity_frameworks WHERE entityFrameworkID=%d;", search_id ) )
-               continue;
-            if( ( result = mysql_store_result( sql_handle ) ) == NULL )
-               continue;
-            if( mysql_num_rows( result ) == 0 )
+            if( ( frame = load_eFramework( search_id ) ) == NULL )
             {
                text_to_olc( olc, "No framework with an ID of %d exists.\r\n", search_id );
                continue;
             }
-            row = mysql_fetch_row( result );
-            frame = init_eFramework();
-            db_load_eFramework( frame, &row );
             AttachToList( frame, olc->using_workspace->frameworks );
             AttachToList( frame, active_frameworks );
             new_workspace_entry( olc->using_workspace, frame->tag );
-            mysql_free_result( result );
             text_to_olc( olc, "Framework %d:%s loaded into %s workspace.\r\n", frame->tag->id, frame->name, olc->using_workspace->name );
          }
       }

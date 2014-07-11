@@ -34,7 +34,8 @@ int clear_olc( INCEPTION *olc );
 WORKSPACE *init_workspace( void );
 int free_workspace( WORKSPACE *wSpace );
 int clear_workspace( WORKSPACE *wSpace );
-int load_workspaces( void );
+WORKSPACE *get_active_workspace( const char * name );
+WORKSPACE *load_workspace( const char *name );
 void db_load_workspace( WORKSPACE *wSpace, MYSQL_ROW *row );
 void unuse_workspace( WORKSPACE *wSpace, ACCOUNT_DATA *account );
 
@@ -44,6 +45,7 @@ int text_to_olc( INCEPTION *olc, const char *fmt, ... );
 void olc_no_prompt( INCEPTION *olc );
 int new_workspace( WORKSPACE *wSpace );
 int new_workspace_entry( WORKSPACE *wSpace, ID_TAG *tag );
+int load_workspace_entries( WORKSPACE *wSpace );
 int load_workspace_entries( WORKSPACE *wSpace );
 bool workspace_list_has_name( LLIST *wSpaces, const char *name );
 

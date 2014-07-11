@@ -20,7 +20,8 @@ int clear_eFramework( ENTITY_FRAMEWORK *frame );
 int free_eFramework( ENTITY_FRAMEWORK *frame );
 
 /* i/o */
-int load_eFramework( ENTITY_FRAMEWORK *frame, const char *name );
+ENTITY_FRAMEWORK *get_active_framework( int id );
+ENTITY_FRAMEWORK *load_eFramework( int id );
 int new_eFramework( ENTITY_FRAMEWORK *frame );
 void db_load_eFramework( ENTITY_FRAMEWORK *frame, MYSQL_ROW *row );
 
