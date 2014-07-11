@@ -194,6 +194,7 @@ do									\
 } while (0)								\
 
 #define UMIN(a, b)		((a) < (b) ? (a) : (b))
+#define UMAX(a, b)              ((a) < (b) ? (b) : (a))
 #define IS_ADMIN(dMob)          ((dMob->level) > LEVEL_PLAYER ? TRUE : FALSE)
 #define IREAD(sKey, sPtr)             \
 {                                     \

@@ -203,14 +203,15 @@ void inception_open( void *passed, char *arg )
 
 int olc_prompt( D_SOCKET *dsock )
 {
+   ENTITY_FRAMEWORK *frame;
    BUFFER *buf = buffer_new( MAX_BUFFER );
    ACCOUNT_DATA *account = dsock->account;
    INCEPTION *olc;
    WORKSPACE *wSpace;
-   ITERATOR Iter;
+   ITERATOR Iter, IterF, IterI;
    char tempstring[MAX_BUFFER];
    int ret = RET_SUCCESS;
-   int center, space_after_pipes, x;
+   int space_after_pipes, max_list, max_frameworks, max_instances, x, left, right;
    if( !account )
    {
       BAD_POINTER( "account" );
@@ -240,25 +241,70 @@ int olc_prompt( D_SOCKET *dsock )
    }
    if( olc->using_workspace )
    {
+      max_frameworks = SizeOfList( olc->using_workspace->frameworks );
+      max_instances = SizeOfList( olc->using_workspace->instances );
+      max_list = UMAX( SizeOfList( olc->using_workspace->frameworks ), SizeOfList( olc->using_workspace->instances ) );
+
+      if( max_list == max_frameworks )
+         left = 1;
+      else
+         left = 2;
+
+      if( left == 1 )
+         right = 2;
+      else if( left == 2 )
+         right = 1;
+
       mud_printf( tempstring, "%s Workspace", olc->using_workspace->name );
       bprintf( buf, "|%s|\r\n", print_header( tempstring, "-", space_after_pipes ) );
-      center = ( account->pagewidth - 7 ) / 2;
-      bprintf( buf, "| %s  |", print_header( "Frameworks", " ", center ) );
-      bprintf( buf, " %s |\r\n", center_string( "Instances", center ) );
 
-      if( SizeOfList( olc->using_workspace->frameworks ) < 1 )
-         bprintf( buf, "|%s|", print_header( "(empty)", " ", space_after_pipes / 2 ) );
-      else
+
+      switch( left )
       {
-         
-         bprintf( buf, "|%s|, print_header( tempstring, " ", space_after_pipes / 2 ) );
+         case 1:
+            bprintf( buf, "|%s|", print_header( "Frameworks", " ", ( space_after_pipes - 1 ) / 2 ) );
+            break;
+         case 2:
+            bprintf( buf, "|%s|", print_header( "Instances", " ", ( space_after_pipes - 1 ) / 2 ) );
+            break;
       }
-      /* else print the first entry in frameworks list */
-      if( SizeOfList( olc->using_workspace->instances )  < 1 )
-         bprintf( buf, "%s|", print_header( "(empty)", " ", ( space_after_pipes ) -1 ) / 2 ) );
-      /* else ibid for instances */
+      switch( right )
+      {
+         case 1:
+            bprintf( buf, " %s|\r\n", print_header( "Frameworks", " ", ( space_after_pipes - 1 ) / 2 ) );
+            break;
+         case 2:
+            bprintf( buf, " %s|\r\n", print_header( "Instances", " ", ( space_after_pipes - 1 ) / 2 ) );
+            break;
+      }
+      bprintf( buf, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
 
-      /* print the reminder of the contents */
+      AttachIterator( &IterF, olc->using_workspace->frameworks );
+      for( x = 0; x < max_list; x++ )
+      {
+         frame = (ENTITY_FRAMEWORK *)NextInList( &IterF );
+         switch( left )
+         {
+            case 1:
+               mud_printf( tempstring, "%s", frame ? frame->name : " " );
+               bprintf( buf, "|%s|", print_header( tempstring, " ", ( space_after_pipes - 1 ) / 2 ) );
+               break;
+            case 2:
+               bprintf( buf, "|%s|", print_header( "  ", " ", ( space_after_pipes - 1 ) / 2 ) );
+               break;
+         }
+         switch( right )
+         {
+            case 1:
+               mud_printf( tempstring, "%s", frame ? frame->name : " " );
+               bprintf( buf, " %s|\r\n", print_header( tempstring, " ", ( space_after_pipes - 1 ) / 2 ) );
+               break;
+            case 2:
+               bprintf( buf, " %s|\r\n", print_header( "  ", " ", ( space_after_pipes - 1 ) / 2 ) );
+               break;
+         }
+      }
+      DetachIterator( &IterF );
    }
    bprintf( buf, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
    print_commands( dsock->account->olc, dsock->account->olc->commands, buf, 0, account->pagewidth );
