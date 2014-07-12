@@ -179,6 +179,7 @@ void eFramework_done( void *passed, char *arg )
       new_tag( frame->tag, olc->account->name );
       new_eFramework( frame );
       AttachToList( frame, active_frameworks );
+      new_workspace_entry( olc->using_workspace, frame->tag );
    }
 
    FREE( olc->editing );
