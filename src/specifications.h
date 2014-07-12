@@ -6,4 +6,5 @@ struct typSpec
 {
    short type;
    int value;
+   const char *owner;
 };
