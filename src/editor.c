@@ -192,7 +192,7 @@ void eFramework_done( void *passed, char *arg )
    olc->editor_commands = NULL;
    olc->editing_state = STATE_OLC;
    change_socket_state( olc->account->socket, STATE_OLC );
-   text_to_olc( olc, "Exiting Entity Framework Editor.\r\n" ); 
-
+   text_to_olc( olc, "Exiting Entity Framework Editor.\r\n" );
+   olc_show_prompt( olc );
    return;
 }

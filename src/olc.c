@@ -442,6 +442,7 @@ int text_to_olc( INCEPTION *olc, const char *fmt, ... )
    }
 
    text_to_buffer( olc->account->socket, dest );
+   olc_no_prompt( olc );
    return res;
 }
 
@@ -450,6 +451,14 @@ void olc_no_prompt( INCEPTION *olc )
    if( !olc->account || !olc->account->socket )
       return;
    olc->account->socket->bust_prompt = FALSE;
+   return;
+}
+
+void olc_show_prompt( INCEPTION *olc )
+{
+   if( !olc->account || !olc->account->socket )
+      return;
+   olc->account->socket->bust_prompt = TRUE;
    return;
 }
 
@@ -498,12 +507,14 @@ void olc_workspace( void *passed, char *arg )
       FreeList( workspace_command->sub_commands );
       workspace_command->sub_commands = NULL;
       text_to_olc( olc, "Workspace Commands Menu Closed.\r\n" );
+      olc_show_prompt( olc );
    }
    else
    {
       workspace_command->sub_commands = AllocList();
       load_commands( workspace_command->sub_commands, workspace_sub_commands, olc->account->level );
       text_to_olc( olc, "Workspace Commands Menu Opened.\r\n" );
+      olc_show_prompt( olc );
    }
 }
 
@@ -555,7 +566,7 @@ void workspace_new( void *passed, char *arg )
    AttachToList( wSpace, olc->wSpaces );
    AttachToList( wSpace, active_wSpaces );
    AttachToList( olc->account, wSpace->who_using );
-   text_to_olc( olc, "New Workspace Created.\r\n" );
+   text_to_olc( olc, "A new workspace %s has been created and loaded.\r\n", wSpace->name );
    mysql_free_result( result );
    return;
 }
@@ -636,9 +647,8 @@ void workspace_load( void *passed, char *arg )
          }
 
    if( !found )
-   {
       text_to_olc( olc, "No workspaces with that name exist.\r\n" );
-   }
+   mysql_free_result( result );
    return;
 }
 
@@ -720,7 +730,7 @@ void workspace_grab( void *passed, char *arg )
             {
                AttachToList( frame, olc->using_workspace->frameworks );
                new_workspace_entry( olc->using_workspace, frame->tag );
-               text_to_olc( olc, "Framework %d:%s loaded into %s workspace.\r\n", frame->tag->id, frame->name, olc->using_workspace->name );
+               text_to_olc( olc, "Framework %d: %s loaded into %s workspace.\r\n", frame->tag->id, frame->name, olc->using_workspace->name );
                continue;
             }
          }
@@ -734,11 +744,23 @@ void workspace_grab( void *passed, char *arg )
             AttachToList( frame, olc->using_workspace->frameworks );
             AttachToList( frame, active_frameworks );
             new_workspace_entry( olc->using_workspace, frame->tag );
-            text_to_olc( olc, "Framework %d:%s loaded into %s workspace.\r\n", frame->tag->id, frame->name, olc->using_workspace->name );
+            text_to_olc( olc, "Framework %d: %s loaded into %s workspace.\r\n", frame->tag->id, frame->name, olc->using_workspace->name );
          }
       }
    }
    return;
+
+}
+void olc_ungrab( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+
+   if( !olc->using_workspace )
+   {
+      text_to_olc( olc, "You can't ungrab anything from a workspace you aren't using.\r\n" );
+      return;
+   }
+
 
 }
 void olc_frameworks( void *passed, char *arg )
@@ -755,12 +777,14 @@ void olc_frameworks( void *passed, char *arg )
       FreeList( frameworks_command->sub_commands );
       frameworks_command->sub_commands = NULL;
       text_to_olc( olc, "Frameworks Commands Menu Closed.\r\n" );
+      olc_show_prompt( olc );
    }
    else
    {
       frameworks_command->sub_commands = AllocList();
       load_commands( frameworks_command->sub_commands, frameworks_sub_commands, olc->account->level );
       text_to_olc( olc, "Frameworks Commands Menu Opened.\r\n" );
+      olc_show_prompt( olc );
    }
 }
 
@@ -779,6 +803,7 @@ void framework_create( void *passed, char *arg )
    olc->editing = init_eFramework();
    olc->editing_state = STATE_EFRAME_EDITOR;
    text_to_olc( olc, "Creating a new Entity Framework.\r\n" );
+   olc_show_prompt( olc );
    olc->editor_commands = AllocList();
    change_socket_state( olc->account->socket, olc->editing_state );
    return;
@@ -799,6 +824,7 @@ void olc_using( void *passed, char *arg )
    if( !strcasecmp( arg, "none" ) )
    {
       text_to_olc( olc, "You are no longer using any workspace.\r\n" );
+      olc_show_prompt( olc );
       olc->using_workspace = NULL;
       return;
    }
@@ -810,23 +836,30 @@ void olc_using( void *passed, char *arg )
    DetachIterator( &Iter );
 
    if( !wSpace )
-   {
       text_to_olc( olc, "You have no such workspace loaded. Remember, be specific!\r\n" );
-      olc_no_prompt( olc );
-   }
    else
    {
       olc->using_workspace = wSpace;
-      text_to_olc( olc, "Using %s.\r\n", wSpace->name );
+      text_to_olc( olc, "You are now using %s.\r\n", wSpace->name );
+      olc_show_prompt( olc );
    }
    return;
 }
 
+void olc_show( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+
+   text_to_olc( olc, "Your current Inception looks like this.\r\n" );
+   olc_show_prompt( olc );
+
+}
 void olc_quit( void *passed, char *arg )
 {
    INCEPTION *olc = (INCEPTION *)passed;
 
    text_to_olc( olc, "You close the Inception OLC.\r\n" );
+   olc_show_prompt( olc );
    change_socket_state( olc->account->socket, STATE_ACCOUNT );
    return;
 }
