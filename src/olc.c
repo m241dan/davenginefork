@@ -411,6 +411,8 @@ int load_workspace_entries( WORKSPACE *wSpace )
                bug( "%s: bad entry in workspace_entries %d", __FUNCTION__, framework_id );
                continue;
             }
+            else
+               AttachToList( frame, active_frameworks );
          }
          AttachToList( frame, wSpace->frameworks );
       }
@@ -714,13 +716,15 @@ void workspace_grab( void *passed, char *arg )
          }
          if( SizeOfList( active_frameworks ) > 0 )
          {
-            if( ( frame = get_active_framework( search_id ) ) == NULL )
+            if( ( frame = get_active_framework( search_id ) ) != NULL )
             {
                AttachToList( frame, olc->using_workspace->frameworks );
                new_workspace_entry( olc->using_workspace, frame->tag );
+               text_to_olc( olc, "Framework %d:%s loaded into %s workspace.\r\n", frame->tag->id, frame->name, olc->using_workspace->name );
+               continue;
             }
          }
-         else if( !frame )
+         if( !frame )
          {
             if( ( frame = load_eFramework( search_id ) ) == NULL )
             {

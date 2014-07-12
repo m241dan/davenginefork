@@ -180,7 +180,10 @@ void eFramework_done( void *passed, char *arg )
       new_eFramework( frame );
       AttachToList( frame, active_frameworks );
       if( olc->using_workspace )
+      {
+         AttachToList( frame, olc->using_workspace->frameworks );
          new_workspace_entry( olc->using_workspace, frame->tag );
+      }
    }
 
    FREE( olc->editing );
