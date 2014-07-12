@@ -226,7 +226,7 @@ int olc_prompt( D_SOCKET *dsock )
    ITERATOR Iter, IterF, IterI;
    char tempstring[MAX_BUFFER];
    int ret = RET_SUCCESS;
-   int space_after_pipes, max_list, max_frameworks, max_instances, x, left, right;
+   int space_after_pipes, max_list, max_frameworks, max_instances, x, style;
    if( !account )
    {
       BAD_POINTER( "account" );
@@ -261,35 +261,23 @@ int olc_prompt( D_SOCKET *dsock )
       max_list = UMAX( SizeOfList( olc->using_workspace->frameworks ), SizeOfList( olc->using_workspace->instances ) );
 
       if( max_list == max_frameworks )
-         left = 1;
+         style = 1;
       else
-         left = 2;
-
-      if( left == 1 )
-         right = 2;
-      else if( left == 2 )
-         right = 1;
+         style = 2;
 
       mud_printf( tempstring, "%s Workspace", olc->using_workspace->name );
       bprintf( buf, "|%s|\r\n", print_header( tempstring, "-", space_after_pipes ) );
 
 
-      switch( left )
+      switch( style )
       {
          case 1:
             bprintf( buf, "|%s|", print_header( "Frameworks", " ", ( space_after_pipes - 1 ) / 2 ) );
+            bprintf( buf, " %s|\r\n", print_header( "Instances", " ", ( space_after_pipes - 1 ) / 2 ) );
             break;
          case 2:
             bprintf( buf, "|%s|", print_header( "Instances", " ", ( space_after_pipes - 1 ) / 2 ) );
-            break;
-      }
-      switch( right )
-      {
-         case 1:
             bprintf( buf, " %s|\r\n", print_header( "Frameworks", " ", ( space_after_pipes - 1 ) / 2 ) );
-            break;
-         case 2:
-            bprintf( buf, " %s|\r\n", print_header( "Instances", " ", ( space_after_pipes - 1 ) / 2 ) );
             break;
       }
       bprintf( buf, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
@@ -298,24 +286,17 @@ int olc_prompt( D_SOCKET *dsock )
       for( x = 0; x < max_list; x++ )
       {
          frame = (ENTITY_FRAMEWORK *)NextInList( &IterF );
-         switch( left )
+         switch( style )
          {
             case 1:
                mud_printf( tempstring, "%s", frame ? frame->name : " " );
                bprintf( buf, "|%s|", print_header( tempstring, " ", ( space_after_pipes - 1 ) / 2 ) );
+               bprintf( buf, " %s|\r\n", print_header( "  ", " ", ( space_after_pipes - 1 ) / 2 ) );
                break;
             case 2:
                bprintf( buf, "|%s|", print_header( "  ", " ", ( space_after_pipes - 1 ) / 2 ) );
-               break;
-         }
-         switch( right )
-         {
-            case 1:
                mud_printf( tempstring, "%s", frame ? frame->name : " " );
                bprintf( buf, " %s|\r\n", print_header( tempstring, " ", ( space_after_pipes - 1 ) / 2 ) );
-               break;
-            case 2:
-               bprintf( buf, " %s|\r\n", print_header( "  ", " ", ( space_after_pipes - 1 ) / 2 ) );
                break;
          }
       }
@@ -751,18 +732,24 @@ void workspace_grab( void *passed, char *arg )
    return;
 
 }
-void olc_ungrab( void *passed, char *arg )
+void workspace_ungrab( void *passed, char *arg )
 {
    INCEPTION *olc = (INCEPTION *)passed;
 
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Ungrab what?\r\n" );
+      return;
+   }
    if( !olc->using_workspace )
    {
       text_to_olc( olc, "You can't ungrab anything from a workspace you aren't using.\r\n" );
       return;
    }
-
-
+   text_to_olc( olc, "I(the ungrab command) don't work yet...\r\n" );
+   return;
 }
+
 void olc_frameworks( void *passed, char *arg )
 {
    INCEPTION *olc = (INCEPTION *)passed;

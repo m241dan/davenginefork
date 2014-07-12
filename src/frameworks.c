@@ -151,7 +151,6 @@ bool framework_list_has_by_id( LLIST *frameworks, int id )
 
    if( !frameworks )
       return FALSE;
-
    if( SizeOfList( frameworks ) < 1 )
       return FALSE;
 
@@ -166,11 +165,31 @@ bool framework_list_has_by_id( LLIST *frameworks, int id )
    return FALSE;
 }
 
+bool framework_list_has_by_name( LLIST *frameworks, const char *name )
+{
+   ENTITY_FRAMEWORK *frame;
+   ITERATOR Iter;
+
+   if( !frameworks )
+      return FALSE;
+   if( SizeOfList( frameworks ) < 1 )
+      return FALSE;
+
+   AttachIterator( &Iter, frameworks );
+   while( ( frame = (ENTITY_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
+      if( !strcmp( frame->name, name ) )
+         break;
+   DetachIterator( &Iter );
+
+   if( frame )
+      return TRUE;
+   return FALSE;
+}
+
 bool live_frame( ENTITY_FRAMEWORK *frame )
 {
    if( !frame->tag )
       return FALSE;
-
    if( !strcmp( frame->tag->created_by, "null" ) )
       return FALSE;
 
