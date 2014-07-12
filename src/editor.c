@@ -39,35 +39,133 @@ int editor_eFramework_prompt( D_SOCKET *dsock )
    bprintf( buf, "|%s|\r\n", fit_string_to_space( tempstring, space_after_pipes ) );
    bprintf( buf, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
    bprintf( buf, "|%s|", print_header( "Specifications Here", " ", ( space_after_pipes - 1 ) / 2 ) );
-   bprintf( buf, "%s |\r\n", print_header( "Stats Here", " ", ( space_after_pipes - 1 ) / 2 ) );
+   bprintf( buf, " %s|\r\n", print_header( "Stats Here", " ", ( space_after_pipes - 1 ) / 2 ) );
    bprintf( buf, "|%s|", print_bar( "-", space_after_pipes ) );
    print_commands( dsock->account->olc, dsock->account->olc->editor_commands, buf, 0, dsock->account->pagewidth );
    bprintf( buf, "\\%s/\r\n", print_bar( "-", space_after_pipes ) );
 
    text_to_buffer( dsock, buf->data );
-
-
    buffer_free( buf );
    return ret;
 }
 
 void eFramework_name( void *passed, char *arg )
 {
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_FRAMEWORK *frame;
+
+   if( strlen( arg ) > MAX_FRAMEWORK_NSL )
+   {
+      text_to_olc( olc, "%s is too long.\r\n", arg );
+      return;
+   }
+   if( ( frame = (ENTITY_FRAMEWORK *)olc->editing ) == NULL )
+   {
+      text_to_olc( olc, "You aren't actually editing anything...\r\n" );
+      change_socket_state( olc->account->socket, STATE_OLC );
+      return;
+   }
+
+   FREE( frame->name );
+   frame->name = strdup( arg );
+   text_to_olc( olc, "Name changed.\r\n" );
+
+   if( live_frame( frame ) )
+   {
+      quick_query( "UPDATE entity_frameworks SET name='%s' WHERE entityFrameworkID=%d;", frame->name, frame->tag->id );
+      update_tag( frame->tag, olc->account->name );
+   }
+
    return;
 }
 
 void eFramework_short( void *passed, char *arg )
 {
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_FRAMEWORK *frame;
+
+   if( strlen( arg ) > MAX_FRAMEWORK_NSL )
+   {
+      text_to_olc( olc, "%s is too long.\r\n", arg );
+      return;
+   }
+   if( ( frame = (ENTITY_FRAMEWORK*)olc->editing ) == NULL )
+   {
+      text_to_olc( olc, "You aren't actually editing anything...\r\n" );
+      change_socket_state( olc->account->socket, STATE_OLC );
+      return;
+   }
+
+   FREE( frame->short_descr );
+   frame->short_descr = strdup( arg );
+   text_to_olc( olc, "Short description changed.\r\n" );
+
+   if( live_frame( frame ) )
+   {
+      quick_query( "UPDATE entity_frameworks SET short_descr='%s' WHERE entityFrameworkID=%d;", frame->short_descr, frame->tag->id );
+      update_tag( frame->tag, olc->account->name );
+   }
+
    return;
 }
 
 void eFramework_long( void *passed, char *arg )
 {
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_FRAMEWORK *frame;
+
+   if( strlen( arg ) > MAX_FRAMEWORK_NSL )
+   {
+      text_to_olc( olc, "%s is too long.\r\n", arg );
+      return;
+   }
+   if( ( frame = (ENTITY_FRAMEWORK*)olc->editing ) == NULL )
+   {
+      text_to_olc( olc, "You aren't actually editing anything...\r\n" );
+      change_socket_state( olc->account->socket, STATE_OLC );
+      return;
+   }
+
+   FREE( frame->long_descr );
+   frame->long_descr = strdup( arg );
+   text_to_olc( olc, "Long description changed.\r\n" );
+
+   if( live_frame( frame ) )
+   {
+      quick_query( "UPDATE entity_frameworks SET long_descr='%s' WHERE entityFrameworkID=%d;", frame->long_descr, frame->tag->id );
+      update_tag( frame->tag, olc->account->name );
+   }
+
    return;
 }
 
 void eFramework_description( void *passed, char *arg )
 {
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_FRAMEWORK *frame;
+
+   if( strlen( arg ) > MAX_BUFFER )
+   {
+      text_to_olc( olc, "%s is too long.\r\n", arg );
+      return;
+   }
+   if( ( frame = (ENTITY_FRAMEWORK*)olc->editing ) == NULL )
+   {
+      text_to_olc( olc, "You aren't actually editing anything...\r\n" );
+      change_socket_state( olc->account->socket, STATE_OLC );
+      return;
+   }
+
+   FREE( frame->description );
+   frame->description = strdup( arg );
+   text_to_olc( olc, "Long description changed.\r\n" );
+
+   if( live_frame( frame ) )
+   {
+      quick_query( "UPDATE entity_frameworks SET description='%s' WHERE entityFrameworkID=%d;", frame->description, frame->tag->id );
+      update_tag( frame->tag, olc->account->name );
+   }
+
    return;
 }
 

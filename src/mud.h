@@ -39,6 +39,7 @@
 
 /* A few globals */
 #define PULSES_PER_SECOND     4                   /* must divide 1000 : 4, 5 or 8 works */
+#define MAX_FRAMEWORK_NSL   255                   /* max for non-text string sql entrees */
 #define MAX_BUFFER         1024                   /* seems like a decent amount         */
 #define MAX_OUTPUT         2048                   /* well shoot me if it isn't enough   */
 #define MAX_HELP_ENTRY     4096                   /* roughly 40 lines of blocktext      */

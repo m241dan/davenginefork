@@ -8,9 +8,9 @@ CREATE TABLE IF NOT EXISTS `entity_frameworks` (
    `created_on` varchar(35) NOT NULL DEFAULT '',
    `modified_by` varchar(50) NOT NULL DEFAULT 'system',
    `modified_on` varchar(35) NOT NULL DEFAULT '',
-   `name` varchar(25) NOT NULL DEFAULT '',
-   `short_descr` varchar(30) NOT NULL DEFAULT '',
-   `long_descr` varchar(60) NOT NULL DEFAULT '',
+   `name` varchar(255) NOT NULL DEFAULT '',
+   `short_descr` varchar(255) NOT NULL DEFAULT '',
+   `long_descr` varchar(255) NOT NULL DEFAULT '',
    `description` text NOT NULL DEFAULT '',
    PRIMARY KEY (`entityFrameworkID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

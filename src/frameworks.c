@@ -165,3 +165,14 @@ bool framework_list_has_by_id( LLIST *frameworks, int id )
       return TRUE;
    return FALSE;
 }
+
+bool live_frame( ENTITY_FRAMEWORK *frame )
+{
+   if( !frame->tag )
+      return FALSE;
+
+   if( !strcmp( frame->tag->created_by, "null" ) )
+      return FALSE;
+
+   return TRUE;
+}
