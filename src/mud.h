@@ -240,6 +240,8 @@ typedef struct  id_tag        ID_TAG;
 typedef struct  entity_framework ENTITY_FRAMEWORK;
 typedef struct  inception_olc  INCEPTION;
 typedef struct  workspace      WORKSPACE;
+typedef struct  typSpec        SPECIFICATION;
+
 /* the actual structures */
 struct dSocket
 {
@@ -303,6 +305,7 @@ typedef struct buffer_type
 #include "olc.h"
 #include "frameworks.h"
 #include "editor.h"
+#include "specifications.h"
 
 /******************************
  * End of new structures      *
