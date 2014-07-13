@@ -12,6 +12,6 @@ CREATE TABLE IF NOT EXISTS `entity_instances` (
    `short_descr` varchar(255) DEFAULT NULL,
    `long_descr` varchar(255) DEFAULT NULL,
    `description` text DEFAULT NULL,
-   `framework` varchar(50) NOT NULL DEFAULT 'undefined',
+   `frameworkID` int NOT NULL DEFAULT '-1',
    PRIMARY KEY (`entityInstanceID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

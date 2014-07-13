@@ -12,6 +12,7 @@ struct typSpec
 SPECIFICATION *init_specification( void );
 int clear_specification( SPECIFICATION *spec );
 int free_specification( SPECIFICATION *spec );
+int specification_clear_list( LLIST *spec_list );
 
 int new_specification( SPECIFICATION *spec );
 int add_spec_to_framework( SPECIFICATION *spec, ENTITY_FRAMEWORK *frame );

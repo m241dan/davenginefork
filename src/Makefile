@@ -6,7 +6,7 @@ O_FILES = socket.o io.o strings.o utils.o interpret.o help.o  \
 	  llist.o stack.o mccp.o event.o event-handler.o \
           account.o strings_table.o nanny.o id-handler.o \
           communication.o olc.o frameworks.o editor.o \
-          specifications.o
+          specifications.o instances.o
 
 all: $(O_FILES)
 	rm -f SocketMud

@@ -42,6 +42,28 @@ int free_specification( SPECIFICATION *spec )
    return ret;
 }
 
+int specification_clear_list( LLIST *spec_list )
+{
+   SPECIFICATION *spec;
+   ITERATOR Iter;
+   int ret = RET_SUCCESS;
+
+   if( !spec_list )
+   {
+      BAD_POINTER( "spec_list" );
+      return ret;
+   }
+   if( SizeOfList( spec_list ) < 1 )
+      return ret;
+
+   AttachIterator( &Iter, spec_list );
+   while( ( spec = (SPECIFICATION *)NextInList( &Iter ) ) != NULL )
+      free_specification( spec );
+   DetachIterator( &Iter );
+
+   return ret;
+}
+
 int new_specification( SPECIFICATION *spec )
 {
    int ret = RET_SUCCESS;

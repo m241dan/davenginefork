@@ -30,6 +30,7 @@ LLIST    * account_list = NULL;
 LLIST    * active_wSpaces = NULL;
 LLIST    * active_OLCs = NULL;
 LLIST    * active_frameworks = NULL;
+LLIST    * eInstances_list = NULL;
 
 MYSQL    * sql_handle = NULL;
 /* mccp support */
@@ -62,6 +63,8 @@ int main(int argc, char **argv)
    active_wSpaces = AllocList();
    active_OLCs = AllocList();
    active_frameworks = AllocList();
+   eInstances_list = AllocList();
+
   /* note that we are booting up */
   log_string("Program starting.");
 

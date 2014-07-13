@@ -324,7 +324,7 @@ extern  LLIST        *  active_wSpaces;   /* a linked list for active work space
 extern  LLIST	     *	active_OLCs;	  /* a linked list of active OLCs */
 extern  LLIST        *  active_frameworks; /* a linked list of active frameworks */
 extern  LLIST        *  help_list;        /* the linked LLIST of help files      */
-extern  LLIST        *  eInstance_list;   /* list of entity instances */
+extern  LLIST        *  eInstances_list;   /* list of entity instances */
 extern  MYSQL        *  sql_handle;       /* global connection to sql database */
 extern  const struct    typCmd tabCmd[];  /* the command table                  */
 extern  bool            shut_down;        /* used for shutdown                  */
