@@ -27,6 +27,17 @@ int match_string_table( const char *string, const char *const string_table[] )
    return -1;
 }
 
+int match_string_table_no_case( const char *string, const char *const string_table[] )
+{
+   int x;
+
+   for( x = 0; string_table[x] != '\0'; x++ )
+      if( !strcasecmp( string, string_table[x] ) )
+         return x;
+
+   return -1;
+}
+
 const char *print_string_table( const char *const string_table[] )
 {
    static char buf[MAX_BUFFER];

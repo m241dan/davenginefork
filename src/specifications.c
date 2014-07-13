@@ -60,11 +60,7 @@ int new_specification( SPECIFICATION *spec )
 
 int add_spec_to_framework( SPECIFICATION *spec, ENTITY_FRAMEWORK *frame )
 {
-   FREE( spec->owner );
-   mud_printf( spec->owner, "f%d", frame->tag->id );
-
    AttachToList( spec, frame->specifications );
-
    return RET_SUCCESS;
 }
 
@@ -115,4 +111,20 @@ int db_load_spec( SPECIFICATION *spec, MYSQL_ROW *row )
    spec->value = atoi( (*row)[1] );
    spec->owner = strdup( (*row)[2] );
    return RET_SUCCESS;
+}
+
+SPECIFICATION *spec_list_has_by_type( LLIST *spec_list, int type )
+{
+   SPECIFICATION *spec;
+   ITERATOR Iter;
+
+   AttachIterator( &Iter, spec_list );
+   while( ( spec = (SPECIFICATION *)NextInList( &Iter ) ) != NULL )
+      if( spec->type == type )
+         break;
+   DetachIterator( &Iter );
+
+   if( spec )
+      return spec;
+   return NULL;
 }

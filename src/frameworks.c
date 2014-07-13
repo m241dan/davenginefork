@@ -104,6 +104,8 @@ ENTITY_FRAMEWORK *load_eFramework( int id )
 
 int new_eFramework( ENTITY_FRAMEWORK *frame )
 {
+   SPECIFICATION *spec;
+   ITERATOR Iter;
    int ret = RET_SUCCESS;
 
    if( !frame )
@@ -126,6 +128,14 @@ int new_eFramework( ENTITY_FRAMEWORK *frame )
          frame->tag->created_on, frame->tag->modified_by, frame->tag->modified_on,
          frame->name, frame->short_descr, frame->long_descr, frame->description ) )
       return RET_FAILED_OTHER;
+
+   AttachIterator( &Iter, frame->specifications );
+   while( ( spec = (SPECIFICATION *)NextInList( &Iter ) ) != NULL )
+   {
+      mud_printf( spec->owner, "f%d", frame->tag->id );
+      new_specification( spec );
+   }
+   DetachIterator( &Iter );
 
    return ret;
 }

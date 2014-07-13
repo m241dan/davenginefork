@@ -40,7 +40,22 @@ int editor_eFramework_prompt( D_SOCKET *dsock )
    bprintf( buf, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
    bprintf( buf, "|%s|", print_header( "Specifications Here", " ", ( space_after_pipes - 1 ) / 2 ) );
    bprintf( buf, " %s|\r\n", print_header( "Stats Here", " ", ( space_after_pipes - 1 ) / 2 ) );
-   bprintf( buf, "|%s|", print_bar( "-", space_after_pipes ) );
+   bprintf( buf, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
+   if( SizeOfList( frame->specifications ) > 0 )
+   {
+      ITERATOR IterSpec;
+      SPECIFICATION *spec;
+
+      AttachIterator( &IterSpec, frame->specifications );
+      while( ( spec = (SPECIFICATION *)NextInList( &IterSpec ) ) == NULL )
+      {
+         mud_printf( tempstring, "%s : %s", spec_table[spec->type], spec->value == 1 ? "True" : itos( spec->value ) );
+         bprintf( buf, "|%s|", fit_string_to_space( tempstring, ( space_after_pipes - 1 ) / 2 ) );
+         bprintf( buf, " %s|\r\n", fit_string_to_space( " ", ( space_after_pipes - 1 ) / 2 ) );
+      }
+      DetachIterator( &IterSpec );
+      bprintf( buf, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
+   }
    print_commands( dsock->account->olc, dsock->account->olc->editor_commands, buf, 0, dsock->account->pagewidth );
    bprintf( buf, "\\%s/\r\n", print_bar( "-", space_after_pipes ) );
 
@@ -185,7 +200,7 @@ void eFramework_addSpec( void *passed, char *arg )
 
    arg = one_arg( arg, spec_arg );
 
-   if( ( spec_type = match_string_table( spec_arg, spec_table ) ) == -1 )
+   if( ( spec_type = match_string_table_no_case( spec_arg, spec_table ) ) == -1 )
    {
       text_to_olc( olc, "Invalid Spec Type.\r\n" );
       return;
@@ -204,11 +219,14 @@ void eFramework_addSpec( void *passed, char *arg )
    else
       spec_value = atoi( arg );
 
-   spec = init_specification();
+   if( ( spec = spec_list_has_by_type( frame->specifications, spec_type ) ) != NULL )
+      text_to_olc( olc, "Override current %s specification who's value was %d.\r\n", spec_table[spec->type], spec->value );
+   else
+      spec = init_specification();
+
    spec->type = spec_type;
    spec->value = spec_value;
    add_spec_to_framework( spec, frame );
-   new_specification( spec );
    text_to_olc( olc, "%s added to %s with the value of %s.\r\n", spec_table[spec_type], frame->name,
                 spec_value == 1 ? "True" : itos( spec->value ) );
    return;
