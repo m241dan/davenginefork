@@ -98,6 +98,7 @@ ENTITY_FRAMEWORK *load_eFramework( int id )
 
    db_load_eFramework( frame, &row );
    mysql_free_result( result );
+   load_specifications_to_list( frame->specifications, quick_format( "f%d", frame->tag->id ) );
    return frame;
 }
 

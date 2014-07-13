@@ -169,6 +169,52 @@ void eFramework_description( void *passed, char *arg )
    return;
 }
 
+void eFramework_addSpec( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_FRAMEWORK *frame = (ENTITY_FRAMEWORK *)olc->editing;
+   SPECIFICATION *spec;
+   char spec_arg[MAX_BUFFER];
+   int spec_type, spec_value;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Valid Specs: %s.\r\n", print_string_table( spec_table ) );
+      return;
+   }
+
+   arg = one_arg( arg, spec_arg );
+
+   if( ( spec_type = match_string_table( spec_arg, spec_table ) ) == -1 )
+   {
+      text_to_olc( olc, "Invalid Spec Type.\r\n" );
+      return;
+   }
+
+   if( !arg || arg[0] == '\0' )
+   {
+     text_to_olc( olc, "Spec Value Defaulting to True(1).\r\n" );
+     spec_value = 1;
+   }
+   else if( !is_number( arg ) )
+   {
+      text_to_olc( olc, "Spec Value must be a number.\r\n" );
+      return;
+   }
+   else
+      spec_value = atoi( arg );
+
+   spec = init_specification();
+   spec->type = spec_type;
+   spec->value = spec_value;
+   add_spec_to_framework( spec, frame );
+   new_specification( spec );
+   text_to_olc( olc, "%s added to %s with the value of %s.\r\n", spec_table[spec_type], frame->name,
+                spec_value == 1 ? "True" : itos( spec->value ) );
+   return;
+
+}
+
 void eFramework_done( void *passed, char *arg )
 {
    INCEPTION *olc = (INCEPTION *)passed;

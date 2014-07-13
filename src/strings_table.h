@@ -3,5 +3,7 @@
 extern const char *const data_types[MAX_MEMORY_TYPE+1];
 extern const char *const tag_table_strings[MAX_ID_HANDLER+1];
 extern const char *const tag_table_whereID[MAX_ID_HANDLER+1];
+
 /* match string from given table */
 int match_string_table( const char *string, const char *const string_table[] );
+const char *print_string_table( const char *const string_table[] );

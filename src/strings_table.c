@@ -26,3 +26,23 @@ int match_string_table( const char *string, const char *const string_table[] )
 
    return -1;
 }
+
+const char *print_string_table( const char *const string_table[] )
+{
+   static char buf[MAX_BUFFER];
+   int x = 0;
+
+   if( !string_table[x] || string_table[x] == '\0' )
+      return "empty table";
+
+   mud_printf( buf, string_table[x] );
+
+   for( x = 1; string_table[x] != '\0'; x++ )
+   {
+      strcat( buf, ", " );
+      strcat( buf, string_table[x] );
+   }
+
+   return buf;
+
+}

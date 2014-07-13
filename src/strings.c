@@ -650,3 +650,28 @@ char *print_bar( const char *pattern, int width )
    buf[strlen(buf)] = '\0';
    return buf;
 }
+
+const char *itos( int value )
+{
+   static char buf[MAX_BUFFER];
+   mud_printf( buf, "%d", value );
+   return buf;
+}
+
+const char *quick_format( const char *format, ... )
+{
+   static char buf[MAX_BUFFER];
+   va_list va;
+   int res;
+
+   va_start( va, format );
+   res = vsnprintf( buf, MAX_BUFFER, format, va );
+   va_end( va );
+
+   if( res >= MAX_BUFFER -1 )
+   {
+      buf[0] = '\0';
+      bug( "Overflow when printing string %s", format );
+   }
+   return buf;
+}
