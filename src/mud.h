@@ -78,7 +78,7 @@ typedef enum
 
 typedef enum
 {
-   ACCOUNT_IDS, WORKSPACE_IDS, ENTITY_FRAMEWORK_IDS, MAX_ID_HANDLER
+   ACCOUNT_IDS, WORKSPACE_IDS, ENTITY_FRAMEWORK_IDS, ENTITY_INSTANCE_IDS, MAX_ID_HANDLER
 } id_handler_types;
 
 typedef enum
@@ -238,6 +238,7 @@ typedef const struct nanny_lib_entry NANNY_LIB_ENTRY;
 typedef struct  id_handler    ID_HANDLER;
 typedef struct  id_tag        ID_TAG;
 typedef struct  entity_framework ENTITY_FRAMEWORK;
+typedef struct  entity_instance ENTITY_INSTANCE;
 typedef struct  inception_olc  INCEPTION;
 typedef struct  workspace      WORKSPACE;
 typedef struct  typSpec        SPECIFICATION;
@@ -304,6 +305,7 @@ typedef struct buffer_type
 #include "communication.h"
 #include "olc.h"
 #include "frameworks.h"
+#include "instances.h"
 #include "editor.h"
 #include "specifications.h"
 
@@ -322,6 +324,7 @@ extern  LLIST        *  active_wSpaces;   /* a linked list for active work space
 extern  LLIST	     *	active_OLCs;	  /* a linked list of active OLCs */
 extern  LLIST        *  active_frameworks; /* a linked list of active frameworks */
 extern  LLIST        *  help_list;        /* the linked LLIST of help files      */
+extern  LLIST        *  eInstance_list;   /* list of entity instances */
 extern  MYSQL        *  sql_handle;       /* global connection to sql database */
 extern  const struct    typCmd tabCmd[];  /* the command table                  */
 extern  bool            shut_down;        /* used for shutdown                  */
