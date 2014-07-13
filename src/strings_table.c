@@ -6,12 +6,12 @@ const char *const data_types[MAX_MEMORY_TYPE+1] = {
 };
 
 const char *const tag_table_strings[MAX_ID_HANDLER+1] = {
-   "accounts", "workspaces", "entity_frameworks",
+   "accounts", "workspaces", "entity_frameworks", "entity_instances",
    '\0'
 };
 
 const char *const tag_table_whereID[MAX_ID_HANDLER+1] = {
-   "accountID", "workspaceID", "entityFrameworkID",
+   "accountID", "workspaceID", "entityFrameworkID", "entityInstanceID",
    '\0'
 };
 
