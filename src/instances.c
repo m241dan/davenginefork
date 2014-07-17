@@ -51,6 +51,17 @@ int free_eInstance( ENTITY_INSTANCE *eInstance )
 ENTITY_INSTANCE *get_instance_by_id( int id )
 {
    ENTITY_INSTANCE *eInstance;
+
+   if( ( eInstance = get_active_instance_by_id( id ) ) == NULL )
+      if( ( eInstance = load_eInstance_by_id( id ) ) != NULL )
+         AttachToList( eInstance, eInstances_list );
+
+   return eInstance;
+}
+
+ENTITY_INSTANCE *get_active_instance_by_id( int id )
+{
+   ENTITY_INSTANCE *eInstance;
    ITERATOR Iter;
 
    if( SizeOfList( eInstances_list ) < 1 )
@@ -214,3 +225,14 @@ ENTITY_INSTANCE *eInstace_list_has_by_name( LLIST *instance_list, const char *na
 }
 
 
+ENTITY_INSTANCE *eInstantiate( ENTITY_FRAMEWORK *frame )
+{
+   ENTITY_INSTANCE *eInstance;
+
+   if( !live_frame( frame ) )
+      return NULL;
+
+   eInstance = init_eInstance();
+   eInstance->framework = frame;
+   return eInstance;
+}

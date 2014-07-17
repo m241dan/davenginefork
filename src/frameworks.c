@@ -57,51 +57,78 @@ int free_eFramework( ENTITY_FRAMEWORK *frame )
    return ret;
 }
 
-ENTITY_FRAMEWORK *get_active_framework( int id )
+ENTITY_FRAMEWORK *load_eFramework_by_query( const char *fmt_query, ... )
 {
-   ENTITY_FRAMEWORK *frame;
-   ITERATOR Iter;
-
-   if( SizeOfList( active_frameworks ) < 1 )
-      return NULL;
-   if( id < 0 )
-      return NULL;
-
-   AttachIterator( &Iter, active_frameworks );
-   while( ( frame = (ENTITY_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
-      if( frame->tag->id == id )
-         break;
-   DetachIterator( &Iter );
-
-   return frame;
-}
-
-ENTITY_FRAMEWORK *load_eFramework( int id )
-{
-   ENTITY_FRAMEWORK *frame;
+   ENTITY_FRAMEWORK *frame = NULL;
    MYSQL_RES *result;
    MYSQL_ROW row;
+   char query[MAX_BUFFER];
+   va_list va;
 
-   if( !quick_query( "SELECT * FROM entity_frameworks WHERE entityFrameworkID=%d;", id ) )
+   va_start( va, fmt_query );
+   vsnprintf( buf, MAX_BUFFER, fmt_query, va );
+   va_end( va );
+
+   if( !quick_query( "SELECT * FROM entity_frameworks WHERE %s;", query) )
       return NULL;
    if( ( result = mysql_store_result( sql_handle ) ) == NULL )
       return NULL;
    if( mysql_num_rows( result ) == 0 )
-      return NULL;
+      goto thereturn;
    if( ( row = mysql_fetch_row( result ) ) == NULL )
-   {
-      mysql_free_result( result );
-      return NULL;
-   }
-   if( ( frame = init_eFramework() ) == NULL )
-      return NULL;
+      goto thereturn;
+   if( ( frame= init_eFramework() ) == NULL )
+      goto thereturn;
 
    db_load_eFramework( frame, &row );
-   mysql_free_result( result );
    load_specifications_to_list( frame->specifications, quick_format( "f%d", frame->tag->id ) );
+
+   thereturn:
+      mysql_free_result( result );
+      return frame;
+}
+
+ENTITY_FRAMEWORK *get_framework_by_id( int id )
+{
+   ENTITY_FRAMEWORK *frame;
+
+   if( ( frame = get_active_framework( id ) ) == NULL )
+      if( ( frame = load_eFramework( id ) ) != NULL )
+         AttachToList( frame, active_frameworks );
+
    return frame;
 }
 
+ENTITY_FRAMEWORK *get_active_framework_by_id( int id )
+{
+   return framework_list_has_by_id( active_frameworks, id );
+}
+
+ENTITY_FRAMEWORK *load_eFramework_by_id( int id )
+{
+   return load_eFramework_by_query( "%s=%d", tag_table_whereID[ENTITY_FRAMEWORK_IDS], id );
+}
+
+ENTITY_FRAMEWORK *get_framework_by_name( const char *name )
+{
+   ENTITY_FRAMEOWKR *frame;
+
+   if( ( frame = get_active_framework_by_name( name ) ) == NULL )
+      if( ( frame = load_eFramework_by_name( name ) ) != NULL )
+         AttachToList( frame, active_frameworks );
+
+   return frame;
+}
+
+ENTITY_FRAMEWORK *get_active_framework_by_name( const char *name )
+{
+   return framework_list_has_by_name( active_frameworks, name );
+}
+
+ENTITY_FRAMEWORK *load_eFramework_by_name( constchar *name )
+{
+   return load_eFramework_by_query( "name='%s' LIMIT 1", name );
+}
 int new_eFramework( ENTITY_FRAMEWORK *frame )
 {
    SPECIFICATION *spec;
@@ -155,15 +182,15 @@ void db_load_eFramework( ENTITY_FRAMEWORK *frame, MYSQL_ROW *row )
    return;
 }
 
-bool framework_list_has_by_id( LLIST *frameworks, int id )
+ENTITY_FRAMEWORK *framework_list_has_by_id( LLIST *frameworks, int id )
 {
    ENTITY_FRAMEWORK *frame;
    ITERATOR Iter;
 
    if( !frameworks )
-      return FALSE;
+      return NULL;
    if( SizeOfList( frameworks ) < 1 )
-      return FALSE;
+      return NULL;
 
    AttachIterator( &Iter, frameworks );
    while( ( frame = (ENTITY_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
@@ -171,20 +198,18 @@ bool framework_list_has_by_id( LLIST *frameworks, int id )
          break;
    DetachIterator( &Iter );
 
-   if( frame )
-      return TRUE;
-   return FALSE;
+   return frame;
 }
 
-bool framework_list_has_by_name( LLIST *frameworks, const char *name )
+ENTITY_FRAMEWORK *framework_list_has_by_name( LLIST *frameworks, const char *name )
 {
    ENTITY_FRAMEWORK *frame;
    ITERATOR Iter;
 
    if( !frameworks )
-      return FALSE;
+      return NULL;
    if( SizeOfList( frameworks ) < 1 )
-      return FALSE;
+      return NULL;
 
    AttachIterator( &Iter, frameworks );
    while( ( frame = (ENTITY_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
@@ -192,9 +217,7 @@ bool framework_list_has_by_name( LLIST *frameworks, const char *name )
          break;
    DetachIterator( &Iter );
 
-   if( frame )
-      return TRUE;
-   return FALSE;
+   return frame;
 }
 
 bool live_frame( ENTITY_FRAMEWORK *frame )

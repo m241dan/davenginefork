@@ -385,15 +385,10 @@ int load_workspace_entries( WORKSPACE *wSpace )
       if( row[0][0] == 'f' )
       {
          framework_id = atoi( row[0]+1 );
-         if( ( frame = get_active_framework( framework_id ) ) == NULL )
+         if( ( frame = get_framework( framework_id ) ) == NULL )
          {
-            if( ( frame = load_eFramework( framework_id ) ) == NULL )
-            {
-               bug( "%s: bad entry in workspace_entries %d", __FUNCTION__, framework_id );
-               continue;
-            }
-            else
-               AttachToList( frame, active_frameworks );
+            bug( "%s: bad entry in workspace_entries %d,", __FUNCTION__, framework_id );
+            continue;
          }
          AttachToList( frame, wSpace->frameworks );
       }
@@ -793,6 +788,43 @@ void framework_create( void *passed, char *arg )
    olc_show_prompt( olc );
    olc->editor_commands = AllocList();
    change_socket_state( olc->account->socket, olc->editing_state );
+   return;
+}
+
+void olc_instantiate( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_FRAMEWORK *frame;
+   ENTITY_INSTANCE *instance;
+   int framework_id;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Instantiate what?\r\n" );
+      return;
+   }
+
+   if( arg[0] != 'f' )
+   {
+      text_to_olc( olc, "%s is an inproper format. Please use: 'f<id>' or 'f_<name>'\r\n", arg );
+      return;
+   }
+   arg++;
+
+   if( arg[0] != '_' )
+   {
+      if( !is_number( arg ) )
+      {
+         text_to_olc( olc, "Bad format. You must enter an ID unless you seperate with an '_'.\r\n" );
+         return;
+      }
+      framework_id = atoi( arg );
+   }
+   else
+   {
+   }
+
+
    return;
 }
 
