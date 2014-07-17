@@ -98,3 +98,39 @@ bool quick_query( const char *format, ... )
    return TRUE;
 }
 
+
+bool db_query_single_row( MYSQL_ROW *row, const char *query  )
+{
+   MYSQL_RES *result;
+
+   if( !quick_query( query ) )
+      return FALSE;
+   if( ( result = mysql_store_result( sql_handle ) ) == NULL )
+      return FALSE;
+   *row = mysql_fetch_row( result );
+
+   mysql_free_result( result );
+   return TRUE;
+}
+
+bool db_query_list_row( LLIST *list, const char *query )
+{
+   MYSQL_RES *result;
+   MYSQL_ROW *row_ptr;
+   MYSQL_ROW row;
+
+   if( !quick_query( query ) )
+      return FALSE;
+   if( ( result = mysql_store_result( sql_handle ) ) == NULL )
+      return FALSE;
+
+   while( ( row = mysql_fetch_row( result ) ) != NULL )
+   {
+      CREATE( row_ptr, MYSQL_ROW, 1 );
+      *row_ptr = row;
+      AttachToList( row_ptr, list );
+   }
+
+   mysql_free_result( result );
+   return TRUE;
+}

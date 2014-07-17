@@ -48,6 +48,23 @@ int free_eInstance( ENTITY_INSTANCE *eInstance )
    return RET_SUCCESS;
 }
 
+ENTITY_INSTANCE *load_eInstance_by_query( const char *query )
+{
+   ENTITY_INSTANCE *instance = NULL;
+   MYSQL_ROW row;
+
+   if( !db_query_single_row( &row, query ) )
+      return NULL;
+
+   if( ( instance = init_eInstance() ) == NULL )
+      return NULL;
+
+   db_load_eInstance( instance, &row );
+   load_specifications_to_list( instance->specifications, quick_format( "%d", instance->tag->id ) );
+
+   return instance;
+}
+
 ENTITY_INSTANCE *get_instance_by_id( int id )
 {
    ENTITY_INSTANCE *eInstance;
@@ -61,45 +78,33 @@ ENTITY_INSTANCE *get_instance_by_id( int id )
 
 ENTITY_INSTANCE *get_active_instance_by_id( int id )
 {
-   ENTITY_INSTANCE *eInstance;
-   ITERATOR Iter;
-
-   if( SizeOfList( eInstances_list ) < 1 )
-      return NULL;
-
-   AttachIterator( &Iter, eInstances_list );
-   while( ( eInstance = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
-      if( eInstance->tag->id == id )
-         break;
-   DetachIterator( &Iter );
-
-   return eInstance;
+   return instance_list_has_by_id( eInstances_list, id );
 }
 
 ENTITY_INSTANCE *load_eInstance_by_id( int id )
 {
+   return load_eInstance_by_query( quick_format( "SELECT * FROM `%s` WHERE %s=%d;", tag_table_strings[ENTITY_INSTANCE_IDS], tag_table_whereID[ENTITY_INSTANCE_IDS], id ) );
+}
+
+ENTITY_INSTANCE *get_instance_by_name( const char *name )
+{
    ENTITY_INSTANCE *eInstance;
-   MYSQL_RES *result;
-   MYSQL_ROW row;
 
-   if( !quick_query( "SELECT * FROM entity_instances WHERE entityInstanceID=%d;", id ) )
-      return NULL;
-   if( ( result = mysql_store_result( sql_handle ) ) == NULL )
-      return NULL;
-   if( mysql_num_rows( result ) == 0 )
-      return NULL;
-   if( ( row = mysql_fetch_row( result ) ) == NULL )
-   {
-      mysql_free_result( result );
-      return NULL;
-   }
-   if( ( eInstance = init_eInstance() ) == NULL )
-      return NULL;
+   if( ( eInstance = get_active_instance_by_name( name ) ) == NULL )
+      if( ( eInstance = load_eInstance_by_name( name ) ) != NULL )
+         AttachToList( eInstance, eInstances_list );
 
-   db_load_eInstance( eInstance, &row );
-   mysql_free_result( result );
-   load_specifications_to_list( eInstance->specifications, quick_format( "%d", id ) );
    return eInstance;
+}
+
+ENTITY_INSTANCE *get_active_instance_by_name( const char *name )
+{
+   return instance_list_has_by_name( eInstances_list, name );
+}
+
+ENTITY_INSTANCE *load_eInstance_by_name( const char *name )
+{
+   return load_eInstance_by_query( quick_format( "SELECT * FROM `%s` WHERE name='%s' LIMIT 1;", tag_table_strings[ENTITY_INSTANCE_IDS], name ) );
 }
 
 int new_eInstance( ENTITY_INSTANCE *eInstance )
@@ -184,7 +189,7 @@ void db_load_eInstance( ENTITY_INSTANCE *eInstance, MYSQL_ROW *row )
    return;
 }
 
-ENTITY_INSTANCE *eInstance_list_has_by_id( LLIST *instance_list, int id )
+ENTITY_INSTANCE *instance_list_has_by_id( LLIST *instance_list, int id )
 {
    ENTITY_INSTANCE *eInstance;
    ITERATOR Iter;
@@ -203,7 +208,7 @@ ENTITY_INSTANCE *eInstance_list_has_by_id( LLIST *instance_list, int id )
    return eInstance;
 }
 
-ENTITY_INSTANCE *eInstace_list_has_by_name( LLIST *instance_list, const char *name )
+ENTITY_INSTANCE *instance_list_has_by_name( LLIST *instance_list, const char *name )
 {
    ENTITY_INSTANCE *eInstance;
    ITERATOR Iter;

@@ -57,35 +57,20 @@ int free_eFramework( ENTITY_FRAMEWORK *frame )
    return ret;
 }
 
-ENTITY_FRAMEWORK *load_eFramework_by_query( const char *fmt_query, ... )
+ENTITY_FRAMEWORK *load_eFramework_by_query( const char *query )
 {
    ENTITY_FRAMEWORK *frame = NULL;
-   MYSQL_RES *result;
    MYSQL_ROW row;
-   char query[MAX_BUFFER];
-   va_list va;
 
-   va_start( va, fmt_query );
-   vsnprintf( query, MAX_BUFFER, fmt_query, va );
-   va_end( va );
+   if( !db_query_single_row( &row, query ) )
+      return NULL;
 
-   if( !quick_query( "SELECT * FROM entity_frameworks WHERE %s;", query ) )
+   if( ( frame = init_eFramework() ) == NULL )
       return NULL;
-   if( ( result = mysql_store_result( sql_handle ) ) == NULL )
-      return NULL;
-   if( mysql_num_rows( result ) == 0 )
-      goto thereturn;
-   if( ( row = mysql_fetch_row( result ) ) == NULL )
-      goto thereturn;
-   if( ( frame= init_eFramework() ) == NULL )
-      goto thereturn;
 
    db_load_eFramework( frame, &row );
    load_specifications_to_list( frame->specifications, quick_format( "f%d", frame->tag->id ) );
-
-   thereturn:
-      mysql_free_result( result );
-      return frame;
+   return frame;
 }
 
 ENTITY_FRAMEWORK *get_framework_by_id( int id )
@@ -106,7 +91,7 @@ ENTITY_FRAMEWORK *get_active_framework_by_id( int id )
 
 ENTITY_FRAMEWORK *load_eFramework_by_id( int id )
 {
-   return load_eFramework_by_query( "%s=%d", tag_table_whereID[ENTITY_FRAMEWORK_IDS], id );
+   return load_eFramework_by_query( quick_format( "SELECT * FROM `%s` WHERE %s=%d;", tag_table_strings[ENTITY_FRAMEWORK_IDS], tag_table_whereID[ENTITY_FRAMEWORK_IDS], id ) );
 }
 
 ENTITY_FRAMEWORK *get_framework_by_name( const char *name )
@@ -127,8 +112,9 @@ ENTITY_FRAMEWORK *get_active_framework_by_name( const char *name )
 
 ENTITY_FRAMEWORK *load_eFramework_by_name( const char *name )
 {
-   return load_eFramework_by_query( "name='%s' LIMIT 1", name );
+   return load_eFramework_by_query( quick_format( "SELECT * FROM `%s` WHERE name='%s' LIMIT 1;", tag_table_strings[ENTITY_FRAMEWORK_IDS], name ) );
 }
+
 int new_eFramework( ENTITY_FRAMEWORK *frame )
 {
    SPECIFICATION *spec;
