@@ -23,7 +23,7 @@ int free_eFramework( ENTITY_FRAMEWORK *frame );
 ENTITY_FRAMEWORK *load_eFramework_by_query( const char *fmt_query, ... );
 
 ENTITY_FRAMEWORK *get_framework_by_id( int id );
-ENTITY_FRAMEWORK *get_active_by_id( int id );
+ENTITY_FRAMEWORK *get_active_framework_by_id( int id );
 ENTITY_FRAMEWORK *load_eFramework_by_id( int id );
 
 ENTITY_FRAMEWORK *get_framework_by_name( const char *name );

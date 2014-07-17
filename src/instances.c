@@ -173,9 +173,9 @@ void db_load_eInstance( ENTITY_INSTANCE *eInstance, MYSQL_ROW *row )
      eInstance->name = strdup( (*row)[9] );
 
    framework_id = atoi( (*row)[10] );
-   if( ( eInstance->framework = get_active_framework( framework_id ) ) == NULL )
+   if( ( eInstance->framework = get_active_framework_by_id( framework_id ) ) == NULL )
    {
-      if( ( eInstance->framework = load_eFramework( framework_id ) ) == NULL )
+      if( ( eInstance->framework = load_eFramework_by_id( framework_id ) ) == NULL )
          bug( "%s: instance has a NULL framework: ID %d", __FUNCTION__, eInstance->tag->id );
       else
          AttachToList( eInstance->framework, active_frameworks );

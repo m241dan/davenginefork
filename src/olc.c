@@ -385,7 +385,7 @@ int load_workspace_entries( WORKSPACE *wSpace )
       if( row[0][0] == 'f' )
       {
          framework_id = atoi( row[0]+1 );
-         if( ( frame = get_framework( framework_id ) ) == NULL )
+         if( ( frame = get_framework_by_id( framework_id ) ) == NULL )
          {
             bug( "%s: bad entry in workspace_entries %d,", __FUNCTION__, framework_id );
             continue;
@@ -702,7 +702,7 @@ void workspace_grab( void *passed, char *arg )
          }
          if( SizeOfList( active_frameworks ) > 0 )
          {
-            if( ( frame = get_active_framework( search_id ) ) != NULL )
+            if( ( frame = get_active_framework_by_id( search_id ) ) != NULL )
             {
                AttachToList( frame, olc->using_workspace->frameworks );
                new_workspace_entry( olc->using_workspace, frame->tag );
@@ -712,7 +712,7 @@ void workspace_grab( void *passed, char *arg )
          }
          if( !frame )
          {
-            if( ( frame = load_eFramework( search_id ) ) == NULL )
+            if( ( frame = load_eFramework_by_id( search_id ) ) == NULL )
             {
                text_to_olc( olc, "No framework with an ID of %d exists.\r\n", search_id );
                continue;

@@ -66,10 +66,10 @@ ENTITY_FRAMEWORK *load_eFramework_by_query( const char *fmt_query, ... )
    va_list va;
 
    va_start( va, fmt_query );
-   vsnprintf( buf, MAX_BUFFER, fmt_query, va );
+   vsnprintf( query, MAX_BUFFER, fmt_query, va );
    va_end( va );
 
-   if( !quick_query( "SELECT * FROM entity_frameworks WHERE %s;", query) )
+   if( !quick_query( "SELECT * FROM entity_frameworks WHERE %s;", query ) )
       return NULL;
    if( ( result = mysql_store_result( sql_handle ) ) == NULL )
       return NULL;
@@ -92,8 +92,8 @@ ENTITY_FRAMEWORK *get_framework_by_id( int id )
 {
    ENTITY_FRAMEWORK *frame;
 
-   if( ( frame = get_active_framework( id ) ) == NULL )
-      if( ( frame = load_eFramework( id ) ) != NULL )
+   if( ( frame = get_active_framework_by_id( id ) ) == NULL )
+      if( ( frame = load_eFramework_by_id( id ) ) != NULL )
          AttachToList( frame, active_frameworks );
 
    return frame;
@@ -111,7 +111,7 @@ ENTITY_FRAMEWORK *load_eFramework_by_id( int id )
 
 ENTITY_FRAMEWORK *get_framework_by_name( const char *name )
 {
-   ENTITY_FRAMEOWKR *frame;
+   ENTITY_FRAMEWORK *frame;
 
    if( ( frame = get_active_framework_by_name( name ) ) == NULL )
       if( ( frame = load_eFramework_by_name( name ) ) != NULL )
@@ -125,7 +125,7 @@ ENTITY_FRAMEWORK *get_active_framework_by_name( const char *name )
    return framework_list_has_by_name( active_frameworks, name );
 }
 
-ENTITY_FRAMEWORK *load_eFramework_by_name( constchar *name )
+ENTITY_FRAMEWORK *load_eFramework_by_name( const char *name )
 {
    return load_eFramework_by_query( "name='%s' LIMIT 1", name );
 }
