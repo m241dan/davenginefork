@@ -155,16 +155,13 @@ int new_eFramework( ENTITY_FRAMEWORK *frame )
 
 void db_load_eFramework( ENTITY_FRAMEWORK *frame, MYSQL_ROW *row )
 {
-   frame->tag->id = atoi( (*row)[0] );
-   frame->tag->type = atoi( (*row)[1] );
-   frame->tag->created_by = strdup( (*row)[2] );
-   frame->tag->created_on = strdup( (*row)[3] );
-   frame->tag->modified_by = strdup( (*row)[4] );
-   frame->tag->modified_on = strdup( (*row)[5] );
-   frame->name = strdup( (*row)[6] );
-   frame->short_descr = strdup( (*row)[7] );
-   frame->long_descr = strdup( (*row)[8] );
-   frame->description = strdup( (*row)[9] );
+   int counter;
+
+   counter = db_load_tag( frame->tag, row );
+   frame->name = strdup( (*row)[counter++] );
+   frame->short_descr = strdup( (*row)[counter++] );
+   frame->long_descr = strdup( (*row)[counter++] );
+   frame->description = strdup( (*row)[counter++] );
    return;
 }
 

@@ -145,6 +145,20 @@ int new_tag( ID_TAG *tag, const char *creator )
    return ret;
 }
 
+int db_load_tag( ID_TAG *tag, MYSQL_ROW *row )
+{
+   int counter = 0;
+
+   tag->id = atoi( (*row)[counter++] );
+   tag->type = atoi( (*row)[counter++] );
+   tag->created_by = strdup( (*row)[counter++] );
+   tag->created_on = strdup( (*row)[counter++] );
+   tag->modified_by = strdup( (*row)[counter++] );
+   tag->modified_on = strdup( (*row)[counter++] );
+
+   return counter;
+}
+
 int update_tag( ID_TAG *tag, const char *effector, ... )
 {
    char buf[50];

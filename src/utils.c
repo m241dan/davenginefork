@@ -119,6 +119,8 @@ bool db_query_list_row( LLIST *list, const char *query )
    MYSQL_ROW *row_ptr;
    MYSQL_ROW row;
 
+   if( !list )
+      return FALSE;
    if( !quick_query( query ) )
       return FALSE;
    if( ( result = mysql_store_result( sql_handle ) ) == NULL )
@@ -134,3 +136,4 @@ bool db_query_list_row( LLIST *list, const char *query )
    mysql_free_result( result );
    return TRUE;
 }
+

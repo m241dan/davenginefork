@@ -167,16 +167,12 @@ WORKSPACE *load_workspace( const char *name )
 
 void db_load_workspace( WORKSPACE *wSpace, MYSQL_ROW *row )
 {
-   wSpace->tag->id = atoi( (*row)[0] );
-   wSpace->tag->type = atoi( (*row)[1] );
-   wSpace->tag->created_by = strdup( (*row)[2] );
-   wSpace->tag->created_on = strdup( (*row)[3] );
-   wSpace->tag->modified_by = strdup( (*row)[4] );
-   wSpace->tag->modified_on = strdup( (*row)[5] );
-   wSpace->name = strdup( (*row)[6] );
-   wSpace->description = strdup( (*row)[7] );
-   wSpace->Public = (bool)atoi( (*row)[8] );
-   return;
+   int counter;
+
+   counter = db_load_tag( wSpace->tag, row );
+   wSpace->name = strdup( (*row)[counter++] );
+   wSpace->description = strdup( (*row)[counter++] );
+   wSpace->Public = (bool)atoi( (*row)[counter++] );
 }
 
 void unuse_workspace( WORKSPACE *wSpace, ACCOUNT_DATA *account )
@@ -552,8 +548,8 @@ void workspace_load( void *passed, char *arg )
    ACCOUNT_DATA *account;
    INCEPTION *olc = (INCEPTION *)passed;
    WORKSPACE *wSpace;
-   MYSQL_RES *result;
-   MYSQL_ROW row;
+   LLIST *list;
+   MYSQL_ROW *row;
    ITERATOR Iter, IterTwo;
    char buf[MAX_BUFFER];
    char who_using[MAX_BUFFER];
@@ -600,31 +596,31 @@ void workspace_load( void *passed, char *arg )
    }
    DetachIterator( &Iter );
 
-   if( quick_query( "SELECT * FROM workspaces WHERE name LIKE '%s%%';", buf ) )
-      if( ( result = mysql_store_result( sql_handle ) ) != NULL )
-         if( mysql_num_rows( result ) > 0 )
+   list = AllocList();
+   if( db_query_list_row( list, quick_format( "SELECT * FROM workspaces WHERE name LIKE '%s%%';", buf ) ) )
+   {
+      AttachIterator( &Iter, list );
+      while( ( row = (MYSQL_ROW *)NextInList( &Iter ) ) != NULL )
+      {
+         wSpace = init_workspace();
+         db_load_workspace( wSpace, row );
+         if( workspace_list_has_name( olc->wSpaces, wSpace->name ) )
          {
-            while( ( row = mysql_fetch_row( result ) ) != NULL )
-            {
-               wSpace = init_workspace();
-               db_load_workspace( wSpace, &row );
-               if( workspace_list_has_name( olc->wSpaces, wSpace->name ) )
-               {
-                  free_workspace( wSpace );
-                  continue;
-               }
-               load_workspace_entries( wSpace );
-               found = TRUE;
-               AttachToList( wSpace, active_wSpaces );
-               AttachToList( wSpace, olc->wSpaces );
-               AttachToList( olc->account, wSpace->who_using );
-               text_to_olc( olc, "Workspace %s loaded from database.\r\n", wSpace->name );
-            }
+            free_workspace( wSpace );
+            continue;
          }
+         load_workspace_entries( wSpace );
+         found = TRUE;
+         AttachToList( wSpace, active_wSpaces );
+         AttachToList( wSpace, olc->wSpaces );
+         AttachToList( olc->account, wSpace->who_using );
+         text_to_olc( olc, "Workspace %s loaded from database.\r\n", wSpace->name );
+      }
+   }
+   FreeList( list );
 
    if( !found )
       text_to_olc( olc, "No workspaces with that name exist.\r\n" );
-   mysql_free_result( result );
    return;
 }
 

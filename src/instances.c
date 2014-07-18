@@ -149,35 +149,31 @@ int new_eInstance( ENTITY_INSTANCE *eInstance )
 void db_load_eInstance( ENTITY_INSTANCE *eInstance, MYSQL_ROW *row )
 {
    int framework_id;
+   int counter;
 
-   eInstance->tag->id = atoi( (*row)[0] );
-   eInstance->tag->type = atoi( (*row)[1] );
-   eInstance->tag->created_by = strdup( (*row)[2] );
-   eInstance->tag->created_on = strdup( (*row)[3] );
-   eInstance->tag->modified_by = strdup( (*row)[4] );
-   eInstance->tag->modified_on = strdup( (*row)[5] );
+   counter = db_load_tag( eInstance->tag, row );
 
-   if( (*row[6]) == NULL )
+   if( (*row[counter++]) == NULL )
      eInstance->name = NULL;
    else
-     eInstance->name = strdup( (*row)[6] );
+     eInstance->name = strdup( (*row)[counter] );
 
-   if( (*row[7]) == NULL )
+   if( (*row[counter++]) == NULL )
      eInstance->name = NULL;
    else
-     eInstance->name = strdup( (*row)[7] );
+     eInstance->name = strdup( (*row)[counter] );
 
-   if( (*row[8]) == NULL )
+   if( (*row[counter++]) == NULL )
      eInstance->name = NULL;
    else
-     eInstance->name = strdup( (*row)[8] );
+     eInstance->name = strdup( (*row)[counter] );
 
-   if( (*row[9]) == NULL )
+   if( (*row[counter++]) == NULL )
      eInstance->name = NULL;
    else
-     eInstance->name = strdup( (*row)[9] );
+     eInstance->name = strdup( (*row)[counter] );
 
-   framework_id = atoi( (*row)[10] );
+   framework_id = atoi( (*row)[counter++] );
    if( ( eInstance->framework = get_active_framework_by_id( framework_id ) ) == NULL )
    {
       if( ( eInstance->framework = load_eFramework_by_id( framework_id ) ) == NULL )
