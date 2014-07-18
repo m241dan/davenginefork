@@ -110,7 +110,7 @@ void db_load_account( ACCOUNT_DATA *account, MYSQL_ROW *row )
 {
    int counter;
 
-   counter = db_load_tag( account->tag, row );
+   counter = db_load_tag( account->idtag, row );
    account->name = strdup( (*row)[counter++] );
    account->password = strdup( (*row)[counter++] );
    account->level = atoi( (*row)[counter++] );
