@@ -399,7 +399,7 @@ int new_workspace_entry( WORKSPACE *wSpace, ID_TAG *tag )
       BAD_POINTER( "tag" );
       return ret;
    }
-   if( !quick_query( "INSERT INTO workspace_entries VALUES ( %d, '%s%d' );", wSpace->tag->id, tag->type == ENTITY_FRAMEWORK_IDS ? "f" : "", tag->id ) )
+   if( !quick_query( "INSERT INTO workspace_entries VALUES ( %d, '%c%d' );", wSpace->tag->id, tag_table_characters[tag->type], tag->id ) )
       return RET_FAILED_OTHER;
 
    return ret;
@@ -407,11 +407,12 @@ int new_workspace_entry( WORKSPACE *wSpace, ID_TAG *tag )
 
 int load_workspace_entries( WORKSPACE *wSpace )
 {
+   ENTITY_INSTANCE *instance;
    ENTITY_FRAMEWORK *frame;
    MYSQL_RES *result;
    MYSQL_ROW row;
    int ret = RET_SUCCESS;
-   int framework_id;
+   int id;
 
    if( !wSpace )
    {
@@ -427,20 +428,28 @@ int load_workspace_entries( WORKSPACE *wSpace )
       return RET_DB_NO_ENTRY;
    while( ( row = mysql_fetch_row( result ) ) != NULL )
    {
-      if( row[0][0] == 'f' )
+      switch( row[0][0] )
       {
-         framework_id = atoi( row[0]+1 );
-         if( ( frame = get_framework_by_id( framework_id ) ) == NULL )
-         {
-            bug( "%s: bad entry in workspace_entries %d,", __FUNCTION__, framework_id );
-            continue;
-         }
-         AttachToList( frame, wSpace->frameworks );
+         default: continue;
+         case 'f':
+            id = atoi( row[0]+1 );
+            if( ( frame = get_framework_by_id( id ) ) == NULL )
+            {
+               bug( "%s: bad entry in workspace_entries %d,", __FUNCTION__, id );
+               continue;
+            }
+            AttachToList( frame, wSpace->frameworks );
+            break;
+         case 'i':
+            id = atoi( row[0]+1 );
+            if( ( instance = get_instance_by_id( id ) ) == NULL )
+            {
+               bug( "%s: bad entry in workspace_entries %d,", __FUNCTION__, id );
+               continue;
+            }
+            AttachToList( instance, wSpace->instances );
+            break;
       }
-   /* else
-      {
-         instance stuff
-      } */
    }
    return ret;
 }
@@ -613,6 +622,8 @@ void workspace_load( void *passed, char *arg )
 
    arg = one_arg( arg, buf );
 
+   /* workspace messaging, needs factoring */
+
    AttachIterator( &Iter, active_wSpaces );
    while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
    {
@@ -644,6 +655,8 @@ void workspace_load( void *passed, char *arg )
       }
    }
    DetachIterator( &Iter );
+
+   /* needs factoring */
 
    list = AllocList();
    if( db_query_list_row( list, quick_format( "SELECT * FROM workspaces WHERE name LIKE '%s%%';", buf ) ) )
@@ -860,7 +873,7 @@ void olc_instantiate( void *passed, char *arg )
 
    AttachToList( instance, eInstances_list );
    if( olc->using_workspace )
-      AttachToList( instance, olc->using_workspace->instances );
+      add_instance_to_workspace( instance, olc->using_workspace );
 
    text_to_olc( olc, "You create a new instance using the %s framework.\r\n", frame->name );
    return;

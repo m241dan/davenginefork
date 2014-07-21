@@ -244,13 +244,10 @@ void eFramework_done( void *passed, char *arg )
       new_eFramework( frame );
       AttachToList( frame, active_frameworks );
       if( olc->using_workspace )
-      {
-         AttachToList( frame, olc->using_workspace->frameworks );
-         new_workspace_entry( olc->using_workspace, frame->tag );
-      }
+         add_frame_to_workspace( frame, olc->using_workspace );
    }
 
-   FREE( olc->editing );
+   olc->editing = NULL;
    free_command_list( olc->editor_commands );
    FreeList( olc->editor_commands );
    olc->editor_commands = NULL;

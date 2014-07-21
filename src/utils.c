@@ -107,6 +107,8 @@ bool db_query_single_row( MYSQL_ROW *row, const char *query  )
       return FALSE;
    if( ( result = mysql_store_result( sql_handle ) ) == NULL )
       return FALSE;
+   if( mysql_num_rows( result ) == 0 )
+      return FALSE;
    *row = mysql_fetch_row( result );
 
    mysql_free_result( result );

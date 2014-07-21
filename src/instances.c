@@ -110,7 +110,7 @@ ENTITY_INSTANCE *load_eInstance_by_name( const char *name )
    if( ( instance = load_eInstance_by_query( quick_format( "SELECT * FROM `%s` WHERE name='%s' LIMIT 1;", tag_table_strings[ENTITY_INSTANCE_IDS], name ) ) ) == NULL )
    {
       if( ( frame = get_framework_by_name( name ) ) != NULL )
-         instance = load_eInstance_by_query( quick_format( "SELECT * FROM '%s' WHERE frameworkID=%d LIMIT 1", tag_table_strings[ENTITY_INSTANCE_IDS], frame->tag->id ) );
+         instance = load_eInstance_by_query( quick_format( "SELECT * FROM '%s' WHERE frameworkID=%d LIMIT 1;", tag_table_strings[ENTITY_INSTANCE_IDS], frame->tag->id ) );
    }
    return instance;
 }
@@ -161,34 +161,34 @@ void db_load_eInstance( ENTITY_INSTANCE *eInstance, MYSQL_ROW *row )
 
    counter = db_load_tag( eInstance->tag, row );
 
-   if( (*row[counter++]) == NULL )
-     eInstance->name = NULL;
+   if( !strcmp( (*row)[counter++], "(null)" ) )
+      eInstance->name = NULL;
    else
-     eInstance->name = strdup( (*row)[counter] );
+      eInstance->name = strdup( (*row)[counter-1] );
 
-   if( (*row[counter++]) == NULL )
-     eInstance->name = NULL;
+   if( !strcmp( (*row)[counter++], "(null)" ) )
+      eInstance->short_descr = NULL;
    else
-     eInstance->name = strdup( (*row)[counter] );
+      eInstance->short_descr = strdup( (*row)[counter-1] );
 
-   if( (*row[counter++]) == NULL )
-     eInstance->name = NULL;
+   if( !strcmp( (*row)[counter++], "(null)" ) )
+      eInstance->long_descr = NULL;
    else
-     eInstance->name = strdup( (*row)[counter] );
+      eInstance->long_descr = strdup( (*row)[counter-1] );
 
-   if( (*row[counter++]) == NULL )
-     eInstance->name = NULL;
+   if( !strcmp( (*row)[counter++], "(null)" ) )
+      eInstance->description = NULL;
    else
-     eInstance->name = strdup( (*row)[counter] );
+      eInstance->description = strdup( (*row)[counter-1] );
+
+   bug( "%s: %s", __FUNCTION__, (*row)[counter] );
 
    framework_id = atoi( (*row)[counter++] );
-   if( ( eInstance->framework = get_active_framework_by_id( framework_id ) ) == NULL )
-   {
-      if( ( eInstance->framework = load_eFramework_by_id( framework_id ) ) == NULL )
-         bug( "%s: instance has a NULL framework: ID %d", __FUNCTION__, eInstance->tag->id );
-      else
-         AttachToList( eInstance->framework, active_frameworks );
-   }
+
+   bug( "%s: id = %d", __FUNCTION__, framework_id );
+
+   if( ( eInstance->framework = get_framework_by_id( framework_id ) ) == NULL )
+      bug( "%s: instance has a NULL framework: ID %d", __FUNCTION__, eInstance->tag->id );
 
    return;
 }
