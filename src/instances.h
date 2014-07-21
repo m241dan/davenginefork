@@ -34,3 +34,9 @@ ENTITY_INSTANCE *instance_list_has_by_id( LLIST *instance_list, int id );
 ENTITY_INSTANCE *instance_list_has_by_name( LLIST *instance_list, const char *name );
 
 ENTITY_INSTANCE *eInstantiate( ENTITY_FRAMEWORK *frame );
+
+const char *instance_name( ENTITY_INSTANCE *instance );
+const char *instance_short_descr( ENTITY_INSTANCE *instance );
+const char *instance_long_descr( ENTITY_INSTANCE *instance );
+const char *instance_description( ENTITY_INSTANCE *instance );
+

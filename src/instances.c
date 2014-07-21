@@ -104,7 +104,15 @@ ENTITY_INSTANCE *get_active_instance_by_name( const char *name )
 
 ENTITY_INSTANCE *load_eInstance_by_name( const char *name )
 {
-   return load_eInstance_by_query( quick_format( "SELECT * FROM `%s` WHERE name='%s' LIMIT 1;", tag_table_strings[ENTITY_INSTANCE_IDS], name ) );
+   ENTITY_INSTANCE *instance;
+   ENTITY_FRAMEWORK *frame;
+
+   if( ( instance = load_eInstance_by_query( quick_format( "SELECT * FROM `%s` WHERE name='%s' LIMIT 1;", tag_table_strings[ENTITY_INSTANCE_IDS], name ) ) ) == NULL )
+   {
+      if( ( frame = get_framework_by_name( name ) ) != NULL )
+         instance = load_eInstance_by_query( quick_format( "SELECT * FROM '%s' WHERE frameworkID=%d LIMIT 1", tag_table_strings[ENTITY_INSTANCE_IDS], frame->tag->id ) );
+   }
+   return instance;
 }
 
 int new_eInstance( ENTITY_INSTANCE *eInstance )
@@ -218,7 +226,7 @@ ENTITY_INSTANCE *instance_list_has_by_name( LLIST *instance_list, const char *na
 
    AttachIterator( &Iter, instance_list );
    while( ( eInstance = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
-      if( !strcasecmp( name, eInstance->name ) )
+      if( !strcasecmp( name, instance_name( eInstance ) ) )
          break;
    DetachIterator( &Iter );
 
@@ -237,3 +245,21 @@ ENTITY_INSTANCE *eInstantiate( ENTITY_FRAMEWORK *frame )
    eInstance->framework = frame;
    return eInstance;
 }
+
+const char *instance_name( ENTITY_INSTANCE *instance )
+{
+   return instance->name ? instance->name : instance->framework->name;
+}
+const char *instance_short_descr( ENTITY_INSTANCE *instance )
+{
+   return instance->short_descr ? instance->short_descr : instance->framework->short_descr;
+}
+const char *instance_long_descr( ENTITY_INSTANCE *instance )
+{
+   return instance->long_descr ? instance->long_descr : instance->framework->long_descr;
+}
+const char *instance_description( ENTITY_INSTANCE *instance )
+{
+   return instance->description ? instance->description : instance->framework->description;
+}
+

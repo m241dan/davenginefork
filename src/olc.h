@@ -45,6 +45,8 @@ int text_to_olc( INCEPTION *olc, const char *fmt, ... );
 void olc_no_prompt( INCEPTION *olc );
 void olc_show_prompt( INCEPTION *olc );
 int new_workspace( WORKSPACE *wSpace );
+int add_frame_to_workspace( ENTITY_FRAMEWORK *frame, WORKSPACE *wSpace );
+int add_instance_to_workspace( ENTITY_INSTANCE *instance, WORKSPACE *wSpace );
 int new_workspace_entry( WORKSPACE *wSpace, ID_TAG *tag );
 int load_workspace_entries( WORKSPACE *wSpace );
 bool workspace_list_has_name( LLIST *wSpaces, const char *name );

@@ -205,6 +205,8 @@ ENTITY_FRAMEWORK *framework_list_has_by_name( LLIST *frameworks, const char *nam
 
 bool live_frame( ENTITY_FRAMEWORK *frame )
 {
+   if( !frame )
+      return FALSE;
    if( !frame->tag )
       return FALSE;
    if( !strcmp( frame->tag->created_by, "null" ) )

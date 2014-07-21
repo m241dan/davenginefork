@@ -344,7 +344,6 @@ bool interpret_entity_selection( const char *input )
    }
    else if( input[1] != '_' && is_number( input+1 ) )
    {
-      bug( "%s: looking up by ID", __FUNCTION__ );
       id = atoi( input+1 );
       /* lookup by id */
       switch( tolower( input[0] ) )

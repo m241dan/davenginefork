@@ -289,11 +289,11 @@ int olc_prompt( D_SOCKET *dsock )
             case 1:
                mud_printf( tempstring, "%s", frame ? frame->name : " " );
                bprintf( buf, "|%s|", print_header( tempstring, " ", ( space_after_pipes - 1 ) / 2 ) );
-               mud_printf( tempstring, "%s", instance ? instance->name : " " );
+               mud_printf( tempstring, "%s", instance ? instance_name( instance ) : " " );
                bprintf( buf, " %s|\r\n", print_header( tempstring, " ", ( space_after_pipes - 1 ) / 2 ) );
                break;
             case 2:
-               mud_printf( tempstring, "%s", instance ? instance->name : " " );
+               mud_printf( tempstring, "%s", instance ? instance_name( instance ) : " " );
                bprintf( buf, "|%s|", print_header( tempstring, " ", ( space_after_pipes - 1 ) / 2 ) );
                mud_printf( tempstring, "%s", frame ? frame->name : " " );
                bprintf( buf, " %s|\r\n", print_header( tempstring, " ", ( space_after_pipes - 1 ) / 2 ) );
@@ -337,6 +337,50 @@ int new_workspace( WORKSPACE *wSpace )
               wSpace->name, wSpace->description, (int)wSpace->Public ) )
       return RET_FAILED_OTHER;
 
+   return ret;
+}
+
+int add_frame_to_workspace( ENTITY_FRAMEWORK *frame, WORKSPACE *wSpace )
+{
+   int ret = RET_SUCCESS;
+
+   if( !wSpace )
+   {
+      BAD_POINTER( "wSpace" );
+      return ret;
+   }
+   if( !frame )
+   {
+      BAD_POINTER( "frame" );
+      return ret;
+   }
+   if( framework_list_has_by_id( wSpace->frameworks, frame->tag->id ) )
+      return RET_FAILED_OTHER;
+
+   AttachToList( frame, wSpace->frameworks );
+   new_workspace_entry( wSpace, frame->tag );
+   return ret;
+}
+
+int add_instance_to_workspace( ENTITY_INSTANCE *instance, WORKSPACE *wSpace )
+{
+   int ret = RET_SUCCESS;
+
+   if( !wSpace )
+   {
+      BAD_POINTER( "wSpace" );
+      return ret;
+   }
+   if( !instance )
+   {
+      BAD_POINTER( "instance" );
+      return ret;
+   }
+   if( instance_list_has_by_id( wSpace->instances, instance->tag->id ) )
+      return RET_FAILED_OTHER;
+
+   AttachToList( instance, wSpace->instances );
+   new_workspace_entry( wSpace, instance->tag );
    return ret;
 }
 
@@ -669,8 +713,8 @@ void workspace_grab( void *passed, char *arg )
 {
    INCEPTION *olc = (INCEPTION *)passed;
    ENTITY_FRAMEWORK *frame;
+   ENTITY_INSTANCE *instance;
    char buf[MAX_BUFFER];
-   int search_id = -1;
 
    if( !arg || arg[0] == '\0' )
    {
@@ -688,41 +732,25 @@ void workspace_grab( void *passed, char *arg )
    {
       arg = one_arg( arg, buf );
 
-      if( buf[0] == 'f' )
+      if( !interpret_entity_selection( buf ) )
+         continue;
+
+      switch( input_selection_typing )
       {
-         if( !is_number( buf+1 ) )
-         {
-            text_to_olc( olc, "%s is an inproperly formatted ID.\r\n", buf );
-            continue;
-         }
-         search_id = atoi( buf+1 );
-         if( framework_list_has_by_id( olc->using_workspace->frameworks, search_id ) )
-         {
-            text_to_olc( olc, "You already have that framework with an ID of %d grabbed into this workspace.\r\n", search_id );
-            continue;
-         }
-         if( SizeOfList( active_frameworks ) > 0 )
-         {
-            if( ( frame = get_active_framework_by_id( search_id ) ) != NULL )
-            {
-               AttachToList( frame, olc->using_workspace->frameworks );
-               new_workspace_entry( olc->using_workspace, frame->tag );
+         default: continue;
+         case SEL_FRAME:
+            frame = (ENTITY_FRAMEWORK *)retrieve_entity_selection();
+            if( add_frame_to_workspace( frame, olc->using_workspace ) == RET_SUCCESS )
                text_to_olc( olc, "Framework %d: %s loaded into %s workspace.\r\n", frame->tag->id, frame->name, olc->using_workspace->name );
-               continue;
-            }
-         }
-         if( !frame )
-         {
-            if( ( frame = load_eFramework_by_id( search_id ) ) == NULL )
-            {
-               text_to_olc( olc, "No framework with an ID of %d exists.\r\n", search_id );
-               continue;
-            }
-            AttachToList( frame, olc->using_workspace->frameworks );
-            AttachToList( frame, active_frameworks );
-            new_workspace_entry( olc->using_workspace, frame->tag );
-            text_to_olc( olc, "Framework %d: %s loaded into %s workspace.\r\n", frame->tag->id, frame->name, olc->using_workspace->name );
-         }
+            break;
+         case SEL_INSTANCE:
+            instance = (ENTITY_INSTANCE *)retrieve_entity_selection();
+            if( add_instance_to_workspace( instance, olc->using_workspace ) == RET_SUCCESS )
+               text_to_olc( olc, "Instance %d: %s loaded into %s workspace.\r\n", instance->tag->id, instance_name( instance ), olc->using_workspace->name );
+            break;
+         case SEL_STRING:
+            text_to_olc( olc, (char *)retrieve_entity_selection() );
+            break;
       }
    }
    return;
