@@ -215,6 +215,7 @@ void inception_open( void *passed, char *arg )
 int olc_prompt( D_SOCKET *dsock )
 {
    ENTITY_FRAMEWORK *frame;
+   ENTITY_INSTANCE *instance;
    BUFFER *buf = buffer_new( MAX_BUFFER );
    ACCOUNT_DATA *account = dsock->account;
    INCEPTION *olc;
@@ -222,7 +223,7 @@ int olc_prompt( D_SOCKET *dsock )
    ITERATOR Iter, IterF, IterI;
    char tempstring[MAX_BUFFER];
    int ret = RET_SUCCESS;
-   int space_after_pipes, max_list, max_frameworks, max_instances, x, style;
+   int space_after_pipes, max_list, max_frameworks, x, style;
    if( !account )
    {
       BAD_POINTER( "account" );
@@ -253,7 +254,6 @@ int olc_prompt( D_SOCKET *dsock )
    if( olc->using_workspace )
    {
       max_frameworks = SizeOfList( olc->using_workspace->frameworks );
-      max_instances = SizeOfList( olc->using_workspace->instances );
       max_list = UMAX( SizeOfList( olc->using_workspace->frameworks ), SizeOfList( olc->using_workspace->instances ) );
 
       if( max_list == max_frameworks )
@@ -279,24 +279,29 @@ int olc_prompt( D_SOCKET *dsock )
       bprintf( buf, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
 
       AttachIterator( &IterF, olc->using_workspace->frameworks );
+      AttachIterator( &IterI, olc->using_workspace->instances );
       for( x = 0; x < max_list; x++ )
       {
          frame = (ENTITY_FRAMEWORK *)NextInList( &IterF );
+         instance = (ENTITY_INSTANCE *)NextInList( &IterI );
          switch( style )
          {
             case 1:
                mud_printf( tempstring, "%s", frame ? frame->name : " " );
                bprintf( buf, "|%s|", print_header( tempstring, " ", ( space_after_pipes - 1 ) / 2 ) );
-               bprintf( buf, " %s|\r\n", print_header( "  ", " ", ( space_after_pipes - 1 ) / 2 ) );
+               mud_printf( tempstring, "%s", instance ? instance->name : " " );
+               bprintf( buf, " %s|\r\n", print_header( tempstring, " ", ( space_after_pipes - 1 ) / 2 ) );
                break;
             case 2:
-               bprintf( buf, "|%s|", print_header( "  ", " ", ( space_after_pipes - 1 ) / 2 ) );
+               mud_printf( tempstring, "%s", instance ? instance->name : " " );
+               bprintf( buf, "|%s|", print_header( tempstring, " ", ( space_after_pipes - 1 ) / 2 ) );
                mud_printf( tempstring, "%s", frame ? frame->name : " " );
                bprintf( buf, " %s|\r\n", print_header( tempstring, " ", ( space_after_pipes - 1 ) / 2 ) );
                break;
          }
       }
       DetachIterator( &IterF );
+      DetachIterator( &IterI );
    }
    bprintf( buf, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
    print_commands( dsock->account->olc, dsock->account->olc->commands, buf, 0, account->pagewidth );
@@ -792,35 +797,44 @@ void olc_instantiate( void *passed, char *arg )
    INCEPTION *olc = (INCEPTION *)passed;
    ENTITY_FRAMEWORK *frame;
    ENTITY_INSTANCE *instance;
-   int framework_id;
 
-   if( !arg || arg[0] == '\0' )
+   if( check_selection_type( arg ) != SEL_FRAME )
    {
-      text_to_olc( olc, "Instantiate what?\r\n" );
+      text_to_olc( olc, "Use proper selection typing for a Framework.\r\n" );
       return;
    }
 
-   if( arg[0] != 'f' )
+   if( !interpret_entity_selection( arg ) )
    {
-      text_to_olc( olc, "%s is an inproper format. Please use: 'f<id>' or 'f_<name>'\r\n", arg );
+      text_to_olc( olc, "There is a problem with the input selection pointer, please contact the nearest Admin or try again in a few seconds.\r\n" );
       return;
    }
-   arg++;
 
-   if( arg[0] != '_' )
+   switch( input_selection_typing )
    {
-      if( !is_number( arg ) )
-      {
-         text_to_olc( olc, "Bad format. You must enter an ID unless you seperate with an '_'.\r\n" );
+      default:
+         text_to_olc( olc, "There's been a major problem. Contact your nearest admin.\r\n" );
          return;
-      }
-      framework_id = atoi( arg );
+      case SEL_FRAME:
+         frame = (ENTITY_FRAMEWORK *)retrieve_entity_selection();
+      case SEL_STRING:
+         text_to_olc( olc, (char *)retrieve_entity_selection() );
    }
-   else
+
+   if( ( instance = eInstantiate( frame ) ) == NULL )
    {
+      text_to_olc( olc, "There's been a major problem, framework you are trying to instantiate from may not be live.\r\n" );
+      return;
    }
 
+   if( new_eInstance( instance ) != RET_SUCCESS )
+      return;
 
+   AttachToList( instance, eInstances_list );
+   if( olc->using_workspace )
+      AttachToList( instance, olc->using_workspace->instances );
+
+   text_to_olc( olc, "You create a new instance using the %s framework.\r\n", frame->name );
    return;
 }
 

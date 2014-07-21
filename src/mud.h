@@ -51,7 +51,7 @@
 #define DB_ADDR            "localhost"
 #define DB_LOGIN           "m241dan"
 #define DB_PASSWORD        "Grc937!"
-
+#define STD_SELECTION_ERRMSG "Improper format. Please use a type char 'f' or 'i' followed by _<name> for a lookup by name or <id> for lookup by id.\r\n - Example: f_aframework, f845, i_anInstance, i1000.\r\n"
 
 /* Connection states */
 typedef enum
@@ -106,6 +106,11 @@ typedef enum
    RET_NO_SQL, RET_DB_NO_ENTRY,
    RET_FAILED_OTHER, MAX_RET_CODES
 } ret_codes;
+
+typedef enum
+{
+   SEL_NULL = -1, SEL_FRAME, SEL_INSTANCE, SEL_STRING, MAX_SEL
+} SEL_TYPING;
 
 /*****************
  * NANNY INDEXES *

@@ -1,5 +1,8 @@
 /* interpret.h written by Davenge */
 
+extern SEL_TYPING input_selection_typing;
+extern void *input_selection_ptr;
+
 extern struct typCmd account_commands[];
 const char *settings_desc( void *extra );
 const char *chat_desc( void *extra );
@@ -26,3 +29,9 @@ int load_commands( LLIST *command_list, COMMAND command_table[], int level_compa
 int copy_command( COMMAND *to_copy, COMMAND *command );
 int free_command_list( LLIST *com_list );
 int free_command( COMMAND *command );
+
+bool interpret_entity_selection( const char *input );
+SEL_TYPING check_selection_type( const char *input );
+void *retrieve_entity_selection( void );
+bool input_format_is_selection_type( const char *input );
+void clear_entity_selection( void );
