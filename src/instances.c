@@ -156,6 +156,7 @@ int new_eInstance( ENTITY_INSTANCE *eInstance )
 
 void db_load_eInstance( ENTITY_INSTANCE *eInstance, MYSQL_ROW *row )
 {
+   char wtf_buf[MAX_BUFFER];
    int framework_id;
    int counter;
 
@@ -181,11 +182,8 @@ void db_load_eInstance( ENTITY_INSTANCE *eInstance, MYSQL_ROW *row )
    else
       eInstance->description = strdup( (*row)[counter-1] );
 
-   bug( "%s: %s", __FUNCTION__, (*row)[counter] );
-
-   framework_id = atoi( (*row)[counter++] );
-
-   bug( "%s: id = %d", __FUNCTION__, framework_id );
+   strcpy( wtf_buf, (*row)[counter++] );
+   framework_id = atoi( wtf_buf );
 
    if( ( eInstance->framework = get_framework_by_id( framework_id ) ) == NULL )
       bug( "%s: instance has a NULL framework: ID %d", __FUNCTION__, eInstance->tag->id );
