@@ -366,7 +366,7 @@ int add_frame_to_workspace( ENTITY_FRAMEWORK *frame, WORKSPACE *wSpace )
       return ret;
    }
    if( framework_list_has_by_id( wSpace->frameworks, frame->tag->id ) )
-      return RET_FAILED_OTHER;
+      return RET_LIST_HAS;
 
    AttachToList( frame, wSpace->frameworks );
    new_workspace_entry( wSpace, frame->tag );
@@ -388,7 +388,7 @@ int add_instance_to_workspace( ENTITY_INSTANCE *instance, WORKSPACE *wSpace )
       return ret;
    }
    if( instance_list_has_by_id( wSpace->instances, instance->tag->id ) )
-      return RET_FAILED_OTHER;
+      return RET_LIST_HAS;
 
    AttachToList( instance, wSpace->instances );
    new_workspace_entry( wSpace, instance->tag );
@@ -743,6 +743,7 @@ void workspace_grab( void *passed, char *arg )
    ENTITY_FRAMEWORK *frame;
    ENTITY_INSTANCE *instance;
    char buf[MAX_BUFFER];
+   int ret;
 
    if( !arg || arg[0] == '\0' )
    {
@@ -768,13 +769,23 @@ void workspace_grab( void *passed, char *arg )
          default: continue;
          case SEL_FRAME:
             frame = (ENTITY_FRAMEWORK *)retrieve_entity_selection();
-            if( add_frame_to_workspace( frame, olc->using_workspace ) == RET_SUCCESS )
+            if( ( ret = add_frame_to_workspace( frame, olc->using_workspace ) ) == RET_SUCCESS )
                text_to_olc( olc, "Framework %d: %s loaded into %s workspace.\r\n", frame->tag->id, frame->name, olc->using_workspace->name );
+            else if( ret == RET_LIST_HAS )
+            {
+               text_to_olc( olc, "This workspace already has the framework.\r\n" );
+               olc_short_prompt( olc );
+            }
             break;
          case SEL_INSTANCE:
             instance = (ENTITY_INSTANCE *)retrieve_entity_selection();
-            if( add_instance_to_workspace( instance, olc->using_workspace ) == RET_SUCCESS )
+            if( ( ret = add_instance_to_workspace( instance, olc->using_workspace ) ) == RET_SUCCESS )
                text_to_olc( olc, "Instance %d: %s loaded into %s workspace.\r\n", instance->tag->id, instance_name( instance ), olc->using_workspace->name );
+            else if( ret == RET_LIST_HAS )
+            {
+               text_to_olc( olc, "this workspace already has that instance.\r\n" );
+               olc_short_prompt( olc );
+            }
             break;
          case SEL_STRING:
             text_to_olc( olc, (char *)retrieve_entity_selection() );

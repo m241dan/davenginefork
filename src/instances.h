@@ -7,7 +7,10 @@ struct entity_instance
    char *short_descr;
    char *long_descr;
    char *description;
+   bool live;
+   bool builder;
 
+   D_SOCKET *socket;
    LLIST *contents;
    LLIST *specifications;
    ENTITY_FRAMEWORK *framework;

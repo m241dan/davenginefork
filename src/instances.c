@@ -26,6 +26,7 @@ int clear_eInstance( ENTITY_INSTANCE *eInstance )
    eInstance->long_descr = NULL;
    eInstance->description = NULL;
    eInstance->framework = NULL;
+   eInstance->socket = NULL;
    return RET_SUCCESS;
 }
 
@@ -45,6 +46,8 @@ int free_eInstance( ENTITY_INSTANCE *eInstance )
    FreeList( eInstance->specifications );
    eInstance->specifications = NULL;
 
+   eInstance->socket = NULL;
+   FREE( eInstance );
    return RET_SUCCESS;
 }
 
