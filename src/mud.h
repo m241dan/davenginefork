@@ -109,6 +109,11 @@ typedef enum
 
 typedef enum
 {
+   NO_PROMPT, NORMAL_PROMPT, SHORT_PROMPT, MAX_PROMPT 
+} prompt_type;
+
+typedef enum
+{
    SEL_NULL = -1, SEL_FRAME, SEL_INSTANCE, SEL_STRING, MAX_SEL
 } SEL_TYPING;
 
@@ -258,7 +263,7 @@ struct dSocket
   char            inbuf[MAX_BUFFER];
   char            outbuf[MAX_OUTPUT];
   char            next_command[MAX_BUFFER];
-  bool            bust_prompt;
+  prompt_type     bust_prompt;
   sh_int          lookup_status;
   sh_int          state;
   sh_int          control;

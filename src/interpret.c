@@ -88,8 +88,8 @@ struct typCmd olc_commands[] = {
    { "quit", olc_quit, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
    { "show", olc_show, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
    { "instance", olc_instantiate, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
+   { "create", framework_create, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
    { "using", olc_using, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
-   { "frameworks", olc_frameworks, LEVEL_BASIC, NULL, TRUE, NULL, olc_commands },
    { "workspace", olc_workspace, LEVEL_BASIC, NULL, TRUE, NULL, olc_commands },
    { "file", olc_file, LEVEL_BASIC, NULL, TRUE, NULL, olc_commands },
    { '\0', NULL, 0, NULL, FALSE, NULL }
@@ -163,7 +163,10 @@ int olc_handle_cmd( INCEPTION *olc, char *arg )
    arg = one_arg( arg, command );
 
    if( ( com = find_loaded_command( olc->commands, command ) ) == NULL )
+   {
       text_to_olc( olc, "No such command.\r\n" );
+      olc_short_prompt( olc );
+   }
    else
       execute_command( olc->account, com, olc, arg );
 
@@ -401,9 +404,9 @@ bool input_format_is_selection_type( const char *input )
 {
    if( !input || input[0] == '\0' || strlen( input ) < 2 )
       return FALSE;
-   if( input[1] == '_' && ( !(&input[2]) || input[2] == '\0' ) )
+   if( input[1] == '_' && ( strlen( input ) < 2 || input[2] == '\0' ) )
       return FALSE;
-   if( !is_number( input + 1 ) )
+   if( input[1] != '_' && !is_number( input + 1 ) )
       return FALSE;
    return TRUE;
 }

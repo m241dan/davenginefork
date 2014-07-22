@@ -43,6 +43,7 @@ void inception_open( void *passed, char *arg );
 int olc_prompt( D_SOCKET *dsock );
 int text_to_olc( INCEPTION *olc, const char *fmt, ... );
 void olc_no_prompt( INCEPTION *olc );
+void olc_short_prompt( INCEPTION *olc );
 void olc_show_prompt( INCEPTION *olc );
 int new_workspace( WORKSPACE *wSpace );
 int add_frame_to_workspace( ENTITY_FRAMEWORK *frame, WORKSPACE *wSpace );

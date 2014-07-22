@@ -236,6 +236,15 @@ int olc_prompt( D_SOCKET *dsock )
       return ret;
    }
 
+   if( dsock->bust_prompt == SHORT_PROMPT )
+   {
+      if( olc->using_workspace )
+         text_to_olc( olc, "\r\nUsing: %s> ", olc->using_workspace->name );
+      else
+         text_to_olc( olc, "\r\nInception OLC> " );
+      return ret;
+   }
+
    space_after_pipes = account->pagewidth - 2;
 
    bprintf( buf, "/%s\\\r\n", print_header( "Inception OLC", "-", space_after_pipes ) );
@@ -287,16 +296,18 @@ int olc_prompt( D_SOCKET *dsock )
          switch( style )
          {
             case 1:
-               mud_printf( tempstring, "%s", frame ? frame->name : " " );
-               bprintf( buf, "|%s|", print_header( tempstring, " ", ( space_after_pipes - 1 ) / 2 ) );
-               mud_printf( tempstring, "%s", instance ? instance_name( instance ) : " " );
-               bprintf( buf, " %s|\r\n", print_header( tempstring, " ", ( space_after_pipes - 1 ) / 2 ) );
+               bprintf( buf, "|%s|", fit_string_to_space( quick_format( " %-7d: %s", frame->tag->id, frame->name ), ( space_after_pipes - 1 ) / 2 ) );
+               if( !instance )
+                  bprintf( buf, " %s|\r\n", print_header( " ", " ", ( space_after_pipes - 1 ) / 2 ) );
+               else
+                  bprintf( buf, " %s|\r\n", fit_string_to_space( quick_format( " %-7d: %s", instance->tag->id, instance_name( instance ) ), ( space_after_pipes - 1 ) / 2 ) );
                break;
             case 2:
-               mud_printf( tempstring, "%s", instance ? instance_name( instance ) : " " );
-               bprintf( buf, "|%s|", print_header( tempstring, " ", ( space_after_pipes - 1 ) / 2 ) );
-               mud_printf( tempstring, "%s", frame ? frame->name : " " );
-               bprintf( buf, " %s|\r\n", print_header( tempstring, " ", ( space_after_pipes - 1 ) / 2 ) );
+               bprintf( buf, "|%s|", fit_string_to_space( quick_format( " %-7d: %s", instance->tag->id, instance_name( instance ) ) , ( space_after_pipes - 1 ) / 2 ) );
+               if( !frame )
+                  bprintf( buf, " %s|\r\n", print_header( " ", " ", ( space_after_pipes - 1 ) / 2 ) );
+               else
+                  bprintf( buf, " %s|\r\n", fit_string_to_space( quick_format( " %-7d: %s", frame->tag->id, frame->name ), ( space_after_pipes - 1 ) / 2 ) );
                break;
          }
       }
@@ -472,7 +483,6 @@ int text_to_olc( INCEPTION *olc, const char *fmt, ... )
    }
 
    text_to_buffer( olc->account->socket, dest );
-   olc_no_prompt( olc );
    return res;
 }
 
@@ -480,15 +490,22 @@ void olc_no_prompt( INCEPTION *olc )
 {
    if( !olc->account || !olc->account->socket )
       return;
-   olc->account->socket->bust_prompt = FALSE;
+   olc->account->socket->bust_prompt = NO_PROMPT;
    return;
+}
+
+void olc_short_prompt( INCEPTION *olc )
+{
+   if( !olc->account || !olc->account->socket )
+      return;
+   olc->account->socket->bust_prompt = SHORT_PROMPT;
 }
 
 void olc_show_prompt( INCEPTION *olc )
 {
    if( !olc->account || !olc->account->socket )
       return;
-   olc->account->socket->bust_prompt = TRUE;
+   olc->account->socket->bust_prompt = NORMAL_PROMPT;
    return;
 }
 
@@ -537,14 +554,12 @@ void olc_workspace( void *passed, char *arg )
       FreeList( workspace_command->sub_commands );
       workspace_command->sub_commands = NULL;
       text_to_olc( olc, "Workspace Commands Menu Closed.\r\n" );
-      olc_show_prompt( olc );
    }
    else
    {
       workspace_command->sub_commands = AllocList();
       load_commands( workspace_command->sub_commands, workspace_sub_commands, olc->account->level );
       text_to_olc( olc, "Workspace Commands Menu Opened.\r\n" );
-      olc_show_prompt( olc );
    }
 }
 
@@ -801,14 +816,12 @@ void olc_frameworks( void *passed, char *arg )
       FreeList( frameworks_command->sub_commands );
       frameworks_command->sub_commands = NULL;
       text_to_olc( olc, "Frameworks Commands Menu Closed.\r\n" );
-      olc_show_prompt( olc );
    }
    else
    {
       frameworks_command->sub_commands = AllocList();
       load_commands( frameworks_command->sub_commands, frameworks_sub_commands, olc->account->level );
       text_to_olc( olc, "Frameworks Commands Menu Opened.\r\n" );
-      olc_show_prompt( olc );
    }
 }
 
@@ -827,7 +840,6 @@ void framework_create( void *passed, char *arg )
    olc->editing = init_eFramework();
    olc->editing_state = STATE_EFRAME_EDITOR;
    text_to_olc( olc, "Creating a new Entity Framework.\r\n" );
-   olc_show_prompt( olc );
    olc->editor_commands = AllocList();
    change_socket_state( olc->account->socket, olc->editing_state );
    return;
@@ -842,12 +854,14 @@ void olc_instantiate( void *passed, char *arg )
    if( check_selection_type( arg ) != SEL_FRAME )
    {
       text_to_olc( olc, "Use proper selection typing for a Framework.\r\n" );
+      olc_short_prompt( olc );
       return;
    }
 
    if( !interpret_entity_selection( arg ) )
    {
       text_to_olc( olc, "There is a problem with the input selection pointer, please contact the nearest Admin or try again in a few seconds.\r\n" );
+      olc_short_prompt( olc );
       return;
    }
 
@@ -855,6 +869,7 @@ void olc_instantiate( void *passed, char *arg )
    {
       default:
          text_to_olc( olc, "There's been a major problem. Contact your nearest admin.\r\n" );
+         olc_short_prompt( olc );
          return;
       case SEL_FRAME:
          frame = (ENTITY_FRAMEWORK *)retrieve_entity_selection();
@@ -875,7 +890,7 @@ void olc_instantiate( void *passed, char *arg )
    if( olc->using_workspace )
       add_instance_to_workspace( instance, olc->using_workspace );
 
-   text_to_olc( olc, "You create a new instance using the %s framework.\r\n", frame->name );
+   text_to_olc( olc, "You create a new instance using the %s framework, its ID is %d.\r\n", frame->name, instance->tag->id );
    return;
 }
 
@@ -894,7 +909,6 @@ void olc_using( void *passed, char *arg )
    if( !strcasecmp( arg, "none" ) )
    {
       text_to_olc( olc, "You are no longer using any workspace.\r\n" );
-      olc_show_prompt( olc );
       olc->using_workspace = NULL;
       return;
    }
@@ -911,7 +925,6 @@ void olc_using( void *passed, char *arg )
    {
       olc->using_workspace = wSpace;
       text_to_olc( olc, "You are now using %s.\r\n", wSpace->name );
-      olc_show_prompt( olc );
    }
    return;
 }
@@ -929,7 +942,6 @@ void olc_quit( void *passed, char *arg )
    INCEPTION *olc = (INCEPTION *)passed;
 
    text_to_olc( olc, "You close the Inception OLC.\r\n" );
-   olc_show_prompt( olc );
    change_socket_state( olc->account->socket, STATE_ACCOUNT );
    return;
 }

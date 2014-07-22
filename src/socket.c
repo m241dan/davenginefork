@@ -869,7 +869,7 @@ void next_cmd_from_buffer(D_SOCKET *dsock)
   /* skip forward to the next line */
   while ( ( dsock->inbuf[size] == '\n' || dsock->inbuf[size] == '\r' ) )
   {
-    dsock->bust_prompt = TRUE;   /* seems like a good place to check */
+    dsock->bust_prompt = NORMAL_PROMPT;   /* seems like a good place to check */
     size++;
   }
 
@@ -892,7 +892,7 @@ bool flush_output(D_SOCKET *dsock)
     return TRUE;
 
   /* bust a prompt */
-  if( dsock->bust_prompt )
+  if( dsock->bust_prompt > NO_PROMPT )
   {
      switch( dsock->state )
      {
