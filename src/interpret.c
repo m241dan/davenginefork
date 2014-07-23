@@ -126,6 +126,11 @@ struct typCmd create_eFramework_commands[] = {
    { '\0', NULL, 0, NULL, FALSE, NULL }
 };
 
+struct typCmd builder_commands[] = {
+
+   { '\0', NULL, 0, NULL, FALSE, NULL }
+};
+
 int account_handle_cmd( ACCOUNT_DATA *account, char *arg )
 {
    COMMAND *com;
@@ -191,6 +196,13 @@ int eFrame_editor_handle_command( INCEPTION *olc, char *arg )
       text_to_olc( olc, "No such command.\r\n" );
    else
       execute_command( olc->account, com, olc, arg );
+
+   return ret;
+}
+
+int entity_handle_cmd( ENTITY_INSTANCE *entity, char *arg )
+{
+   int ret = RET_SUCCESS;
 
    return ret;
 }

@@ -56,7 +56,7 @@
 /* Connection states */
 typedef enum
 {
-   STATE_NANNY, STATE_ACCOUNT, STATE_OLC, STATE_EFRAME_EDITOR, STATE_PLAYING, STATE_CLOSED, MAX_STATE
+   STATE_NANNY, STATE_ACCOUNT, STATE_OLC, STATE_EFRAME_EDITOR, STATE_BUILDER, STATE_PLAYING, STATE_CLOSED, MAX_STATE
 } socket_states;
 
 /* Thread states - please do not change the order of these states    */
@@ -274,6 +274,7 @@ struct dSocket
   unsigned char * out_compress_buf;            /* MCCP support */
 
    ACCOUNT_DATA *account;
+   ENTITY_INSTANCE *controlling;
 };
 
 struct help_data
@@ -391,6 +392,9 @@ void  handle_new_connections  ( D_S *dsock, char *arg );
 void  clear_socket            ( D_S *sock_new, int sock );
 void  recycle_sockets         ( void );
 void *lookup_address          ( void *arg );
+void socket_control_entity( D_SOCKET *socket, ENTITY_INSTANCE *entity );
+void socket_unsocket_entity( ENTITY_INSTANCE *entity );
+
 
 /*
  * interpret.c

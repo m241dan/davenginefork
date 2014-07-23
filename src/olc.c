@@ -940,6 +940,25 @@ void olc_using( void *passed, char *arg )
    return;
 }
 
+void olc_builder( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_INSTANCE *builder;
+
+   if( ( builder = init_builder() ) == NULL )
+   {
+      text_to_olc( olc, "Could not allocate memory for a Builder... that's really bad.\r\n" );
+      olc_short_prompt( olc );
+      return;
+   }
+
+   text_to_olc( olc, "You enter builder mode.\r\n" );
+   socket_control_entity( olc->account->socket, builder );
+   change_socket_state( olc->account->socket, STATE_BUILDER );
+   return;
+
+}
+
 void olc_show( void *passed, char *arg )
 {
    INCEPTION *olc = (INCEPTION *)passed;

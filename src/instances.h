@@ -9,16 +9,25 @@ struct entity_instance
    char *description;
    bool live;
    bool builder;
+   sh_int level;
+
+   LLIST *specifications;
+
+   ENTITY_FRAMEWORK *framework;
+
+   ENTITY_INSTANCE *contained_by;
+   LLIST *contents;
 
    D_SOCKET *socket;
-   LLIST *contents;
-   LLIST *specifications;
-   ENTITY_FRAMEWORK *framework;
+   ACCOUNT_DATA *account;
+   LLIST *commands;
 };
 
 ENTITY_INSTANCE *init_eInstance( void );
 int clear_eInstance( ENTITY_INSTANCE *eInstance );
 int free_eInstance( ENTITY_INSTANCE *eInstance );
+
+ENTITY_INSTANCE *init_builder( void );
 
 ENTITY_INSTANCE *load_eInstance_by_query( const char *query);
 
@@ -43,3 +52,4 @@ const char *instance_short_descr( ENTITY_INSTANCE *instance );
 const char *instance_long_descr( ENTITY_INSTANCE *instance );
 const char *instance_description( ENTITY_INSTANCE *instance );
 
+int builder_prompt( D_SOCKET *dsock );

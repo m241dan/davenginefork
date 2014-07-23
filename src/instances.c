@@ -27,6 +27,8 @@ int clear_eInstance( ENTITY_INSTANCE *eInstance )
    eInstance->description = NULL;
    eInstance->framework = NULL;
    eInstance->socket = NULL;
+   eInstance->account = NULL;
+   eInstance->contained_by = NULL;
    return RET_SUCCESS;
 }
 
@@ -47,8 +49,25 @@ int free_eInstance( ENTITY_INSTANCE *eInstance )
    eInstance->specifications = NULL;
 
    eInstance->socket = NULL;
+   eInstance->contained_by = NULL;
+   eInstance->account = NULL;
+
    FREE( eInstance );
    return RET_SUCCESS;
+}
+
+ENTITY_INSTANCE *init_builder( void )
+{
+   ENTITY_INSTANCE *builder;
+
+   builder = init_eInstance();
+   builder->name = strdup( "Builder" );
+   builder->short_descr = strdup( "A builder" );
+   builder->long_descr = strdup( "A construct is here building things." );
+   builder->description = strdup( "none" );
+   builder->live = TRUE;
+   builder->builder = TRUE;
+   return builder;
 }
 
 ENTITY_INSTANCE *load_eInstance_by_query( const char *query )
@@ -264,3 +283,9 @@ const char *instance_description( ENTITY_INSTANCE *instance )
    return instance->description ? instance->description : instance->framework->description;
 }
 
+int builder_prompt( D_SOCKET *dsock )
+{
+   int ret = RET_SUCCESS;
+
+   return ret;
+}

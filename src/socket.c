@@ -231,9 +231,11 @@ void GameLoop(int control)
              if( eFrame_editor_handle_command( dsock->account->olc, dsock->next_command ) != RET_SUCCESS )
                 bug( "eFrame_editor_handle_command failed to interpret the input." );
              break;
+          case STATE_BUILDER:
           case STATE_PLAYING:
-/*            handle_cmd_input(dsock, dsock->next_command); */
-            break;
+             if( entity_handle_cmd( dsock->controlling, dsock->next_command ) != RET_SUCCESS )
+                bug( "entity_handle_cmd failed ot interpret the input." );
+             break;
         }
 
         dsock->next_command[0] = '\0';
@@ -453,6 +455,10 @@ void close_socket(D_SOCKET *dsock, bool reconnect)
    if( !reconnect && dsock->account )
       free_account( dsock->account );
    dsock->account = NULL;
+
+   if( !reconnect && dsock->controlling )
+      free_eInstance( dsock->controlling );
+   dsock->controlling = NULL;
 
   /* dequeue all events for this socket */
   AttachIterator(&Iter, dsock->events);
@@ -908,6 +914,9 @@ bool flush_output(D_SOCKET *dsock)
         case STATE_EFRAME_EDITOR:
            editor_eFramework_prompt( dsock );
            break;
+        case STATE_BUILDER:
+           builder_prompt( dsock );
+           break;
         case STATE_NANNY:
            break;
      }
@@ -1029,8 +1038,34 @@ int change_socket_state( D_SOCKET *dsock, int state )
          if( SizeOfList( dsock->account->olc->editor_commands ) < 1 )
            load_commands( dsock->account->olc->editor_commands, create_eFramework_commands, dsock->account->level );
          break;
+      case STATE_BUILDER:
+         if( SizeOfList( dsock->controlling->commands ) < 1 )
+            load_commands( dsock->controlling->commands, builder_commands, dsock->controlling->level );
+         break;
       case STATE_PLAYING:
          break;
    }
    return ret;
+}
+
+void socket_control_entity( D_SOCKET *socket, ENTITY_INSTANCE *entity )
+{
+   if( !socket || !entity )
+      return;
+
+   socket->controlling = entity;
+   entity->socket = socket;
+
+   return;
+}
+
+void socket_uncontrol_entity( ENTITY_INSTANCE *entity )
+{
+   if( !entity )
+      return;
+
+   entity->socket->controlling = NULL;
+   entity->socket = NULL;
+
+   return;
 }
