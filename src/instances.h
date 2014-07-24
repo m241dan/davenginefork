@@ -47,9 +47,14 @@ ENTITY_INSTANCE *instance_list_has_by_name( LLIST *instance_list, const char *na
 
 ENTITY_INSTANCE *eInstantiate( ENTITY_FRAMEWORK *frame );
 
+
 const char *instance_name( ENTITY_INSTANCE *instance );
 const char *instance_short_descr( ENTITY_INSTANCE *instance );
 const char *instance_long_descr( ENTITY_INSTANCE *instance );
 const char *instance_description( ENTITY_INSTANCE *instance );
 
+int text_to_entity( ENTITY_INSTANCE *entity, const char *fmt, ... );
 int builder_prompt( D_SOCKET *dsock );
+int ent_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container );
+
+void entity_goto( void *passed, char *arg );

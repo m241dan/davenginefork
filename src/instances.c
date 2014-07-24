@@ -7,6 +7,7 @@ ENTITY_INSTANCE *init_eInstance( void )
    ENTITY_INSTANCE *eInstance;
 
    CREATE( eInstance, ENTITY_INSTANCE, 1 );
+   eInstance->commands = AllocList();
    eInstance->contents = AllocList();
    eInstance->specifications = AllocList();
    eInstance->tag = init_tag();
@@ -283,9 +284,31 @@ const char *instance_description( ENTITY_INSTANCE *instance )
    return instance->description ? instance->description : instance->framework->description;
 }
 
+int text_to_entity( ENTITY_INSTANCE *entity, const char *fmt, ... )
+{
+   va_list va;
+   int res;
+   char dest[MAX_BUFFER];
+
+   va_start( va, fmt );
+   res = vsnprintf( dest, MAX_BUFFER, fmt, va );
+   va_end( va );
+
+   if( res >= MAX_BUFFER -1 )
+   {
+      dest[0] = '\0';
+      bug( "Overflow when attempting to format string for message." );
+   }
+
+   text_to_buffer( entity->socket, dest );
+   return res;
+}
+
 int builder_prompt( D_SOCKET *dsock )
 {
    int ret = RET_SUCCESS;
+
+   text_to_buffer( dsock, "Builder Mode:> " );
 
    return ret;
 }

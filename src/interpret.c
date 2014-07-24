@@ -87,6 +87,7 @@ const char *chatas_desc( void *extra )
 struct typCmd olc_commands[] = {
    { "quit", olc_quit, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
    { "show", olc_show, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
+   { "builder", olc_builder, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
    { "instance", olc_instantiate, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
    { "create", framework_create, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
    { "using", olc_using, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
@@ -202,7 +203,22 @@ int eFrame_editor_handle_command( INCEPTION *olc, char *arg )
 
 int entity_handle_cmd( ENTITY_INSTANCE *entity, char *arg )
 {
+   COMMAND *com;
+   char command[MAX_BUFFER];
    int ret = RET_SUCCESS;
+
+   if( !entity )
+   {
+      BAD_POINTER( "entity" );
+      return ret;
+   }
+
+   arg = one_arg( arg, command );
+
+   if( ( com = find_loaded_command( entity->commands, command ) ) == NULL )
+      text_to_entity( entity, "No such command.\r\n" );
+   else
+      execute_command( entity->socket->account, com, entity, arg );
 
    return ret;
 }
