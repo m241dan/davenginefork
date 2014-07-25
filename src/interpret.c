@@ -128,7 +128,7 @@ struct typCmd create_eFramework_commands[] = {
 };
 
 struct typCmd builder_commands[] = {
-
+   { "goto", entity_goto, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
    { '\0', NULL, 0, NULL, FALSE, NULL }
 };
 

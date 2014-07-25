@@ -308,7 +308,90 @@ int builder_prompt( D_SOCKET *dsock )
 {
    int ret = RET_SUCCESS;
 
-   text_to_buffer( dsock, "Builder Mode:> " );
+   if( !dsock->controlling )
+      bug( "%s: socket is controlling nothing...", __FUNCTION__ );
+
+   /* ugly but works for now */
+
+   if( dsock->controlling->contained_by )
+      text_to_entity( dsock->controlling, "Builder Mode:(%d)> ", dsock->controlling->contained_by->tag->id );
+   else
+      text_to_buffer( dsock, "Builder Mode:> " );
 
    return ret;
+}
+int ent_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container )
+{
+   int ret = RET_SUCCESS;
+
+   if( !entity )
+   {
+      BAD_POINTER( "entity" );
+      return ret;
+   }
+   if( !container )
+   {
+      BAD_POINTER( "container" );
+      return ret;
+   }
+
+   entity->contained_by = container;
+   AttachToList( entity, container->contents );
+   return ret;
+}
+
+int show_ent_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing )
+{
+   int ret = RET_SUCCESS;
+
+   if( !entity )
+   {
+      BAD_POINTER( "entity" );
+      return ret;
+   }
+   if( !viewing )
+   {
+      BAD_POINTER( "viewing" );
+      return ret;
+   }
+
+   text_to_entity( entity, "%s\r\n", instance_short_descr( viewing ) );
+   text_to_entity( entity, "%s\r\n", print_bar( "-", entity->socket->account ? entity->socket->account->pagewidth : 80 ) );
+   text_to_entity( entity, "%s\r\n", instance_description( viewing ) );
+   text_to_entity( entity, "%s\r\n", print_bar( "-", entity->socket->account ? entity->socket->account->pagewidth : 80 ) );
+
+   return ret;
+}
+
+void entity_goto( void *passed, char *arg )
+{
+   ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
+   ENTITY_INSTANCE *ent_to_goto;
+   char buf[MAX_BUFFER];
+
+   arg = one_arg( arg, buf );
+
+   if( check_selection_type( buf ) != SEL_INSTANCE )
+   {
+      if( is_number( buf ) )
+         ent_to_goto = get_instance_by_id( atoi( buf ) );
+      else
+         ent_to_goto = get_instance_by_name( buf );
+   }
+   else
+   {
+      if( interpret_entity_selection( buf ) )
+         ent_to_goto = (ENTITY_INSTANCE *)retrieve_entity_selection();
+   }
+
+   if( !ent_to_goto )
+   {
+      text_to_entity( entity, "No such instance exists.\r\n" );
+      return;
+   }
+   text_to_entity( entity, "You wisk away to the desired instance.\r\n" );
+   ent_to_ent( entity, ent_to_goto );
+   show_ent_to_ent( entity, entity->contained_by );
+
+   return;
 }

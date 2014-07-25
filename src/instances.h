@@ -56,5 +56,6 @@ const char *instance_description( ENTITY_INSTANCE *instance );
 int text_to_entity( ENTITY_INSTANCE *entity, const char *fmt, ... );
 int builder_prompt( D_SOCKET *dsock );
 int ent_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container );
+int show_ent_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing );
 
 void entity_goto( void *passed, char *arg );
