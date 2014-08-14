@@ -426,8 +426,6 @@ int load_workspace_entries( WORKSPACE *wSpace )
    int ret = RET_SUCCESS;
    int id;
 
-  bug( "%s - Addr: %p\r\n", __FUNCTION__, row );
-
    if( !wSpace )
    {
       BAD_POINTER( "wSpace" );
@@ -703,8 +701,6 @@ void workspace_load( void *passed, char *arg )
             continue;
          }
          load_workspace_entries( wSpace );
-         bug( "%s: checking list integrity.", __FUNCTION__ );
-         debug_row_list( list );
          found = TRUE;
          AttachToList( wSpace, active_wSpaces );
          AttachToList( wSpace, olc->wSpaces );

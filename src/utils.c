@@ -120,6 +120,7 @@ bool db_query_list_row( LLIST *list, const char *query )
    MYSQL_RES *result;
    MYSQL_ROW *row_ptr;
    MYSQL_ROW row;
+   int size;
 
    if( !list )
       return FALSE;
@@ -128,17 +129,41 @@ bool db_query_list_row( LLIST *list, const char *query )
    if( ( result = mysql_store_result( sql_handle ) ) == NULL )
       return FALSE;
 
+   size = mysql_num_fields( result );
+
    while( ( row = mysql_fetch_row( result ) ) != NULL )
    {
-      CREATE( row_ptr, MYSQL_ROW, 1 );
-      bug( "%s: Row_Ptr Addr: %p", __FUNCTION__, row_ptr );
-      *row_ptr = row;
+      row_ptr = malloc( sizeof( MYSQL_ROW ) );
+      *row_ptr = malloc( sizeof( MYSQL_ROW ) * size );
+      copy_row( row_ptr, &row, size );
       AttachToList( row_ptr, list );
    }
 
-   debug_row_list( list );
+/*   debug_row_list( list ); */
+
    mysql_free_result( result );
    return TRUE;
+}
+
+void copy_row( MYSQL_ROW *row_dest, MYSQL_ROW *row_src, int size )
+{
+   int x;
+
+   for( x = 0; x < size; x++ )
+   {
+      (*row_dest)[x] = strdup( (*row_src)[x] );
+/*
+      if( row_dest[x] )
+         bug( "%s: dest addr %p", __FUNCTION__, row_dest );
+      if( !(*row_src)[x] )
+      {
+         bug( "%s: sourc %d is NULL", __FUNCTION__, x );
+         continue;
+      }
+      bug( "%s: source %d is %s", __FUNCTION__, x, (*row_src)[x] );
+*/
+   }
+   return;
 }
 
 void debug_row( MYSQL_ROW *row, int size )
