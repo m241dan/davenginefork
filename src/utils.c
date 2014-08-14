@@ -131,11 +131,40 @@ bool db_query_list_row( LLIST *list, const char *query )
    while( ( row = mysql_fetch_row( result ) ) != NULL )
    {
       CREATE( row_ptr, MYSQL_ROW, 1 );
+      bug( "%s: Row_Ptr Addr: %p", __FUNCTION__, row_ptr );
       *row_ptr = row;
       AttachToList( row_ptr, list );
    }
 
+   debug_row_list( list );
    mysql_free_result( result );
    return TRUE;
 }
 
+void debug_row( MYSQL_ROW *row, int size )
+{
+   char buf[MAX_BUFFER];
+   char tempstring[MAX_BUFFER];
+   int x;
+
+   mud_printf( buf, "Row Addr: %p - ", row );
+   for( x = 0; x < size; x++ )
+   {
+      mud_printf( tempstring, "%s, ", (*row)[x] );
+      strcat( buf, tempstring );
+   }
+
+   bug( "%s: %s", __FUNCTION__, buf );
+   return;
+}
+
+void debug_row_list( LLIST *list )
+{
+   MYSQL_ROW *row_ptr;
+   ITERATOR Iter;
+
+   AttachIterator( &Iter, list );
+   while( ( row_ptr = (MYSQL_ROW *)NextInList( &Iter ) ) != NULL )
+      debug_row( row_ptr, 9 );
+   DetachIterator( &Iter );
+}

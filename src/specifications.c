@@ -74,7 +74,7 @@ int new_specification( SPECIFICATION *spec )
       return RET_FAILED_OTHER;
    }
 
-   if( !quick_query( "INSERT INTO live_specs VALUES( %d, %d, '%s' );", spec->type, spec->value, spec->owner ) )
+   if( !quick_query( "INSERT INTO live_specs VALUES( '%s', %d, '%s' );", spec_table[spec->type], spec->value, spec->owner ) )
       return RET_FAILED_OTHER;
 
    return ret;
@@ -129,7 +129,7 @@ int load_specifications_to_list( LLIST *spec_list, const char *owner )
 
 int db_load_spec( SPECIFICATION *spec, MYSQL_ROW *row )
 {
-   spec->type = atoi( (*row)[0] );
+   spec->type = match_string_table( (*row)[0], spec_table );
    spec->value = atoi( (*row)[1] );
    spec->owner = strdup( (*row)[2] );
    return RET_SUCCESS;

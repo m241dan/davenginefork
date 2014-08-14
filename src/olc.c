@@ -170,9 +170,10 @@ void db_load_workspace( WORKSPACE *wSpace, MYSQL_ROW *row )
    int counter;
 
    counter = db_load_tag( wSpace->tag, row );
+
    wSpace->name = strdup( (*row)[counter++] );
    wSpace->description = strdup( (*row)[counter++] );
-   wSpace->Public = (bool)atoi( (*row)[counter++] );
+   wSpace->Public = (bool)(atoi( (*row)[counter++] ));
 }
 
 void unuse_workspace( WORKSPACE *wSpace, ACCOUNT_DATA *account )
@@ -425,6 +426,8 @@ int load_workspace_entries( WORKSPACE *wSpace )
    int ret = RET_SUCCESS;
    int id;
 
+  bug( "%s - Addr: %p\r\n", __FUNCTION__, row );
+
    if( !wSpace )
    {
       BAD_POINTER( "wSpace" );
@@ -435,8 +438,14 @@ int load_workspace_entries( WORKSPACE *wSpace )
       return RET_FAILED_OTHER;
    if( ( result = mysql_store_result( sql_handle ) ) == NULL )
      return RET_FAILED_OTHER;
+   return ret;
+
    if( mysql_num_rows( result ) < 1 )
+   {
+      mysql_free_result( result );
       return RET_DB_NO_ENTRY;
+   }
+
    while( ( row = mysql_fetch_row( result ) ) != NULL )
    {
       switch( row[0][0] )
@@ -462,6 +471,7 @@ int load_workspace_entries( WORKSPACE *wSpace )
             break;
       }
    }
+   mysql_free_result( result );
    return ret;
 }
 
@@ -644,6 +654,12 @@ void workspace_load( void *passed, char *arg )
    {
       if(  ( x = strcasecmp( buf, wSpace->name ) ) == 0 || x == -110 )
       {
+         if( workspace_list_has_name( olc->wSpaces, wSpace->name ) )
+         {
+            text_to_olc( olc, "You already have workspace %s loaded.\r\n", wSpace->name );
+            found = TRUE;
+            continue;
+         }
          found = TRUE;
          if( !wSpace->Public && strcmp( wSpace->tag->created_by, olc->account->name ) )
             text_to_olc( olc, "The workspace %s is private and you did not create it.\r\n", wSpace->name );
@@ -681,18 +697,21 @@ void workspace_load( void *passed, char *arg )
       {
          wSpace = init_workspace();
          db_load_workspace( wSpace, row );
-         if( workspace_list_has_name( olc->wSpaces, wSpace->name ) )
+         if( workspace_list_has_name( active_wSpaces, wSpace->name ) )
          {
             free_workspace( wSpace );
             continue;
          }
          load_workspace_entries( wSpace );
+         bug( "%s: checking list integrity.", __FUNCTION__ );
+         debug_row_list( list );
          found = TRUE;
          AttachToList( wSpace, active_wSpaces );
          AttachToList( wSpace, olc->wSpaces );
          AttachToList( olc->account, wSpace->who_using );
          text_to_olc( olc, "Workspace %s loaded from database.\r\n", wSpace->name );
       }
+      DetachIterator( &Iter );
    }
    FreeList( list );
 
