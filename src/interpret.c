@@ -89,6 +89,7 @@ struct typCmd olc_commands[] = {
    { "show", olc_show, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
    { "builder", olc_builder, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
    { "instance", olc_instantiate, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
+   { "edit", framework_edit, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
    { "create", framework_create, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
    { "using", olc_using, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
    { "workspace", olc_workspace, LEVEL_BASIC, NULL, TRUE, NULL, olc_commands },
@@ -128,6 +129,8 @@ struct typCmd create_eFramework_commands[] = {
 };
 
 struct typCmd builder_commands[] = {
+   { "look", entity_look, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
+   { "instance", entity_instance, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
    { "goto", entity_goto, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
    { '\0', NULL, 0, NULL, FALSE, NULL }
 };

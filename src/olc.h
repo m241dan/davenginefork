@@ -60,6 +60,7 @@ void workspace_unload( void *passed, char *arg );
 void workspace_grab( void *passed, char *arg );
 void olc_frameworks( void *passed, char *arg );
 void framework_create( void *passed, char *arg );
+void framework_edit( void *passed, char *arg );
 void olc_instantiate( void *passed, char *arg );
 void olc_using( void *passed, char *arg );
 void olc_builder( void *passed, char *arg );

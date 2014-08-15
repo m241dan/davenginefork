@@ -3,10 +3,6 @@
 struct entity_instance
 {
    ID_TAG *tag;
-   char *name;
-   char *short_descr;
-   char *long_descr;
-   char *description;
    bool live;
    bool builder;
    sh_int level;
@@ -16,6 +12,8 @@ struct entity_instance
    ENTITY_FRAMEWORK *framework;
 
    ENTITY_INSTANCE *contained_by;
+   int contained_by_id; /* loading considerations */
+
    LLIST *contents;
 
    D_SOCKET *socket;
@@ -41,6 +39,9 @@ ENTITY_INSTANCE *load_eInstance_by_name( const char *name );
 
 int new_eInstance( ENTITY_INSTANCE *eInstance );
 void db_load_eInstance( ENTITY_INSTANCE *eInstance, MYSQL_ROW *row );
+void entity_from_container( ENTITY_INSTANCE *entity );
+void entity_to_world( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container );
+
 
 ENTITY_INSTANCE *instance_list_has_by_id( LLIST *instance_list, int id );
 ENTITY_INSTANCE *instance_list_has_by_name( LLIST *instance_list, const char *name );
@@ -55,7 +56,8 @@ const char *instance_description( ENTITY_INSTANCE *instance );
 
 int text_to_entity( ENTITY_INSTANCE *entity, const char *fmt, ... );
 int builder_prompt( D_SOCKET *dsock );
-int ent_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container );
 int show_ent_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing );
 
 void entity_goto( void *passed, char *arg );
+void entity_instance( void *passed, char *arg );
+void entity_look( void *passed, char *arg );

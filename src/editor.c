@@ -47,9 +47,9 @@ int editor_eFramework_prompt( D_SOCKET *dsock )
       SPECIFICATION *spec;
 
       AttachIterator( &IterSpec, frame->specifications );
-      while( ( spec = (SPECIFICATION *)NextInList( &IterSpec ) ) == NULL )
+      while( ( spec = (SPECIFICATION *)NextInList( &IterSpec ) ) != NULL )
       {
-         mud_printf( tempstring, "%s : %s", spec_table[spec->type], spec->value == 1 ? "True" : itos( spec->value ) );
+         mud_printf( tempstring, " %s : %s", spec_table[spec->type], spec->value == 1 ? "True" : itos( spec->value ) );
          bprintf( buf, "|%s|", fit_string_to_space( tempstring, ( space_after_pipes - 1 ) / 2 ) );
          bprintf( buf, " %s|\r\n", fit_string_to_space( " ", ( space_after_pipes - 1 ) / 2 ) );
       }

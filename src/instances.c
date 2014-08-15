@@ -22,23 +22,16 @@ ENTITY_INSTANCE *init_eInstance( void )
 
 int clear_eInstance( ENTITY_INSTANCE *eInstance )
 {
-   eInstance->name = NULL;
-   eInstance->short_descr = NULL;
-   eInstance->long_descr = NULL;
-   eInstance->description = NULL;
    eInstance->framework = NULL;
    eInstance->socket = NULL;
    eInstance->account = NULL;
    eInstance->contained_by = NULL;
+   eInstance->contained_by_id = -1;
    return RET_SUCCESS;
 }
 
 int free_eInstance( ENTITY_INSTANCE *eInstance )
 {
-   FREE( eInstance->name );
-   FREE( eInstance->short_descr );
-   FREE( eInstance->long_descr );
-   FREE( eInstance->description );
    eInstance->framework = NULL;
 
    CLEARLIST( eInstance->contents, ENTITY_INSTANCE );
@@ -62,10 +55,12 @@ ENTITY_INSTANCE *init_builder( void )
    ENTITY_INSTANCE *builder;
 
    builder = init_eInstance();
-   builder->name = strdup( "Builder" );
-   builder->short_descr = strdup( "A builder" );
-   builder->long_descr = strdup( "A construct is here building things." );
-   builder->description = strdup( "none" );
+   builder->framework = init_eFramework();
+
+   builder->framework->name = strdup( "Builder" );
+   builder->framework->short_descr = strdup( "A builder" );
+   builder->framework->long_descr = strdup( "A construct is here building things." );
+   builder->framework->description = strdup( "none" );
    builder->live = TRUE;
    builder->builder = TRUE;
    return builder;
@@ -159,11 +154,10 @@ int new_eInstance( ENTITY_INSTANCE *eInstance )
       }
    }
 
-   if( !quick_query( "INSERT INTO entity_instances VALUES( %d, %d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %d );",
+   if( !quick_query( "INSERT INTO entity_instances VALUES( %d, %d, '%s', '%s', '%s', '%s', %d, %d );",
          eInstance->tag->id, eInstance->tag->type, eInstance->tag->created_by,
          eInstance->tag->created_on, eInstance->tag->modified_by, eInstance->tag->modified_on,
-         eInstance->name, eInstance->short_descr, eInstance->long_descr,
-         eInstance->description, eInstance->framework->tag->id ) )
+         eInstance->contained_by ? eInstance->contained_by->tag->id : 0, eInstance->framework->tag->id ) )
       return RET_FAILED_OTHER;
 
    AttachIterator( &Iter, eInstance->specifications );
@@ -179,38 +173,54 @@ int new_eInstance( ENTITY_INSTANCE *eInstance )
 
 void db_load_eInstance( ENTITY_INSTANCE *eInstance, MYSQL_ROW *row )
 {
-   char wtf_buf[MAX_BUFFER];
    int framework_id;
    int counter;
 
    counter = db_load_tag( eInstance->tag, row );
 
-   if( !strcmp( (*row)[counter++], "(null)" ) )
-      eInstance->name = NULL;
-   else
-      eInstance->name = strdup( (*row)[counter-1] );
-
-   if( !strcmp( (*row)[counter++], "(null)" ) )
-      eInstance->short_descr = NULL;
-   else
-      eInstance->short_descr = strdup( (*row)[counter-1] );
-
-   if( !strcmp( (*row)[counter++], "(null)" ) )
-      eInstance->long_descr = NULL;
-   else
-      eInstance->long_descr = strdup( (*row)[counter-1] );
-
-   if( !strcmp( (*row)[counter++], "(null)" ) )
-      eInstance->description = NULL;
-   else
-      eInstance->description = strdup( (*row)[counter-1] );
-
-   strcpy( wtf_buf, (*row)[counter++] );
-   framework_id = atoi( wtf_buf );
+   eInstance->contained_by_id = atoi( (*row)[counter++] );
+   framework_id = atoi( (*row)[counter++] ); /* don't grab containedBY just yet */
 
    if( ( eInstance->framework = get_framework_by_id( framework_id ) ) == NULL )
       bug( "%s: instance has a NULL framework: ID %d", __FUNCTION__, eInstance->tag->id );
 
+   return;
+}
+
+void entity_from_container( ENTITY_INSTANCE *entity )
+{
+   if( entity->contained_by )
+   {
+      DetachFromList( entity, entity->contained_by->contents );
+      entity->contained_by_id = 0;
+   }
+   if( !quick_query( "UPDATE `entity_instances` SET containedBy='%d' WHERE entityInstanceId=%d;", entity->contained_by_id, entity->tag->id ) )
+      bug( "%s: could not update databaes with %d's new location in the world.", __FUNCTION__, entity->tag->id );
+   return;
+
+}
+
+void entity_to_world( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container )
+{
+   if( !entity )
+      return;
+
+   if( entity->contained_by )
+      entity_from_container( entity );
+
+   if( !container )
+   {
+      entity->contained_by = NULL;
+      entity->contained_by_id = 0;
+   }
+   else
+   {
+      AttachToList( entity, container->contents );
+      entity->contained_by = container;
+      entity->contained_by_id = container->tag->id;
+   }
+   if( !quick_query( "UPDATE `entity_instances` SET containedBy='%d' WHERE entityInstanceId=%d;", entity->contained_by_id, entity->tag->id ) )
+      bug( "%s: could not update databaes with %d's new location in the world.", __FUNCTION__, entity->tag->id );
    return;
 }
 
@@ -269,19 +279,19 @@ ENTITY_INSTANCE *eInstantiate( ENTITY_FRAMEWORK *frame )
 
 const char *instance_name( ENTITY_INSTANCE *instance )
 {
-   return instance->name ? instance->name : instance->framework->name;
+   return instance->framework->name;
 }
 const char *instance_short_descr( ENTITY_INSTANCE *instance )
 {
-   return instance->short_descr ? instance->short_descr : instance->framework->short_descr;
+   return instance->framework->short_descr;
 }
 const char *instance_long_descr( ENTITY_INSTANCE *instance )
 {
-   return instance->long_descr ? instance->long_descr : instance->framework->long_descr;
+   return instance->framework->long_descr;
 }
 const char *instance_description( ENTITY_INSTANCE *instance )
 {
-   return instance->description ? instance->description : instance->framework->description;
+   return instance->framework->description;
 }
 
 int text_to_entity( ENTITY_INSTANCE *entity, const char *fmt, ... )
@@ -318,25 +328,6 @@ int builder_prompt( D_SOCKET *dsock )
    else
       text_to_buffer( dsock, "Builder Mode:> " );
 
-   return ret;
-}
-int ent_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container )
-{
-   int ret = RET_SUCCESS;
-
-   if( !entity )
-   {
-      BAD_POINTER( "entity" );
-      return ret;
-   }
-   if( !container )
-   {
-      BAD_POINTER( "container" );
-      return ret;
-   }
-
-   entity->contained_by = container;
-   AttachToList( entity, container->contents );
    return ret;
 }
 
@@ -390,8 +381,66 @@ void entity_goto( void *passed, char *arg )
       return;
    }
    text_to_entity( entity, "You wisk away to the desired instance.\r\n" );
-   ent_to_ent( entity, ent_to_goto );
+   entity_to_world( entity, ent_to_goto );
    show_ent_to_ent( entity, entity->contained_by );
 
+   return;
+}
+
+void entity_instance( void *passed, char *arg )
+{
+   ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
+   ENTITY_FRAMEWORK *frame_to_instance;
+   ENTITY_INSTANCE *ent_to_instance;
+   ENTITY_INSTANCE *new_ent;
+   char buf[MAX_BUFFER];
+
+   arg = one_arg( arg, buf );
+
+   if( !interpret_entity_selection( buf ) )
+   {
+      text_to_entity( entity, "There is a problem with the input selection pointer, please contact the nearest Admin or try again in a few seconds.\r\n" );
+      return;
+   }
+
+   switch( input_selection_typing )
+   {
+      default:
+         text_to_entity( entity, "There's been a major problem. Contact your nearest admin.\r\n" );
+         break;
+      case SEL_FRAME:
+         frame_to_instance = (ENTITY_FRAMEWORK *)retrieve_entity_selection();
+         break;
+      case SEL_INSTANCE:
+         ent_to_instance = (ENTITY_INSTANCE *)retrieve_entity_selection();
+         frame_to_instance = ent_to_instance->framework;
+         break;
+      case SEL_STRING:
+         text_to_entity( entity, (char *)retrieve_entity_selection() );
+         return;
+   }
+
+   if( ( new_ent = eInstantiate( frame_to_instance ) ) == NULL )
+   {
+      text_to_entity( entity, "There's been a major problem, framework you are trying to instantiate from may not be live.\r\n" );
+      return;
+   }
+   if( new_eInstance( new_ent ) != RET_SUCCESS )
+   {
+      free_eInstance( new_ent );
+      text_to_entity( entity, "Could not add new instance to the database, deleting it from live memory.\r\n" );
+      return;
+   }
+
+   AttachToList( new_ent, eInstances_list );
+   entity_to_world( new_ent, entity->contained_by ? entity->contained_by : NULL );
+   text_to_entity( entity, "You create a new instance of %s.\r\n", instance_name( new_ent ) );
+   return;
+}
+
+void entity_look( void *passed, char *arg )
+{
+   ENTITY_INSTANCE *instance = (ENTITY_INSTANCE *)passed;
+   show_ent_to_ent( instance, instance->contained_by );
    return;
 }

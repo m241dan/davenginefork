@@ -436,7 +436,6 @@ int load_workspace_entries( WORKSPACE *wSpace )
       return RET_FAILED_OTHER;
    if( ( result = mysql_store_result( sql_handle ) ) == NULL )
      return RET_FAILED_OTHER;
-   return ret;
 
    if( mysql_num_rows( result ) < 1 )
    {
@@ -871,6 +870,47 @@ void framework_create( void *passed, char *arg )
    return;
 }
 
+void framework_edit( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+
+   if( olc->editing && ( arg && arg[0] != '\0' ) )
+   {
+      text_to_olc( olc, "You alraedy have something loaded in your editor, type editor with no arguments to load it and complete it.\r\n" );
+      change_socket_state( olc->account->socket, olc->editing_state );
+      return;
+   }
+
+   if( !interpret_entity_selection( arg ) )
+   {
+      text_to_olc( olc, "There is a problem with the input selection pointer, please contact the nearest Admin or try again in a few seconds.\r\n" );
+      olc_short_prompt( olc );
+      return;
+   }
+
+   switch( input_selection_typing )
+   {
+      default:
+         text_to_olc( olc, "There's been a major problem. Contact your nearest admin.\r\n" );
+         olc_short_prompt( olc );
+         break;
+      case SEL_FRAME:
+         olc->editing = retrieve_entity_selection();
+         olc->editing_state = STATE_EFRAME_EDITOR;
+         text_to_olc( olc, "Editing Frame...\r\n" );
+         olc->editor_commands = AllocList();
+         change_socket_state( olc->account->socket, olc->editing_state );
+         break;
+      case SEL_INSTANCE:
+         text_to_olc( olc, "Not doing instances yet...\r\n" );
+         break;;
+      case SEL_STRING:
+         text_to_olc( olc, (char *)retrieve_entity_selection() );
+         break;
+   }
+   return;
+}
+
 void olc_instantiate( void *passed, char *arg )
 {
    INCEPTION *olc = (INCEPTION *)passed;
@@ -910,7 +950,11 @@ void olc_instantiate( void *passed, char *arg )
    }
 
    if( new_eInstance( instance ) != RET_SUCCESS )
+   {
+      free_eInstance( instance );
+      text_to_olc( olc, "Could not add new instance to database, deleting it from live memory.\r\n" );
       return;
+   }
 
    AttachToList( instance, eInstances_list );
    if( olc->using_workspace )
