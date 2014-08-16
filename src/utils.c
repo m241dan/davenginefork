@@ -107,6 +107,8 @@ bool db_query_single_row( MYSQL_ROW *row, const char *query  )
       return FALSE;
    if( ( result = mysql_store_result( sql_handle ) ) == NULL )
       return FALSE;
+   if( mysql_num_rows( result ) == 0 )
+      return FALSE;
    *row = mysql_fetch_row( result );
 
    mysql_free_result( result );
@@ -118,6 +120,7 @@ bool db_query_list_row( LLIST *list, const char *query )
    MYSQL_RES *result;
    MYSQL_ROW *row_ptr;
    MYSQL_ROW row;
+   int size;
 
    if( !list )
       return FALSE;
@@ -126,14 +129,67 @@ bool db_query_list_row( LLIST *list, const char *query )
    if( ( result = mysql_store_result( sql_handle ) ) == NULL )
       return FALSE;
 
+   size = mysql_num_fields( result );
+
    while( ( row = mysql_fetch_row( result ) ) != NULL )
    {
-      CREATE( row_ptr, MYSQL_ROW, 1 );
-      *row_ptr = row;
+      row_ptr = malloc( sizeof( MYSQL_ROW ) );
+      *row_ptr = malloc( sizeof( MYSQL_ROW ) * size );
+      copy_row( row_ptr, &row, size );
       AttachToList( row_ptr, list );
    }
+
+/*   debug_row_list( list ); */
 
    mysql_free_result( result );
    return TRUE;
 }
 
+void copy_row( MYSQL_ROW *row_dest, MYSQL_ROW *row_src, int size )
+{
+   int x;
+
+   for( x = 0; x < size; x++ )
+   {
+      (*row_dest)[x] = strdup( (*row_src)[x] );
+/*
+      if( row_dest[x] )
+         bug( "%s: dest addr %p", __FUNCTION__, row_dest );
+      if( !(*row_src)[x] )
+      {
+         bug( "%s: sourc %d is NULL", __FUNCTION__, x );
+         continue;
+      }
+      bug( "%s: source %d is %s", __FUNCTION__, x, (*row_src)[x] );
+*/
+   }
+   return;
+}
+
+void debug_row( MYSQL_ROW *row, int size )
+{
+   char buf[MAX_BUFFER];
+   char tempstring[MAX_BUFFER];
+   int x;
+
+   mud_printf( buf, "Row Addr: %p - ", row );
+   for( x = 0; x < size; x++ )
+   {
+      mud_printf( tempstring, "%s, ", (*row)[x] );
+      strcat( buf, tempstring );
+   }
+
+   bug( "%s: %s", __FUNCTION__, buf );
+   return;
+}
+
+void debug_row_list( LLIST *list )
+{
+   MYSQL_ROW *row_ptr;
+   ITERATOR Iter;
+
+   AttachIterator( &Iter, list );
+   while( ( row_ptr = (MYSQL_ROW *)NextInList( &Iter ) ) != NULL )
+      debug_row( row_ptr, 9 );
+   DetachIterator( &Iter );
+}

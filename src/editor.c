@@ -47,9 +47,9 @@ int editor_eFramework_prompt( D_SOCKET *dsock )
       SPECIFICATION *spec;
 
       AttachIterator( &IterSpec, frame->specifications );
-      while( ( spec = (SPECIFICATION *)NextInList( &IterSpec ) ) == NULL )
+      while( ( spec = (SPECIFICATION *)NextInList( &IterSpec ) ) != NULL )
       {
-         mud_printf( tempstring, "%s : %s", spec_table[spec->type], spec->value == 1 ? "True" : itos( spec->value ) );
+         mud_printf( tempstring, " %s : %s", spec_table[spec->type], spec->value == 1 ? "True" : itos( spec->value ) );
          bprintf( buf, "|%s|", fit_string_to_space( tempstring, ( space_after_pipes - 1 ) / 2 ) );
          bprintf( buf, " %s|\r\n", fit_string_to_space( " ", ( space_after_pipes - 1 ) / 2 ) );
       }
@@ -244,13 +244,10 @@ void eFramework_done( void *passed, char *arg )
       new_eFramework( frame );
       AttachToList( frame, active_frameworks );
       if( olc->using_workspace )
-      {
-         AttachToList( frame, olc->using_workspace->frameworks );
-         new_workspace_entry( olc->using_workspace, frame->tag );
-      }
+         add_frame_to_workspace( frame, olc->using_workspace );
    }
 
-   FREE( olc->editing );
+   olc->editing = NULL;
    free_command_list( olc->editor_commands );
    FreeList( olc->editor_commands );
    olc->editor_commands = NULL;

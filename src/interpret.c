@@ -7,6 +7,9 @@
 /* include main header file */
 #include "mud.h"
 
+SEL_TYPING input_selection_typing = SEL_NULL;
+void *input_selection_ptr = NULL;
+
 /****************************************************************************
 * ACCOUNT COMMAND TABLE                                                     *
 ****************************************************************************/
@@ -84,8 +87,11 @@ const char *chatas_desc( void *extra )
 struct typCmd olc_commands[] = {
    { "quit", olc_quit, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
    { "show", olc_show, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
+   { "builder", olc_builder, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
+   { "instance", olc_instantiate, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
+   { "edit", framework_edit, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
+   { "create", framework_create, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
    { "using", olc_using, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
-   { "frameworks", olc_frameworks, LEVEL_BASIC, NULL, TRUE, NULL, olc_commands },
    { "workspace", olc_workspace, LEVEL_BASIC, NULL, TRUE, NULL, olc_commands },
    { "file", olc_file, LEVEL_BASIC, NULL, TRUE, NULL, olc_commands },
    { '\0', NULL, 0, NULL, FALSE, NULL }
@@ -119,6 +125,13 @@ struct typCmd create_eFramework_commands[] = {
    { "long", eFramework_long, LEVEL_BASIC, NULL, FALSE, NULL, create_eFramework_commands },
    { "short", eFramework_short, LEVEL_BASIC, NULL, FALSE, NULL, create_eFramework_commands },
    { "name", eFramework_name, LEVEL_BASIC, NULL, FALSE, NULL, create_eFramework_commands },
+   { '\0', NULL, 0, NULL, FALSE, NULL }
+};
+
+struct typCmd builder_commands[] = {
+   { "look", entity_look, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
+   { "instance", entity_instance, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
+   { "goto", entity_goto, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
    { '\0', NULL, 0, NULL, FALSE, NULL }
 };
 
@@ -159,7 +172,10 @@ int olc_handle_cmd( INCEPTION *olc, char *arg )
    arg = one_arg( arg, command );
 
    if( ( com = find_loaded_command( olc->commands, command ) ) == NULL )
+   {
       text_to_olc( olc, "No such command.\r\n" );
+      olc_short_prompt( olc );
+   }
    else
       execute_command( olc->account, com, olc, arg );
 
@@ -184,6 +200,28 @@ int eFrame_editor_handle_command( INCEPTION *olc, char *arg )
       text_to_olc( olc, "No such command.\r\n" );
    else
       execute_command( olc->account, com, olc, arg );
+
+   return ret;
+}
+
+int entity_handle_cmd( ENTITY_INSTANCE *entity, char *arg )
+{
+   COMMAND *com;
+   char command[MAX_BUFFER];
+   int ret = RET_SUCCESS;
+
+   if( !entity )
+   {
+      BAD_POINTER( "entity" );
+      return ret;
+   }
+
+   arg = one_arg( arg, command );
+
+   if( ( com = find_loaded_command( entity->commands, command ) ) == NULL )
+      text_to_entity( entity, "No such command.\r\n" );
+   else
+      execute_command( entity->socket->account, com, entity, arg );
 
    return ret;
 }
@@ -304,4 +342,108 @@ int free_command( COMMAND *command )
    command->from_table = NULL;
    FREE( command );
    return ret;
+}
+
+bool interpret_entity_selection( const char *input )
+{
+   static char err_msg[MAX_BUFFER];
+   int id = 0;
+
+   if( input_selection_typing != SEL_NULL )
+   {
+      bug( "%s: cannot interpret new selection until previous has been retrieved.", __FUNCTION__ );
+      return FALSE;
+   }
+   if( check_selection_type( input ) == SEL_NULL )
+   {
+      input_selection_typing = SEL_STRING;
+      input_selection_ptr = STD_SELECTION_ERRMSG;
+      return TRUE;
+   }
+
+   if( input[1] == '_' && ( !(&input[2]) || input[2] != '\0' ) )
+   {
+      /* lookup by name */
+      switch( tolower( input[0] ) )
+      {
+         case 'f':
+            if( ( input_selection_ptr = get_framework_by_name( input+2 ) ) != NULL )
+               input_selection_typing = SEL_FRAME;
+            break;
+         case 'i':
+            if( ( input_selection_ptr = get_instance_by_name( input+2 ) ) != NULL )
+               input_selection_typing = SEL_INSTANCE;
+            break;
+      }
+   }
+   else if( input[1] != '_' && is_number( input+1 ) )
+   {
+      id = atoi( input+1 );
+      /* lookup by id */
+      switch( tolower( input[0] ) )
+      {
+         case 'f':
+            if( ( input_selection_ptr = get_framework_by_id( id ) ) != NULL )
+               input_selection_typing = SEL_FRAME;
+            break;
+         case 'i':
+            if( ( input_selection_ptr = get_instance_by_id( id ) ) != NULL )
+               input_selection_typing = SEL_INSTANCE;
+            break;
+      }
+   }
+   else
+   {
+      input_selection_typing = SEL_STRING;
+      input_selection_ptr = STD_SELECTION_ERRMSG;
+      return TRUE;
+   }
+
+   if( !input_selection_ptr )
+   {
+      input_selection_typing = SEL_STRING;
+      input_selection_ptr = err_msg;
+      mud_printf( err_msg, "No such %s with the %s %s exists.\r\n", input[0] == 'f' ? "frame" : "instance",
+                  input[1] == '_' ? "name" : "id", input[1] == '_' ? quick_format( "%s", input+2 ) : quick_format( "%d", id ) );
+   }
+   return TRUE;
+}
+
+SEL_TYPING check_selection_type( const char *input )
+{
+   /* check the format basics */
+
+   if( !input_format_is_selection_type( input ) )
+      return SEL_NULL;
+   switch( tolower( input[0] ) )
+   {
+      default:  return SEL_NULL;
+      case 'f': return SEL_FRAME;
+      case 'i': return SEL_INSTANCE;
+   }
+   return SEL_NULL;
+}
+
+void *retrieve_entity_selection( void )
+{
+   void *tmp_ptr = input_selection_ptr;
+   clear_entity_selection();
+   return tmp_ptr;
+}
+
+bool input_format_is_selection_type( const char *input )
+{
+   if( !input || input[0] == '\0' || strlen( input ) < 2 )
+      return FALSE;
+   if( input[1] == '_' && ( strlen( input ) < 2 || input[2] == '\0' ) )
+      return FALSE;
+   if( input[1] != '_' && !is_number( input + 1 ) )
+      return FALSE;
+   return TRUE;
+}
+
+void clear_entity_selection( void )
+{
+   input_selection_typing = SEL_NULL;
+   input_selection_ptr = NULL;
 }

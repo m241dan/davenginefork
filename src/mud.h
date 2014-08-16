@@ -51,12 +51,12 @@
 #define DB_ADDR            "localhost"
 #define DB_LOGIN           "m241dan"
 #define DB_PASSWORD        "Grc937!"
-
+#define STD_SELECTION_ERRMSG "Improper format. Please use a type char 'f' or 'i' followed by _<name> for a lookup by name or <id> for lookup by id.\r\n - Example: f_aframework, f845, i_anInstance, i1000.\r\n"
 
 /* Connection states */
 typedef enum
 {
-   STATE_NANNY, STATE_ACCOUNT, STATE_OLC, STATE_EFRAME_EDITOR, STATE_PLAYING, STATE_CLOSED, MAX_STATE
+   STATE_NANNY, STATE_ACCOUNT, STATE_OLC, STATE_EFRAME_EDITOR, STATE_BUILDER, STATE_PLAYING, STATE_CLOSED, MAX_STATE
 } socket_states;
 
 /* Thread states - please do not change the order of these states    */
@@ -104,6 +104,7 @@ typedef enum
    RET_SUCCESS, RET_FAILED_BAD_PATH, RET_FAILED_BAD_FORMAT, RET_FAILED_NULL_POINTER,
    RET_FAILED_NO_LIB_ENTRY,
    RET_NO_SQL, RET_DB_NO_ENTRY,
+   RET_LIST_HAS,
    RET_FAILED_OTHER, MAX_RET_CODES
 } ret_codes;
 
@@ -113,6 +114,16 @@ typedef enum
 } SPEC_IDS;
 
 #define MAX_QUICK_SORT (SPEC_ISEXIT+1)
+
+typedef enum
+{
+   NO_PROMPT, NORMAL_PROMPT, SHORT_PROMPT, MAX_PROMPT 
+} prompt_type;
+
+typedef enum
+{
+   SEL_NULL = -1, SEL_FRAME, SEL_INSTANCE, SEL_STRING, MAX_SEL
+} SEL_TYPING;
 
 /*****************
  * NANNY INDEXES *
@@ -179,6 +190,7 @@ do                                                                      \
       abort();                                                          \
    }									\
 } while(0)
+
 
 #define FREE(point)                      \
 do                                          \
@@ -259,7 +271,7 @@ struct dSocket
   char            inbuf[MAX_BUFFER];
   char            outbuf[MAX_OUTPUT];
   char            next_command[MAX_BUFFER];
-  bool            bust_prompt;
+  prompt_type     bust_prompt;
   sh_int          lookup_status;
   sh_int          state;
   sh_int          control;
@@ -269,6 +281,7 @@ struct dSocket
   unsigned char * out_compress_buf;            /* MCCP support */
 
    ACCOUNT_DATA *account;
+   ENTITY_INSTANCE *controlling;
 };
 
 struct help_data
@@ -386,6 +399,9 @@ void  handle_new_connections  ( D_S *dsock, char *arg );
 void  clear_socket            ( D_S *sock_new, int sock );
 void  recycle_sockets         ( void );
 void *lookup_address          ( void *arg );
+void socket_control_entity( D_SOCKET *socket, ENTITY_INSTANCE *entity );
+void socket_unsocket_entity( ENTITY_INSTANCE *entity );
+
 
 /*
  * interpret.c
@@ -457,7 +473,9 @@ void report_sql_error( MYSQL *con );
 bool quick_query( const char *format, ...);
 bool db_query_single_row( MYSQL_ROW *row, const char *query );
 bool db_query_list_row( LLIST *list, const char *query );
-
+void debug_row( MYSQL_ROW *row, int size );
+void debug_row_list( LLIST *list );
+void copy_row( MYSQL_ROW *row_dest, MYSQL_ROW *row_src, int size );
 /*
  * mccp.c
  */

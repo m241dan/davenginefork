@@ -293,7 +293,7 @@ void account_chat( void *passed, char *arg )
    }
 
    communicate( CHAT_LEVEL, account, arg );
-   account->socket->bust_prompt = FALSE;
+   account->socket->bust_prompt = NO_PROMPT;
    text_to_account( account, "What is your choice? " );
    return;
 }

@@ -15,6 +15,11 @@ const char *const tag_table_whereID[MAX_ID_HANDLER+1] = {
    '\0'
 };
 
+const char const tag_table_characters[MAX_ID_HANDLER+1] = {
+   'a', 'w', 'f', 'i',
+   '\0'
+};
+
 /* match from from given table */
 int match_string_table( const char *string, const char *const string_table[] )
 {
