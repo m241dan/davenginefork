@@ -3,9 +3,10 @@
 #include "mud.h"
 
 const char *const spec_table[] = {
-   "IsRoom",
+   "IsRoom", "IsExit", "IsMob",
    '\0' /* gandalf */
 };
+
 
 
 SPECIFICATION *init_specification( void )

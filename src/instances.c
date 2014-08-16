@@ -5,9 +5,12 @@
 ENTITY_INSTANCE *init_eInstance( void )
 {
    ENTITY_INSTANCE *eInstance;
+   int x;
 
    CREATE( eInstance, ENTITY_INSTANCE, 1 );
    eInstance->contents = AllocList();
+   for( x = 0; x < MAX_QUICK_SORT; x++ )
+     eInstance->contents_sorted[x] = AllocList();
    eInstance->specifications = AllocList();
    eInstance->tag = init_tag();
    eInstance->tag->type = ENTITY_INSTANCE_IDS;
@@ -31,6 +34,8 @@ int clear_eInstance( ENTITY_INSTANCE *eInstance )
 
 int free_eInstance( ENTITY_INSTANCE *eInstance )
 {
+   int x;
+
    FREE( eInstance->name );
    FREE( eInstance->short_descr );
    FREE( eInstance->long_descr );
@@ -40,6 +45,13 @@ int free_eInstance( ENTITY_INSTANCE *eInstance )
    CLEARLIST( eInstance->contents, ENTITY_INSTANCE );
    FreeList( eInstance->contents );
    eInstance->contents = NULL;
+
+   for( x = 0; x < MAX_QUICK_SORT; x++ )
+   {
+      CLEARLIST( eInstance->contents_sorted[x], ENTITY_INSTANCE );
+      FreeList( eInstance->contents_sorted[x] );
+      eInstance->contents_sorted[x] = NULL;
+   }
 
    specification_clear_list( eInstance->specifications );
    FreeList( eInstance->specifications );

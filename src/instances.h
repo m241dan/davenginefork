@@ -9,6 +9,7 @@ struct entity_instance
    char *description;
 
    LLIST *contents;
+   LLIST *contents_sorted[MAX_QUICK_SORT];
    LLIST *specifications;
    ENTITY_FRAMEWORK *framework;
 };

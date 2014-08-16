@@ -107,6 +107,13 @@ typedef enum
    RET_FAILED_OTHER, MAX_RET_CODES
 } ret_codes;
 
+typedef enum
+{
+   SPEC_ISROOM, SPEC_ISEXIT, SPEC_ISMOB, MAX_SPEC
+} SPEC_IDS;
+
+#define MAX_QUICK_SORT (SPEC_ISEXIT+1)
+
 /*****************
  * NANNY INDEXES *
  *****************/
