@@ -147,7 +147,33 @@ SPECIFICATION *spec_list_has_by_type( LLIST *spec_list, int type )
          break;
    DetachIterator( &Iter );
 
-   if( spec )
-      return spec;
-   return NULL;
+   return spec;
+}
+
+SPECIFICATION *spec_list_has_by_name( LLIST *spec_list, const char *name )
+{
+   int type;
+
+   if( ( type = match_string_table( name, spec_table ) ) == -1 )
+   {
+      bug( "%s: invalid spec.", __FUNCTION__ );
+      return NULL;
+   }
+
+   return spec_list_has_by_type( spec_list, type );
+}
+
+SPECIFICATION *has_spec( ENTITY_INSTANCE *entity, const char *spec_name )
+{
+   SPECIFICATION *spec;
+
+   if( ( spec = spec_list_has_by_name( entity->specifications, spec_name ) ) == NULL )
+      spec = spec_list_has_by_name( entity->framework->specifications, spec_name );
+
+   return spec;
+}
+
+SPECIFICATION *frame_has_spec( ENTITY_FRAMEWORK *frame, const char *spec_name )
+{
+   return spec_list_has_by_name( frame->specifications, spec_name );
 }

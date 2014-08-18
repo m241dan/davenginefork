@@ -220,19 +220,34 @@ void entity_to_world( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container )
    if( entity->contained_by )
       entity_from_container( entity );
 
+   entity_to_contents( entity, container );
+
+   if( !quick_query( "UPDATE `entity_instances` SET containedBy='%d' WHERE entityInstanceId=%d;", entity->contained_by_id, entity->tag->id ) )
+      bug( "%s: could not update databaes with %d's new location in the world.", __FUNCTION__, entity->tag->id );
+   return;
+}
+
+void entity_to_contents( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container )
+{
    if( !container )
    {
       entity->contained_by = NULL;
       entity->contained_by_id = 0;
    }
-   else
-   {
-      AttachToList( entity, container->contents );
-      entity->contained_by = container;
-      entity->contained_by_id = container->tag->id;
-   }
-   if( !quick_query( "UPDATE `entity_instances` SET containedBy='%d' WHERE entityInstanceId=%d;", entity->contained_by_id, entity->tag->id ) )
-      bug( "%s: could not update databaes with %d's new location in the world.", __FUNCTION__, entity->tag->id );
+   AttachToList( entity, container->contents);
+   entity_contents_quick_sort( entity, container );
+   entity->contained_by = container;
+   entity->contained_by_id = container->tag->id;
+}
+
+void entity_contents_quick_sort( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container )
+{
+   int x;
+
+   for( x = 0; x < MAX_QUICK_SORT; x++ )
+      if( has_spec( entity, spec_table[x] ) )
+         AttachToList( entity, container->contents_sorted[x] );
+
    return;
 }
 
