@@ -233,11 +233,13 @@ void entity_to_contents( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container )
    {
       entity->contained_by = NULL;
       entity->contained_by_id = 0;
+      return;
    }
    AttachToList( entity, container->contents);
    entity_contents_quick_sort( entity, container );
    entity->contained_by = container;
    entity->contained_by_id = container->tag->id;
+   return;
 }
 
 void entity_contents_quick_sort( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container )
@@ -381,6 +383,124 @@ int show_ent_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing )
    return ret;
 }
 
+int show_ent_contents_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing )
+{
+   int ret = RET_SUCCESS;
+
+   if( !entity )
+   {
+      BAD_POINTER( "entity" );
+      return ret;
+   }
+   if( !viewing )
+   {
+      BAD_POINTER( "viewing" );
+      return ret;
+   }
+
+   if( SizeOfList( viewing->contents_sorted[SPEC_ISEXIT] ) > 0 )
+      show_ent_exits_to_ent( entity, viewing );
+   else if( has_spec( viewing, "IsRoom" ) )
+   {
+      text_to_entity( entity, "| Exits |\r\n" );
+      text_to_entity( entity, "  None\r\n\r\n" );
+   }
+   if( SizeOfList( viewing->contents_sorted[SPEC_ISMOB] ) > 0 )
+      show_ent_mobiles_to_ent( entity, viewing );
+   if( SizeOfList( viewing->contents_sorted[SPEC_ISOBJECT] ) > 0 )
+      show_ent_objects_to_ent( entity, viewing );
+   return ret;
+}
+
+int show_ent_exits_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing )
+{
+   ENTITY_INSTANCE *exit, *exit_to;
+   ITERATOR Iter;
+   int ret = RET_SUCCESS;
+
+   if( !entity )
+   {
+      BAD_POINTER( "entity" );
+      return ret;
+   }
+   if( !viewing )
+   {
+      BAD_POINTER( "viewing" );
+      return ret;
+   }
+
+   text_to_entity( entity, "| Exits |\r\n" );
+
+   AttachIterator( &Iter, viewing->contents_sorted[SPEC_ISEXIT] );
+   while( ( exit = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
+   {
+      exit_to = get_active_instance_by_id( get_spec_value( exit, "IsExit" ) );
+      if( entity == exit || entity == exit_to )
+         continue;
+      text_to_entity( entity, "%s - %s\r\n", instance_short_descr( exit ),  exit_to ? instance_short_descr( exit_to ) : "Nowhere" );
+   }
+   DetachIterator( &Iter );
+   text_to_entity( entity, "\r\n" );
+   return ret;
+}
+
+int show_ent_mobiles_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing )
+{
+   ENTITY_INSTANCE *mob;
+   ITERATOR Iter;
+   int ret = RET_SUCCESS;
+
+   if( !entity )
+   {
+      BAD_POINTER( "entity" );
+      return ret;
+   }
+   if( !viewing )
+   {
+      BAD_POINTER( "viewing" );
+      return ret;
+   }
+
+   AttachIterator( &Iter, viewing->contents_sorted[SPEC_ISMOB] );
+   while( ( mob = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
+   {
+      if( entity == mob )
+         continue;
+      text_to_entity( entity, "%s.\r\n", instance_long_descr( mob ) );
+   }
+   DetachIterator( &Iter );
+   return ret;
+}
+
+int show_ent_objects_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing )
+{
+   ENTITY_INSTANCE *obj;
+   ITERATOR Iter;
+   int ret = RET_SUCCESS;
+
+   if( !entity )
+   {
+      BAD_POINTER( "entity" );
+      return ret;
+   }
+   if( !viewing )
+   {
+      BAD_POINTER( "viewing" );
+      return ret;
+   }
+
+   AttachIterator( &Iter, viewing->contents_sorted[SPEC_ISOBJECT] );
+   while( ( obj = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
+   {
+      if( instance_list_has_by_id( viewing->contents_sorted[SPEC_ISMOB], obj->tag->id ) )
+         continue;
+      text_to_entity( entity, "%s", instance_long_descr( obj ) );
+   }
+   DetachIterator( &Iter );
+   return ret;
+
+}
+
 void entity_goto( void *passed, char *arg )
 {
    ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
@@ -469,5 +589,6 @@ void entity_look( void *passed, char *arg )
 {
    ENTITY_INSTANCE *instance = (ENTITY_INSTANCE *)passed;
    show_ent_to_ent( instance, instance->contained_by );
+   show_ent_contents_to_ent( instance, instance->contained_by );
    return;
 }

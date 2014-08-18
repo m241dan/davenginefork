@@ -23,3 +23,4 @@ SPECIFICATION *spec_list_has_by_type( LLIST *spec_list, int type );
 SPECIFICATION *spec_list_has_by_name( LLIST *spec_list, const char *name );
 SPECIFICATION *has_spec( ENTITY_INSTANCE *entity, const char *spec_name );
 SPECIFICATION *frame_has_spec( ENTITY_FRAMEWORK *frame, const char *spec_name );
+int get_spec_value( ENTITY_INSTANCE *entity, const char *spec_name );

@@ -3,7 +3,7 @@
 #include "mud.h"
 
 const char *const spec_table[] = {
-   "IsRoom", "IsExit", "IsMob",
+   "IsRoom", "IsExit", "IsMob", "IsObject",
    '\0' /* gandalf */
 };
 
@@ -176,4 +176,14 @@ SPECIFICATION *has_spec( ENTITY_INSTANCE *entity, const char *spec_name )
 SPECIFICATION *frame_has_spec( ENTITY_FRAMEWORK *frame, const char *spec_name )
 {
    return spec_list_has_by_name( frame->specifications, spec_name );
+}
+
+int get_spec_value( ENTITY_INSTANCE *entity, const char *spec_name )
+{
+   SPECIFICATION *spec;
+
+   if( ( spec = has_spec( entity, spec_name ) ) == NULL )
+      return 0;
+   else
+      return spec->value;
 }
