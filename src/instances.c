@@ -398,6 +398,8 @@ int show_ent_contents_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing 
       return ret;
    }
 
+   if( SizeOfList( viewing->contents_sorted[SPEC_ISROOM] ) > 0 )
+      show_ent_rooms_to_ent( entity, viewing );
    if( SizeOfList( viewing->contents_sorted[SPEC_ISEXIT] ) > 0 )
       show_ent_exits_to_ent( entity, viewing );
    else if( has_spec( viewing, "IsRoom" ) )
@@ -434,6 +436,8 @@ int show_ent_exits_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing )
    AttachIterator( &Iter, viewing->contents_sorted[SPEC_ISEXIT] );
    while( ( exit = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
    {
+      if( entity == exit )
+         continue;
       exit_to = get_active_instance_by_id( get_spec_value( exit, "IsExit" ) );
       if( entity == exit || entity == exit_to )
          continue;
@@ -492,6 +496,8 @@ int show_ent_objects_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing )
    AttachIterator( &Iter, viewing->contents_sorted[SPEC_ISOBJECT] );
    while( ( obj = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
    {
+      if( entity == obj )
+         continue;
       if( instance_list_has_by_id( viewing->contents_sorted[SPEC_ISMOB], obj->tag->id ) )
          continue;
       text_to_entity( entity, "%s", instance_long_descr( obj ) );
@@ -500,6 +506,35 @@ int show_ent_objects_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing )
    return ret;
 
 }
+
+int show_ent_rooms_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing )
+{
+   ENTITY_INSTANCE *room;
+   ITERATOR Iter;
+   int ret = RET_SUCCESS;
+
+   if( !entity )
+   {
+      BAD_POINTER( "entity" );
+      return ret;
+   }
+   if( !viewing )
+   {
+      BAD_POINTER( "viewing" );
+      return ret;
+   }
+   text_to_entity( entity, "| Rooms |\r\n" );
+   AttachIterator( &Iter, viewing->contents_sorted[SPEC_ISROOM] );
+   while( ( room = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
+   {
+      if( entity == room )
+         continue;
+      text_to_entity( entity, "%s - %s.\r\n", instance_short_descr( room ), instance_long_descr( room ) );
+   }
+   DetachIterator( &Iter );
+   return ret;
+}
+
 
 void entity_goto( void *passed, char *arg )
 {
