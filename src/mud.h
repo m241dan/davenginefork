@@ -110,7 +110,8 @@ typedef enum
 
 typedef enum
 {
-   SPEC_ISROOM, SPEC_ISEXIT, SPEC_ISMOB, SPEC_ISOBJECT, MAX_SPEC
+   SPEC_ISROOM, SPEC_ISEXIT, SPEC_ISMOB, SPEC_ISOBJECT, SPEC_CANGET, SPEC_NODROP,
+   MAX_SPEC
 } SPEC_IDS;
 
 #define MAX_QUICK_SORT (SPEC_ISOBJECT+1)
@@ -274,6 +275,7 @@ struct dSocket
   prompt_type     bust_prompt;
   sh_int          lookup_status;
   sh_int          state;
+  sh_int          prev_state;
   sh_int          control;
   sh_int          top_output;
   unsigned char   compressing;                 /* MCCP support */
@@ -400,7 +402,7 @@ void  clear_socket            ( D_S *sock_new, int sock );
 void  recycle_sockets         ( void );
 void *lookup_address          ( void *arg );
 void socket_control_entity( D_SOCKET *socket, ENTITY_INSTANCE *entity );
-void socket_unsocket_entity( ENTITY_INSTANCE *entity );
+void socket_uncontrol_entity( ENTITY_INSTANCE *entity );
 
 
 /*
@@ -429,6 +431,7 @@ int change_socket_state( D_SOCKET *dsock, int state );
  * strings.c
  */
 char   *one_arg               ( char *fStr, char *bStr );
+char   *one_arg_delim         ( char *fStr, char *bStr, char delim );
 char   *strdup                ( const char *s );
 int     strcasecmp            ( const char *s1, const char *s2 );
 bool    is_prefix             ( const char *aStr, const char *bStr );

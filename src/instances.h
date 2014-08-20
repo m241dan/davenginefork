@@ -24,6 +24,8 @@ struct entity_instance
 ENTITY_INSTANCE *init_eInstance( void );
 int clear_eInstance( ENTITY_INSTANCE *eInstance );
 int free_eInstance( ENTITY_INSTANCE *eInstance );
+int clear_ent_contents( ENTITY_INSTANCE *eInstance );
+
 
 ENTITY_INSTANCE *init_builder( void );
 
@@ -42,7 +44,10 @@ void db_load_eInstance( ENTITY_INSTANCE *eInstance, MYSQL_ROW *row );
 void entity_from_container( ENTITY_INSTANCE *entity );
 void entity_to_world( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container );
 void entity_to_contents( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container );
-void entity_contents_quick_sort( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container );
+void attach_entity_to_contents( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container );
+void detach_entity_from_contents( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container );
+void entity_to_contents_quick_sort( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container );
+void entity_from_contents_quick_sort( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container );
 
 ENTITY_INSTANCE *instance_list_has_by_id( LLIST *instance_list, int id );
 ENTITY_INSTANCE *instance_list_has_by_name( LLIST *instance_list, const char *name );
@@ -67,3 +72,8 @@ int show_ent_rooms_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing );
 void entity_goto( void *passed, char *arg );
 void entity_instance( void *passed, char *arg );
 void entity_look( void *passed, char *arg );
+void entity_inventory( void *passed, char *arg );
+void entity_drop( void *passed, char *arg );
+void entity_get( void *passed, char *arg );
+void entity_quit( void *passed, char *arg );
+

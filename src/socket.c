@@ -1018,6 +1018,7 @@ int change_socket_state( D_SOCKET *dsock, int state )
       return ret;
    }
 
+   dsock->prev_state = dsock->state;
    dsock->state = state;
    switch( state )
    {

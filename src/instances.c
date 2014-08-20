@@ -39,16 +39,16 @@ int free_eInstance( ENTITY_INSTANCE *eInstance )
 
    eInstance->framework = NULL;
 
-   CLEARLIST( eInstance->contents, ENTITY_INSTANCE );
-   FreeList( eInstance->contents );
-   eInstance->contents = NULL;
-
    for( x = 0; x < MAX_QUICK_SORT; x++ )
    {
       CLEARLIST( eInstance->contents_sorted[x], ENTITY_INSTANCE );
       FreeList( eInstance->contents_sorted[x] );
       eInstance->contents_sorted[x] = NULL;
    }
+
+   clear_ent_contents( eInstance );
+   FreeList( eInstance->contents );
+   eInstance->contents = NULL;
 
    specification_clear_list( eInstance->specifications );
    FreeList( eInstance->specifications );
@@ -59,6 +59,19 @@ int free_eInstance( ENTITY_INSTANCE *eInstance )
    eInstance->account = NULL;
 
    FREE( eInstance );
+   return RET_SUCCESS;
+}
+
+int clear_ent_contents( ENTITY_INSTANCE *eInstance )
+{
+   ENTITY_INSTANCE *to_free;
+   ITERATOR Iter;
+
+   AttachIterator( &Iter, eInstance->contents );
+   while( ( to_free = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
+      free_eInstance( to_free );
+   DetachIterator( &Iter );
+
    return RET_SUCCESS;
 }
 
@@ -203,11 +216,10 @@ void entity_from_container( ENTITY_INSTANCE *entity )
 {
    if( entity->contained_by )
    {
-      DetachFromList( entity, entity->contained_by->contents );
-      entity->contained_by_id = 0;
+      detach_entity_from_contents( entity, entity->contained_by );
+      if( !quick_query( "UPDATE `entity_instances` SET containedBy='%d' WHERE entityInstanceId=%d;", entity->contained_by_id, entity->tag->id ) )
+         bug( "%s: could not update databaes with %d's new location in the world.", __FUNCTION__, entity->tag->id );
    }
-   if( !quick_query( "UPDATE `entity_instances` SET containedBy='%d' WHERE entityInstanceId=%d;", entity->contained_by_id, entity->tag->id ) )
-      bug( "%s: could not update databaes with %d's new location in the world.", __FUNCTION__, entity->tag->id );
    return;
 
 }
@@ -222,6 +234,9 @@ void entity_to_world( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container )
 
    entity_to_contents( entity, container );
 
+   if( container->builder ) /* don't save for now if the person who is holding it is a builder */
+      return;
+
    if( !quick_query( "UPDATE `entity_instances` SET containedBy='%d' WHERE entityInstanceId=%d;", entity->contained_by_id, entity->tag->id ) )
       bug( "%s: could not update databaes with %d's new location in the world.", __FUNCTION__, entity->tag->id );
    return;
@@ -235,20 +250,44 @@ void entity_to_contents( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container )
       entity->contained_by_id = 0;
       return;
    }
-   AttachToList( entity, container->contents);
-   entity_contents_quick_sort( entity, container );
-   entity->contained_by = container;
-   entity->contained_by_id = container->tag->id;
+   attach_entity_to_contents( entity, container );
    return;
 }
 
-void entity_contents_quick_sort( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container )
+void attach_entity_to_contents( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container )
+{
+   AttachToList( entity, container->contents );
+   entity_to_contents_quick_sort( entity, container );
+   entity->contained_by = container;
+   entity->contained_by_id = container->tag->id;
+}
+
+void detach_entity_from_contents( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container )
+{
+   DetachFromList( entity, container->contents );
+   entity_from_contents_quick_sort( entity, container );
+   entity->contained_by = NULL;
+   entity->contained_by_id = 0;
+}
+
+void entity_to_contents_quick_sort( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container )
 {
    int x;
 
    for( x = 0; x < MAX_QUICK_SORT; x++ )
       if( has_spec( entity, spec_table[x] ) )
          AttachToList( entity, container->contents_sorted[x] );
+
+   return;
+}
+
+void entity_from_contents_quick_sort( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container )
+{
+   int x;
+
+   for( x = 0; x < MAX_QUICK_SORT; x++ )
+      if( has_spec( entity, spec_table[x] ) )
+         DetachFromList( entity, container->contents_sorted[x] );
 
    return;
 }
@@ -625,5 +664,95 @@ void entity_look( void *passed, char *arg )
    ENTITY_INSTANCE *instance = (ENTITY_INSTANCE *)passed;
    show_ent_to_ent( instance, instance->contained_by );
    show_ent_contents_to_ent( instance, instance->contained_by );
+   return;
+}
+
+void entity_inventory( void *passed, char *arg )
+{
+   ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
+   show_ent_contents_to_ent( entity, entity );
+   return;
+}
+
+void entity_drop( void *passed, char *arg )
+{
+   ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
+   ENTITY_INSTANCE *to_drop;
+   char buf[MAX_BUFFER];
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_entity( entity, "Drop what?\r\n" );
+      return;
+   }
+
+   while( arg[0] != '\0' )
+   {
+      arg = one_arg( arg, buf );
+
+      if( ( to_drop = instance_list_has_by_name( entity->contents, buf ) ) == NULL )
+      {
+         text_to_entity( entity, "You do not have %s to drop.\r\n", buf );
+         continue;
+      }
+      if( !entity->builder )
+      {
+         if( get_spec_value( to_drop, "NoDrop" ) > 0 )
+         {
+            text_to_entity( entity, "You cannot drop %s.\r\n", instance_short_descr( to_drop ) );
+            continue;
+         }
+      }
+      text_to_entity( entity, "You drop %s.\r\n", instance_short_descr( to_drop ) );
+      entity_to_world( to_drop, entity->contained_by );
+   }
+   return;
+}
+
+void entity_get( void *passed, char *arg )
+{
+   ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
+   ENTITY_INSTANCE *to_get;
+   char buf[MAX_BUFFER];
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_entity( entity, "Get what?\r\n" );
+      return;
+   }
+
+   while( arg[0] != '\0' )
+   {
+      arg = one_arg( arg, buf );
+
+      if( !entity->contained_by )
+         puts( "it's null" );
+      if( ( to_get = instance_list_has_by_name( entity->contained_by->contents, buf ) ) == NULL )
+      {
+         text_to_entity( entity, "You do not see %s to get.\r\n", buf );
+         continue;
+      }
+      if( !entity->builder )
+      {
+         if( get_spec_value( to_get, "CanGet" ) > 0 )
+         {
+            text_to_entity( entity, "You cannot get %s.\r\n", instance_short_descr( to_get ) );
+            continue;
+         }
+      }
+      text_to_entity( entity, "You get %s.\r\n", instance_short_descr( to_get ) );
+      entity_to_world( to_get, entity );
+   }
+   return;
+}
+
+void entity_quit( void *passed, char *arg )
+{
+   ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
+
+   text_to_entity( entity, "You quit builder-mode.\r\n" );
+   change_socket_state( entity->socket, entity->socket->prev_state );
+   socket_uncontrol_entity( entity );
+   free_eInstance( entity );
    return;
 }

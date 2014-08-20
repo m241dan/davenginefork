@@ -3,7 +3,7 @@
 #include "mud.h"
 
 const char *const spec_table[] = {
-   "IsRoom", "IsExit", "IsMob", "IsObject",
+   "IsRoom", "IsExit", "IsMob", "IsObject", "CanGet", "NoDrop",
    '\0' /* gandalf */
 };
 

@@ -129,6 +129,10 @@ struct typCmd create_eFramework_commands[] = {
 };
 
 struct typCmd builder_commands[] = {
+   { "quit", entity_quit, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
+   { "get", entity_get, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
+   { "drop", entity_drop, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
+   { "inventory", entity_inventory, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
    { "look", entity_look, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
    { "instance", entity_instance, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
    { "goto", entity_goto, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
