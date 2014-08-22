@@ -332,6 +332,26 @@ ENTITY_INSTANCE *instance_list_has_by_name( LLIST *instance_list, const char *na
    return eInstance;
 }
 
+ENTITY_INSTANCE *instance_list_has_by_short_prefix( LLIST *instance_list, const char *name )
+{
+   ENTITY_INSTANCE *eInstance;
+   ITERATOR Iter;
+
+   if( !instance_list )
+      return NULL;
+   if( SizeOfList( instance_list ) < 1 )
+      return NULL;
+   if( !name || name[0] == '\0' )
+      return NULL;
+
+   AttachIterator( &Iter, instance_list );
+   while( ( eInstance = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
+      if( is_prefix( name, instance_short_descr( eInstance ) ) )
+         break;
+   DetachIterator( &Iter );
+
+   return eInstance;
+}
 
 ENTITY_INSTANCE *eInstantiate( ENTITY_FRAMEWORK *frame )
 {
@@ -585,7 +605,7 @@ int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *exit )
       return ret;
    }
 
-   if( ( move_to = get_active_instance_by_id( get_spec_value( entity, "IsExit" ) ) ) == NULL )
+   if( ( move_to = get_active_instance_by_id( get_spec_value( exit, "IsExit" ) ) ) == NULL )
    {
       text_to_entity( entity, "That exit goes to nowhere.\r\n" );
       return ret;
@@ -593,6 +613,7 @@ int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *exit )
 
    entity_to_world( entity, move_to );
    text_to_entity( entity, "You move to the %s.\r\n", instance_short_descr( exit ) );
+   show_ent_to_ent( entity, move_to );
    return ret;
 }
 

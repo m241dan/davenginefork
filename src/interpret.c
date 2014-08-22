@@ -210,6 +210,7 @@ int eFrame_editor_handle_command( INCEPTION *olc, char *arg )
 
 int entity_handle_cmd( ENTITY_INSTANCE *entity, char *arg )
 {
+   ENTITY_INSTANCE *exit;
    COMMAND *com;
    char command[MAX_BUFFER];
    int ret = RET_SUCCESS;
@@ -222,10 +223,13 @@ int entity_handle_cmd( ENTITY_INSTANCE *entity, char *arg )
 
    arg = one_arg( arg, command );
 
-   if( ( com = find_loaded_command( entity->commands, command ) ) == NULL )
-      text_to_entity( entity, "No such command.\r\n" );
-   else
+   if( ( com = find_loaded_command( entity->commands, command ) ) != NULL )
       execute_command( entity->socket->account, com, entity, arg );
+   else if( ( exit = instance_list_has_by_short_prefix( entity->contained_by->contents_sorted[SPEC_ISEXIT], command ) ) != NULL )
+      move_entity( entity, exit );
+   else
+      text_to_entity( entity, "No such command or exit.\r\n" );
+
 
    return ret;
 }
@@ -248,7 +252,7 @@ COMMAND *find_loaded_command( LLIST *loaded_list, const char *command )
    AttachIterator( &Iter, loaded_list );
    while( ( com = (COMMAND *)NextInList( &Iter ) ) != NULL )
    {
-      if( is_prefix( com->cmd_name, command ) )
+      if( is_prefix( command, com->cmd_name ) )
          break;
       if( com->sub_commands && ( com = find_loaded_command( com->sub_commands, command ) ) != NULL )
          break;

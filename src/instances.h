@@ -51,6 +51,7 @@ void entity_from_contents_quick_sort( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *
 
 ENTITY_INSTANCE *instance_list_has_by_id( LLIST *instance_list, int id );
 ENTITY_INSTANCE *instance_list_has_by_name( LLIST *instance_list, const char *name );
+ENTITY_INSTANCE *instance_list_has_by_short_prefix( LLIST *instance_list, const char *name );
 
 ENTITY_INSTANCE *eInstantiate( ENTITY_FRAMEWORK *frame );
 
