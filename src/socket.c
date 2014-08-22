@@ -55,6 +55,7 @@ int main(int argc, char **argv)
 
   /* get the current time */
   current_time = time(NULL);
+  srand( time( NULL ) );
 
    /* allocate memory for socket and mobile lists'n'stacks */
    dsock_list= AllocList();

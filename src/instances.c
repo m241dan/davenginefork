@@ -574,6 +574,14 @@ int show_ent_rooms_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing )
    return ret;
 }
 
+int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing )
+{
+   int ret = RET_SUCCESS;
+
+   if( number_range
+   if( get_spec_value( entity, "CanMove" ) )
+}
+
 
 void entity_goto( void *passed, char *arg )
 {

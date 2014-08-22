@@ -111,6 +111,7 @@ typedef enum
 typedef enum
 {
    SPEC_ISROOM, SPEC_ISEXIT, SPEC_ISMOB, SPEC_ISOBJECT, SPEC_CANGET, SPEC_NODROP,
+   SPEC_CANMOVE,
    MAX_SPEC
 } SPEC_IDS;
 
@@ -479,6 +480,8 @@ bool db_query_list_row( LLIST *list, const char *query );
 void debug_row( MYSQL_ROW *row, int size );
 void debug_row_list( LLIST *list );
 void copy_row( MYSQL_ROW *row_dest, MYSQL_ROW *row_src, int size );
+int number_percent();
+int number_range( int min, int max );
 /*
  * mccp.c
  */

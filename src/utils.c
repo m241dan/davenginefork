@@ -193,3 +193,16 @@ void debug_row_list( LLIST *list )
       debug_row( row_ptr, 9 );
    DetachIterator( &Iter );
 }
+
+int number_percent( )
+{
+   return ( rand() % 100 ) + 1;
+}
+
+int number_range( int min, int max )
+{
+   if( ( max - min ) < 1 )
+      return min;
+
+   return ( ( rand() % ( max - min + 1 ) ) + min );
+}
