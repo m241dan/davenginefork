@@ -574,12 +574,26 @@ int show_ent_rooms_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing )
    return ret;
 }
 
-int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing )
+int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *exit )
 {
    int ret = RET_SUCCESS;
+   ENTITY_INSTANCE *move_to;
 
-   if( number_range
-   if( get_spec_value( entity, "CanMove" ) )
+   if( get_spec_value( entity, "CanMove" ) < 1 && !entity->builder )
+   {
+      text_to_entity( entity, "You cannot move.\r\n" );
+      return ret;
+   }
+
+   if( ( move_to = get_active_instance_by_id( get_spec_value( entity, "IsExit" ) ) ) == NULL )
+   {
+      text_to_entity( entity, "That exit goes to nowhere.\r\n" );
+      return ret;
+   }
+
+   entity_to_world( entity, move_to );
+   text_to_entity( entity, "You move to the %s.\r\n", instance_short_descr( exit ) );
+   return ret;
 }
 
 
