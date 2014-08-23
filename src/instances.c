@@ -617,6 +617,17 @@ int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *exit )
    return ret;
 }
 
+int create_arg_to_num( const char *arg )
+{
+   if( !strcasecmp( arg, "mob" ) )
+      return SPEC_ISMOB;
+   if( !strcasecmp( arg, "room" ) )
+      return SPEC_ISROOM;
+   if( !strcasecmp( arg, "exit" ) )
+      return SPEC_ISEXIT;
+   return -1;
+}
+
 
 void entity_goto( void *passed, char *arg )
 {
@@ -806,6 +817,7 @@ void entity_create( void *passed, char *arg )
    INCEPTION *olc = (INCEPTION *)entity->account->olc;
    SPECIFICATION *pre_loaded_spec;
    char buf[MAX_BUFFER];
+   int num;
 
    if( !arg || arg[0] == '\0' )
    {
@@ -821,26 +833,41 @@ void entity_create( void *passed, char *arg )
    }
    arg = one_arg( arg, buf );
 
-   if( !strcasecmp( buf, "mob" ) )
+   if( ( num = create_arg_to_num( buf ) ) != -1 )
    {
       init_editor( olc );
       pre_loaded_spec = init_specification();
-      pre_loaded_spec->type = SPEC_ISMOB;
-      pre_loaded_spec->value = 1;
-      add_spec_to_framework( pre_loaded_spec, (ENTITY_FRAMEWORK *)olc->editing );
-      pre_loaded_spec = init_specification();
-      pre_loaded_spec->type = SPEC_CANMOVE;
-      pre_loaded_spec->value = 1;
-      add_spec_to_framework( pre_loaded_spec, (ENTITY_FRAMEWORK *)olc->editing );
+      switch( num )
+      {
+         default:
+            free_editor( olc );
+            text_to_entity( entity, "Create is not ready for this yet.\r\n" );
+            return;
+         case SPEC_ISMOB:
+            pre_loaded_spec->type = SPEC_ISMOB;
+            pre_loaded_spec->value = 1;
+            add_spec_to_framework( pre_loaded_spec, (ENTITY_FRAMEWORK *)olc->editing );
+
+            pre_loaded_spec = init_specification();
+            pre_loaded_spec->type = SPEC_CANMOVE;
+            pre_loaded_spec->value = 1;
+            add_spec_to_framework( pre_loaded_spec, (ENTITY_FRAMEWORK *)olc->editing );
+            break;
+         case SPEC_ISROOM:
+            pre_loaded_spec->type = SPEC_ISROOM;
+            pre_loaded_spec->value = 1;
+            add_spec_to_framework( pre_loaded_spec, (ENTITY_FRAMEWORK *)olc->editing );
+            break;
+         case SPEC_ISEXIT:
+            pre_loaded_spec->type = SPEC_ISEXIT;
+            pre_loaded_spec->value = 0;
+            add_spec_to_framework( pre_loaded_spec, (ENTITY_FRAMEWORK *)olc->editing );
+            break;
+      }
       change_socket_state( entity->socket, olc->editing_state );
       return;
    }
-   if( !strcasecmp( buf, "room" ) )
-   {
-   }
-   if( !strcasecmp( buf, "exit" ) )
-   {
-   }
+
    if( !strcasecmp( buf, "mexit" ) )
    {
    }
