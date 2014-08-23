@@ -2,6 +2,32 @@
 
 #include "mud.h"
 
+int init_editor( INCEPTION *olc )
+{
+   int ret = RET_SUCCESS;
+
+   CREATE( olc->editing, ENTITY_FRAMEWORK, 1 );
+   olc->editing = init_eFramework();
+   olc->editing_state = STATE_EFRAME_EDITOR;
+   text_to_olc( olc, "Creating a new entity framework.\r\n" );
+   olc->editor_commands = AllocList();
+
+   return ret;
+}
+
+int free_editor( INCEPTION *olc )
+{
+   int ret = RET_SUCCESS;
+
+   olc->editing = NULL;
+   free_command_list( olc->editor_commands );
+   FreeList( olc->editor_commands );
+   olc->editor_commands = NULL;
+   olc->editing_state = olc->account->socket->prev_state;
+
+   return ret;
+}
+
 int editor_eFramework_prompt( D_SOCKET *dsock )
 {
    ENTITY_FRAMEWORK *frame;
@@ -247,12 +273,8 @@ void eFramework_done( void *passed, char *arg )
          add_frame_to_workspace( frame, olc->using_workspace );
    }
 
-   olc->editing = NULL;
-   free_command_list( olc->editor_commands );
-   FreeList( olc->editor_commands );
-   olc->editor_commands = NULL;
-   olc->editing_state = STATE_OLC;
-   change_socket_state( olc->account->socket, STATE_OLC );
+   free_editor( olc );
+   change_socket_state( olc->account->socket, olc->account->socket->prev_state );
    text_to_olc( olc, "Exiting Entity Framework Editor.\r\n" );
    olc_show_prompt( olc );
    return;

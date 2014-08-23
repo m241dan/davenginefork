@@ -697,8 +697,8 @@ void entity_instance( void *passed, char *arg )
    }
 
    AttachToList( new_ent, eInstances_list );
-   entity_to_world( new_ent, entity->contained_by ? entity->contained_by : NULL );
-   text_to_entity( entity, "You create a new instance of %s.\r\n", instance_name( new_ent ) );
+   entity_to_world( new_ent, entity );
+   text_to_entity( entity, "You create a new instance of %s. It has been placed in your inventory.\r\n", instance_name( new_ent ) );
    return;
 }
 
@@ -794,8 +794,55 @@ void entity_quit( void *passed, char *arg )
    ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
 
    text_to_entity( entity, "You quit builder-mode.\r\n" );
-   change_socket_state( entity->socket, entity->socket->prev_state );
+   change_socket_state( entity->socket, STATE_OLC );
    socket_uncontrol_entity( entity );
    free_eInstance( entity );
+   return;
+}
+
+void entity_create( void *passed, char *arg )
+{
+   ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
+   INCEPTION *olc = (INCEPTION *)entity->account->olc;
+   SPECIFICATION *pre_loaded_spec;
+   char buf[MAX_BUFFER];
+
+   if( !arg || arg[0] == '\0' )
+   {
+      if( olc->editing)
+      {
+         text_to_entity( entity, "There's alraedy something loaded in your editor, resume work on that first.\r\n" );
+         return;
+      }
+
+      init_editor( olc );
+      change_socket_state( entity->socket, olc->editing_state );
+      return;
+   }
+   arg = one_arg( arg, buf );
+
+   if( !strcasecmp( buf, "mob" ) )
+   {
+      init_editor( olc );
+      pre_loaded_spec = init_specification();
+      pre_loaded_spec->type = SPEC_ISMOB;
+      pre_loaded_spec->value = 1;
+      add_spec_to_framework( pre_loaded_spec, (ENTITY_FRAMEWORK *)olc->editing );
+      pre_loaded_spec = init_specification();
+      pre_loaded_spec->type = SPEC_CANMOVE;
+      pre_loaded_spec->value = 1;
+      add_spec_to_framework( pre_loaded_spec, (ENTITY_FRAMEWORK *)olc->editing );
+      change_socket_state( entity->socket, olc->editing_state );
+      return;
+   }
+   if( !strcasecmp( buf, "room" ) )
+   {
+   }
+   if( !strcasecmp( buf, "exit" ) )
+   {
+   }
+   if( !strcasecmp( buf, "mexit" ) )
+   {
+   }
    return;
 }

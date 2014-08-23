@@ -860,12 +860,7 @@ void framework_create( void *passed, char *arg )
       change_socket_state( olc->account->socket, olc->editing_state );
       return;
    }
-
-   CREATE( olc->editing, ENTITY_FRAMEWORK, 1 );
-   olc->editing = init_eFramework();
-   olc->editing_state = STATE_EFRAME_EDITOR;
-   text_to_olc( olc, "Creating a new Entity Framework.\r\n" );
-   olc->editor_commands = AllocList();
+   init_editor( olc );
    change_socket_state( olc->account->socket, olc->editing_state );
    return;
 }
@@ -1010,7 +1005,7 @@ void olc_builder( void *passed, char *arg )
       olc_short_prompt( olc );
       return;
    }
-
+   builder->account = olc->account;
    text_to_olc( olc, "You enter builder mode.\r\n" );
    socket_control_entity( olc->account->socket, builder );
    change_socket_state( olc->account->socket, STATE_BUILDER );
