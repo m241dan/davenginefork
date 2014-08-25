@@ -216,13 +216,21 @@ bool live_frame( ENTITY_FRAMEWORK *frame )
    return TRUE;
 }
 
-ENTITY_FRAMEWORK *create_room_framework( void )
+ENTITY_FRAMEWORK *create_room_framework( const char *name )
 {
    ENTITY_FRAMEWORK *framework;
    SPECIFICATION *pre_loaded_spec;
 
    framework = init_eFramework();
    pre_loaded_spec = init_specification();
+
+   if( name )
+   {
+      FREE( framework->name );
+      FREE( framework->short_descr );
+      framework->name = strdup( name );
+      framework->short_descr = strdup( quick_format( "An %s", name );
+   }
 
    pre_loaded_spec->type = SPEC_ISROOM;
    pre_loaded_spec->value = 1;
@@ -256,13 +264,21 @@ ENTITY_FRAMEWORK *create_exit_framework( const char *name, int dir )
    return framework;
 }
 
-ENTITY_FRAMEWORK *create_mobile_framework( void )
+ENTITY_FRAMEWORK *create_mobile_framework( const char *name )
 {
    ENTITY_FRAMEWORK *framework;
    SPECIFICATION *pre_loaded_spec;
 
    framework = init_eFramework();
    pre_loaded_spec = init_specification();
+
+   if( name )
+   {
+      FREE( framework->name );
+      FREE( framework->short_descr );
+      framework->name = strdup( name );
+      framework->short_descr = strdup( quick_format( "An %s", name );
+   }
 
    pre_loaded_spec->type = SPEC_ISMOB;
    pre_loaded_spec->value = 1;

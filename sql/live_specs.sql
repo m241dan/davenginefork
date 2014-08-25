@@ -14,7 +14,12 @@ INSERT INTO `live_specs` VALUES ( 'IsExit', '0', 'f3' );
 INSERT INTO `live_specs` VALUES ( 'IsExit', '0', 'f4' );
 INSERT INTO `live_specs` VALUES ( 'IsExit', '0', 'f5' );
 
-
+INSERT INTO `live_specs` VALUES ( 'MirrorExit', '1', 'f0' );
+INSERT INTO `live_specs` VALUES ( 'MirrorExit', '0', 'f1' );
+INSERT INTO `live_specs` VALUES ( 'MirrorExit', '3', 'f2' );
+INSERT INTO `live_specs` VALUES ( 'MirrorExit', '2', 'f3' );
+INSERT INTO `live_specs` VALUES ( 'MirrorExit', '5', 'f4' );
+INSERT INTO `live_specs` VALUES ( 'MirrorExit', '4', 'f5' );
 
 
 

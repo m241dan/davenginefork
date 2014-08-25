@@ -55,9 +55,9 @@ ENTITY_INSTANCE *instance_list_has_by_short_prefix( LLIST *instance_list, const 
 
 ENTITY_INSTANCE *eInstantiate( ENTITY_FRAMEWORK *frame );
 
-ENTITY_INSTANCE *create_room_instance( void );
+ENTITY_INSTANCE *create_room_instance( const char *name );
 ENTITY_INSTANCE *create_exit_instance( const char *name, int dir );
-ENTITY_INSTANCE *create_mobile_instance( void );
+ENTITY_INSTANCE *create_mobile_instance( const char *name );
 
 
 const char *instance_name( ENTITY_INSTANCE *instance );

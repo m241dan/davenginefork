@@ -37,6 +37,6 @@ ENTITY_FRAMEWORK *framework_list_has_by_id( LLIST *frameworks, int id );
 ENTITY_FRAMEWORK *framework_list_has_by_name( LLIST *frameworks, const char *name );
 bool live_frame( ENTITY_FRAMEWORK *frame );
 
-ENTITY_FRAMEWORK *create_room_framework( void );
+ENTITY_FRAMEWORK *create_room_framework( const char *name );
 ENTITY_FRAMEWORK *create_exit_framework( const char *name, int dir );
-ENTITY_FRAMEWORK *create_mobile_framework( void );
+ENTITY_FRAMEWORK *create_mobile_framework( const char *name );

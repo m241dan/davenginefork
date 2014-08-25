@@ -366,12 +366,12 @@ ENTITY_INSTANCE *eInstantiate( ENTITY_FRAMEWORK *frame )
    return eInstance;
 }
 
-ENTITY_INSTANCE *create_room_instance( void )
+ENTITY_INSTANCE *create_room_instance( const char *name )
 {
    ENTITY_FRAMEWORK *frame;
    ENTITY_INSTANCE *instance;
 
-   frame = create_room_framework();
+   frame = create_room_framework( name );
    instance = eInstantiate( frame );
    new_eInstance( instance );
 
@@ -392,12 +392,12 @@ ENTITY_INSTANCE *create_exit_instance( const char *name, int dir )
 
 }
 
-ENTITY_INSTANCE *create_mobile_instance( void )
+ENTITY_INSTANCE *create_mobile_instance( const char *name  )
 {
    ENTITY_FRAMEWORK *frame;
    ENTITY_INSTANCE *instance;
 
-   frame = create_mobile_framework();
+   frame = create_mobile_framework( name );
    instance = eInstantiate( frame );
    new_eInstance( instance );
 
@@ -862,9 +862,24 @@ void entity_create( void *passed, char *arg )
 
    if( !strcasecmp( buf, "room" ) )
    {
-      frame = create_room_framework();
+      if( arg[0] != '\0' )
+         frame = create_room_framework( arg );
+      else
+         frame = create_room_framework( NULL );
+
       init_editor( olc, frame );
       change_socket_state( entity->socket, olc->editing_state );
+      return;
+   }
+   if( !strcasecmp( buf, "mob" ) || !strcasecmp( buf, "mobile" ) )
+   {
+      if( arg[0] != '\0' )
+         frame = create_mobile_framework( arg );
+      else
+         frame = create_mobile_framework( NULL );
+
+      init_editor( olc, frame );
+      change_socket_state( enttiy->socket, olc->editing_state );
       return;
    }
    if( !strcasecmp( buf, "exit" ) )
@@ -879,15 +894,13 @@ void entity_create( void *passed, char *arg )
       arg = one_arg( arg, buf );
       if( arg[0] == '\0' || !is_number( arg ) )
       {
-         frame = create_exit_framework( buf, 0 );
+         frame = create_exit_framework( quick_format( "%s%s", buf, arg ), 0 );
          init_editor( olc, frame );
          change_socket_state( entity->socket, olc->editing_state );
          return;
       }
       value = atoi( arg );
-
       
-
 
    }
    return;
