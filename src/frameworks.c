@@ -299,3 +299,49 @@ ENTITY_FRAMEWORK *create_mobile_framework( const char *name )
    return framework;
 
 }
+
+const char *chase_name( ENTITY_FRAMEWORK *frame ) /* chase the inheritance chain, if there is one */
+{
+   if( !strcmp( frame->name, "_inherited_" ) )
+   {
+      if( !frame->inherits )
+         return "inheritance error";
+      return chase_name( frame->inherits );
+   }
+   return frame->name;
+}
+
+const char *chase_short_descr( ENTITY_FRAMEWORK *frame )
+{
+   if( !strcmp( frame->short_descr, "_inherited_" ) )
+   {
+      if( !frame->inherits )
+         return "inheritance error";
+      return chase_short_descr( frame->inherits );
+   }
+   return frame->short_descr;
+}
+
+const char *chase_long_descr( ENTITY_FRAMEWORK *frame )
+{
+   if( !strcmp( frame->long_descr, "_inherited_" ) )
+   {
+      if( !frame->inherits )
+         return "inheritance error";
+      return chase_long_descr( frame->inherits );
+   }
+   return frame->long_descr;
+}
+
+
+const char *chase_description( ENTITY_FRAMEWORK *frame )
+{
+   if( !strcmp( frame->description, "_inherited_" ) )
+   {
+      if( !frame->inherits )
+         return "inheritance error";
+      return chase_long_descr( frame->inherits );
+   }
+   return frame->description;
+}
+

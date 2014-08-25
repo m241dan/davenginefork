@@ -43,3 +43,9 @@ bool live_frame( ENTITY_FRAMEWORK *frame );
 ENTITY_FRAMEWORK *create_room_framework( const char *name );
 ENTITY_FRAMEWORK *create_exit_framework( const char *name, int dir );
 ENTITY_FRAMEWORK *create_mobile_framework( const char *name );
+
+const char *chase_name( ENTITY_FRAMEWORK *frame );
+const char *chase_short_descr( ENTITY_FRAMEWORK *frame );
+const char *chase_long_descr( ENTITY_FRAMEWORK *frame );
+const char *chase_description( ENTITY_FRAMEWORK *frame );
+

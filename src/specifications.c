@@ -174,14 +174,17 @@ SPECIFICATION *has_spec( ENTITY_INSTANCE *entity, const char *spec_name )
    SPECIFICATION *spec;
 
    if( ( spec = spec_list_has_by_name( entity->specifications, spec_name ) ) == NULL )
-      spec = spec_list_has_by_name( entity->framework->specifications, spec_name );
-
+      spec = frame_has_spec( entity->framework, spec_name );
    return spec;
 }
 
 SPECIFICATION *frame_has_spec( ENTITY_FRAMEWORK *frame, const char *spec_name )
 {
-   return spec_list_has_by_name( frame->specifications, spec_name );
+   SPECIFICATION *spec;
+
+   if( ( spec = spec_list_has_by_name( frame->specifications, spec_name ) ) == NULL && frame->inherits )
+      spec = frame_has_spec( frame->inherits, spec_name );
+   return spec;
 }
 
 int get_spec_value( ENTITY_INSTANCE *entity, const char *spec_name )

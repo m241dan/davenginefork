@@ -61,13 +61,9 @@ ENTITY_INSTANCE *create_mobile_instance( const char *name );
 
 
 const char *instance_name( ENTITY_INSTANCE *instance );
-const char *chase_name( ENTITY_FRAMEWORK *frame );
 const char *instance_short_descr( ENTITY_INSTANCE *instance );
-const char *chase_short_descr( ENTITY_FRAMEWORK *frame );
 const char *instance_long_descr( ENTITY_INSTANCE *instance );
-const char *chase_long_descr( ENTITY_FRAMEWORK *frame );
 const char *instance_description( ENTITY_INSTANCE *instance );
-const char *chase_description( ENTITY_FRAMEWORK *frame );
 
 int text_to_entity( ENTITY_INSTANCE *entity, const char *fmt, ... );
 int builder_prompt( D_SOCKET *dsock );

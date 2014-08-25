@@ -60,15 +60,32 @@ int editor_eFramework_prompt( D_SOCKET *dsock )
       mud_printf( tempstring, "Potential Framework ID: %d", get_potential_id( frame->tag->type ) );
    else
       mud_printf( tempstring, "Framework ID: %d", frame->tag->id );
+
+   if( frame->inherits )
+      strcat( tempstring, quick_format( " | Inherits from %s ID: %d", chase_name( frame->inherits ), frame->inherits->tag->id ) );
+
    bprintf( buf, "/%s\\\r\n", print_header( tempstring, "-", space_after_pipes ) );
-   mud_printf( tempstring, " Name : %s", frame->name );
+
+   mud_printf( tempstring, " Name : %s", chase_name( frame ) );
+   if( !strcmp( frame->name, "_inherited_" ) )
+      strcat( tempstring, " ( inherited )" );
    bprintf( buf, "|%s|\r\n", fit_string_to_space( tempstring, space_after_pipes ) );
+
    mud_printf( tempstring, " Short: %s", frame->short_descr );
+   if( !strcmp( frame->short_descr, "_inherited_" ) )
+      strcat( tempstring, " ( inherited )" );
    bprintf( buf, "|%s|\r\n", fit_string_to_space( tempstring, space_after_pipes ) );
+
    mud_printf( tempstring, " Long : %s", frame->long_descr );
+   if( !strcmp( frame->long_descr, "_inherited_" ) )
+      strcat( tempstring, " ( inherited )" );
    bprintf( buf, "|%s|\r\n", fit_string_to_space( tempstring, space_after_pipes ) );
+
    mud_printf( tempstring, " Desc : %s", frame->description );
+   if( !strcmp( frame->description, "_inherited_" ) )
+      strcat( tempstring, " ( inherited )" );
    bprintf( buf, "|%s|\r\n", fit_string_to_space( tempstring, space_after_pipes ) );
+
    bprintf( buf, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
    bprintf( buf, "|%s|", print_header( "Specifications Here", " ", ( space_after_pipes - 1 ) / 2 ) );
    bprintf( buf, " %s|\r\n", print_header( "Stats Here", " ", ( space_after_pipes - 1 ) / 2 ) );
@@ -81,7 +98,7 @@ int editor_eFramework_prompt( D_SOCKET *dsock )
       AttachIterator( &IterSpec, frame->specifications );
       while( ( spec = (SPECIFICATION *)NextInList( &IterSpec ) ) != NULL )
       {
-         mud_printf( tempstring, " %s : %s", spec_table[spec->type], spec->value == 1 ? "True" : itos( spec->value ) );
+         mud_printf( tempstring, " %s : %s", spec_table[spec->type], itos( spec->value ) );
          bprintf( buf, "|%s|", fit_string_to_space( tempstring, ( space_after_pipes - 1 ) / 2 ) );
          bprintf( buf, " %s|\r\n", fit_string_to_space( " ", ( space_after_pipes - 1 ) / 2 ) );
       }
@@ -240,7 +257,7 @@ void eFramework_addSpec( void *passed, char *arg )
 
    if( !arg || arg[0] == '\0' )
    {
-     text_to_olc( olc, "Spec Value Defaulting to True(1).\r\n" );
+     text_to_olc( olc, "Spec Value Defaulting to 1.\r\n" );
      spec_value = 1;
    }
    else if( !is_number( arg ) )
@@ -259,8 +276,7 @@ void eFramework_addSpec( void *passed, char *arg )
    spec->type = spec_type;
    spec->value = spec_value;
    add_spec_to_framework( spec, frame );
-   text_to_olc( olc, "%s added to %s with the value of %s.\r\n", spec_table[spec_type], frame->name,
-                spec_value == 1 ? "True" : itos( spec->value ) );
+   text_to_olc( olc, "%s added to %s with the value of %s.\r\n", spec_table[spec_type], frame->name, itos( spec->value ) );
    return;
 
 }
