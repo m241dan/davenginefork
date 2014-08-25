@@ -193,6 +193,7 @@ int new_eInstance( ENTITY_INSTANCE *eInstance )
    }
    DetachIterator( &Iter );
 
+   AttachToList( eInstance, eInstances_list );
    return ret;
 }
 
@@ -363,6 +364,45 @@ ENTITY_INSTANCE *eInstantiate( ENTITY_FRAMEWORK *frame )
    eInstance = init_eInstance();
    eInstance->framework = frame;
    return eInstance;
+}
+
+ENTITY_INSTANCE *create_room_instance( void )
+{
+   ENTITY_FRAMEWORK *frame;
+   ENTITY_INSTANCE *instance;
+
+   frame = create_room_framework();
+   instance = eInstantiate( frame );
+   new_eInstance( instance );
+
+   return instance;
+
+}
+
+ENTITY_INSTANCE *create_exit_instance( const char *name, int dir )
+{
+   ENTITY_FRAMEWORK *frame;
+   ENTITY_INSTANCE *instance;
+
+   frame = create_exit_framework( name, 0 );
+   instance = eInstantiate( frame );
+   new_eInstance( instance );
+
+   return instance;
+
+}
+
+ENTITY_INSTANCE *create_mobile_instance( void )
+{
+   ENTITY_FRAMEWORK *frame;
+   ENTITY_INSTANCE *instance;
+
+   frame = create_mobile_framework();
+   instance = eInstantiate( frame );
+   new_eInstance( instance );
+
+   return instance;
+
 }
 
 const char *instance_name( ENTITY_INSTANCE *instance )
@@ -617,18 +657,6 @@ int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *exit )
    return ret;
 }
 
-int create_arg_to_num( const char *arg )
-{
-   if( !strcasecmp( arg, "mob" ) )
-      return SPEC_ISMOB;
-   if( !strcasecmp( arg, "room" ) )
-      return SPEC_ISROOM;
-   if( !strcasecmp( arg, "exit" ) )
-      return SPEC_ISEXIT;
-   return -1;
-}
-
-
 void entity_goto( void *passed, char *arg )
 {
    ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
@@ -695,7 +723,7 @@ void entity_instance( void *passed, char *arg )
          return;
    }
 
-   if( ( new_ent = eInstantiate( frame_to_instance ) ) == NULL )
+   if( ( new_ent = ueInstantiate( frame_to_instance ) ) == NULL )
    {
       text_to_entity( entity, "There's been a major problem, framework you are trying to instantiate from may not be live.\r\n" );
       return;
@@ -707,7 +735,6 @@ void entity_instance( void *passed, char *arg )
       return;
    }
 
-   AttachToList( new_ent, eInstances_list );
    entity_to_world( new_ent, entity );
    text_to_entity( entity, "You create a new instance of %s. It has been placed in your inventory.\r\n", instance_name( new_ent ) );
    return;
@@ -813,63 +840,55 @@ void entity_quit( void *passed, char *arg )
 
 void entity_create( void *passed, char *arg )
 {
+   ENTITY_FRAMEWORK *frame;
    ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
    INCEPTION *olc = (INCEPTION *)entity->account->olc;
-   SPECIFICATION *pre_loaded_spec;
    char buf[MAX_BUFFER];
-   int num;
+   int value;
 
    if( !arg || arg[0] == '\0' )
    {
       if( olc->editing)
       {
-         text_to_entity( entity, "There's alraedy something loaded in your editor, resume work on that first.\r\n" );
+         text_to_entity( entity, "There's already something loaded in your editor, resume work on that first.\r\n" );
          return;
       }
 
-      init_editor( olc );
+      init_editor( olc, NULL );
       change_socket_state( entity->socket, olc->editing_state );
       return;
    }
    arg = one_arg( arg, buf );
 
-   if( ( num = create_arg_to_num( buf ) ) != -1 )
+   if( !strcasecmp( buf, "room" ) )
    {
-      init_editor( olc );
-      pre_loaded_spec = init_specification();
-      switch( num )
-      {
-         default:
-            free_editor( olc );
-            text_to_entity( entity, "Create is not ready for this yet.\r\n" );
-            return;
-         case SPEC_ISMOB:
-            pre_loaded_spec->type = SPEC_ISMOB;
-            pre_loaded_spec->value = 1;
-            add_spec_to_framework( pre_loaded_spec, (ENTITY_FRAMEWORK *)olc->editing );
-
-            pre_loaded_spec = init_specification();
-            pre_loaded_spec->type = SPEC_CANMOVE;
-            pre_loaded_spec->value = 1;
-            add_spec_to_framework( pre_loaded_spec, (ENTITY_FRAMEWORK *)olc->editing );
-            break;
-         case SPEC_ISROOM:
-            pre_loaded_spec->type = SPEC_ISROOM;
-            pre_loaded_spec->value = 1;
-            add_spec_to_framework( pre_loaded_spec, (ENTITY_FRAMEWORK *)olc->editing );
-            break;
-         case SPEC_ISEXIT:
-            pre_loaded_spec->type = SPEC_ISEXIT;
-            pre_loaded_spec->value = 0;
-            add_spec_to_framework( pre_loaded_spec, (ENTITY_FRAMEWORK *)olc->editing );
-            break;
-      }
+      frame = create_room_framework();
+      init_editor( olc, frame );
       change_socket_state( entity->socket, olc->editing_state );
       return;
    }
-
-   if( !strcasecmp( buf, "mexit" ) )
+   if( !strcasecmp( buf, "exit" ) )
    {
+      if( arg[0] == '\0' )
+      {
+         frame = create_exit_framework( NULL, 0 );
+         init_editor( olc, frame );
+         change_socket_state( entity->socket, olc->editing_state );
+         return;
+      }
+      arg = one_arg( arg, buf );
+      if( arg[0] == '\0' || !is_number( arg ) )
+      {
+         frame = create_exit_framework( buf, 0 );
+         init_editor( olc, frame );
+         change_socket_state( entity->socket, olc->editing_state );
+         return;
+      }
+      value = atoi( arg );
+
+      
+
+
    }
    return;
 }

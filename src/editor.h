@@ -1,6 +1,6 @@
 /* editor.h written by Davenge */
 
-int init_editor( INCEPTION *olc );
+int init_editor( INCEPTION *olc, ENTITY_FRAMEWORK *frame );
 int free_editor( INCEPTION *olc );
 
 int editor_eFramework_prompt( D_SOCKET *dsock );

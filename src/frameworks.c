@@ -150,6 +150,7 @@ int new_eFramework( ENTITY_FRAMEWORK *frame )
    }
    DetachIterator( &Iter );
 
+   AttachToList( frame, active_frameworks );
    return ret;
 }
 
@@ -213,4 +214,66 @@ bool live_frame( ENTITY_FRAMEWORK *frame )
       return FALSE;
 
    return TRUE;
+}
+
+ENTITY_FRAMEWORK *create_room_framework( void )
+{
+   ENTITY_FRAMEWORK *framework;
+   SPECIFICATION *pre_loaded_spec;
+
+   framework = init_eFramework();
+   pre_loaded_spec = init_specification();
+
+   pre_loaded_spec->type = SPEC_ISROOM;
+   pre_loaded_spec->value = 1;
+   add_spec_to_framework( pre_loaded_spec, framework );
+
+   new_eFramework( framework );
+   return framework;
+}
+
+ENTITY_FRAMEWORK *create_exit_framework( const char *name, int dir )
+{
+   ENTITY_FRAMEWORK *framework;
+   SPECIFICATION *pre_loaded_spec;
+
+   framework = init_eFramework();
+   pre_loaded_spec = init_specification();
+
+   if( name )
+   {
+      FREE( framework->name );
+      FREE( framework->short_descr );
+      framework->name = strdup( name );
+      framework->short_descr = strdup( name );
+   }
+
+   pre_loaded_spec->type = SPEC_ISEXIT;
+   pre_loaded_spec->value = dir;
+   add_spec_to_framework( pre_loaded_spec, framework );
+
+   new_eFramework( framework );
+   return framework;
+}
+
+ENTITY_FRAMEWORK *create_mobile_framework( void )
+{
+   ENTITY_FRAMEWORK *framework;
+   SPECIFICATION *pre_loaded_spec;
+
+   framework = init_eFramework();
+   pre_loaded_spec = init_specification();
+
+   pre_loaded_spec->type = SPEC_ISMOB;
+   pre_loaded_spec->value = 1;
+   add_spec_to_framework( pre_loaded_spec, framework );
+
+   pre_loaded_spec = init_specification();
+   pre_loaded_spec->type = SPEC_CANMOVE;
+   pre_loaded_spec->value = 1;
+   add_spec_to_framework( pre_loaded_spec, framework );
+
+   new_eFramework( framework );
+   return framework;
+
 }

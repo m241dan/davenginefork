@@ -2,14 +2,20 @@
 
 #include "mud.h"
 
-int init_editor( INCEPTION *olc )
+int init_editor( INCEPTION *olc, ENTITY_FRAMEWORK *frame )
 {
    int ret = RET_SUCCESS;
 
-   CREATE( olc->editing, ENTITY_FRAMEWORK, 1 );
-   olc->editing = init_eFramework();
+   if( !frame )
+   {
+      CREATE( olc->editing, ENTITY_FRAMEWORK, 1 );
+      olc->editing = init_eFramework();
+   }
+   else
+      olc->editing = frame;
+
    olc->editing_state = STATE_EFRAME_EDITOR;
-   text_to_olc( olc, "Creating a new entity framework.\r\n" );
+   text_to_olc( olc, "Opening the Framework Editor...\r\n" );
    olc->editor_commands = AllocList();
 
    return ret;
@@ -268,7 +274,6 @@ void eFramework_done( void *passed, char *arg )
    {
       new_tag( frame->tag, olc->account->name );
       new_eFramework( frame );
-      AttachToList( frame, active_frameworks );
       if( olc->using_workspace )
          add_frame_to_workspace( frame, olc->using_workspace );
    }

@@ -55,6 +55,10 @@ ENTITY_INSTANCE *instance_list_has_by_short_prefix( LLIST *instance_list, const 
 
 ENTITY_INSTANCE *eInstantiate( ENTITY_FRAMEWORK *frame );
 
+ENTITY_INSTANCE *create_room_instance( void );
+ENTITY_INSTANCE *create_exit_instance( const char *name, int dir );
+ENTITY_INSTANCE *create_mobile_instance( void );
+
 
 const char *instance_name( ENTITY_INSTANCE *instance );
 const char *instance_short_descr( ENTITY_INSTANCE *instance );
@@ -70,7 +74,6 @@ int show_ent_mobiles_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing )
 int show_ent_objects_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing );
 int show_ent_rooms_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing );
 int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *move_to );
-int create_arg_to_num( const char *arg );
 
 void entity_goto( void *passed, char *arg );
 void entity_instance( void *passed, char *arg );

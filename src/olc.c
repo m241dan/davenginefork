@@ -860,7 +860,7 @@ void framework_create( void *passed, char *arg )
       change_socket_state( olc->account->socket, olc->editing_state );
       return;
    }
-   init_editor( olc );
+   init_editor( olc, NULL );
    change_socket_state( olc->account->socket, olc->editing_state );
    return;
 }
