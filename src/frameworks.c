@@ -33,6 +33,8 @@ int clear_eFramework( ENTITY_FRAMEWORK *frame )
    FREE( frame->description );
    frame->description = strdup( "none" );
 
+   frame->inherits = NULL;
+
    return ret;
 }
 
@@ -47,6 +49,8 @@ int free_eFramework( ENTITY_FRAMEWORK *frame )
    frame->contents = NULL;
    FreeList( frame->specifications );
    frame->specifications = NULL;
+
+   frame->inherits = NULL;
 
    FREE( frame->name );
    FREE( frame->short_descr );
@@ -136,10 +140,11 @@ int new_eFramework( ENTITY_FRAMEWORK *frame )
       }
    }
 
-   if( !quick_query( "INSERT INTO entity_frameworks VALUES( %d, %d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s' );",
+   if( !quick_query( "INSERT INTO entity_frameworks VALUES( %d, %d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d' );",
          frame->tag->id, frame->tag->type, frame->tag->created_by,
          frame->tag->created_on, frame->tag->modified_by, frame->tag->modified_on,
-         frame->name, frame->short_descr, frame->long_descr, frame->description ) )
+         frame->name, frame->short_descr, frame->long_descr, frame->description,
+         frame->inherits->tag->id ) )
       return RET_FAILED_OTHER;
 
    AttachIterator( &Iter, frame->specifications );
@@ -163,6 +168,7 @@ void db_load_eFramework( ENTITY_FRAMEWORK *frame, MYSQL_ROW *row )
    frame->short_descr = strdup( (*row)[counter++] );
    frame->long_descr = strdup( (*row)[counter++] );
    frame->description = strdup( (*row)[counter++] );
+   frame->inherits = get_framework_by_id( atoi( (*row)[counter++] ) );
    return;
 }
 

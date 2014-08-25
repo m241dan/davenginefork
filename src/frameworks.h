@@ -10,6 +10,9 @@ struct entity_framework
 
    LLIST *contents;
    LLIST *specifications;
+
+   ENTITY_FRAMEWORK *inherits;
+
 };
 
 /* creation */

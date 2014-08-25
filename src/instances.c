@@ -415,19 +415,66 @@ ENTITY_INSTANCE *create_mobile_instance( const char *name  )
 
 const char *instance_name( ENTITY_INSTANCE *instance )
 {
-   return instance->framework->name;
+   return instance->framework ? chase_name( instance->framework ) : "null";
 }
+
+const char *chase_name( ENTITY_FRAMEWORK *frame ) /* chase the inheritance chain, if there is one */
+{
+   if( !strcmp( frame->name, "_inherited_" ) )
+   {
+      if( !frame->inherits )
+         return "inheritance error";
+      return chase_name( frame->inherits );
+   }
+   return frame->name;
+}
+
 const char *instance_short_descr( ENTITY_INSTANCE *instance )
 {
-   return instance->framework->short_descr;
+   return instance->framework ? chase_short_descr( instance->framework ) : "null";
 }
+
+const char *chase_short_descr( ENTITY_FRAMEWORK *frame )
+{
+   if( !strcmp( frame->short_descr, "_inherited_" ) )
+   {
+      if( !frame->inherits )
+         return "inheritance error";
+      return chase_short_descr( frame->inherits );
+   }
+   return frame->short_descr;
+}
+
 const char *instance_long_descr( ENTITY_INSTANCE *instance )
 {
-   return instance->framework->long_descr;
+   return instance->framework ? chase_long_descr( instance->framework ) : "null";
 }
+
+const char *chase_long_descr( ENTITY_FRAMEWORK *frame )
+{
+   if( !strcmp( frame->long_descr, "_inherited_" ) )
+   {
+      if( !frame->inherits )
+         return "inheritance error";
+      return chase_long_descr( frame->inherits );
+   }
+   return frame->long_descr;
+}
+
 const char *instance_description( ENTITY_INSTANCE *instance )
 {
-   return instance->framework->description;
+   return instance->framework ? chase_description( instance->framework ) : "null";
+}
+
+const char *chase_description( ENTITY_FRAMEWORK *frame )
+{
+   if( !strcmp( frame->description, "_inherited_" ) )
+   {
+      if( !frame->inherits )
+         return "inheritance error";
+      return chase_long_descr( frame->inherits );
+   }
+   return frame->description;
 }
 
 int text_to_entity( ENTITY_INSTANCE *entity, const char *fmt, ... )
