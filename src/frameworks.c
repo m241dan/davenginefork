@@ -229,7 +229,7 @@ ENTITY_FRAMEWORK *create_room_framework( const char *name )
       FREE( framework->name );
       FREE( framework->short_descr );
       framework->name = strdup( name );
-      framework->short_descr = strdup( quick_format( "An %s", name );
+      framework->short_descr = strdup( quick_format( "A %s", name ) );
    }
 
    pre_loaded_spec->type = SPEC_ISROOM;
@@ -277,7 +277,7 @@ ENTITY_FRAMEWORK *create_mobile_framework( const char *name )
       FREE( framework->name );
       FREE( framework->short_descr );
       framework->name = strdup( name );
-      framework->short_descr = strdup( quick_format( "An %s", name );
+      framework->short_descr = strdup( quick_format( "A %s", name ) );
    }
 
    pre_loaded_spec->type = SPEC_ISMOB;

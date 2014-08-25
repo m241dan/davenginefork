@@ -16,6 +16,7 @@ int specification_clear_list( LLIST *spec_list );
 
 int new_specification( SPECIFICATION *spec );
 int add_spec_to_framework( SPECIFICATION *spec, ENTITY_FRAMEWORK *frame );
+int add_spec_to_instance( SPECIFICATION *spec, ENTITY_INSTANCE *instance );
 int load_specifications_to_list( LLIST *spec_list, const char *owner );
 int db_load_spec( SPECIFICATION *spec, MYSQL_ROW *row );
 

@@ -383,13 +383,21 @@ ENTITY_INSTANCE *create_exit_instance( const char *name, int dir )
 {
    ENTITY_FRAMEWORK *frame;
    ENTITY_INSTANCE *instance;
+   SPECIFICATION *spec;
 
    frame = create_exit_framework( name, 0 );
    instance = eInstantiate( frame );
+
+   if( dir > 0 )
+   {
+      spec = init_specification();
+      spec->type = SPEC_ISEXIT;
+      spec->value = dir;
+      add_spec_to_instance( spec, instance );
+   }
    new_eInstance( instance );
 
    return instance;
-
 }
 
 ENTITY_INSTANCE *create_mobile_instance( const char *name  )
@@ -723,7 +731,7 @@ void entity_instance( void *passed, char *arg )
          return;
    }
 
-   if( ( new_ent = ueInstantiate( frame_to_instance ) ) == NULL )
+   if( ( new_ent = eInstantiate( frame_to_instance ) ) == NULL )
    {
       text_to_entity( entity, "There's been a major problem, framework you are trying to instantiate from may not be live.\r\n" );
       return;
@@ -841,6 +849,7 @@ void entity_quit( void *passed, char *arg )
 void entity_create( void *passed, char *arg )
 {
    ENTITY_FRAMEWORK *frame;
+   ENTITY_INSTANCE *instance;
    ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
    INCEPTION *olc = (INCEPTION *)entity->account->olc;
    char buf[MAX_BUFFER];
@@ -879,7 +888,7 @@ void entity_create( void *passed, char *arg )
          frame = create_mobile_framework( NULL );
 
       init_editor( olc, frame );
-      change_socket_state( enttiy->socket, olc->editing_state );
+      change_socket_state( entity->socket, olc->editing_state );
       return;
    }
    if( !strcasecmp( buf, "exit" ) )
@@ -899,9 +908,13 @@ void entity_create( void *passed, char *arg )
          change_socket_state( entity->socket, olc->editing_state );
          return;
       }
-      value = atoi( arg );
-      
 
+      value = atoi( arg );
+      instance = create_exit_instance( buf, value );
+      entity_to_world( instance, entity->contained_by );
+      text_to_entity( entity, "You create a new exit: %s.\r\n", instance_name( instance ) );
+      entity_look( entity, "" );
+      return;
    }
    return;
 }

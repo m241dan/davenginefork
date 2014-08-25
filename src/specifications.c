@@ -87,6 +87,12 @@ int add_spec_to_framework( SPECIFICATION *spec, ENTITY_FRAMEWORK *frame )
    return RET_SUCCESS;
 }
 
+int add_spec_to_instance( SPECIFICATION *spec, ENTITY_INSTANCE *instance )
+{
+   AttachToList( spec, instance->specifications );
+   return RET_SUCCESS;
+}
+
 int load_specifications_to_list( LLIST *spec_list, const char *owner )
 {
    SPECIFICATION *spec;
