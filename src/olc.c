@@ -869,47 +869,46 @@ void framework_edit( void *passed, char *arg )
 {
    INCEPTION *olc = (INCEPTION *)passed;
    ENTITY_FRAMEWORK *to_edit;
-   ENTITY_INSTANCE *to_edit_i;
 
    if( olc->editing && ( arg && arg[0] != '\0' ) )
    {
       text_to_olc( olc, "You alraedy have something loaded in your editor, type editor with no arguments to load it and complete it.\r\n" );
-      change_socket_state( olc->account->socket, olc->editing_state );
       return;
    }
 
-   if( !interpret_entity_selection( arg ) )
-   {
-      text_to_olc( olc, "There is a problem with the input selection pointer, please contact the nearest Admin or try again in a few seconds.\r\n" );
-      olc_short_prompt( olc );
+   if( ( to_edit = olc_edit_selection( olc, arg ) ) == NULL ) /* handles its own messaging */
       return;
-   }
 
-   switch( input_selection_typing )
-   {
-      default:
-         text_to_olc( olc, "There's been a major problem. Contact your nearest admin.\r\n" );
-         olc_short_prompt( olc );
-         return;
-      case SEL_FRAME:
-         to_edit = (ENTITY_FRAMEWORK *)retrieve_entity_selection();
-         break;
-      case SEL_INSTANCE:
-         to_edit_i = (ENTITY_INSTANCE *)retrieve_entity_selection();
-         to_edit = to_edit_i->framework;
-         break;;
-      case SEL_STRING:
-         text_to_olc( olc, (char *)retrieve_entity_selection() );
-         return;
-   }
-   if( !to_edit )
-   {
-      text_to_olc( olc, "There's been an error.\r\n" );
-      return;
-   }
    init_editor( olc, to_edit );
    text_to_olc( olc, "Editing Frame...\r\n" );
    change_socket_state( olc->account->socket, olc->editing_state );
+   return;
+}
+
+void framework_iedit( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_FRAMEWORK *to_edit;
+   ENTITY_FRAMEWORK *inherited_to_edit;
+
+   if( olc->editing && ( arg && arg[0] != '\0' ) )
+   {
+      text_to_olc( olc, "You alrady have something loaded in your editor, type editor with no arguments to load it and complete it.\r\n" );
+      return;
+   }
+
+   if( ( to_edit = olc_edit_selection( olc, arg ) ) == NULL ) /* handles its own messaging */
+      return;
+
+   if( ( inherited_to_edit = create_inherited_framework( to_edit ) ) == NULL ) /* does its own setting and databasing */
+   {
+      text_to_olc( olc, "Something has gone wrong tryin gto create an inherited frame.\r\n" );
+      return;
+   }
+
+   init_editor( olc, inherited_to_edit );
+   change_socket_state( olc->account->socket, olc->editing_state );
+   text_to_olc( olc, "You begin to edit %s.\r\n", chase_name( inherited_to_edit ) );
    return;
 }
 

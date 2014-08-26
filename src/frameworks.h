@@ -46,6 +46,7 @@ ENTITY_FRAMEWORK *create_exit_framework( const char *name, int dir );
 ENTITY_FRAMEWORK *create_mobile_framework( const char *name );
 ENTITY_FRAMEWORK *create_inherited_framework( ENTITY_FRAMEWORK *inherit_from );
 ENTITY_FRAMEWORK *entity_edit_selection( ENTITY_INSTANCE *entity, const char *arg );
+ENTITY_FRAMEWORK *olc_edit_selection( INCEPTION *olc, const char *arg );
 
 const char *chase_name( ENTITY_FRAMEWORK *frame );
 const char *chase_short_descr( ENTITY_FRAMEWORK *frame );

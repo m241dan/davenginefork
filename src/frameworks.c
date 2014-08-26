@@ -371,6 +371,42 @@ ENTITY_FRAMEWORK *entity_edit_selection( ENTITY_INSTANCE *entity, const char *ar
          to_edit = to_edit_i->framework;
          break;
    }
+   if( !to_edit )
+      text_to_entity( entity, "There's been a problem.\r\n" );
+   return to_edit;
+}
+
+ENTITY_FRAMEWORK *olc_edit_selection( INCEPTION *olc, const char *arg )
+{
+   ENTITY_FRAMEWORK *to_edit;
+   ENTITY_INSTANCE *to_edit_i;
+
+   if( !interpret_entity_selection( arg ) )
+   {
+      text_to_olc( olc, "There is a problem with the input selection pointer, please contact the nearest Admin or try again in a few seconds.\r\n" );
+      olc_short_prompt( olc );
+      return NULL;
+   }
+
+   switch( input_selection_typing )
+   {
+      default:
+         text_to_olc( olc, "There's been a major problem. Contact your nearest admin.\r\n" );
+         olc_short_prompt( olc );
+         return NULL;
+      case SEL_FRAME:
+         to_edit = (ENTITY_FRAMEWORK *)retrieve_entity_selection();
+         break;
+      case SEL_INSTANCE:
+         to_edit_i = (ENTITY_INSTANCE *)retrieve_entity_selection();
+         to_edit = to_edit_i->framework;
+         break;
+      case SEL_STRING:
+         text_to_olc( olc, (char *)retrieve_entity_selection() );
+         return NULL;
+   }
+   if( !to_edit )
+      text_to_olc( olc, "There's been an error.\r\n" );
    return to_edit;
 }
 
