@@ -326,7 +326,52 @@ ENTITY_FRAMEWORK *create_inherited_framework( ENTITY_FRAMEWORK *inherit_from )
    new_eFramework( frame );
 
    return frame;
+}
 
+ENTITY_FRAMEWORK *entity_edit_selection( ENTITY_INSTANCE *entity, const char *arg )
+{
+   ENTITY_FRAMEWORK *to_edit;
+   ENTITY_INSTANCE *to_edit_i;
+
+   if( !interpret_entity_selection( arg ) )
+   {
+      text_to_entity( entity, "There is a problem with the input selection pointer, please contac the nearest Admin or try again in a few seconds.\r\n" );
+      return NULL;
+   }
+
+   switch( input_selection_typing )
+   {
+      default:
+         clear_entity_selection();
+
+         /* ugly... brain no worky well right now */
+         if( ( !arg || arg[0] == '\0' ) && !entity->contained_by )
+         {
+            text_to_entity( entity, "You are not being contained, therefor cannot use edit with no argument.\r\n" );
+            return NULL;
+         }
+         else if( ( !arg || arg[0] == '\0' ) && entity->contained_by )
+         {
+            to_edit = entity->contained_by->framework;
+            break;
+         }
+
+         if( ( to_edit_i = instance_list_has_by_name( entity->contained_by->contents, arg ) ) == NULL )
+         {
+            text_to_entity( entity, "There is no %s here.\r\n", arg );
+            break;
+         }
+         to_edit = to_edit_i->framework;
+         break;
+      case SEL_FRAME:
+         to_edit = (ENTITY_FRAMEWORK *)retrieve_entity_selection();
+         break;
+      case SEL_INSTANCE:
+         to_edit_i = (ENTITY_INSTANCE *)retrieve_entity_selection();
+         to_edit = to_edit_i->framework;
+         break;
+   }
+   return to_edit;
 }
 
 const char *chase_name( ENTITY_FRAMEWORK *frame ) /* chase the inheritance chain, if there is one */
