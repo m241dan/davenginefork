@@ -18,6 +18,7 @@ struct entity_framework
 /* creation */
 ENTITY_FRAMEWORK *init_eFramework( void );
 int clear_eFramework( ENTITY_FRAMEWORK *frame );
+int set_to_inherited( ENTITY_FRAMEWORK *frame );
 
 /* deletion */
 int free_eFramework( ENTITY_FRAMEWORK *frame );
@@ -43,6 +44,7 @@ bool live_frame( ENTITY_FRAMEWORK *frame );
 ENTITY_FRAMEWORK *create_room_framework( const char *name );
 ENTITY_FRAMEWORK *create_exit_framework( const char *name, int dir );
 ENTITY_FRAMEWORK *create_mobile_framework( const char *name );
+ENTITY_FRAMEWORK *create_inherited_framework( ENTITY_FRAMEWORK *inherit_from );
 
 const char *chase_name( ENTITY_FRAMEWORK *frame );
 const char *chase_short_descr( ENTITY_FRAMEWORK *frame );

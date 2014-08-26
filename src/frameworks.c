@@ -38,6 +38,22 @@ int clear_eFramework( ENTITY_FRAMEWORK *frame )
    return ret;
 }
 
+int set_to_inherited( ENTITY_FRAMEWORK *frame )
+{
+   int ret = RET_SUCCESS;
+
+   FREE( frame->name );
+   frame->name = strdup( "_inherited_" );
+   FREE( frame->short_descr );
+   frame->short_descr = strdup( "_inherited_" );
+   FREE( frame->long_descr );
+   frame->long_descr = strdup( "_inherited_" );
+   FREE( frame->description );
+   frame->description = strdup( "_inherited_" );
+
+   return ret;
+}
+
 int free_eFramework( ENTITY_FRAMEWORK *frame )
 {
    int ret = RET_SUCCESS;
@@ -297,6 +313,19 @@ ENTITY_FRAMEWORK *create_mobile_framework( const char *name )
 
    new_eFramework( framework );
    return framework;
+
+}
+
+ENTITY_FRAMEWORK *create_inherited_framework( ENTITY_FRAMEWORK *inherit_from )
+{
+   ENTITY_FRAMEWORK *frame;
+
+   frame = init_eFramework();
+   set_to_inherited( frame );
+   frame->inherits = inherit_from;
+   new_eFramework( frame );
+
+   return frame;
 
 }
 
