@@ -868,6 +868,8 @@ void framework_create( void *passed, char *arg )
 void framework_edit( void *passed, char *arg )
 {
    INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_FRAMEWORK *to_edit;
+   ENTITY_INSTANCE *to_edit_i;
 
    if( olc->editing && ( arg && arg[0] != '\0' ) )
    {
@@ -888,21 +890,26 @@ void framework_edit( void *passed, char *arg )
       default:
          text_to_olc( olc, "There's been a major problem. Contact your nearest admin.\r\n" );
          olc_short_prompt( olc );
-         break;
+         return;
       case SEL_FRAME:
-         olc->editing = retrieve_entity_selection();
-         olc->editing_state = STATE_EFRAME_EDITOR;
-         text_to_olc( olc, "Editing Frame...\r\n" );
-         olc->editor_commands = AllocList();
-         change_socket_state( olc->account->socket, olc->editing_state );
+         to_edit = (ENTITY_FRAMEWORK *)retrieve_entity_selection();
          break;
       case SEL_INSTANCE:
-         text_to_olc( olc, "Not doing instances yet...\r\n" );
+         to_edit_i = (ENTITY_INSTANCE *)retrieve_entity_selection();
+         to_edit = to_edit_i->framework;
          break;;
       case SEL_STRING:
          text_to_olc( olc, (char *)retrieve_entity_selection() );
-         break;
+         return;
    }
+   if( !to_edit )
+   {
+      text_to_olc( olc, "There's been an error.\r\n" );
+      return;
+   }
+   init_editor( olc, to_edit );
+   text_to_olc( olc, "Editing Frame...\r\n" );
+   change_socket_state( olc->account->socket, olc->editing_state );
    return;
 }
 

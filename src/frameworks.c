@@ -144,7 +144,7 @@ int new_eFramework( ENTITY_FRAMEWORK *frame )
          frame->tag->id, frame->tag->type, frame->tag->created_by,
          frame->tag->created_on, frame->tag->modified_by, frame->tag->modified_on,
          frame->name, frame->short_descr, frame->long_descr, frame->description,
-         frame->inherits->tag->id ) )
+         ( frame->inherits ? frame->inherits->tag->id : -1 ) ) )
       return RET_FAILED_OTHER;
 
    AttachIterator( &Iter, frame->specifications );

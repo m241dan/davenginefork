@@ -235,7 +235,7 @@ void entity_to_world( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container )
 
    entity_to_contents( entity, container );
 
-   if( container->builder ) /* don't save for now if the person who is holding it is a builder */
+   if( container && container->builder ) /* don't save for now if the person who is holding it is a builder */
       return;
 
    if( !quick_query( "UPDATE `entity_instances` SET containedBy='%d' WHERE entityInstanceId=%d;", entity->contained_by_id, entity->tag->id ) )
@@ -248,7 +248,7 @@ void entity_to_contents( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container )
    if( !container )
    {
       entity->contained_by = NULL;
-      entity->contained_by_id = 0;
+      entity->contained_by_id = -1;
       return;
    }
    attach_entity_to_contents( entity, container );
@@ -268,7 +268,7 @@ void detach_entity_from_contents( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *cont
    DetachFromList( entity, container->contents );
    entity_from_contents_quick_sort( entity, container );
    entity->contained_by = NULL;
-   entity->contained_by_id = 0;
+   entity->contained_by_id = -1;
 }
 
 void entity_to_contents_quick_sort( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container )
@@ -919,5 +919,78 @@ void entity_create( void *passed, char *arg )
       entity_look( entity, "" );
       return;
    }
+   return;
+}
+
+void entity_edit( void *passed, char *arg )
+{
+   ENTITY_INSTANCE *instance = (ENTITY_INSTANCE *)passed;
+   ENTITY_INSTANCE *to_edit_i;
+   ENTITY_FRAMEWORK *to_edit;
+   INCEPTION *olc;
+
+   if( !instance->socket->account )
+   {
+      text_to_entity( instance, "You somehow have no account, run away now!\r\n" );
+      return;
+   }
+   /* holy-ugly but my brain is not working right atm */
+   if( !instance->socket->account->olc )
+   {
+      instance->socket->account->olc = init_olc();
+      instance->socket->account->olc->account = instance->socket->account;
+   }
+   olc = instance->socket->account->olc;
+
+   if( olc->editing )
+   {
+      text_to_entity( instance, "You already have something in your editor, resume to resolve that first.\r\n" );
+      return;
+   }
+
+   if( !interpret_entity_selection( arg ) )
+   {
+      text_to_entity( instance, "There is a problem with the input selection pointer, please contac the nearest Admin or try again in a few seconds.\r\n" );
+      return;
+   }
+
+   switch( input_selection_typing )
+   {
+      default:
+         clear_entity_selection();
+         if( ( !arg || arg[0] == '\0' ) && !instance->contained_by )
+         {
+            text_to_entity( instance, "You are not being contained, therefor cannot use edit with no argument.\r\n" );
+            return;
+         }
+         else
+         {
+            to_edit = instance->contained_by->framework;
+            break;
+         }
+
+         if( ( to_edit_i = instance_list_has_by_name( instance->contained_by->contents, arg ) ) == NULL )
+         {
+            text_to_entity( instance, "There is no %s here.\r\n", arg );
+            break;
+         }
+         to_edit = to_edit_i->framework;
+         break;
+      case SEL_FRAME:
+         to_edit = (ENTITY_FRAMEWORK *)retrieve_entity_selection();
+         break;
+      case SEL_INSTANCE:
+         to_edit_i = (ENTITY_INSTANCE *)retrieve_entity_selection();
+         to_edit = to_edit_i->framework;
+         break;
+   }
+   if( !to_edit )
+   {
+      text_to_entity( instance, "There's been an error.\r\n" );
+      return;
+   }
+   init_editor( olc, to_edit );
+   change_socket_state( instance->socket, olc->editing_state );
+   text_to_entity( instance, "You begin to edit %s.\r\n", chase_name( to_edit ) );
    return;
 }
