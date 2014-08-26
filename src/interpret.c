@@ -129,6 +129,7 @@ struct typCmd create_eFramework_commands[] = {
 };
 
 struct typCmd builder_commands[] = {
+   { "iedit", entity_iedit, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
    { "edit", entity_edit, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
    { "create", entity_create, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
    { "quit", entity_quit, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
@@ -227,7 +228,7 @@ int entity_handle_cmd( ENTITY_INSTANCE *entity, char *arg )
 
    if( ( com = find_loaded_command( entity->commands, command ) ) != NULL )
       execute_command( entity->socket->account, com, entity, arg );
-   else if( ( exit = instance_list_has_by_short_prefix( entity->contained_by->contents_sorted[SPEC_ISEXIT], command ) ) != NULL )
+   else if( entity->contained_by && ( exit = instance_list_has_by_short_prefix( entity->contained_by->contents_sorted[SPEC_ISEXIT], command ) ) != NULL )
       move_entity( entity, exit );
    else
       text_to_entity( entity, "No such command or exit.\r\n" );

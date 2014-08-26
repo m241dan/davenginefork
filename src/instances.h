@@ -84,3 +84,4 @@ void entity_get( void *passed, char *arg );
 void entity_quit( void *passed, char *arg );
 void entity_create( void *passed, char *arg );
 void entity_edit( void *passed, char *arg );
+void entity_iedit( void *passed, char *arg );

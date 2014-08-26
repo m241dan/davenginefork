@@ -71,17 +71,17 @@ int editor_eFramework_prompt( D_SOCKET *dsock )
       strcat( tempstring, " ( inherited )" );
    bprintf( buf, "|%s|\r\n", fit_string_to_space( tempstring, space_after_pipes ) );
 
-   mud_printf( tempstring, " Short: %s", frame->short_descr );
+   mud_printf( tempstring, " Short: %s", chase_short_descr( frame ) );
    if( !strcmp( frame->short_descr, "_inherited_" ) )
       strcat( tempstring, " ( inherited )" );
    bprintf( buf, "|%s|\r\n", fit_string_to_space( tempstring, space_after_pipes ) );
 
-   mud_printf( tempstring, " Long : %s", frame->long_descr );
+   mud_printf( tempstring, " Long : %s", chase_long_descr( frame ) );
    if( !strcmp( frame->long_descr, "_inherited_" ) )
       strcat( tempstring, " ( inherited )" );
    bprintf( buf, "|%s|\r\n", fit_string_to_space( tempstring, space_after_pipes ) );
 
-   mud_printf( tempstring, " Desc : %s", frame->description );
+   mud_printf( tempstring, " Desc : %s", chase_description( frame ) );
    if( !strcmp( frame->description, "_inherited_" ) )
       strcat( tempstring, " ( inherited )" );
    bprintf( buf, "|%s|\r\n", fit_string_to_space( tempstring, space_after_pipes ) );

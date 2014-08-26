@@ -924,34 +924,68 @@ void entity_create( void *passed, char *arg )
 
 void entity_edit( void *passed, char *arg )
 {
-   ENTITY_INSTANCE *instance = (ENTITY_INSTANCE *)passed;
+   ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
    ENTITY_FRAMEWORK *to_edit;
    INCEPTION *olc;
 
-   if( !instance->socket->account )
+   if( !entity->socket->account )
    {
-      text_to_entity( instance, "You somehow have no account, run away now!\r\n" );
+      text_to_entity( entity, "You somehow have no account, run away now!\r\n" );
       return;
    }
    /* holy-ugly but my brain is not working right atm */
-   if( !instance->socket->account->olc )
+   if( !entity->socket->account->olc )
    {
-      instance->socket->account->olc = init_olc();
-      instance->socket->account->olc->account = instance->socket->account;
+      entity->socket->account->olc = init_olc();
+      entity->socket->account->olc->account = entity->socket->account;
    }
-   olc = instance->socket->account->olc;
+   olc = entity->socket->account->olc;
 
    if( olc->editing )
    {
-      text_to_entity( instance, "You already have something in your editor, resume to resolve that first.\r\n" );
+      text_to_entity( entity, "You already have something in your editor, resume to resolve that first.\r\n" );
       return;
    }
 
-   if( ( to_edit = entity_edit_selection( instance, arg ) ) == NULL )
+   if( ( to_edit = entity_edit_selection( entity, arg ) ) == NULL )
       return;
 
    init_editor( olc, to_edit );
-   change_socket_state( instance->socket, olc->editing_state );
-   text_to_entity( instance, "You begin to edit %s.\r\n", chase_name( to_edit ) );
+   change_socket_state( entity->socket, olc->editing_state );
+   text_to_entity( entity, "You begin to edit %s.\r\n", chase_name( to_edit ) );
+   return;
+}
+
+void entity_iedit( void *passed, char *arg ) /* inheritance edit, not instance edit */
+{
+   ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
+   ENTITY_FRAMEWORK *to_edit;
+   ENTITY_FRAMEWORK *inherited_to_edit;
+   INCEPTION *olc;
+
+   if( ( olc = entity->socket->account->olc ) == NULL )
+   {
+      text_to_entity( entity, "You don't have an olc initiated...\r\n" );
+      return;
+   }
+
+   if( olc->editing )
+   {
+      text_to_entity( entity, "You already have something in your editor, resume to resolve that first.\r\n" );
+      return;
+   }
+
+   if( ( to_edit = entity_edit_selection( entity, arg ) ) == NULL ) /* entity_edit_selection handles its own messaging */
+      return;
+
+   if( ( inherited_to_edit = create_inherited_framework( to_edit ) ) == NULL ) /* does its own setting and databasing */
+   {
+      text_to_entity( entity, "Something has gone wrong trying to create an inherited frame.\r\n" );
+      return;
+   }
+
+   init_editor( olc, inherited_to_edit );
+   change_socket_state( entity->socket, olc->editing_state );
+   text_to_entity( entity, "You begin to edit %s.\r\n", chase_name( inherited_to_edit ) );
    return;
 }
