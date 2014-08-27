@@ -34,10 +34,19 @@ int clear_olc( INCEPTION *olc );
 WORKSPACE *init_workspace( void );
 int free_workspace( WORKSPACE *wSpace );
 int clear_workspace( WORKSPACE *wSpace );
-WORKSPACE *get_active_workspace( const char * name );
+WORKSPACE *load_workspace_by_query( const char *query );
+WORKSPACE *get_workspace_by_id( int id );
+WORKSPACE *get_active_workspace_by_id( int id );
+WORKSPACE *load_workspace_by_id( int id );
+WORKSPACE *get_workspace_by_name( const char *name );
+WORKSPACE *get_active_workspace_by_name( const char *name );
+WORKSPACE *load_workspace_by_name( const char *name );
 WORKSPACE *load_workspace( const char *name );
 void db_load_workspace( WORKSPACE *wSpace, MYSQL_ROW *row );
 void unuse_workspace( WORKSPACE *wSpace, ACCOUNT_DATA *account );
+
+WORKSPACE *workspace_list_has_by_name( LLIST *workspace_list, const char *name );
+WORKSPACE *workspace_list_has_by_id( LLIST *workspace_list, int id );
 
 void inception_open( void *passed, char *arg );
 int olc_prompt( D_SOCKET *dsock );

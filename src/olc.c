@@ -120,49 +120,62 @@ int free_workspace( WORKSPACE *wSpace )
    return ret;
 }
 
-WORKSPACE *get_active_workspace( const char *name )
+WORKSPACE *load_workspace_by_query( const char *query )
+{
+   WORKSPACE *wSpace = NULL;
+   MYSQL_ROW row;
+
+   if( !db_query_single_row( &row, query ) )
+      return NULL;
+
+   if( ( wSpace = init_workspace() ) == NULL )
+      return NULL;
+
+   db_load_workspace( wSpace, &row );
+   load_workspace_entries( wSpace );
+   return wSpace;
+}
+
+WORKSPACE *get_workspace_by_id( int id )
 {
    WORKSPACE *wSpace;
-   ITERATOR Iter;
 
-   if( !name || name[0] == '\0' )
-      return NULL;
-   if( SizeOfList( active_wSpaces ) < 1 )
-      return NULL;
-
-   AttachIterator( &Iter, active_wSpaces );
-   while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
-      if( !strcmp( name, wSpace->name ) )
-         break;
-   DetachIterator( &Iter );
+   if( ( wSpace = get_active_workspace_by_id( id ) ) == NULL )
+      if( ( wSpace = load_workspace_by_id( id ) ) != NULL )
+         AttachToList( wSpace, active_wSpaces );
 
    return wSpace;
 }
 
-WORKSPACE *load_workspace( const char *name )
+WORKSPACE *get_active_workspace_by_id( int id )
+{
+   return workspace_list_has_by_id( active_wSpaces, id );
+}
+
+WORKSPACE *load_workspace_by_id( int id )
+{
+   return load_workspace_by_query( quick_format( "SELECT * FROM `$s` WHERE %s=%d;", tag_table_strings[WORKSPACE_IDS], tag_table_whereID[WORKSPACE_IDS], id ) );
+}
+
+WORKSPACE *get_workspace_by_name( const char *name )
 {
    WORKSPACE *wSpace;
-   MYSQL_RES *result;
-   MYSQL_ROW row;
 
-   if( !name || name[0] == '\0' )
-      return NULL;
-   if( !quick_query( "SELECT * FROM workspaces WHERE name='%s';", name ) )
-      return NULL;
-   if( ( result = mysql_store_result( sql_handle ) ) == NULL )
-      return NULL;
-   if( mysql_num_rows( result ) < 1 )
-      return NULL;
-   if( ( row = mysql_fetch_row( result ) ) == NULL )
-   {
-      mysql_free_result( result );
-      return NULL;
-   }
+   if( ( wSpace = get_active_workspace_by_name( name ) ) == NULL )
+      if( ( wSpace = load_workspace_by_name( name ) ) != NULL )
+         AttachToList( wSpace, active_wSpaces );
 
-   wSpace = init_workspace();
-   db_load_workspace( wSpace, &row );
-   load_workspace_entries( wSpace );
    return wSpace;
+}
+
+WORKSPACE *get_active_workspace_by_name( const char *name )
+{
+   return workspace_list_has_by_name( active_wSpaces, name );
+}
+
+WORKSPACE *load_workspace_by_name( const char *name )
+{
+   return load_workspace_by_query( quick_format( "SELECT * FROM `%s` WHERE name='%s' LIMIT 1;", tag_table_strings[WORKSPACE_IDS], name ) );
 }
 
 void db_load_workspace( WORKSPACE *wSpace, MYSQL_ROW *row )
@@ -197,6 +210,44 @@ void unuse_workspace( WORKSPACE *wSpace, ACCOUNT_DATA *account )
       DetachIterator( &Iter );
    }
    return;
+}
+
+WORKSPACE *workspace_list_has_by_name( LLIST *workspace_list, const char *name )
+{
+   WORKSPACE *wSpace;
+   ITERATOR Iter;
+
+   if( !name || name[0] == '\0' )
+      return NULL;
+   if( !workspace_list || SizeOfList( workspace_list ) < 1 )
+      return NULL;
+
+   AttachIterator( &Iter, workspace_list );
+   while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
+      if( !strcasecmp( wSpace->name, name ) )
+          break;
+   DetachIterator( &Iter );
+
+   return wSpace;
+}
+
+WORKSPACE *workspace_list_has_by_id( LLIST *workspace_list, int id )
+{
+   WORKSPACE *wSpace;
+   ITERATOR Iter;
+
+   if( id < 0 )
+      return NULL;
+   if( !workspace_list || SizeOfList( workspace_list ) < 1 )
+      return NULL;
+
+   AttachIterator( &Iter, workspace_list );
+   while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
+      if( wSpace->tag->id == id )
+         break;
+   DetachIterator( &Iter );
+
+   return wSpace;
 }
 
 void inception_open( void *passed, char *arg )

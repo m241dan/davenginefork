@@ -386,6 +386,10 @@ bool interpret_entity_selection( const char *input )
             if( ( input_selection_ptr = get_instance_by_name( input+2 ) ) != NULL )
                input_selection_typing = SEL_INSTANCE;
             break;
+         case 'w':
+            if( ( input_selection_ptr = get_workspace_by_name( input+2 ) ) != NULL )
+               input_selection_typing = SEL_WORKSPACE;
+            break;
       }
    }
    else if( input[1] != '_' && is_number( input+1 ) )
@@ -402,6 +406,10 @@ bool interpret_entity_selection( const char *input )
             if( ( input_selection_ptr = get_instance_by_id( id ) ) != NULL )
                input_selection_typing = SEL_INSTANCE;
             break;
+         case 'w':
+            if( ( input_selection_ptr = get_workspace_by_id( id ) ) != NULL )
+               input_selection_typing = SEL_WORKSPACE;
+            break;
       }
    }
    else
@@ -415,7 +423,7 @@ bool interpret_entity_selection( const char *input )
    {
       input_selection_typing = SEL_STRING;
       input_selection_ptr = err_msg;
-      mud_printf( err_msg, "No such %s with the %s %s exists.\r\n", input[0] == 'f' ? "frame" : "instance",
+      mud_printf( err_msg, "No such %s with the %s %s exists.\r\n", check_selection_type_string( input ),
                   input[1] == '_' ? "name" : "id", input[1] == '_' ? quick_format( "%s", input+2 ) : quick_format( "%d", id ) );
    }
    return TRUE;
@@ -432,8 +440,22 @@ SEL_TYPING check_selection_type( const char *input )
       default:  return SEL_NULL;
       case 'f': return SEL_FRAME;
       case 'i': return SEL_INSTANCE;
+      case 'w': return SEL_WORKSPACE;
    }
    return SEL_NULL;
+}
+const char *check_selection_type_string( const char *input )
+{
+   if( !input_format_is_selection_type( input ) )
+      return "null";
+   switch( tolower( input[0] ) )
+   {
+      default:  return "null";
+      case 'f': return "frame";
+      case 'i': return "instance";
+      case 'w': return "workspace";
+   }
+   return "null";
 }
 
 void *retrieve_entity_selection( void )
@@ -459,3 +481,4 @@ void clear_entity_selection( void )
    input_selection_typing = SEL_NULL;
    input_selection_ptr = NULL;
 }
+

@@ -147,14 +147,11 @@ ENTITY_INSTANCE *get_active_instance_by_name( const char *name )
 
 ENTITY_INSTANCE *load_eInstance_by_name( const char *name )
 {
-   ENTITY_INSTANCE *instance;
+   ENTITY_INSTANCE *instance = NULL;
    ENTITY_FRAMEWORK *frame;
 
-   if( ( instance = load_eInstance_by_query( quick_format( "SELECT * FROM `%s` WHERE name='%s' LIMIT 1;", tag_table_strings[ENTITY_INSTANCE_IDS], name ) ) ) == NULL )
-   {
-      if( ( frame = get_framework_by_name( name ) ) != NULL )
-         instance = load_eInstance_by_query( quick_format( "SELECT * FROM '%s' WHERE frameworkID=%d LIMIT 1;", tag_table_strings[ENTITY_INSTANCE_IDS], frame->tag->id ) );
-   }
+   if( ( frame = get_framework_by_name( name ) ) != NULL )
+      instance = load_eInstance_by_query( quick_format( "SELECT * FROM '%s' WHERE frameworkID=%d LIMIT 1;", tag_table_strings[ENTITY_INSTANCE_IDS], frame->tag->id ) );
    return instance;
 }
 
@@ -317,11 +314,9 @@ ENTITY_INSTANCE *instance_list_has_by_name( LLIST *instance_list, const char *na
    ENTITY_INSTANCE *eInstance;
    ITERATOR Iter;
 
-   if( !instance_list )
-      return NULL;
-   if( SizeOfList( instance_list ) < 1 )
-      return NULL;
    if( !name || name[0] == '\0' )
+      return NULL;
+   if( !instance_list || SizeOfList( instance_list ) < 1 )
       return NULL;
 
    AttachIterator( &Iter, instance_list );

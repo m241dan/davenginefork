@@ -124,7 +124,7 @@ typedef enum
 
 typedef enum
 {
-   SEL_NULL = -1, SEL_FRAME, SEL_INSTANCE, SEL_STRING, MAX_SEL
+   SEL_NULL = -1, SEL_FRAME, SEL_INSTANCE, SEL_WORKSPACE, SEL_STRING, MAX_SEL
 } SEL_TYPING;
 
 /*****************
