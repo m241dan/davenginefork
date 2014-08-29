@@ -9,7 +9,7 @@ ENTITY_FRAMEWORK *init_eFramework( void )
    CREATE( frame, ENTITY_FRAMEWORK, 1 );
    frame->tag = init_tag();
    frame->tag->type = ENTITY_FRAMEWORK_IDS;
-   frame->contents = AllocList();
+   frame->fixed_contents = AllocList();
    frame->specifications = AllocList();
    if( clear_eFramework( frame ) != RET_SUCCESS )
    {
@@ -61,8 +61,11 @@ int free_eFramework( ENTITY_FRAMEWORK *frame )
    if( frame->tag )
       free_tag( frame->tag );
 
-   FreeList( frame->contents );
-   frame->contents = NULL;
+   CLEARLIST( frame->fixed_contents, ENTITY_FRAMEWORK );
+   FreeList( frame->fixed_contents );
+   frame->fixed_contents = NULL;
+
+   specification_clear_list( frame->specifications );
    FreeList( frame->specifications );
    frame->specifications = NULL;
 
@@ -90,6 +93,7 @@ ENTITY_FRAMEWORK *load_eFramework_by_query( const char *query )
 
    db_load_eFramework( frame, &row );
    load_specifications_to_list( frame->specifications, quick_format( "f%d", frame->tag->id ) );
+   load_fixed_possessions_to_list( frame->fixed_contents, frame->tag->id );
    return frame;
 }
 
@@ -186,6 +190,44 @@ void db_load_eFramework( ENTITY_FRAMEWORK *frame, MYSQL_ROW *row )
    frame->description = strdup( (*row)[counter++] );
    frame->inherits = get_framework_by_id( atoi( (*row)[counter++] ) );
    return;
+}
+
+int load_fixed_possessions_to_list( LLIST *fixed_contents, int id )
+{
+   ENTITY_FRAMEWORK *frame;
+   LLIST *row_list;
+   MYSQL_ROW row;
+   ITERATOR Iter;
+   int value;
+
+   int ret = RET_SUCCESS;
+
+   if( !fixed_contents )
+   {
+      BAD_POINTER( "fixed_contents" );
+      return ret;
+   }
+
+   row_list = AllocList();
+   if( !db_query_list_row( row_list, quick_format( "SELECT content_frameworkID WHERE frameworkID=%d;", id ) ) )
+   {
+      FreeList( row_list );
+      return RET_FAILED_OTHER;
+   }
+
+   AttachIterator( &Iter, row_list );
+   while( ( row = (MYSQL_ROW)NextInList( &Iter ) ) != NULL )
+   {
+      value = atoi( row[0] );
+      if( ( frame = get_framework_by_id( value ) ) == NULL )
+         continue;
+
+      AttachToList( frame, fixed_contents );
+   }
+   DetachIterator( &Iter );
+   FreeList( row_list );
+
+  return ret;
 }
 
 ENTITY_FRAMEWORK *framework_list_has_by_id( LLIST *frameworks, int id )
@@ -335,7 +377,7 @@ ENTITY_FRAMEWORK *entity_edit_selection( ENTITY_INSTANCE *entity, const char *ar
 
    if( !interpret_entity_selection( arg ) )
    {
-      text_to_entity( entity, "There is a problem with the input selection pointer, please contac the nearest Admin or try again in a few seconds.\r\n" );
+      text_to_entity( entity, STD_SELECTION_ERRMSG_PTR_USED );
       return NULL;
    }
 
@@ -383,7 +425,7 @@ ENTITY_FRAMEWORK *olc_edit_selection( INCEPTION *olc, const char *arg )
 
    if( !interpret_entity_selection( arg ) )
    {
-      text_to_olc( olc, "There is a problem with the input selection pointer, please contact the nearest Admin or try again in a few seconds.\r\n" );
+      text_to_olc( olc, STD_SELECTION_ERRMSG_PTR_USED );
       olc_short_prompt( olc );
       return NULL;
    }
@@ -455,3 +497,30 @@ const char *chase_description( ENTITY_FRAMEWORK *frame )
    return frame->description;
 }
 
+void add_frame_to_fixed_contents( ENTITY_FRAMEWORK *frame_to_add, ENTITY_FRAMEWORK *container )
+{
+   if( !frame_to_add || !container )
+      return;
+
+   if( !container->fixed_contents )
+      return;
+
+   AttachToList( frame_to_add, container->fixed_contents );
+
+   quick_query( "INSERT INTO framework_fixed_possessions VALUES( %d, %d );", container->tag->id, frame_to_add->tag->id );
+   return;
+}
+
+void rem_frame_from_fixed_contents( ENTITY_FRAMEWORK *frame_to_rem, ENTITY_FRAMEWORK *container )
+{
+   if( !frame_to_rem || !container )
+      return;
+
+   if( !container->fixed_contents )
+      return;
+
+   DetachFromList( frame_to_rem, container->fixed_contents );
+
+   quick_query( "DELETE FROM framework_fixed_possessions WHERE frameworkID=%d AND content_frameworkID=%d;", container->tag->id, frame_to_rem->tag->id );
+   return;
+}

@@ -708,7 +708,7 @@ void entity_instance( void *passed, char *arg )
 
    if( !interpret_entity_selection( buf ) )
    {
-      text_to_entity( entity, "There is a problem with the input selection pointer, please contact the nearest Admin or try again in a few seconds.\r\n" );
+      text_to_entity( entity, STD_SELECTION_ERRMSG_PTR_USED );
       return;
    }
 

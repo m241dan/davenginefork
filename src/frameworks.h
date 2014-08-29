@@ -8,7 +8,7 @@ struct entity_framework
    char *long_descr;
    char *description;
 
-   LLIST *contents;
+   LLIST *fixed_contents; /* frameworks structs */
    LLIST *specifications;
 
    ENTITY_FRAMEWORK *inherits;
@@ -36,6 +36,7 @@ ENTITY_FRAMEWORK *load_eFramework_by_name( const char *name );
 
 int new_eFramework( ENTITY_FRAMEWORK *frame );
 void db_load_eFramework( ENTITY_FRAMEWORK *frame, MYSQL_ROW *row );
+int load_fixed_possessions_to_list( LLIST *fixed_contents, int id );
 
 ENTITY_FRAMEWORK *framework_list_has_by_id( LLIST *frameworks, int id );
 ENTITY_FRAMEWORK *framework_list_has_by_name( LLIST *frameworks, const char *name );
@@ -53,3 +54,5 @@ const char *chase_short_descr( ENTITY_FRAMEWORK *frame );
 const char *chase_long_descr( ENTITY_FRAMEWORK *frame );
 const char *chase_description( ENTITY_FRAMEWORK *frame );
 
+void add_frame_to_fixed_contents( ENTITY_FRAMEWORK *frame_to_add, ENTITY_FRAMEWORK *container );
+void rem_frame_from_fixed_contents( ENTITY_FRAMEWORK *frame_to_rem, ENTITY_FRAMEWORK *container );

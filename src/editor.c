@@ -300,3 +300,50 @@ void eFramework_done( void *passed, char *arg )
    olc_show_prompt( olc );
    return;
 }
+
+void eFramework_addContent( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_FRAMEWORK *frame = (ENTITY_FRAMEWORK *)olc->editing;
+   ENTITY_FRAMEWORK *frame_to_add;
+   int value;
+
+   if( check_selection_type( arg ) != SEL_FRAME )
+   {
+      if( is_number( arg ) )
+      {
+         value = atoi( arg );
+         if( ( frame_to_add = get_framework_by_id( value ) ) == NULL )
+         {
+            text_to_olc( olc, "There's no framework with the ID of %d.\r\n", value );
+            return;
+         }
+      }
+      else if( ( frame_to_add =  get_framework_by_name( arg ) ) == NULL )
+      {
+         text_to_olc( olc, "There's no framework with the name %s.\r\n", arg );
+         return;
+      }
+   }
+   else
+   {
+      if( !interpret_entity_selection( arg ) )
+      {
+         text_to_olc( olc, STD_SELECTION_ERRMSG_PTR_USED );
+         return;
+      }
+      switch( input_selection_typing )
+      {
+         default: return;
+         case SEL_FRAME:
+            frame_to_add = (ENTITY_FRAMEWORK *)retrieve_entity_selection();
+            break;
+         case SEL_STRING:
+            text_to_olc( olc, (char *)retrieve_entity_selection() );
+            return;
+      }
+   }
+   add_frame_to_fixed_contents( frame_to_add, frame );
+   text_to_olc( olc, "%s added to %s's fixed contents.\r\n", chase_name( frame_to_add ), chase_name( frame ) );
+   return;
+}

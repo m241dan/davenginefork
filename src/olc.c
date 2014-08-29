@@ -978,7 +978,7 @@ void olc_instantiate( void *passed, char *arg )
 
    if( !interpret_entity_selection( arg ) )
    {
-      text_to_olc( olc, "There is a problem with the input selection pointer, please contact the nearest Admin or try again in a few seconds.\r\n" );
+      text_to_olc( olc, STD_SELECTION_ERRMSG_PTR_USED );
       olc_short_prompt( olc );
       return;
    }
@@ -1087,3 +1087,40 @@ void olc_quit( void *passed, char *arg )
    return;
 }
 
+void olc_load( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_FRAMEWORK *frame;
+   ENTITY_INSTANCE *instance;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Load what?\r\n" );
+      return;
+   }
+
+   if( !interpret_entity_selection( arg ) )
+   {
+      text_to_olc( olc, STD_SELECTION_ERRMSG_PTR_USED );
+      olc_short_prompt( olc );
+      return;
+   }
+
+   switch( input_selection_typing )
+   {
+      default:
+         clear_entity_selection();
+         text_to_olc( olc, "Invalid selection type, frames and instances only.\r\n" );
+         return;
+      case SEL_FRAME:
+         frame = (ENTITY_FRAMEWORK *)retrieve_entity_selection();
+         break;
+      case SEL_INSTANCE:
+         instance = (ENTITY_INSTANCE *)retrieve_entity_selection();
+         break;
+      case SEL_STRING:
+         text_to_olc( olc, (char *)retrieve_entity_selection() );
+         return;
+   }
+   return;
+}
