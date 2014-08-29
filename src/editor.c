@@ -119,7 +119,7 @@ int editor_eFramework_prompt( D_SOCKET *dsock )
       AttachIterator( &IterFixed, frame->fixed_contents );
       while( ( fixed_content = (ENTITY_FRAMEWORK *)NextInList( &IterFixed ) ) != NULL )
       {
-         mud_printf( tempstring, "(%-7d) %s, %s", frame->tag->id, chase_name( frame ), chase_short_descr( frame ) );
+         mud_printf( tempstring, "(%-7d) %s, %s", fixed_content->tag->id, chase_name( fixed_content ), chase_short_descr( fixed_content ) );
          bprintf( buf, "|%s|\r\n", fit_string_to_space( tempstring, space_after_pipes ) );
       }
       DetachIterator( &IterFixed );
