@@ -209,7 +209,7 @@ int load_fixed_possessions_to_list( LLIST *fixed_contents, int id )
    }
 
    row_list = AllocList();
-   if( !db_query_list_row( row_list, quick_format( "SELECT content_frameworkID WHERE frameworkID=%d;", id ) ) )
+   if( !db_query_list_row( row_list, quick_format( "SELECT content_frameworkID FROM `framework_fixed_possessions` WHERE frameworkID=%d;", id ) ) )
    {
       FreeList( row_list );
       return RET_FAILED_OTHER;
@@ -507,7 +507,7 @@ void add_frame_to_fixed_contents( ENTITY_FRAMEWORK *frame_to_add, ENTITY_FRAMEWO
 
    AttachToList( frame_to_add, container->fixed_contents );
 
-   quick_query( "INSERT INTO framework_fixed_possessions VALUES( %d, %d );", container->tag->id, frame_to_add->tag->id );
+   quick_query( "INSERT INTO `framework_fixed_possessions` VALUES( %d, %d );", container->tag->id, frame_to_add->tag->id );
    return;
 }
 
@@ -521,6 +521,6 @@ void rem_frame_from_fixed_contents( ENTITY_FRAMEWORK *frame_to_rem, ENTITY_FRAME
 
    DetachFromList( frame_to_rem, container->fixed_contents );
 
-   quick_query( "DELETE FROM framework_fixed_possessions WHERE frameworkID=%d AND content_frameworkID=%d;", container->tag->id, frame_to_rem->tag->id );
+   quick_query( "DELETE FROM `framework_fixed_possessions` WHERE frameworkID=%d AND content_frameworkID=%d;", container->tag->id, frame_to_rem->tag->id );
    return;
 }

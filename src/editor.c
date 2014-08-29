@@ -86,14 +86,16 @@ int editor_eFramework_prompt( D_SOCKET *dsock )
       strcat( tempstring, " ( inherited )" );
    bprintf( buf, "|%s|\r\n", fit_string_to_space( tempstring, space_after_pipes ) );
 
-   bprintf( buf, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
-   bprintf( buf, "|%s|", print_header( "Specifications Here", " ", ( space_after_pipes - 1 ) / 2 ) );
-   bprintf( buf, " %s|\r\n", print_header( "Stats Here", " ", ( space_after_pipes - 1 ) / 2 ) );
-   bprintf( buf, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
    if( SizeOfList( frame->specifications ) > 0 )
    {
       ITERATOR IterSpec;
       SPECIFICATION *spec;
+
+      bprintf( buf, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
+      bprintf( buf, "|%s|", print_header( "Specifications Here", " ", ( space_after_pipes - 1 ) / 2 ) );
+      bprintf( buf, " %s|\r\n", print_header( "Stats Here", " ", ( space_after_pipes - 1 ) / 2 ) );
+      bprintf( buf, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
+
 
       AttachIterator( &IterSpec, frame->specifications );
       while( ( spec = (SPECIFICATION *)NextInList( &IterSpec ) ) != NULL )
@@ -105,6 +107,25 @@ int editor_eFramework_prompt( D_SOCKET *dsock )
       DetachIterator( &IterSpec );
       bprintf( buf, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
    }
+   if( SizeOfList( frame->fixed_contents ) > 0 )
+   {
+      ITERATOR IterFixed;
+      ENTITY_FRAMEWORK *fixed_content;
+
+      bprintf( buf, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
+      bprintf( buf, "|%s|\r\n", print_header( "Fixed Possessions", " ", space_after_pipes ) );
+      bprintf( buf, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
+
+      AttachIterator( &IterFixed, frame->fixed_contents );
+      while( ( fixed_content = (ENTITY_FRAMEWORK *)NextInList( &IterFixed ) ) != NULL )
+      {
+         mud_printf( tempstring, "(%-7d) %s, %s", frame->tag->id, chase_name( frame ), chase_short_descr( frame ) );
+         bprintf( buf, "|%s|\r\n", fit_string_to_space( tempstring, space_after_pipes ) );
+      }
+      DetachIterator( &IterFixed );
+      bprintf( buf, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
+   }
+
    print_commands( dsock->account->olc, dsock->account->olc->editor_commands, buf, 0, dsock->account->pagewidth );
    bprintf( buf, "\\%s/\r\n", print_bar( "-", space_after_pipes ) );
 
