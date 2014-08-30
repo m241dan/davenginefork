@@ -1114,6 +1114,7 @@ void olc_load( void *passed, char *arg )
          return;
       case SEL_FRAME:
          frame = (ENTITY_FRAMEWORK *)retrieve_entity_selection();
+         instance = eInstantiate( frame );
          break;
       case SEL_INSTANCE:
          instance = (ENTITY_INSTANCE *)retrieve_entity_selection();

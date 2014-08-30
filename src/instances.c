@@ -155,6 +155,41 @@ ENTITY_INSTANCE *load_eInstance_by_name( const char *name )
    return instance;
 }
 
+void live_load_eInstance( ENTITY_INSTANCE *instance )
+{
+   ENTITY_FRAMEWORK *fixed_content;
+   ENTITY_INSTANCE *instance_content;
+   LLIST *list;
+   MYSQL_ROW *row;
+   ITERATOR Iter;
+   int value;
+
+   if( !instance )
+      return NULL;
+
+   if( !instance->contained_by && instance->contained_by_id != -1 )
+      entity_to_contents( instance, get_instance_by_id( instance->contained_by_id ) );
+
+   list = AllocList();
+   db_query_list_row( list, quick_format( "SELECT entityInstanceID FROM `entity_instances` WHERE containedBy =%d;", instance->tag->id ) );
+
+   AttachIterator( &Iter, list );
+   while( ( row = (MYSQL_ROW *)NextInList( &Iter ) ) != NULL )
+   {
+      value = atoi( (*row)[0] );
+      if( ( instance_content = get_instance_by_id( value ) ) == NULL )
+      {
+         bug( "%s: could not get instance with the ID of %d.", value );
+         continue;
+      }
+      entity_to_contents( instance_content, instance );
+      live_load_eInstance( instance_content );
+   }
+   DetachIterator( &Iter );
+   FreeList( list );
+
+}
+
 int new_eInstance( ENTITY_INSTANCE *eInstance )
 {
    SPECIFICATION *spec;

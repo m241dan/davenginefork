@@ -29,7 +29,7 @@ int clear_ent_contents( ENTITY_INSTANCE *eInstance );
 
 ENTITY_INSTANCE *init_builder( void );
 
-ENTITY_INSTANCE *load_eInstance_by_query( const char *query);
+ENTITY_INSTANCE *load_eInstance_by_query( const char *query );
 
 ENTITY_INSTANCE *get_instance_by_id( int id );
 ENTITY_INSTANCE *get_active_instance_by_id( int id );
@@ -38,6 +38,8 @@ ENTITY_INSTANCE *load_eInstance_by_id( int id );
 ENTITY_INSTANCE *get_instance_by_name( const char *name );
 ENTITY_INSTANCE *get_active_instance_by_name( const char *name );
 ENTITY_INSTANCE *load_eInstance_by_name( const char *name );
+
+void live_load_eInstance( ENTITY_INSTANCE *instance );
 
 int new_eInstance( ENTITY_INSTANCE *eInstance );
 void db_load_eInstance( ENTITY_INSTANCE *eInstance, MYSQL_ROW *row );
