@@ -155,9 +155,19 @@ ENTITY_INSTANCE *load_eInstance_by_name( const char *name )
    return instance;
 }
 
-void live_load_eInstance( ENTITY_INSTANCE *instance )
+void full_load_eInstance( ENTITY_INSTANCE *instance )
 {
-   ENTITY_FRAMEWORK *fixed_content;
+   if( instance->loaded )
+   {
+      live_load_eInstance_from_instance( instance );
+      return;
+   }
+   live_load_eInstance_from_framework( instance->framework );
+   return;
+}
+
+void full_load_eInstance_from_instance( ENTITY_INSTANCE *instance )
+{
    ENTITY_INSTANCE *instance_content;
    LLIST *list;
    MYSQL_ROW *row;
@@ -165,9 +175,9 @@ void live_load_eInstance( ENTITY_INSTANCE *instance )
    int value;
 
    if( !instance )
-      return NULL;
+      return;
 
-   if( !instance->contained_by && instance->contained_by_id != -1 )
+   if( instance->contained_by && instance->contained_by_id != -1 )
       entity_to_contents( instance, get_instance_by_id( instance->contained_by_id ) );
 
    list = AllocList();
@@ -187,6 +197,23 @@ void live_load_eInstance( ENTITY_INSTANCE *instance )
    }
    DetachIterator( &Iter );
    FreeList( list );
+
+   return;
+}
+
+void full_load_eInstance_from_framework( ENTITY_FRAMEWORK *frame )
+{
+   ENTITY_FRAMEWORK *fixed_possession;
+   ENTITY_INSTANCE *instance;
+   ITERATOR Iter;
+
+   if( !frame )
+      return;
+
+   instance = eInstantiate( frame );
+
+   entity_to_world( 
+
 
 }
 
@@ -211,10 +238,11 @@ int new_eInstance( ENTITY_INSTANCE *eInstance )
       }
    }
 
-   if( !quick_query( "INSERT INTO entity_instances VALUES( %d, %d, '%s', '%s', '%s', '%s', %d, %d );",
+   if( !quick_query( "INSERT INTO entity_instances VALUES( %d, %d, '%s', '%s', '%s', '%s', %d, %d, %d, %d );",
          eInstance->tag->id, eInstance->tag->type, eInstance->tag->created_by,
          eInstance->tag->created_on, eInstance->tag->modified_by, eInstance->tag->modified_on,
-         eInstance->contained_by ? eInstance->contained_by->tag->id : 0, eInstance->framework->tag->id ) )
+         eInstance->contained_by ? eInstance->contained_by->tag->id : 0, eInstance->framework->tag->id,
+         (int)eInstance->live, (int)eInstance->loaded ) )
       return RET_FAILED_OTHER;
 
    AttachIterator( &Iter, eInstance->specifications );
@@ -238,6 +266,8 @@ void db_load_eInstance( ENTITY_INSTANCE *eInstance, MYSQL_ROW *row )
 
    eInstance->contained_by_id = atoi( (*row)[counter++] );
    framework_id = atoi( (*row)[counter++] ); /* don't grab containedBY just yet */
+   eInstance->live = atoi( (*row)[counter++] );
+   eInstance->loaded = atoi( (*row)[counter++] );
 
    if( ( eInstance->framework = get_framework_by_id( framework_id ) ) == NULL )
       bug( "%s: instance has a NULL framework: ID %d", __FUNCTION__, eInstance->tag->id );

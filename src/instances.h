@@ -3,6 +3,7 @@
 struct entity_instance
 {
    ID_TAG *tag;
+   bool loaded;
    bool live;
    bool builder;
    sh_int level;
@@ -39,7 +40,9 @@ ENTITY_INSTANCE *get_instance_by_name( const char *name );
 ENTITY_INSTANCE *get_active_instance_by_name( const char *name );
 ENTITY_INSTANCE *load_eInstance_by_name( const char *name );
 
-void live_load_eInstance( ENTITY_INSTANCE *instance );
+void full_load_eInstance( ENTITY_INSTANCE *instance );
+void full_load_eInstance_from_instance( ENTITY_INSTANCE *instance );
+void full_load_eInstance_from_framework( ENTITY_FRAMEWORK *frame );
 
 int new_eInstance( ENTITY_INSTANCE *eInstance );
 void db_load_eInstance( ENTITY_INSTANCE *eInstance, MYSQL_ROW *row );
