@@ -76,3 +76,4 @@ void olc_using( void *passed, char *arg );
 void olc_builder( void *passed, char *arg );
 void olc_show( void *passed, char *arg );
 void olc_quit( void *passed, char *arg );
+void olc_load( void *passed, char *arg );

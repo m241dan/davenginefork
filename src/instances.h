@@ -40,9 +40,8 @@ ENTITY_INSTANCE *get_instance_by_name( const char *name );
 ENTITY_INSTANCE *get_active_instance_by_name( const char *name );
 ENTITY_INSTANCE *load_eInstance_by_name( const char *name );
 
-void full_load_eInstance( ENTITY_INSTANCE *instance );
-void full_load_eInstance_from_instance( ENTITY_INSTANCE *instance );
-void full_load_eInstance_from_framework( ENTITY_FRAMEWORK *frame );
+ENTITY_INSTANCE *full_load_eFramework( ENTITY_FRAMEWORK *frame );
+void full_load_instance( ENTITY_INSTANCE *instance );
 
 int new_eInstance( ENTITY_INSTANCE *eInstance );
 void db_load_eInstance( ENTITY_INSTANCE *eInstance, MYSQL_ROW *row );

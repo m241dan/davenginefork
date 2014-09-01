@@ -1114,14 +1114,20 @@ void olc_load( void *passed, char *arg )
          return;
       case SEL_FRAME:
          frame = (ENTITY_FRAMEWORK *)retrieve_entity_selection();
-         instance = eInstantiate( frame );
+         instance = full_load_eFramework( frame );
          break;
       case SEL_INSTANCE:
          instance = (ENTITY_INSTANCE *)retrieve_entity_selection();
+         full_load_instance( instance );
          break;
       case SEL_STRING:
          text_to_olc( olc, (char *)retrieve_entity_selection() );
          return;
    }
+
+   if( olc->using_workspace )
+      add_instance_to_workspace( instance, olc->using_workspace );
+
+   text_to_olc( olc, "You completely load %s.\r\n", instance_name( instance ) );
    return;
 }

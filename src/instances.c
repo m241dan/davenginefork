@@ -155,66 +155,59 @@ ENTITY_INSTANCE *load_eInstance_by_name( const char *name )
    return instance;
 }
 
-void full_load_eInstance( ENTITY_INSTANCE *instance )
+ENTITY_INSTANCE *full_load_eFramework( ENTITY_FRAMEWORK *frame )
 {
-   if( instance->loaded )
-   {
-      live_load_eInstance_from_instance( instance );
-      return;
-   }
-   live_load_eInstance_from_framework( instance->framework );
-   return;
+   ENTITY_INSTANCE *instance;
+   instance = eInstantiate( frame );
+   full_load_instance( instance );
+   return instance;
 }
 
-void full_load_eInstance_from_instance( ENTITY_INSTANCE *instance )
+/* could be factored */
+void full_load_instance( ENTITY_INSTANCE *instance )
 {
-   ENTITY_INSTANCE *instance_content;
-   LLIST *list;
+   ENTITY_FRAMEWORK *frame;
+   ENTITY_INSTANCE *instance_to_contain;
    MYSQL_ROW *row;
+   LLIST *list;
    ITERATOR Iter;
-   int value;
+   int id_to_load;
 
-   if( !instance )
+   if( !instance->loaded )
+   {
+      if( SizeOfList( instance->framework->fixed_contents ) == 0 )
+      {
+         instance->loaded = TRUE;
+         return;
+      }
+
+      AttachIterator( &Iter, instance->framework->fixed_contents );
+      while( ( frame = (ENTITY_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
+      {
+         instance_to_contain = full_load_eFramework( frame );
+         entity_to_world( instance_to_contain, instance );
+      }
+      DetachIterator( &Iter );
+
+      instance->loaded = TRUE;
       return;
-
-   if( instance->contained_by && instance->contained_by_id != -1 )
-      entity_to_contents( instance, get_instance_by_id( instance->contained_by_id ) );
+   }
 
    list = AllocList();
-   db_query_list_row( list, quick_format( "SELECT entityInstanceID FROM `entity_instances` WHERE containedBy =%d;", instance->tag->id ) );
-
+   db_query_list_row( list, quick_format( "SELECT entityInstanceID FROM `entity_instances` WHERE containedBy=%d;", instance->tag->id ) );
    AttachIterator( &Iter, list );
    while( ( row = (MYSQL_ROW *)NextInList( &Iter ) ) != NULL )
    {
-      value = atoi( (*row)[0] );
-      if( ( instance_content = get_instance_by_id( value ) ) == NULL )
-      {
-         bug( "%s: could not get instance with the ID of %d.", value );
+      id_to_load = atoi( (*row)[0] );
+      if( ( instance_to_contain = get_instance_by_id( id_to_load ) ) == NULL )
          continue;
-      }
-      entity_to_contents( instance_content, instance );
-      live_load_eInstance( instance_content );
+      full_load_instance( instance_to_contain );
+      if( !instance_list_has_by_id( instance->contents, id_to_load ) )
+         entity_to_contents( instance_to_contain, instance );
    }
    DetachIterator( &Iter );
    FreeList( list );
-
    return;
-}
-
-void full_load_eInstance_from_framework( ENTITY_FRAMEWORK *frame )
-{
-   ENTITY_FRAMEWORK *fixed_possession;
-   ENTITY_INSTANCE *instance;
-   ITERATOR Iter;
-
-   if( !frame )
-      return;
-
-   instance = eInstantiate( frame );
-
-   entity_to_world( 
-
-
 }
 
 int new_eInstance( ENTITY_INSTANCE *eInstance )
