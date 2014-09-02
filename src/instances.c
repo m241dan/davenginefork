@@ -1046,3 +1046,65 @@ void entity_iedit( void *passed, char *arg ) /* inheritance edit, not instance e
    text_to_entity( entity, "You begin to edit %s.\r\n", chase_name( inherited_to_edit ) );
    return;
 }
+
+void entity_load( void *passed, char *arg )
+{
+   ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
+   ENTITY_FRAMEWORK *frame;
+   ENTITY_INSTANCE *instance;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      if( entity->contained_by && entity->contained_by_id != -1 )
+      {
+         text_to_entity( entity, "Loading the entity you are within.\r\n" );
+         full_load_instance( entity->contained_by );
+         return;
+      }
+      text_to_entity( entity, "Load what?\r\n" );
+      return;
+   }
+
+   /* search inventory and room contents */
+   if( check_selection_type( arg ) == SEL_NULL )
+   {
+      if( ( instance = instance_list_has_by_name( entity->contents, arg ) ) == NULL
+         && ( !entity->contained_by || ( instance = instance_list_has_by_name( entity->contained_by->contents, arg ) ) == NULL ) )
+      {
+         text_to_entity( entity, "You don't have %s in your inventory and its not in this room.\r\n", arg );
+         return;
+      }
+      text_to_entity( entity, "Loading %s.\r\n", instance_name( instance ) );
+      full_load_instance( instance );
+      return;
+   }
+
+   if( !interpret_entity_selection( arg ) )
+   {
+      text_to_entity( entity, STD_SELECTION_ERRMSG_PTR_USED );
+      return;
+   }
+
+   switch( input_selection_typing )
+   {
+      default:
+         clear_entity_selection();
+         text_to_entity( entity, "Invalid selection type, frames and instances only.\r\n" );
+         return;
+      case SEL_FRAME:
+         frame = (ENTITY_FRAMEWORK *)retrieve_entity_selection();
+         instance = full_load_eFramework( frame );
+         entity_to_world( instance, entity );
+         break;
+      case SEL_INSTANCE:
+         instance = (ENTITY_INSTANCE *)retrieve_entity_selection();
+         full_load_instance( instance );
+         break;
+      case SEL_STRING:
+         text_to_entity( entity, (char *)retrieve_entity_selection() );
+         return;
+   }
+
+   text_to_entity( entity, "You completely load %s.\r\n", instance_name( instance ) );
+   return;
+}

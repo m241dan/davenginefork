@@ -136,6 +136,8 @@ WORKSPACE *load_workspace_by_query( const char *query )
    db_load_workspace( wSpace, row );
    load_workspace_entries( wSpace );
    free( row );
+   if( *row )
+      free( *row );
    return wSpace;
 }
 
@@ -628,8 +630,6 @@ void workspace_new( void *passed, char *arg )
 {
    INCEPTION *olc = (INCEPTION *)passed;
    WORKSPACE *wSpace;
-   MYSQL_RES *result;
-   char buf[MAX_BUFFER];
 
    if( !arg || arg[0] == '\0' )
    {
@@ -637,21 +637,9 @@ void workspace_new( void *passed, char *arg )
       return;
    }
 
-   arg = one_arg( arg, buf );
-
-   if( !quick_query( "SELECT * FROM workspaces WHERE name='%s';", buf ) )
-      return;
-
-   if( ( result = mysql_store_result( sql_handle ) ) == NULL )
-   {
-      report_sql_error( sql_handle );
-      return;
-   }
-
-   if( mysql_num_rows( result ) != 0 )
+   if( ( wSpace = get_workspace_by_name( arg ) ) )
    {
       text_to_olc( olc, "A workspace with that name already exists.\r\n" );
-      mysql_free_result( result );
       return;
    }
 
@@ -662,7 +650,7 @@ void workspace_new( void *passed, char *arg )
       free_workspace( wSpace );
       return;
    }
-   wSpace->name = strdup( buf );
+   wSpace->name = strdup( arg );
    if( new_workspace( wSpace ) != RET_SUCCESS )
    {
       text_to_olc( olc, "Your new workspace could not be saved to the database it will not be created.\r\n" );
@@ -673,7 +661,6 @@ void workspace_new( void *passed, char *arg )
    AttachToList( wSpace, active_wSpaces );
    AttachToList( olc->account, wSpace->who_using );
    text_to_olc( olc, "A new workspace %s has been created and loaded.\r\n", wSpace->name );
-   mysql_free_result( result );
    return;
 }
 
