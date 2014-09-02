@@ -123,16 +123,19 @@ int free_workspace( WORKSPACE *wSpace )
 WORKSPACE *load_workspace_by_query( const char *query )
 {
    WORKSPACE *wSpace = NULL;
-   MYSQL_ROW row;
+   MYSQL_ROW *row;
 
-   if( !db_query_single_row( &row, query ) )
+   row = malloc( sizeof( MYSQL_ROW ) );
+
+   if( !db_query_single_row( row, query ) )
       return NULL;
 
    if( ( wSpace = init_workspace() ) == NULL )
       return NULL;
 
-   db_load_workspace( wSpace, &row );
+   db_load_workspace( wSpace, row );
    load_workspace_entries( wSpace );
+   free( row );
    return wSpace;
 }
 
