@@ -16,10 +16,10 @@ CREATE TABLE IF NOT EXISTS `entity_frameworks` (
    PRIMARY KEY (`entityFrameworkID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-INSERT INTO `entity_frameworks` VALUES ( '0', '2', 'Davenge', 'init_script', 'Davenge', 'init_script', 'North', 'North', 'Northern exit is here.', 'An exit to the north.', '-1' );
-INSERT INTO `entity_frameworks` VALUES ( '1', '2', 'Davenge', 'init_script', 'Davenge', 'init_script', 'South', 'South', 'Southern exit is here.', 'An exit to the south.', '-1' );
-INSERT INTO `entity_frameworks` VALUES ( '2', '2', 'Davenge', 'init_script', 'Davenge', 'init_script', 'East', 'East', 'Easthern exit is here.', 'An exit to the east.', '-1' );
-INSERT INTO `entity_frameworks` VALUES ( '3', '2', 'Davenge', 'init_script', 'Davenge', 'init_script', 'West', 'West', 'Westhern exit is here.', 'An exit to the west.', '-1' );
-INSERT INTO `entity_frameworks` VALUES ( '4', '2', 'Davenge', 'init_script', 'Davenge', 'init_script', 'Up', 'Up', 'Up exit is here.', 'An exit leading up.', '-1' );
-INSERT INTO `entity_frameworks` VALUES ( '5', '2', 'Davenge', 'init_script', 'Davenge', 'init_script', 'Down', 'Down', 'Down exit is here.', 'An exit leaded down.', '-1' );
+INSERT INTO `entity_frameworks` VALUES ( '0', '2', 'Davenge', 'initscript', 'Davenge', 'initscript', 'North', 'North', 'Northern exit is here.', 'An exit to the north.', '-1' );
+INSERT INTO `entity_frameworks` VALUES ( '1', '2', 'Davenge', 'initscript', 'Davenge', 'initscript', 'South', 'South', 'Southern exit is here.', 'An exit to the south.', '-1' );
+INSERT INTO `entity_frameworks` VALUES ( '2', '2', 'Davenge', 'initscript', 'Davenge', 'initscript', 'East', 'East', 'Easthern exit is here.', 'An exit to the east.', '-1' );
+INSERT INTO `entity_frameworks` VALUES ( '3', '2', 'Davenge', 'initscript', 'Davenge', 'initscript', 'West', 'West', 'Westhern exit is here.', 'An exit to the west.', '-1' );
+INSERT INTO `entity_frameworks` VALUES ( '4', '2', 'Davenge', 'initscript', 'Davenge', 'initscript', 'Up', 'Up', 'Up exit is here.', 'An exit leading up.', '-1' );
+INSERT INTO `entity_frameworks` VALUES ( '5', '2', 'Davenge', 'initscript', 'Davenge', 'initscript', 'Down', 'Down', 'Down exit is here.', 'An exit leaded down.', '-1' );
 
