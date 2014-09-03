@@ -63,6 +63,9 @@ ENTITY_INSTANCE *create_room_instance( const char *name );
 ENTITY_INSTANCE *create_exit_instance( const char *name, int dir );
 ENTITY_INSTANCE *create_mobile_instance( const char *name );
 
+void move_create( ENTITY_INSTANCE *entity, ENTITY_FRAMEWORK *exit_frame, char *arg );
+bool should_move_create( ENTITY_INSTANCE *entity, char *arg );
+
 
 const char *instance_name( ENTITY_INSTANCE *instance );
 const char *instance_short_descr( ENTITY_INSTANCE *instance );
@@ -90,3 +93,9 @@ void entity_create( void *passed, char *arg );
 void entity_edit( void *passed, char *arg );
 void entity_iedit( void *passed, char *arg );
 void entity_load( void *passed, char *arg );
+void entity_north( void *passed, char *arg );
+void entity_south( void *passed, char *arg );
+void entity_west( void *passed, char *arg );
+void entity_east( void *passed, char *arg );
+void entity_up( void *passed, char *arg );
+void entity_down( void *passed, char *arg );
