@@ -3,9 +3,10 @@
 #include "mud.h"
 
 const char *const spec_table[] = {
-   "IsRoom",
+   "IsRoom", "IsExit", "IsMob", "IsObject", "CanGet", "NoDrop", "CanMove", "MirrorExit",
    '\0' /* gandalf */
 };
+
 
 
 SPECIFICATION *init_specification( void )
@@ -86,6 +87,12 @@ int add_spec_to_framework( SPECIFICATION *spec, ENTITY_FRAMEWORK *frame )
    return RET_SUCCESS;
 }
 
+int add_spec_to_instance( SPECIFICATION *spec, ENTITY_INSTANCE *instance )
+{
+   AttachToList( spec, instance->specifications );
+   return RET_SUCCESS;
+}
+
 int load_specifications_to_list( LLIST *spec_list, const char *owner )
 {
    SPECIFICATION *spec;
@@ -146,7 +153,46 @@ SPECIFICATION *spec_list_has_by_type( LLIST *spec_list, int type )
          break;
    DetachIterator( &Iter );
 
-   if( spec )
-      return spec;
-   return NULL;
+   return spec;
+}
+
+SPECIFICATION *spec_list_has_by_name( LLIST *spec_list, const char *name )
+{
+   int type;
+
+   if( ( type = match_string_table( name, spec_table ) ) == -1 )
+   {
+      bug( "%s: invalid spec.", __FUNCTION__ );
+      return NULL;
+   }
+
+   return spec_list_has_by_type( spec_list, type );
+}
+
+SPECIFICATION *has_spec( ENTITY_INSTANCE *entity, const char *spec_name )
+{
+   SPECIFICATION *spec;
+
+   if( ( spec = spec_list_has_by_name( entity->specifications, spec_name ) ) == NULL )
+      spec = frame_has_spec( entity->framework, spec_name );
+   return spec;
+}
+
+SPECIFICATION *frame_has_spec( ENTITY_FRAMEWORK *frame, const char *spec_name )
+{
+   SPECIFICATION *spec;
+
+   if( ( spec = spec_list_has_by_name( frame->specifications, spec_name ) ) == NULL && frame->inherits )
+      spec = frame_has_spec( frame->inherits, spec_name );
+   return spec;
+}
+
+int get_spec_value( ENTITY_INSTANCE *entity, const char *spec_name )
+{
+   SPECIFICATION *spec;
+
+   if( ( spec = has_spec( entity, spec_name ) ) == NULL )
+      return 0;
+   else
+      return spec->value;
 }

@@ -2,6 +2,38 @@
 
 #include "mud.h"
 
+int init_editor( INCEPTION *olc, ENTITY_FRAMEWORK *frame )
+{
+   int ret = RET_SUCCESS;
+
+   if( !frame )
+   {
+      CREATE( olc->editing, ENTITY_FRAMEWORK, 1 );
+      olc->editing = init_eFramework();
+   }
+   else
+      olc->editing = frame;
+
+   olc->editing_state = STATE_EFRAME_EDITOR;
+   text_to_olc( olc, "Opening the Framework Editor...\r\n" );
+   olc->editor_commands = AllocList();
+
+   return ret;
+}
+
+int free_editor( INCEPTION *olc )
+{
+   int ret = RET_SUCCESS;
+
+   olc->editing = NULL;
+   free_command_list( olc->editor_commands );
+   FreeList( olc->editor_commands );
+   olc->editor_commands = NULL;
+   olc->editing_state = olc->account->socket->prev_state;
+
+   return ret;
+}
+
 int editor_eFramework_prompt( D_SOCKET *dsock )
 {
    ENTITY_FRAMEWORK *frame;
@@ -28,34 +60,72 @@ int editor_eFramework_prompt( D_SOCKET *dsock )
       mud_printf( tempstring, "Potential Framework ID: %d", get_potential_id( frame->tag->type ) );
    else
       mud_printf( tempstring, "Framework ID: %d", frame->tag->id );
+
+   if( frame->inherits )
+      strcat( tempstring, quick_format( " | Inherits from %s ID: %d", chase_name( frame->inherits ), frame->inherits->tag->id ) );
+
    bprintf( buf, "/%s\\\r\n", print_header( tempstring, "-", space_after_pipes ) );
-   mud_printf( tempstring, " Name : %s", frame->name );
+
+   mud_printf( tempstring, " Name : %s", chase_name( frame ) );
+   if( !strcmp( frame->name, "_inherited_" ) )
+      strcat( tempstring, " ( inherited )" );
    bprintf( buf, "|%s|\r\n", fit_string_to_space( tempstring, space_after_pipes ) );
-   mud_printf( tempstring, " Short: %s", frame->short_descr );
+
+   mud_printf( tempstring, " Short: %s", chase_short_descr( frame ) );
+   if( !strcmp( frame->short_descr, "_inherited_" ) )
+      strcat( tempstring, " ( inherited )" );
    bprintf( buf, "|%s|\r\n", fit_string_to_space( tempstring, space_after_pipes ) );
-   mud_printf( tempstring, " Long : %s", frame->long_descr );
+
+   mud_printf( tempstring, " Long : %s", chase_long_descr( frame ) );
+   if( !strcmp( frame->long_descr, "_inherited_" ) )
+      strcat( tempstring, " ( inherited )" );
    bprintf( buf, "|%s|\r\n", fit_string_to_space( tempstring, space_after_pipes ) );
-   mud_printf( tempstring, " Desc : %s", frame->description );
+
+   mud_printf( tempstring, " Desc : %s", chase_description( frame ) );
+   if( !strcmp( frame->description, "_inherited_" ) )
+      strcat( tempstring, " ( inherited )" );
    bprintf( buf, "|%s|\r\n", fit_string_to_space( tempstring, space_after_pipes ) );
-   bprintf( buf, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
-   bprintf( buf, "|%s|", print_header( "Specifications Here", " ", ( space_after_pipes - 1 ) / 2 ) );
-   bprintf( buf, " %s|\r\n", print_header( "Stats Here", " ", ( space_after_pipes - 1 ) / 2 ) );
-   bprintf( buf, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
+
    if( SizeOfList( frame->specifications ) > 0 )
    {
       ITERATOR IterSpec;
       SPECIFICATION *spec;
 
+      bprintf( buf, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
+      bprintf( buf, "|%s|", print_header( "Specifications Here", " ", ( space_after_pipes - 1 ) / 2 ) );
+      bprintf( buf, " %s|\r\n", print_header( "Stats Here", " ", ( space_after_pipes - 1 ) / 2 ) );
+      bprintf( buf, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
+
+
       AttachIterator( &IterSpec, frame->specifications );
-      while( ( spec = (SPECIFICATION *)NextInList( &IterSpec ) ) == NULL )
+      while( ( spec = (SPECIFICATION *)NextInList( &IterSpec ) ) != NULL )
       {
-         mud_printf( tempstring, "%s : %s", spec_table[spec->type], spec->value == 1 ? "True" : itos( spec->value ) );
+         mud_printf( tempstring, " %s : %s", spec_table[spec->type], itos( spec->value ) );
          bprintf( buf, "|%s|", fit_string_to_space( tempstring, ( space_after_pipes - 1 ) / 2 ) );
          bprintf( buf, " %s|\r\n", fit_string_to_space( " ", ( space_after_pipes - 1 ) / 2 ) );
       }
       DetachIterator( &IterSpec );
       bprintf( buf, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
    }
+   if( SizeOfList( frame->fixed_contents ) > 0 )
+   {
+      ITERATOR IterFixed;
+      ENTITY_FRAMEWORK *fixed_content;
+
+      bprintf( buf, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
+      bprintf( buf, "|%s|\r\n", print_header( "Fixed Possessions", " ", space_after_pipes ) );
+      bprintf( buf, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
+
+      AttachIterator( &IterFixed, frame->fixed_contents );
+      while( ( fixed_content = (ENTITY_FRAMEWORK *)NextInList( &IterFixed ) ) != NULL )
+      {
+         mud_printf( tempstring, "(%-7d) %s, %s", fixed_content->tag->id, chase_name( fixed_content ), chase_short_descr( fixed_content ) );
+         bprintf( buf, "|%s|\r\n", fit_string_to_space( tempstring, space_after_pipes ) );
+      }
+      DetachIterator( &IterFixed );
+      bprintf( buf, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
+   }
+
    print_commands( dsock->account->olc, dsock->account->olc->editor_commands, buf, 0, dsock->account->pagewidth );
    bprintf( buf, "\\%s/\r\n", print_bar( "-", space_after_pipes ) );
 
@@ -208,7 +278,7 @@ void eFramework_addSpec( void *passed, char *arg )
 
    if( !arg || arg[0] == '\0' )
    {
-     text_to_olc( olc, "Spec Value Defaulting to True(1).\r\n" );
+     text_to_olc( olc, "Spec Value Defaulting to 1.\r\n" );
      spec_value = 1;
    }
    else if( !is_number( arg ) )
@@ -227,8 +297,7 @@ void eFramework_addSpec( void *passed, char *arg )
    spec->type = spec_type;
    spec->value = spec_value;
    add_spec_to_framework( spec, frame );
-   text_to_olc( olc, "%s added to %s with the value of %s.\r\n", spec_table[spec_type], frame->name,
-                spec_value == 1 ? "True" : itos( spec->value ) );
+   text_to_olc( olc, "%s added to %s with the value of %s.\r\n", spec_table[spec_type], frame->name, itos( spec->value ) );
    return;
 
 }
@@ -242,18 +311,60 @@ void eFramework_done( void *passed, char *arg )
    {
       new_tag( frame->tag, olc->account->name );
       new_eFramework( frame );
-      AttachToList( frame, active_frameworks );
       if( olc->using_workspace )
          add_frame_to_workspace( frame, olc->using_workspace );
    }
 
-   olc->editing = NULL;
-   free_command_list( olc->editor_commands );
-   FreeList( olc->editor_commands );
-   olc->editor_commands = NULL;
-   olc->editing_state = STATE_OLC;
-   change_socket_state( olc->account->socket, STATE_OLC );
+   free_editor( olc );
+   change_socket_state( olc->account->socket, olc->account->socket->prev_state );
    text_to_olc( olc, "Exiting Entity Framework Editor.\r\n" );
    olc_show_prompt( olc );
+   return;
+}
+
+void eFramework_addContent( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_FRAMEWORK *frame = (ENTITY_FRAMEWORK *)olc->editing;
+   ENTITY_FRAMEWORK *frame_to_add;
+   int value;
+
+   if( check_selection_type( arg ) != SEL_FRAME )
+   {
+      if( is_number( arg ) )
+      {
+         value = atoi( arg );
+         if( ( frame_to_add = get_framework_by_id( value ) ) == NULL )
+         {
+            text_to_olc( olc, "There's no framework with the ID of %d.\r\n", value );
+            return;
+         }
+      }
+      else if( ( frame_to_add =  get_framework_by_name( arg ) ) == NULL )
+      {
+         text_to_olc( olc, "There's no framework with the name %s.\r\n", arg );
+         return;
+      }
+   }
+   else
+   {
+      if( !interpret_entity_selection( arg ) )
+      {
+         text_to_olc( olc, STD_SELECTION_ERRMSG_PTR_USED );
+         return;
+      }
+      switch( input_selection_typing )
+      {
+         default: return;
+         case SEL_FRAME:
+            frame_to_add = (ENTITY_FRAMEWORK *)retrieve_entity_selection();
+            break;
+         case SEL_STRING:
+            text_to_olc( olc, (char *)retrieve_entity_selection() );
+            return;
+      }
+   }
+   add_frame_to_fixed_contents( frame_to_add, frame );
+   text_to_olc( olc, "%s added to %s's fixed contents.\r\n", chase_name( frame_to_add ), chase_name( frame ) );
    return;
 }

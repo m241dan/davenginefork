@@ -88,7 +88,10 @@ struct typCmd olc_commands[] = {
    { "quit", olc_quit, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
    { "show", olc_show, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
    { "builder", olc_builder, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
+   { "load", olc_load, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
    { "instance", olc_instantiate, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
+   { "iedit", framework_iedit, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
+   { "edit", framework_edit, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
    { "create", framework_create, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
    { "using", olc_using, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
    { "workspace", olc_workspace, LEVEL_BASIC, NULL, TRUE, NULL, olc_commands },
@@ -119,6 +122,7 @@ struct typCmd frameworks_sub_commands[] = {
 
 struct typCmd create_eFramework_commands[] = {
    { "done", eFramework_done, LEVEL_BASIC, NULL, FALSE, NULL, create_eFramework_commands },
+   { "addcontent", eFramework_addContent, LEVEL_BASIC, NULL, FALSE, NULL, create_eFramework_commands },
    { "addspec", eFramework_addSpec, LEVEL_BASIC, NULL, FALSE, NULL, create_eFramework_commands },
    { "desc", eFramework_description, LEVEL_BASIC, NULL, FALSE, NULL, create_eFramework_commands },
    { "long", eFramework_long, LEVEL_BASIC, NULL, FALSE, NULL, create_eFramework_commands },
@@ -128,6 +132,16 @@ struct typCmd create_eFramework_commands[] = {
 };
 
 struct typCmd builder_commands[] = {
+   { "load", entity_load, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
+   { "iedit", entity_iedit, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
+   { "edit", entity_edit, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
+   { "create", entity_create, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
+   { "quit", entity_quit, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
+   { "get", entity_get, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
+   { "drop", entity_drop, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
+   { "inventory", entity_inventory, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
+   { "look", entity_look, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
+   { "instance", entity_instance, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
    { "goto", entity_goto, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
    { '\0', NULL, 0, NULL, FALSE, NULL }
 };
@@ -203,6 +217,7 @@ int eFrame_editor_handle_command( INCEPTION *olc, char *arg )
 
 int entity_handle_cmd( ENTITY_INSTANCE *entity, char *arg )
 {
+   ENTITY_INSTANCE *exit;
    COMMAND *com;
    char command[MAX_BUFFER];
    int ret = RET_SUCCESS;
@@ -215,10 +230,13 @@ int entity_handle_cmd( ENTITY_INSTANCE *entity, char *arg )
 
    arg = one_arg( arg, command );
 
-   if( ( com = find_loaded_command( entity->commands, command ) ) == NULL )
-      text_to_entity( entity, "No such command.\r\n" );
-   else
+   if( ( com = find_loaded_command( entity->commands, command ) ) != NULL )
       execute_command( entity->socket->account, com, entity, arg );
+   else if( entity->contained_by && ( exit = instance_list_has_by_short_prefix( entity->contained_by->contents_sorted[SPEC_ISEXIT], command ) ) != NULL )
+      move_entity( entity, exit );
+   else
+      text_to_entity( entity, "No such command or exit.\r\n" );
+
 
    return ret;
 }
@@ -241,7 +259,7 @@ COMMAND *find_loaded_command( LLIST *loaded_list, const char *command )
    AttachIterator( &Iter, loaded_list );
    while( ( com = (COMMAND *)NextInList( &Iter ) ) != NULL )
    {
-      if( is_prefix( com->cmd_name, command ) )
+      if( is_prefix( command, com->cmd_name ) )
          break;
       if( com->sub_commands && ( com = find_loaded_command( com->sub_commands, command ) ) != NULL )
          break;
@@ -371,6 +389,10 @@ bool interpret_entity_selection( const char *input )
             if( ( input_selection_ptr = get_instance_by_name( input+2 ) ) != NULL )
                input_selection_typing = SEL_INSTANCE;
             break;
+         case 'w':
+            if( ( input_selection_ptr = get_workspace_by_name( input+2 ) ) != NULL )
+               input_selection_typing = SEL_WORKSPACE;
+            break;
       }
    }
    else if( input[1] != '_' && is_number( input+1 ) )
@@ -387,6 +409,10 @@ bool interpret_entity_selection( const char *input )
             if( ( input_selection_ptr = get_instance_by_id( id ) ) != NULL )
                input_selection_typing = SEL_INSTANCE;
             break;
+         case 'w':
+            if( ( input_selection_ptr = get_workspace_by_id( id ) ) != NULL )
+               input_selection_typing = SEL_WORKSPACE;
+            break;
       }
    }
    else
@@ -400,7 +426,7 @@ bool interpret_entity_selection( const char *input )
    {
       input_selection_typing = SEL_STRING;
       input_selection_ptr = err_msg;
-      mud_printf( err_msg, "No such %s with the %s %s exists.\r\n", input[0] == 'f' ? "frame" : "instance",
+      mud_printf( err_msg, "No such %s with the %s %s exists.\r\n", check_selection_type_string( input ),
                   input[1] == '_' ? "name" : "id", input[1] == '_' ? quick_format( "%s", input+2 ) : quick_format( "%d", id ) );
    }
    return TRUE;
@@ -417,8 +443,22 @@ SEL_TYPING check_selection_type( const char *input )
       default:  return SEL_NULL;
       case 'f': return SEL_FRAME;
       case 'i': return SEL_INSTANCE;
+      case 'w': return SEL_WORKSPACE;
    }
    return SEL_NULL;
+}
+const char *check_selection_type_string( const char *input )
+{
+   if( !input_format_is_selection_type( input ) )
+      return "null";
+   switch( tolower( input[0] ) )
+   {
+      default:  return "null";
+      case 'f': return "frame";
+      case 'i': return "instance";
+      case 'w': return "workspace";
+   }
+   return "null";
 }
 
 void *retrieve_entity_selection( void )
@@ -444,3 +484,4 @@ void clear_entity_selection( void )
    input_selection_typing = SEL_NULL;
    input_selection_ptr = NULL;
 }
+

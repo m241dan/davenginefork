@@ -77,6 +77,7 @@ int free_account( ACCOUNT_DATA *account )
 }
 
 /* i/o */
+/* this could be factored into the load by query style */
 int load_account( ACCOUNT_DATA *account, const char *name )
 {
    MYSQL_RES *result;

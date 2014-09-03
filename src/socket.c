@@ -55,6 +55,7 @@ int main(int argc, char **argv)
 
   /* get the current time */
   current_time = time(NULL);
+  srand( time( NULL ) );
 
    /* allocate memory for socket and mobile lists'n'stacks */
    dsock_list= AllocList();
@@ -1018,6 +1019,7 @@ int change_socket_state( D_SOCKET *dsock, int state )
       return ret;
    }
 
+   dsock->prev_state = dsock->state;
    dsock->state = state;
    switch( state )
    {

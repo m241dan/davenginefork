@@ -9,7 +9,7 @@ ENTITY_FRAMEWORK *init_eFramework( void )
    CREATE( frame, ENTITY_FRAMEWORK, 1 );
    frame->tag = init_tag();
    frame->tag->type = ENTITY_FRAMEWORK_IDS;
-   frame->contents = AllocList();
+   frame->fixed_contents = AllocList();
    frame->specifications = AllocList();
    if( clear_eFramework( frame ) != RET_SUCCESS )
    {
@@ -33,6 +33,24 @@ int clear_eFramework( ENTITY_FRAMEWORK *frame )
    FREE( frame->description );
    frame->description = strdup( "none" );
 
+   frame->inherits = NULL;
+
+   return ret;
+}
+
+int set_to_inherited( ENTITY_FRAMEWORK *frame )
+{
+   int ret = RET_SUCCESS;
+
+   FREE( frame->name );
+   frame->name = strdup( "_inherited_" );
+   FREE( frame->short_descr );
+   frame->short_descr = strdup( "_inherited_" );
+   FREE( frame->long_descr );
+   frame->long_descr = strdup( "_inherited_" );
+   FREE( frame->description );
+   frame->description = strdup( "_inherited_" );
+
    return ret;
 }
 
@@ -43,10 +61,15 @@ int free_eFramework( ENTITY_FRAMEWORK *frame )
    if( frame->tag )
       free_tag( frame->tag );
 
-   FreeList( frame->contents );
-   frame->contents = NULL;
+   CLEARLIST( frame->fixed_contents, ENTITY_FRAMEWORK );
+   FreeList( frame->fixed_contents );
+   frame->fixed_contents = NULL;
+
+   specification_clear_list( frame->specifications );
    FreeList( frame->specifications );
    frame->specifications = NULL;
+
+   frame->inherits = NULL;
 
    FREE( frame->name );
    FREE( frame->short_descr );
@@ -60,16 +83,20 @@ int free_eFramework( ENTITY_FRAMEWORK *frame )
 ENTITY_FRAMEWORK *load_eFramework_by_query( const char *query )
 {
    ENTITY_FRAMEWORK *frame = NULL;
-   MYSQL_ROW row;
+   MYSQL_ROW *row;
 
-   if( !db_query_single_row( &row, query ) )
+   row = malloc( sizeof( MYSQL_ROW ) );
+
+   if( !db_query_single_row( row, query ) )
       return NULL;
 
    if( ( frame = init_eFramework() ) == NULL )
       return NULL;
 
-   db_load_eFramework( frame, &row );
+   db_load_eFramework( frame, row );
    load_specifications_to_list( frame->specifications, quick_format( "f%d", frame->tag->id ) );
+   load_fixed_possessions_to_list( frame->fixed_contents, frame->tag->id );
+   free( row );
    return frame;
 }
 
@@ -136,10 +163,11 @@ int new_eFramework( ENTITY_FRAMEWORK *frame )
       }
    }
 
-   if( !quick_query( "INSERT INTO entity_frameworks VALUES( %d, %d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s' );",
+   if( !quick_query( "INSERT INTO entity_frameworks VALUES( %d, %d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d' );",
          frame->tag->id, frame->tag->type, frame->tag->created_by,
          frame->tag->created_on, frame->tag->modified_by, frame->tag->modified_on,
-         frame->name, frame->short_descr, frame->long_descr, frame->description ) )
+         frame->name, frame->short_descr, frame->long_descr, frame->description,
+         ( frame->inherits ? frame->inherits->tag->id : -1 ) ) )
       return RET_FAILED_OTHER;
 
    AttachIterator( &Iter, frame->specifications );
@@ -150,6 +178,7 @@ int new_eFramework( ENTITY_FRAMEWORK *frame )
    }
    DetachIterator( &Iter );
 
+   AttachToList( frame, active_frameworks );
    return ret;
 }
 
@@ -162,7 +191,46 @@ void db_load_eFramework( ENTITY_FRAMEWORK *frame, MYSQL_ROW *row )
    frame->short_descr = strdup( (*row)[counter++] );
    frame->long_descr = strdup( (*row)[counter++] );
    frame->description = strdup( (*row)[counter++] );
+   frame->inherits = get_framework_by_id( atoi( (*row)[counter++] ) );
    return;
+}
+
+int load_fixed_possessions_to_list( LLIST *fixed_contents, int id )
+{
+   ENTITY_FRAMEWORK *frame;
+   LLIST *row_list;
+   MYSQL_ROW *row;
+   ITERATOR Iter;
+   int value;
+
+   int ret = RET_SUCCESS;
+
+   if( !fixed_contents )
+   {
+      BAD_POINTER( "fixed_contents" );
+      return ret;
+   }
+
+   row_list = AllocList();
+   if( !db_query_list_row( row_list, quick_format( "SELECT content_frameworkID FROM `framework_fixed_possessions` WHERE frameworkID=%d;", id ) ) )
+   {
+      FreeList( row_list );
+      return RET_FAILED_OTHER;
+   }
+
+   AttachIterator( &Iter, row_list );
+   while( ( row = (MYSQL_ROW *)NextInList( &Iter ) ) != NULL )
+   {
+      value = atoi( (*row)[0] );
+      if( ( frame = get_framework_by_id( value ) ) == NULL )
+         continue;
+
+      AttachToList( frame, fixed_contents );
+   }
+   DetachIterator( &Iter );
+   FreeList( row_list );
+
+  return ret;
 }
 
 ENTITY_FRAMEWORK *framework_list_has_by_id( LLIST *frameworks, int id )
@@ -213,4 +281,249 @@ bool live_frame( ENTITY_FRAMEWORK *frame )
       return FALSE;
 
    return TRUE;
+}
+
+ENTITY_FRAMEWORK *create_room_framework( const char *name )
+{
+   ENTITY_FRAMEWORK *framework;
+   SPECIFICATION *pre_loaded_spec;
+
+   framework = init_eFramework();
+   pre_loaded_spec = init_specification();
+
+   if( name )
+   {
+      FREE( framework->name );
+      FREE( framework->short_descr );
+      framework->name = strdup( name );
+      framework->short_descr = strdup( quick_format( "A %s", name ) );
+   }
+
+   pre_loaded_spec->type = SPEC_ISROOM;
+   pre_loaded_spec->value = 1;
+   add_spec_to_framework( pre_loaded_spec, framework );
+
+   new_eFramework( framework );
+   return framework;
+}
+
+ENTITY_FRAMEWORK *create_exit_framework( const char *name, int dir )
+{
+   ENTITY_FRAMEWORK *framework;
+   SPECIFICATION *pre_loaded_spec;
+
+   framework = init_eFramework();
+   pre_loaded_spec = init_specification();
+
+   if( name )
+   {
+      FREE( framework->name );
+      FREE( framework->short_descr );
+      framework->name = strdup( name );
+      framework->short_descr = strdup( name );
+   }
+
+   pre_loaded_spec->type = SPEC_ISEXIT;
+   pre_loaded_spec->value = dir;
+   add_spec_to_framework( pre_loaded_spec, framework );
+
+   new_eFramework( framework );
+   return framework;
+}
+
+ENTITY_FRAMEWORK *create_mobile_framework( const char *name )
+{
+   ENTITY_FRAMEWORK *framework;
+   SPECIFICATION *pre_loaded_spec;
+
+   framework = init_eFramework();
+   pre_loaded_spec = init_specification();
+
+   if( name )
+   {
+      FREE( framework->name );
+      FREE( framework->short_descr );
+      framework->name = strdup( name );
+      framework->short_descr = strdup( quick_format( "A %s", name ) );
+   }
+
+   pre_loaded_spec->type = SPEC_ISMOB;
+   pre_loaded_spec->value = 1;
+   add_spec_to_framework( pre_loaded_spec, framework );
+
+   pre_loaded_spec = init_specification();
+   pre_loaded_spec->type = SPEC_CANMOVE;
+   pre_loaded_spec->value = 1;
+   add_spec_to_framework( pre_loaded_spec, framework );
+
+   new_eFramework( framework );
+   return framework;
+
+}
+
+ENTITY_FRAMEWORK *create_inherited_framework( ENTITY_FRAMEWORK *inherit_from )
+{
+   ENTITY_FRAMEWORK *frame;
+
+   frame = init_eFramework();
+   set_to_inherited( frame );
+   frame->inherits = inherit_from;
+   new_eFramework( frame );
+
+   return frame;
+}
+
+ENTITY_FRAMEWORK *entity_edit_selection( ENTITY_INSTANCE *entity, const char *arg )
+{
+   ENTITY_FRAMEWORK *to_edit;
+   ENTITY_INSTANCE *to_edit_i;
+
+   if( !interpret_entity_selection( arg ) )
+   {
+      text_to_entity( entity, STD_SELECTION_ERRMSG_PTR_USED );
+      return NULL;
+   }
+
+   switch( input_selection_typing )
+   {
+      default:
+         clear_entity_selection();
+
+         /* ugly... brain no worky well right now */
+         if( ( !arg || arg[0] == '\0' ) && !entity->contained_by )
+         {
+            text_to_entity( entity, "You are not being contained, therefor cannot use edit with no argument.\r\n" );
+            return NULL;
+         }
+         else if( ( !arg || arg[0] == '\0' ) && entity->contained_by )
+         {
+            to_edit = entity->contained_by->framework;
+            break;
+         }
+
+         if( ( to_edit_i = instance_list_has_by_name( entity->contained_by->contents, arg ) ) == NULL )
+         {
+            text_to_entity( entity, "There is no %s here.\r\n", arg );
+            break;
+         }
+         to_edit = to_edit_i->framework;
+         break;
+      case SEL_FRAME:
+         to_edit = (ENTITY_FRAMEWORK *)retrieve_entity_selection();
+         break;
+      case SEL_INSTANCE:
+         to_edit_i = (ENTITY_INSTANCE *)retrieve_entity_selection();
+         to_edit = to_edit_i->framework;
+         break;
+   }
+   if( !to_edit )
+      text_to_entity( entity, "There's been a problem.\r\n" );
+   return to_edit;
+}
+
+ENTITY_FRAMEWORK *olc_edit_selection( INCEPTION *olc, const char *arg )
+{
+   ENTITY_FRAMEWORK *to_edit;
+   ENTITY_INSTANCE *to_edit_i;
+
+   if( !interpret_entity_selection( arg ) )
+   {
+      text_to_olc( olc, STD_SELECTION_ERRMSG_PTR_USED );
+      olc_short_prompt( olc );
+      return NULL;
+   }
+
+   switch( input_selection_typing )
+   {
+      default:
+         text_to_olc( olc, "There's been a major problem. Contact your nearest admin.\r\n" );
+         olc_short_prompt( olc );
+         return NULL;
+      case SEL_FRAME:
+         to_edit = (ENTITY_FRAMEWORK *)retrieve_entity_selection();
+         break;
+      case SEL_INSTANCE:
+         to_edit_i = (ENTITY_INSTANCE *)retrieve_entity_selection();
+         to_edit = to_edit_i->framework;
+         break;
+      case SEL_STRING:
+         text_to_olc( olc, (char *)retrieve_entity_selection() );
+         return NULL;
+   }
+   if( !to_edit )
+      text_to_olc( olc, "There's been an error.\r\n" );
+   return to_edit;
+}
+
+const char *chase_name( ENTITY_FRAMEWORK *frame ) /* chase the inheritance chain, if there is one */
+{
+   if( !strcmp( frame->name, "_inherited_" ) )
+   {
+      if( !frame->inherits )
+         return "inheritance error";
+      return chase_name( frame->inherits );
+   }
+   return frame->name;
+}
+
+const char *chase_short_descr( ENTITY_FRAMEWORK *frame )
+{
+   if( !strcmp( frame->short_descr, "_inherited_" ) )
+   {
+      if( !frame->inherits )
+         return "inheritance error";
+      return chase_short_descr( frame->inherits );
+   }
+   return frame->short_descr;
+}
+
+const char *chase_long_descr( ENTITY_FRAMEWORK *frame )
+{
+   if( !strcmp( frame->long_descr, "_inherited_" ) )
+   {
+      if( !frame->inherits )
+         return "inheritance error";
+      return chase_long_descr( frame->inherits );
+   }
+   return frame->long_descr;
+}
+
+
+const char *chase_description( ENTITY_FRAMEWORK *frame )
+{
+   if( !strcmp( frame->description, "_inherited_" ) )
+   {
+      if( !frame->inherits )
+         return "inheritance error";
+      return chase_long_descr( frame->inherits );
+   }
+   return frame->description;
+}
+
+void add_frame_to_fixed_contents( ENTITY_FRAMEWORK *frame_to_add, ENTITY_FRAMEWORK *container )
+{
+   if( !frame_to_add || !container )
+      return;
+
+   if( !container->fixed_contents )
+      return;
+
+   AttachToList( frame_to_add, container->fixed_contents );
+
+   quick_query( "INSERT INTO `framework_fixed_possessions` VALUES( %d, %d );", container->tag->id, frame_to_add->tag->id );
+   return;
+}
+
+void rem_frame_from_fixed_contents( ENTITY_FRAMEWORK *frame_to_rem, ENTITY_FRAMEWORK *container )
+{
+   if( !frame_to_rem || !container )
+      return;
+
+   if( !container->fixed_contents )
+      return;
+
+   DetachFromList( frame_to_rem, container->fixed_contents );
+
+   quick_query( "DELETE FROM `framework_fixed_possessions` WHERE frameworkID=%d AND content_frameworkID=%d;", container->tag->id, frame_to_rem->tag->id );
+   return;
 }

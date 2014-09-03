@@ -36,6 +36,7 @@ int free_command( COMMAND *command );
 
 bool interpret_entity_selection( const char *input );
 SEL_TYPING check_selection_type( const char *input );
+const char *check_selection_type_string( const char *input );
 void *retrieve_entity_selection( void );
 bool input_format_is_selection_type( const char *input );
 void clear_entity_selection( void );

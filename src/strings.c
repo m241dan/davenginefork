@@ -35,6 +35,43 @@ bool is_prefix(const char *aStr, const char *bStr)
 
 char *one_arg(char *fStr, char *bStr)
 {
+   char delim;
+
+  /* skip leading spaces */
+  while (isspace(*fStr))
+    fStr++; 
+
+   delim = ' ';
+   if( *fStr == '"' )
+     delim = *fStr++;
+
+  /* copy the beginning of the string */
+  while (*fStr != '\0')
+  {
+    /* have we reached the end of the first word ? */
+    if (*fStr == delim)
+    {
+      fStr++;
+      break;
+    }
+
+    /* copy one char */
+    *bStr++ = *fStr++;
+  }
+
+  /* terminate string */
+  *bStr = '\0';
+
+  /* skip past any leftover spaces */
+  while (isspace(*fStr))
+    fStr++;
+
+  /* return the leftovers */
+  return fStr;
+}
+
+char *one_arg_delim( char *fStr, char *bStr, char delim )
+{
   /* skip leading spaces */
   while (isspace(*fStr))
     fStr++; 
@@ -43,7 +80,7 @@ char *one_arg(char *fStr, char *bStr)
   while (*fStr != '\0')
   {
     /* have we reached the end of the first word ? */
-    if (*fStr == ' ')
+    if (*fStr == delim)
     {
       fStr++;
       break;

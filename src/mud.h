@@ -52,7 +52,7 @@
 #define DB_LOGIN           "m241dan"
 #define DB_PASSWORD        "Grc937!"
 #define STD_SELECTION_ERRMSG "Improper format. Please use a type char 'f' or 'i' followed by _<name> for a lookup by name or <id> for lookup by id.\r\n - Example: f_aframework, f845, i_anInstance, i1000.\r\n"
-
+#define STD_SELECTION_ERRMSG_PTR_USED "There is a problem with the input selection pointer, please contact the nearest Admin or try again in a few seconds.\r\n"
 /* Connection states */
 typedef enum
 {
@@ -110,12 +110,21 @@ typedef enum
 
 typedef enum
 {
+   SPEC_ISROOM, SPEC_ISEXIT, SPEC_ISMOB, SPEC_ISOBJECT, SPEC_CANGET, SPEC_NODROP,
+   SPEC_CANMOVE, SPEC_MEXIT,
+   MAX_SPEC
+} SPEC_IDS;
+
+#define MAX_QUICK_SORT (SPEC_ISOBJECT+1)
+
+typedef enum
+{
    NO_PROMPT, NORMAL_PROMPT, SHORT_PROMPT, MAX_PROMPT 
 } prompt_type;
 
 typedef enum
 {
-   SEL_NULL = -1, SEL_FRAME, SEL_INSTANCE, SEL_STRING, MAX_SEL
+   SEL_NULL = -1, SEL_FRAME, SEL_INSTANCE, SEL_WORKSPACE, SEL_STRING, MAX_SEL
 } SEL_TYPING;
 
 /*****************
@@ -267,6 +276,7 @@ struct dSocket
   prompt_type     bust_prompt;
   sh_int          lookup_status;
   sh_int          state;
+  sh_int          prev_state;
   sh_int          control;
   sh_int          top_output;
   unsigned char   compressing;                 /* MCCP support */
@@ -393,7 +403,7 @@ void  clear_socket            ( D_S *sock_new, int sock );
 void  recycle_sockets         ( void );
 void *lookup_address          ( void *arg );
 void socket_control_entity( D_SOCKET *socket, ENTITY_INSTANCE *entity );
-void socket_unsocket_entity( ENTITY_INSTANCE *entity );
+void socket_uncontrol_entity( ENTITY_INSTANCE *entity );
 
 
 /*
@@ -422,6 +432,7 @@ int change_socket_state( D_SOCKET *dsock, int state );
  * strings.c
  */
 char   *one_arg               ( char *fStr, char *bStr );
+char   *one_arg_delim         ( char *fStr, char *bStr, char delim );
 char   *strdup                ( const char *s );
 int     strcasecmp            ( const char *s1, const char *s2 );
 bool    is_prefix             ( const char *aStr, const char *bStr );
@@ -468,6 +479,9 @@ bool db_query_single_row( MYSQL_ROW *row, const char *query );
 bool db_query_list_row( LLIST *list, const char *query );
 void debug_row( MYSQL_ROW *row, int size );
 void debug_row_list( LLIST *list );
+void copy_row( MYSQL_ROW *row_dest, MYSQL_ROW *row_src, int size );
+int number_percent();
+int number_range( int min, int max );
 /*
  * mccp.c
  */

@@ -120,49 +120,67 @@ int free_workspace( WORKSPACE *wSpace )
    return ret;
 }
 
-WORKSPACE *get_active_workspace( const char *name )
+WORKSPACE *load_workspace_by_query( const char *query )
+{
+   WORKSPACE *wSpace = NULL;
+   MYSQL_ROW *row;
+
+   row = malloc( sizeof( MYSQL_ROW ) );
+
+   if( !db_query_single_row( row, query ) )
+      return NULL;
+
+   if( ( wSpace = init_workspace() ) == NULL )
+      return NULL;
+
+   db_load_workspace( wSpace, row );
+   load_workspace_entries( wSpace );
+   free( row );
+   if( *row )
+      free( *row );
+   return wSpace;
+}
+
+WORKSPACE *get_workspace_by_id( int id )
 {
    WORKSPACE *wSpace;
-   ITERATOR Iter;
 
-   if( !name || name[0] == '\0' )
-      return NULL;
-   if( SizeOfList( active_wSpaces ) < 1 )
-      return NULL;
-
-   AttachIterator( &Iter, active_wSpaces );
-   while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
-      if( !strcmp( name, wSpace->name ) )
-         break;
-   DetachIterator( &Iter );
+   if( ( wSpace = get_active_workspace_by_id( id ) ) == NULL )
+      if( ( wSpace = load_workspace_by_id( id ) ) != NULL )
+         AttachToList( wSpace, active_wSpaces );
 
    return wSpace;
 }
 
-WORKSPACE *load_workspace( const char *name )
+WORKSPACE *get_active_workspace_by_id( int id )
+{
+   return workspace_list_has_by_id( active_wSpaces, id );
+}
+
+WORKSPACE *load_workspace_by_id( int id )
+{
+   return load_workspace_by_query( quick_format( "SELECT * FROM `$s` WHERE %s=%d;", tag_table_strings[WORKSPACE_IDS], tag_table_whereID[WORKSPACE_IDS], id ) );
+}
+
+WORKSPACE *get_workspace_by_name( const char *name )
 {
    WORKSPACE *wSpace;
-   MYSQL_RES *result;
-   MYSQL_ROW row;
 
-   if( !name || name[0] == '\0' )
-      return NULL;
-   if( !quick_query( "SELECT * FROM workspaces WHERE name='%s';", name ) )
-      return NULL;
-   if( ( result = mysql_store_result( sql_handle ) ) == NULL )
-      return NULL;
-   if( mysql_num_rows( result ) < 1 )
-      return NULL;
-   if( ( row = mysql_fetch_row( result ) ) == NULL )
-   {
-      mysql_free_result( result );
-      return NULL;
-   }
+   if( ( wSpace = get_active_workspace_by_name( name ) ) == NULL )
+      if( ( wSpace = load_workspace_by_name( name ) ) != NULL )
+         AttachToList( wSpace, active_wSpaces );
 
-   wSpace = init_workspace();
-   db_load_workspace( wSpace, &row );
-   load_workspace_entries( wSpace );
    return wSpace;
+}
+
+WORKSPACE *get_active_workspace_by_name( const char *name )
+{
+   return workspace_list_has_by_name( active_wSpaces, name );
+}
+
+WORKSPACE *load_workspace_by_name( const char *name )
+{
+   return load_workspace_by_query( quick_format( "SELECT * FROM `%s` WHERE name='%s' LIMIT 1;", tag_table_strings[WORKSPACE_IDS], name ) );
 }
 
 void db_load_workspace( WORKSPACE *wSpace, MYSQL_ROW *row )
@@ -197,6 +215,44 @@ void unuse_workspace( WORKSPACE *wSpace, ACCOUNT_DATA *account )
       DetachIterator( &Iter );
    }
    return;
+}
+
+WORKSPACE *workspace_list_has_by_name( LLIST *workspace_list, const char *name )
+{
+   WORKSPACE *wSpace;
+   ITERATOR Iter;
+
+   if( !name || name[0] == '\0' )
+      return NULL;
+   if( !workspace_list || SizeOfList( workspace_list ) < 1 )
+      return NULL;
+
+   AttachIterator( &Iter, workspace_list );
+   while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
+      if( !strcasecmp( wSpace->name, name ) )
+          break;
+   DetachIterator( &Iter );
+
+   return wSpace;
+}
+
+WORKSPACE *workspace_list_has_by_id( LLIST *workspace_list, int id )
+{
+   WORKSPACE *wSpace;
+   ITERATOR Iter;
+
+   if( id < 0 )
+      return NULL;
+   if( !workspace_list || SizeOfList( workspace_list ) < 1 )
+      return NULL;
+
+   AttachIterator( &Iter, workspace_list );
+   while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
+      if( wSpace->tag->id == id )
+         break;
+   DetachIterator( &Iter );
+
+   return wSpace;
 }
 
 void inception_open( void *passed, char *arg )
@@ -436,7 +492,6 @@ int load_workspace_entries( WORKSPACE *wSpace )
       return RET_FAILED_OTHER;
    if( ( result = mysql_store_result( sql_handle ) ) == NULL )
      return RET_FAILED_OTHER;
-   return ret;
 
    if( mysql_num_rows( result ) < 1 )
    {
@@ -575,8 +630,6 @@ void workspace_new( void *passed, char *arg )
 {
    INCEPTION *olc = (INCEPTION *)passed;
    WORKSPACE *wSpace;
-   MYSQL_RES *result;
-   char buf[MAX_BUFFER];
 
    if( !arg || arg[0] == '\0' )
    {
@@ -584,21 +637,9 @@ void workspace_new( void *passed, char *arg )
       return;
    }
 
-   arg = one_arg( arg, buf );
-
-   if( !quick_query( "SELECT * FROM workspaces WHERE name='%s';", buf ) )
-      return;
-
-   if( ( result = mysql_store_result( sql_handle ) ) == NULL )
-   {
-      report_sql_error( sql_handle );
-      return;
-   }
-
-   if( mysql_num_rows( result ) != 0 )
+   if( ( wSpace = get_workspace_by_name( arg ) ) )
    {
       text_to_olc( olc, "A workspace with that name already exists.\r\n" );
-      mysql_free_result( result );
       return;
    }
 
@@ -609,7 +650,7 @@ void workspace_new( void *passed, char *arg )
       free_workspace( wSpace );
       return;
    }
-   wSpace->name = strdup( buf );
+   wSpace->name = strdup( arg );
    if( new_workspace( wSpace ) != RET_SUCCESS )
    {
       text_to_olc( olc, "Your new workspace could not be saved to the database it will not be created.\r\n" );
@@ -620,7 +661,6 @@ void workspace_new( void *passed, char *arg )
    AttachToList( wSpace, active_wSpaces );
    AttachToList( olc->account, wSpace->who_using );
    text_to_olc( olc, "A new workspace %s has been created and loaded.\r\n", wSpace->name );
-   mysql_free_result( result );
    return;
 }
 
@@ -701,8 +741,6 @@ void workspace_load( void *passed, char *arg )
             continue;
          }
          load_workspace_entries( wSpace );
-         bug( "%s: checking list integrity.", __FUNCTION__ );
-         debug_row_list( list );
          found = TRUE;
          AttachToList( wSpace, active_wSpaces );
          AttachToList( wSpace, olc->wSpaces );
@@ -863,13 +901,55 @@ void framework_create( void *passed, char *arg )
       change_socket_state( olc->account->socket, olc->editing_state );
       return;
    }
-
-   CREATE( olc->editing, ENTITY_FRAMEWORK, 1 );
-   olc->editing = init_eFramework();
-   olc->editing_state = STATE_EFRAME_EDITOR;
-   text_to_olc( olc, "Creating a new Entity Framework.\r\n" );
-   olc->editor_commands = AllocList();
+   init_editor( olc, NULL );
    change_socket_state( olc->account->socket, olc->editing_state );
+   return;
+}
+
+void framework_edit( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_FRAMEWORK *to_edit;
+
+   if( olc->editing && ( arg && arg[0] != '\0' ) )
+   {
+      text_to_olc( olc, "You alraedy have something loaded in your editor, type editor with no arguments to load it and complete it.\r\n" );
+      return;
+   }
+
+   if( ( to_edit = olc_edit_selection( olc, arg ) ) == NULL ) /* handles its own messaging */
+      return;
+
+   init_editor( olc, to_edit );
+   text_to_olc( olc, "Editing Frame...\r\n" );
+   change_socket_state( olc->account->socket, olc->editing_state );
+   return;
+}
+
+void framework_iedit( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_FRAMEWORK *to_edit;
+   ENTITY_FRAMEWORK *inherited_to_edit;
+
+   if( olc->editing && ( arg && arg[0] != '\0' ) )
+   {
+      text_to_olc( olc, "You alrady have something loaded in your editor, type editor with no arguments to load it and complete it.\r\n" );
+      return;
+   }
+
+   if( ( to_edit = olc_edit_selection( olc, arg ) ) == NULL ) /* handles its own messaging */
+      return;
+
+   if( ( inherited_to_edit = create_inherited_framework( to_edit ) ) == NULL ) /* does its own setting and databasing */
+   {
+      text_to_olc( olc, "Something has gone wrong tryin gto create an inherited frame.\r\n" );
+      return;
+   }
+
+   init_editor( olc, inherited_to_edit );
+   change_socket_state( olc->account->socket, olc->editing_state );
+   text_to_olc( olc, "You begin to edit %s.\r\n", chase_name( inherited_to_edit ) );
    return;
 }
 
@@ -888,7 +968,7 @@ void olc_instantiate( void *passed, char *arg )
 
    if( !interpret_entity_selection( arg ) )
    {
-      text_to_olc( olc, "There is a problem with the input selection pointer, please contact the nearest Admin or try again in a few seconds.\r\n" );
+      text_to_olc( olc, STD_SELECTION_ERRMSG_PTR_USED );
       olc_short_prompt( olc );
       return;
    }
@@ -912,7 +992,11 @@ void olc_instantiate( void *passed, char *arg )
    }
 
    if( new_eInstance( instance ) != RET_SUCCESS )
+   {
+      free_eInstance( instance );
+      text_to_olc( olc, "Could not add new instance to database, deleting it from live memory.\r\n" );
       return;
+   }
 
    AttachToList( instance, eInstances_list );
    if( olc->using_workspace )
@@ -968,7 +1052,7 @@ void olc_builder( void *passed, char *arg )
       olc_short_prompt( olc );
       return;
    }
-
+   builder->account = olc->account;
    text_to_olc( olc, "You enter builder mode.\r\n" );
    socket_control_entity( olc->account->socket, builder );
    change_socket_state( olc->account->socket, STATE_BUILDER );
@@ -993,3 +1077,47 @@ void olc_quit( void *passed, char *arg )
    return;
 }
 
+void olc_load( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_FRAMEWORK *frame;
+   ENTITY_INSTANCE *instance;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Load what?\r\n" );
+      return;
+   }
+
+   if( !interpret_entity_selection( arg ) )
+   {
+      text_to_olc( olc, STD_SELECTION_ERRMSG_PTR_USED );
+      olc_short_prompt( olc );
+      return;
+   }
+
+   switch( input_selection_typing )
+   {
+      default:
+         clear_entity_selection();
+         text_to_olc( olc, "Invalid selection type, frames and instances only.\r\n" );
+         return;
+      case SEL_FRAME:
+         frame = (ENTITY_FRAMEWORK *)retrieve_entity_selection();
+         instance = full_load_eFramework( frame );
+         break;
+      case SEL_INSTANCE:
+         instance = (ENTITY_INSTANCE *)retrieve_entity_selection();
+         full_load_instance( instance );
+         break;
+      case SEL_STRING:
+         text_to_olc( olc, (char *)retrieve_entity_selection() );
+         return;
+   }
+
+   if( olc->using_workspace )
+      add_instance_to_workspace( instance, olc->using_workspace );
+
+   text_to_olc( olc, "You completely load %s.\r\n", instance_name( instance ) );
+   return;
+}
