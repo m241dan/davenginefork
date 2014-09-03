@@ -143,6 +143,12 @@ struct typCmd builder_commands[] = {
    { "look", entity_look, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
    { "instance", entity_instance, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
    { "goto", entity_goto, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
+   { "north", entity_north, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
+   { "south", entity_south, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
+   { "east", entity_east, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
+   { "west", entity_west, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
+   { "up", entity_up, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
+   { "down", entity_down, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
    { '\0', NULL, 0, NULL, FALSE, NULL }
 };
 

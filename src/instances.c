@@ -180,21 +180,19 @@ void full_load_instance( ENTITY_INSTANCE *instance )
    if( !instance->loaded )
    {
       if( SizeOfList( instance->framework->fixed_contents ) == 0 )
-      {
          instance->loaded = TRUE;
-         return;
-      }
-
-      AttachIterator( &Iter, instance->framework->fixed_contents );
-      while( ( frame = (ENTITY_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
+      else
       {
-         instance_to_contain = full_load_eFramework( frame );
-         entity_to_world( instance_to_contain, instance );
-      }
-      DetachIterator( &Iter );
+         AttachIterator( &Iter, instance->framework->fixed_contents );
+         while( ( frame = (ENTITY_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
+         {
+            instance_to_contain = full_load_eFramework( frame );
+            entity_to_world( instance_to_contain, instance );
+         }
+         DetachIterator( &Iter );
 
-      instance->loaded = TRUE;
-      return;
+         instance->loaded = TRUE;
+      }
    }
 
    list = AllocList();
@@ -470,6 +468,121 @@ ENTITY_INSTANCE *create_mobile_instance( const char *name  )
 
 }
 
+void move_create( ENTITY_INSTANCE *entity, ENTITY_FRAMEWORK *exit_frame, char *arg )
+{
+   ENTITY_FRAMEWORK *room_frame;
+   ENTITY_INSTANCE *room_instance;
+   ENTITY_INSTANCE *exit_instance;
+   ENTITY_INSTANCE *mirrored_exit_instance;
+   SPECIFICATION *spec;
+   char buf[MAX_BUFFER];
+   int mirror_id;
+   int count = 0;
+   bool mirror = TRUE;
+   bool new_room = FALSE;
+   bool have_frame = FALSE;
+
+   while( arg[0] != '\0' )
+   {
+      count++;
+      arg = one_arg( arg, buf );
+      if( !strcasecmp( buf, "nomirror" ) )
+      {
+         mirror = FALSE;
+         continue;
+      }
+
+      if( !interpret_entity_selection( buf ) )
+      {
+         text_to_entity( entity, STD_SELECTION_ERRMSG_PTR_USED );
+         return;
+      }
+
+      switch( input_selection_typing )
+      {
+         default: clear_entity_selection(); break;
+         case SEL_FRAME:
+            have_frame = TRUE;
+            room_frame = (ENTITY_FRAMEWORK *)retrieve_entity_selection();
+            break;
+         case SEL_INSTANCE:
+            have_frame = TRUE;
+            new_room = TRUE;
+            room_instance = (ENTITY_INSTANCE *)retrieve_entity_selection();
+            break;
+         case SEL_STRING:
+            text_to_entity( entity, (char *)retrieve_entity_selection() );
+            break;
+      }
+      if( count == 2 )
+         break;
+   }
+
+   /* create room */
+   if( !have_frame )
+   {
+      room_frame = init_eFramework();
+      new_eFramework( room_frame );
+   }
+
+   if( !new_room )
+   {
+      room_instance = eInstantiate( room_frame );
+      new_eInstance( room_instance );
+   }
+   entity_to_world( room_instance, NULL );
+
+   /* create exit */
+   exit_instance = eInstantiate( exit_frame );
+   new_eInstance( exit_instance );
+
+   spec = init_specification();
+   spec->type = SPEC_ISEXIT;
+   spec->value = room_instance->tag->id;
+   mud_printf( spec->owner, "%d", exit_instance->tag->id );
+   new_specification( spec );
+   add_spec_to_instance( spec, exit_instance );
+
+   entity_to_world( exit_instance, entity->contained_by );
+   text_to_entity( entity, "You create a new room(%d) to the %s.\r\n", room_instance->tag->id, instance_name( exit_instance ) );
+
+   /* create mirrored exit */
+   if( mirror )
+   {
+      if( ( mirror_id = get_spec_value( exit_instance, "MirrorExit" ) ) == -1 )
+      {
+         text_to_entity( entity, "That exit has no mirror value...\r\n" );
+         return;
+      }
+
+      mirrored_exit_instance = eInstantiate( get_framework_by_id( mirror_id ) );
+      new_eInstance( mirrored_exit_instance );
+
+      spec = init_specification();
+      spec->type = SPEC_ISEXIT;
+      spec->value = entity->contained_by_id;
+      mud_printf( spec->owner, "%d", mirrored_exit_instance->tag->id );
+      new_specification( spec );
+      add_spec_to_instance( spec, mirrored_exit_instance );
+
+      entity_to_world( mirrored_exit_instance, room_instance );
+   }
+   move_entity( entity, exit_instance );
+   return;
+}
+
+bool should_move_create( ENTITY_INSTANCE *entity, char *arg )
+{
+   ENTITY_INSTANCE *exit;
+
+   if( entity->contained_by && ( exit = instance_list_has_by_short_prefix( entity->contained_by->contents_sorted[SPEC_ISEXIT], arg ) ) != NULL )
+   {
+      move_entity( entity, exit );
+      return FALSE;
+   }
+   return TRUE;
+}
+
 const char *instance_name( ENTITY_INSTANCE *instance )
 {
    return instance->framework ? chase_name( instance->framework ) : "null";
@@ -571,7 +684,7 @@ int show_ent_contents_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing 
       show_ent_exits_to_ent( entity, viewing );
    else if( has_spec( viewing, "IsRoom" ) )
    {
-      text_to_entity( entity, "| Exits |\r\n" );
+      text_to_entity( entity, "Exits:\r\n" );
       text_to_entity( entity, "  None\r\n\r\n" );
    }
    if( SizeOfList( viewing->contents_sorted[SPEC_ISMOB] ) > 0 )
@@ -598,7 +711,7 @@ int show_ent_exits_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing )
       return ret;
    }
 
-   text_to_entity( entity, "| Exits |\r\n" );
+   text_to_entity( entity, "Exits:\r\n" );
 
    AttachIterator( &Iter, viewing->contents_sorted[SPEC_ISEXIT] );
    while( ( exit = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
@@ -690,7 +803,7 @@ int show_ent_rooms_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing )
       BAD_POINTER( "viewing" );
       return ret;
    }
-   text_to_entity( entity, "| Rooms |\r\n" );
+   text_to_entity( entity, "Rooms:\r\n" );
    AttachIterator( &Iter, viewing->contents_sorted[SPEC_ISROOM] );
    while( ( room = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
    {
@@ -721,7 +834,7 @@ int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *exit )
 
    entity_to_world( entity, move_to );
    text_to_entity( entity, "You move to the %s.\r\n", instance_short_descr( exit ) );
-   show_ent_to_ent( entity, move_to );
+   entity_look( entity, "" );
    return ret;
 }
 
@@ -753,8 +866,7 @@ void entity_goto( void *passed, char *arg )
    }
    text_to_entity( entity, "You wisk away to the desired instance.\r\n" );
    entity_to_world( entity, ent_to_goto );
-   show_ent_to_ent( entity, entity->contained_by );
-
+   entity_look( entity, "" );
    return;
 }
 
@@ -819,6 +931,11 @@ void entity_look( void *passed, char *arg )
 void entity_inventory( void *passed, char *arg )
 {
    ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
+   if( SizeOfList( entity->contents ) == 0 )
+   {
+      text_to_entity( entity, "Your inventory is empty.\r\n" );
+      return;
+   }
    show_ent_contents_to_ent( entity, entity );
    return;
 }
@@ -1106,5 +1223,65 @@ void entity_load( void *passed, char *arg )
    }
 
    text_to_entity( entity, "You completely load %s.\r\n", instance_name( instance ) );
+   return;
+}
+
+void entity_north( void *passed, char *arg )
+{
+   ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
+
+   if( !should_move_create( entity, "north" ) )
+      return;
+   move_create( entity, get_framework_by_id( 0 ), arg );
+   return;
+}
+
+void entity_south( void *passed, char *arg )
+{
+   ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
+
+   if( !should_move_create( entity, "south" ) )
+      return;
+   move_create( entity, get_framework_by_id( 1 ), arg );
+   return;
+}
+
+void entity_east( void *passed, char *arg )
+{
+   ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
+
+   if( !should_move_create( entity, "east" ) )
+      return;
+   move_create( entity, get_framework_by_id( 2 ), arg );
+   return;
+}
+
+void entity_west( void *passed, char *arg )
+{
+   ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
+
+   if( !should_move_create( entity, "west" ) )
+      return;
+   move_create( entity, get_framework_by_id( 3 ), arg );
+   return;
+}
+
+void entity_up( void *passed, char *arg )
+{
+   ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
+
+   if( !should_move_create( entity, "up" ) )
+      return;
+   move_create( entity, get_framework_by_id( 4 ), arg );
+   return;
+}
+
+void entity_down( void *passed, char *arg )
+{
+   ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
+
+   if( !should_move_create( entity, "down" ) )
+      return;
+   move_create( entity, get_framework_by_id( 5 ), arg );
    return;
 }

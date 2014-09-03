@@ -162,10 +162,9 @@ SPECIFICATION *spec_list_has_by_name( LLIST *spec_list, const char *name )
 
    if( ( type = match_string_table( name, spec_table ) ) == -1 )
    {
-      bug( "%s: invalid spec.", __FUNCTION__ );
+      bug( "%s: invalid spec %s.", __FUNCTION__, name );
       return NULL;
    }
-
    return spec_list_has_by_type( spec_list, type );
 }
 
@@ -192,7 +191,7 @@ int get_spec_value( ENTITY_INSTANCE *entity, const char *spec_name )
    SPECIFICATION *spec;
 
    if( ( spec = has_spec( entity, spec_name ) ) == NULL )
-      return 0;
+      return -1;
    else
       return spec->value;
 }

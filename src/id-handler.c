@@ -324,5 +324,5 @@ int get_potential_id( int type )
 
       return rec_id;
    }
-   return handler->top_id+1;
+   return handler->top_id;
 }
