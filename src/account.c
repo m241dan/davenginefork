@@ -36,6 +36,7 @@ int clear_account( ACCOUNT_DATA *account )
    FREE( account->last_command );
    account->last_command = strdup( "none" );
    account->executing_command = NULL;
+   FREE( account->chatting_as );
    account->chatting_as = strdup( " " );
 
    /* this needs to eventually clear any lists */
@@ -50,16 +51,21 @@ int free_account( ACCOUNT_DATA *account )
 
    if( account->idtag )
       free_tag( account->idtag );
+  account->idtag = NULL;
+
    if( account->olc )
       free_olc( account->olc );
    account->olc = NULL;
-   account->socket = NULL;
+
    CLEARLIST( account->characters, char );
    FreeList( account->characters );
    account->characters = NULL;
+
    free_command_list( account->commands );
    FreeList( account->commands );
    account->commands = NULL;
+
+   account->socket = NULL;
    FREE( account->name );
    FREE( account->password );
    FREE( account->command_tables );

@@ -426,8 +426,6 @@ int load_workspace_entries( WORKSPACE *wSpace )
    int ret = RET_SUCCESS;
    int id;
 
-  bug( "%s - Addr: %p\r\n", __FUNCTION__, row );
-
    if( !wSpace )
    {
       BAD_POINTER( "wSpace" );

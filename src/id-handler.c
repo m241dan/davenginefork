@@ -32,7 +32,7 @@ int clear_handler( ID_HANDLER *handler )
 
    handler->type = -1;
    FREE( handler->name );
-   handler->name = strdup( "new handler" );
+   handler->name = "new handler";
    handler->top_id = 0;
    handler->can_recycle = FALSE;
 
@@ -87,9 +87,9 @@ int clear_tag( ID_TAG *tag )
    FREE( tag->created_on );
    FREE( tag->modified_by );
    FREE( tag->modified_on );
-   tag->created_by = strdup( "null" );
+   tag->created_by = "null";
    tag->created_on = strdup( strip_nl( ctime( &current_time ) ) );
-   tag->modified_by = strdup( "null" );
+   tag->modified_by = "null";
    tag->modified_on = strdup( strip_nl( ctime( &current_time ) ) );
 
    return ret;

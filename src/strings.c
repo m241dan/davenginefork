@@ -183,13 +183,12 @@ int bprintf(BUFFER *buffer, char *fmt, ...)
 
 char *strdup(const char *s)
 {
-  char *pstr;
+  char *pstr = NULL;
   int len;
 
   len = strlen(s) + 1;
-  pstr = (char *) calloc(1, len);
-  strcpy(pstr, s);
-
+  pstr = (char *)malloc( len );
+  mud_printf( pstr, "%s", s );
   return pstr;
 }
 

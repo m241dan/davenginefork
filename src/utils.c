@@ -120,6 +120,7 @@ bool db_query_list_row( LLIST *list, const char *query )
    MYSQL_RES *result;
    MYSQL_ROW *row_ptr;
    MYSQL_ROW row;
+   int size;
 
    if( !list )
       return FALSE;
@@ -127,6 +128,8 @@ bool db_query_list_row( LLIST *list, const char *query )
       return FALSE;
    if( ( result = mysql_store_result( sql_handle ) ) == NULL )
       return FALSE;
+
+   size = mysql_num_fields( result );
 
    while( ( row = mysql_fetch_row( result ) ) != NULL )
    {
