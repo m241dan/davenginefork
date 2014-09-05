@@ -783,6 +783,7 @@ void workspace_unload( void *passed, char *arg )
    if( !wSpace )
    {
       text_to_olc( olc, "You have no such workspace loaded.\r\n" );
+      olc_short_prompt( olc );
       return;
    }
 
@@ -809,6 +810,7 @@ void workspace_grab( void *passed, char *arg )
    if( !olc->using_workspace )
    {
       text_to_olc( olc, "You have to be using a workspace to grab.\r\n" );
+      olc_short_prompt( olc );
       return;
    }
 
@@ -844,6 +846,7 @@ void workspace_grab( void *passed, char *arg )
             break;
          case SEL_STRING:
             text_to_olc( olc, (char *)retrieve_entity_selection() );
+            olc_short_prompt( olc );
             break;
       }
    }
@@ -1032,7 +1035,10 @@ void olc_using( void *passed, char *arg )
    DetachIterator( &Iter );
 
    if( !wSpace )
+   {
       text_to_olc( olc, "You have no such workspace loaded. Remember, be specific!\r\n" );
+      olc_short_prompt( olc );
+   }
    else
    {
       olc->using_workspace = wSpace;
