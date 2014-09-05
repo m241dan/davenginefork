@@ -99,3 +99,4 @@ void entity_west( void *passed, char *arg );
 void entity_east( void *passed, char *arg );
 void entity_up( void *passed, char *arg );
 void entity_down( void *passed, char *arg );
+void entity_chat( void *passed, char *arg );

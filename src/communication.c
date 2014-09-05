@@ -43,11 +43,11 @@ int communicate( int level, ACCOUNT_DATA *speaker, const char *message )
 
       if( account == speaker )
       {
-         text_to_account( account, "You %s, '%s'\r\n", comm_tag_self, message );
+         text_to_account( account, "#PYou %s, '%s'#n\r\n", comm_tag_self, message );
          continue;
       }
 
-      text_to_account( account, "%s %s, '%s'\r\n", speaker->chatting_as[0] != ' ' ? speaker->chatting_as : speaker->name, comm_tag_oth, message );
+      text_to_account( account, "#P%s %s, '%s'#n\r\n", speaker->chatting_as[0] != ' ' ? speaker->chatting_as : speaker->name, comm_tag_oth, message );
    }
 
    return ret;

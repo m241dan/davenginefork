@@ -86,6 +86,7 @@ const char *chatas_desc( void *extra )
 *******************************************************************************/
 struct typCmd olc_commands[] = {
    { "quit", olc_quit, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
+   { "chat", olc_chat, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
    { "show", olc_show, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
    { "builder", olc_builder, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
    { "load", olc_load, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
@@ -132,6 +133,7 @@ struct typCmd create_eFramework_commands[] = {
 };
 
 struct typCmd builder_commands[] = {
+   { "chat", entity_chat, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
    { "load", entity_load, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
    { "iedit", entity_iedit, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
    { "edit", entity_edit, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },

@@ -1285,3 +1285,19 @@ void entity_down( void *passed, char *arg )
    move_create( entity, get_framework_by_id( 5 ), arg );
    return;
 }
+
+void entity_chat( void *passed, char *arg )
+{
+   ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_entity( entity, "Chat what?\r\n" );
+      return;
+   }
+
+   communicate( CHAT_LEVEL, entity->socket->account, arg );
+   entity->socket->bust_prompt = NO_PROMPT;
+   text_to_entity( entity, ":> " );
+   return;
+}

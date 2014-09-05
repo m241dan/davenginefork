@@ -1121,3 +1121,19 @@ void olc_load( void *passed, char *arg )
    text_to_olc( olc, "You completely load %s.\r\n", instance_name( instance ) );
    return;
 }
+
+void olc_chat( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Chat what?\r\n" );
+      return;
+   }
+
+   communicate( CHAT_LEVEL, olc->account, arg );
+   olc->account->socket->bust_prompt = NO_PROMPT;
+   text_to_olc( olc, ":> " );
+   return;
+}
