@@ -1,5 +1,5 @@
 CC      = gcc -std=c99
-C_FLAGS = -g -rdynamic -Wall -pedantic `mysql_config --cflags`
+C_FLAGS = -g3 -ggdb3 -Wall -pedantic `mysql_config --cflags`
 L_FLAGS = -lcrypt `mysql_config --libs`
 
 O_FILES = socket.o io.o strings.o utils.o interpret.o help.o  \
@@ -10,7 +10,7 @@ O_FILES = socket.o io.o strings.o utils.o interpret.o help.o  \
 
 all: $(O_FILES)
 	rm -f SocketMud
-	$(CC) -o SocketMud $(O_FILES) $(L_FLAGS)
+	$(CC) -rdynamic -export-dynamic -o SocketMud $(O_FILES) $(L_FLAGS)
 
 .c.o: all
 	@echo [`date +%T`] Compiling $< ...
