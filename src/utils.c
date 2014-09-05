@@ -102,6 +102,7 @@ bool quick_query( const char *format, ... )
 bool db_query_single_row( MYSQL_ROW *row, const char *query  )
 {
    MYSQL_RES *result;
+   MYSQL_ROW sql_row;
 
    if( !quick_query( query ) )
       return FALSE;
@@ -109,7 +110,9 @@ bool db_query_single_row( MYSQL_ROW *row, const char *query  )
       return FALSE;
    if( mysql_num_rows( result ) == 0 )
       return FALSE;
-   *row = mysql_fetch_row( result );
+   sql_row = mysql_fetch_row( result );
+
+   copy_row( row, &sql_row, mysql_num_fields( result ) );
 
    mysql_free_result( result );
    return TRUE;
