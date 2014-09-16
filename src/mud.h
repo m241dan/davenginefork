@@ -332,7 +332,7 @@ typedef struct buffer_type
 #include "instances.h"
 #include "editor.h"
 #include "specifications.h"
-#include "project.h"
+#include "projects.h"
 
 /******************************
  * End of new structures      *
@@ -477,7 +477,7 @@ char *get_time                ( void );
 bool check_sql( void );
 void report_sql_error( MYSQL *con );
 bool quick_query( const char *format, ...);
-bool db_query_single_row( MYSQL_ROW *row, const char *query );
+MYSQL_ROW db_query_single_row( const char *query );
 bool db_query_list_row( LLIST *list, const char *query );
 void debug_row( MYSQL_ROW *row, int size );
 void debug_row_list( LLIST *list );

@@ -55,8 +55,6 @@ PROJECT *load_project_by_query( const char *query )
    db_load_project( project, row );
    load_workspace_entires( wSpace );
    free( row );
-   if( *row )
-      free( *row );
 
    return project;
 }

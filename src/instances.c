@@ -94,17 +94,15 @@ ENTITY_INSTANCE *init_builder( void )
 ENTITY_INSTANCE *load_eInstance_by_query( const char *query )
 {
    ENTITY_INSTANCE *instance = NULL;
-   MYSQL_ROW *row;
+   MYSQL_ROW row;
 
-   row = malloc( sizeof( MYSQL_ROW ) );
-
-   if( !db_query_single_row( row, query ) )
+   if( ( row = db_query_single_row( query ) ) == NULL )
       return NULL;
 
    if( ( instance = init_eInstance() ) == NULL )
       return NULL;
 
-   db_load_eInstance( instance, row );
+   db_load_eInstance( instance, &row );
    load_specifications_to_list( instance->specifications, quick_format( "%d", instance->tag->id ) );
    free( row );
 

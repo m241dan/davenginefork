@@ -20,7 +20,7 @@ INCEPTION *init_olc( void )
 int clear_olc( INCEPTION *olc )
 {
    int ret = RET_SUCCESS;
-   olc->porject = NULL;
+   olc->project = NULL;
    olc->using_workspace = NULL;
    olc->editing = NULL;
    if( olc->editor_commands )
@@ -125,21 +125,18 @@ int free_workspace( WORKSPACE *wSpace )
 WORKSPACE *load_workspace_by_query( const char *query )
 {
    WORKSPACE *wSpace = NULL;
-   MYSQL_ROW *row;
+   MYSQL_ROW row;
 
-   row = malloc( sizeof( MYSQL_ROW ) );
 
-   if( !db_query_single_row( row, query ) )
+   if( ( row = db_query_single_row( query ) ) == NULL )
       return NULL;
 
    if( ( wSpace = init_workspace() ) == NULL )
       return NULL;
 
-   db_load_workspace( wSpace, row );
+   db_load_workspace( wSpace, &row );
    load_workspace_entries( wSpace );
    free( row );
-   if( *row )
-      free( *row );
    return wSpace;
 }
 
@@ -672,7 +669,7 @@ void workspace_load( void *passed, char *arg )
    INCEPTION *olc = (INCEPTION *)passed;
    WORKSPACE *wSpace;
    LLIST *list;
-   MYSQL_ROW *row;
+   MYSQL_ROW row;
    ITERATOR Iter, IterTwo;
    char buf[MAX_BUFFER];
    char who_using[MAX_BUFFER];
@@ -733,10 +730,10 @@ void workspace_load( void *passed, char *arg )
    if( db_query_list_row( list, quick_format( "SELECT * FROM workspaces WHERE name LIKE '%s%%';", buf ) ) )
    {
       AttachIterator( &Iter, list );
-      while( ( row = (MYSQL_ROW *)NextInList( &Iter ) ) != NULL )
+      while( ( row = (MYSQL_ROW)NextInList( &Iter ) ) != NULL )
       {
          wSpace = init_workspace();
-         db_load_workspace( wSpace, row );
+         db_load_workspace( wSpace, &row );
          if( workspace_list_has_name( active_wSpaces, wSpace->name ) )
          {
             free_workspace( wSpace );

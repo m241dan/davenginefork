@@ -7,7 +7,7 @@ struct project
    bool Public;
 
    LLIST *workspaces;
-}
+};
 
 PROJECT *init_project( void );
 int free_project( PROJECT *project );
