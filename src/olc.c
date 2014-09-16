@@ -20,6 +20,7 @@ INCEPTION *init_olc( void )
 int clear_olc( INCEPTION *olc )
 {
    int ret = RET_SUCCESS;
+   olc->porject = NULL;
    olc->using_workspace = NULL;
    olc->editing = NULL;
    if( olc->editor_commands )
@@ -106,6 +107,7 @@ int free_workspace( WORKSPACE *wSpace )
    CLEARLIST( wSpace->frameworks, ENTITY_FRAMEWORK );
    FreeList( wSpace->frameworks );
    wSpace->frameworks = NULL;
+   CLEARLIST( wSpace->instances, ENTITY_INSTANCE );
    FreeList( wSpace->instances );
    wSpace->instances = NULL;
    CLEARLIST( wSpace->who_using, ACCOUNT_DATA );

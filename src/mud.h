@@ -78,7 +78,7 @@ typedef enum
 
 typedef enum
 {
-   ACCOUNT_IDS, WORKSPACE_IDS, ENTITY_FRAMEWORK_IDS, ENTITY_INSTANCE_IDS, MAX_ID_HANDLER
+   ACCOUNT_IDS, WORKSPACE_IDS, ENTITY_FRAMEWORK_IDS, ENTITY_INSTANCE_IDS, PROJECT_IDS, MAX_ID_HANDLER
 } id_handler_types;
 
 typedef enum
@@ -263,6 +263,7 @@ typedef struct  entity_instance ENTITY_INSTANCE;
 typedef struct  inception_olc  INCEPTION;
 typedef struct  workspace      WORKSPACE;
 typedef struct  typSpec        SPECIFICATION;
+typedef struct  project        PROJECT;
 
 /* the actual structures */
 struct dSocket
@@ -331,6 +332,7 @@ typedef struct buffer_type
 #include "instances.h"
 #include "editor.h"
 #include "specifications.h"
+#include "project.h"
 
 /******************************
  * End of new structures      *

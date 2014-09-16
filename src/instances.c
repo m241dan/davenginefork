@@ -196,7 +196,7 @@ void full_load_instance( ENTITY_INSTANCE *instance )
    }
 
    list = AllocList();
-   db_query_list_row( list, quick_format( "SELECT entityInstanceID FROM `entity_instances` WHERE containedBy=%d;", instance->tag->id ) );
+   db_query_list_row( list, quick_format( "SELECT %s FROM `entity_instances` WHERE containedBy=%d;", tag_table_whereID[ENTITY_INSTANCE_IDS], instance->tag->id ) );
    AttachIterator( &Iter, list );
    while( ( row = (MYSQL_ROW *)NextInList( &Iter ) ) != NULL )
    {

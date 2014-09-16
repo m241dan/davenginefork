@@ -99,7 +99,7 @@ bool quick_query( const char *format, ... )
 }
 
 
-bool db_query_single_row( MYSQL_ROW *row, const char *query  )
+MYSQL_ROW db_query_single_row( MYSQL_ROW *row, const char *query  )
 {
    MYSQL_RES *result;
    MYSQL_ROW sql_row;
