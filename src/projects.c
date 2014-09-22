@@ -9,6 +9,7 @@ PROJECT *init_project( void )
    CREATE( project, PROJECT, 1 );
    project->workspaces = AllocList();
    project->tag = init_tag();
+   project->tag->type = PROJECT_IDS;
    clear_project( project );
    return project;
 }
@@ -193,6 +194,46 @@ void add_workspace_to_project( WORKSPACE *wSpace, PROJECT *project )
 }
 
 void rem_workspace_from_project( WORKSPACE *wSpace, PROJECT *project )
+{
+   return;
+}
+
+void project_newProject( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   PROJECT *project;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "How about a name for that new project?\r\n" );
+      olc_short_prompt( olc );
+      return;
+   }
+
+   if( SizeOfList( olc->wSpaces ) > 0 )
+   {
+      text_to_olc( olc, "You can't have any workspaces loaded when creating a new project.\r\n" );
+      olc_short_prompt( olc );
+      return;
+   }
+
+   project = init_project();
+   if( new_tag( project->tag, olc->account->name ) != RET_SUCCESS )
+   {
+      text_to_olc( olc, "You could not get a new tag for your project, therefore, it was not created.\r\n" );
+      free_project( project );
+      olc_short_prompt( olc );
+      return;
+   }
+   FREE( project->name );
+   project->name = strdup( arg );
+   new_project( project );
+   olc->project = project;
+   text_to_olc( olc, "You start a new project named: %s.\r\n", arg );
+   return;
+}
+
+void project_openProject( void *passed, char *arg )
 {
    return;
 }

@@ -24,4 +24,5 @@ void load_project_entries( PROJECT *project );
 void add_workspace_to_project( WORKSPACE *wSpace, PROJECT *project );
 void rem_workspace_from_project( WORKSPACE *wSpace, PROJECT *project );
 
-
+void project_newProject( void *passed, char *arg );
+void project_openProject( void *passed, char *arg );

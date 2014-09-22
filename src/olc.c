@@ -303,7 +303,11 @@ int olc_prompt( D_SOCKET *dsock )
 
    space_after_pipes = account->pagewidth - 2;
 
-   bprintf( buf, "/%s\\\r\n", print_header( "Inception OLC", "-", space_after_pipes ) );
+   if( !olc->project )
+      bprintf( buf, "/%s\\\r\n", print_header( "Inception OLC", "-", space_after_pipes ) );
+   else
+      bprintf( buf, "/%s\\\r\n", print_header( quick_format( "Inception OLC - Project: %s", olc->project->name ), "-", space_after_pipes ) );
+
    mud_printf( tempstring, " You have %d workspaces loaded.", SizeOfList( olc->wSpaces ) );
    bprintf( buf, "|%s|\r\n", fit_string_to_space( tempstring, space_after_pipes ) );
    if( SizeOfList( olc->wSpaces ) > 0 )
@@ -597,8 +601,24 @@ bool workspace_list_has_name( LLIST *wSpaces, const char *name )
 void olc_file( void *passed, char *arg )
 {
    INCEPTION *olc = (INCEPTION *)passed;
+   COMMAND *file_command;
 
-   text_to_olc( olc, "You used the file command.\r\n" );
+   if( ( file_command = olc->account->executing_command ) == NULL )
+      return;
+
+   if( file_command->sub_commands )
+   {
+      free_command_list( file_command->sub_commands );
+      FreeList( file_command->sub_commands );
+      file_command->sub_commands = NULL;
+      text_to_olc( olc, "File Menu Closed.\r\n" );
+   }
+   else
+   {
+      file_command->sub_commands = AllocList();
+      load_commands( file_command->sub_commands, file_sub_commands, olc->account->level );
+      text_to_olc( olc, "File Menu Opened.\r\n" );
+   }
    return;
 }
 
@@ -623,6 +643,7 @@ void olc_workspace( void *passed, char *arg )
       load_commands( workspace_command->sub_commands, workspace_sub_commands, olc->account->level );
       text_to_olc( olc, "Workspace Commands Menu Opened.\r\n" );
    }
+   return;
 }
 
 void workspace_new( void *passed, char *arg )
@@ -647,8 +668,10 @@ void workspace_new( void *passed, char *arg )
    {
       text_to_olc( olc, "You could not get a new tag for your workspace, therefore, it was not created.\r\n" );
       free_workspace( wSpace );
+      olc_short_prompt( olc );
       return;
    }
+   FREE( wSpace->name );
    wSpace->name = strdup( arg );
    if( new_workspace( wSpace ) != RET_SUCCESS )
    {
