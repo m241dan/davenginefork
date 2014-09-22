@@ -168,3 +168,31 @@ void load_project_entries( PROJECT *project )
    FreeList( list );
    return;
 }
+
+void add_workspace_to_project( WORKSPACE *wSpace, PROJECT *project )
+{
+   if( !wSpace )
+   {
+      bug( "%s: workspace pointer is NULL.", __FUNCTION__ );
+      return;
+   }
+   if( !project )
+   {
+      bug( "%s: project pointer is NULL.", __FUNCTION__ );
+      return;
+   }
+   if( workspace_list_has_by_id( project->workspaces, wSpace->tag->id ) )
+   {
+       bug( "%s: project always has workspace with %d id.", __FUNCTION__, wSpace->tag->id );
+       return;
+   }
+
+   AttachToList( wSpace, project->workspaces );
+   new_project_entry( project, wSpace->tag );
+   return;
+}
+
+void rem_workspace_from_project( WORKSPACE *wSpace, PROJECT *project )
+{
+   return;
+}
