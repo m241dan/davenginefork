@@ -1,5 +1,5 @@
 CC      = gcc -std=c99
-C_FLAGS = -ggdb -rdynamic -Wall -pedantic `mysql_config --cflags`
+C_FLAGS = -g3 -ggdb3 -Wall -pedantic `mysql_config --cflags`
 L_FLAGS = -lcrypt `mysql_config --libs`
 
 O_FILES = socket.o io.o strings.o utils.o interpret.o help.o  \
