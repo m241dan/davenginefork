@@ -20,7 +20,7 @@ PROJECT *load_project_by_name( const char *name );
 int new_project( PROJECT *project );
 int new_project_entry( PROJECT *project, ID_TAG *tag );
 void db_load_project( PROJECT *project, MYSQL_ROW *row );
-void load_project_entires( PROJECT *project );
+void load_project_entries( PROJECT *project );
 void add_workspace_to_project( WORKSPACE *wSpace, PROJECT *project );
 void rem_workspace_from_project( WORKSPACE *wSpace, PROJECT *project );
 
