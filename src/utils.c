@@ -99,29 +99,33 @@ bool quick_query( const char *format, ... )
 }
 
 
-bool db_query_single_row( MYSQL_ROW *row, const char *query  )
+MYSQL_ROW db_query_single_row( const char *query  )
 {
    MYSQL_RES *result;
    MYSQL_ROW sql_row;
-
+   MYSQL_ROW to_return;
+   int size;
    if( !quick_query( query ) )
       return FALSE;
    if( ( result = mysql_store_result( sql_handle ) ) == NULL )
       return FALSE;
    if( mysql_num_rows( result ) == 0 )
       return FALSE;
-   sql_row = mysql_fetch_row( result );
+   if( ( size = mysql_num_fields( result ) ) == 0 )
+      return NULL;
 
-   copy_row( row, &sql_row, mysql_num_fields( result ) );
+   to_return = malloc( sizeof( MYSQL_ROW ) * size );
+   sql_row = mysql_fetch_row( result );
+   copy_row( &to_return, &sql_row, size );
 
    mysql_free_result( result );
-   return TRUE;
+   return to_return;
 }
 
 bool db_query_list_row( LLIST *list, const char *query )
 {
    MYSQL_RES *result;
-   MYSQL_ROW *row_ptr;
+   MYSQL_ROW row_ptr;
    MYSQL_ROW row;
    int size;
 
@@ -136,9 +140,8 @@ bool db_query_list_row( LLIST *list, const char *query )
 
    while( ( row = mysql_fetch_row( result ) ) != NULL )
    {
-      row_ptr = malloc( sizeof( MYSQL_ROW ) );
-      *row_ptr = malloc( sizeof( MYSQL_ROW ) * size );
-      copy_row( row_ptr, &row, size );
+      row_ptr = malloc( sizeof( MYSQL_ROW ) * size );
+      copy_row( &row_ptr, &row, size );
       AttachToList( row_ptr, list );
    }
 

@@ -6,6 +6,7 @@ struct inception_olc
    LLIST *commands;
    LLIST *editor_commands;
    LLIST *wSpaces;
+   PROJECT *project;
    WORKSPACE *using_workspace;
    void *editing;
    int editing_state;
@@ -41,7 +42,6 @@ WORKSPACE *load_workspace_by_id( int id );
 WORKSPACE *get_workspace_by_name( const char *name );
 WORKSPACE *get_active_workspace_by_name( const char *name );
 WORKSPACE *load_workspace_by_name( const char *name );
-WORKSPACE *load_workspace( const char *name );
 void db_load_workspace( WORKSPACE *wSpace, MYSQL_ROW *row );
 void unuse_workspace( WORKSPACE *wSpace, ACCOUNT_DATA *account );
 

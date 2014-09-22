@@ -94,17 +94,15 @@ ENTITY_INSTANCE *init_builder( void )
 ENTITY_INSTANCE *load_eInstance_by_query( const char *query )
 {
    ENTITY_INSTANCE *instance = NULL;
-   MYSQL_ROW *row;
+   MYSQL_ROW row;
 
-   row = malloc( sizeof( MYSQL_ROW ) );
-
-   if( !db_query_single_row( row, query ) )
+   if( ( row = db_query_single_row( query ) ) == NULL )
       return NULL;
 
    if( ( instance = init_eInstance() ) == NULL )
       return NULL;
 
-   db_load_eInstance( instance, row );
+   db_load_eInstance( instance, &row );
    load_specifications_to_list( instance->specifications, quick_format( "%d", instance->tag->id ) );
    free( row );
 
@@ -196,7 +194,7 @@ void full_load_instance( ENTITY_INSTANCE *instance )
    }
 
    list = AllocList();
-   db_query_list_row( list, quick_format( "SELECT entityInstanceID FROM `entity_instances` WHERE containedBy=%d;", instance->tag->id ) );
+   db_query_list_row( list, quick_format( "SELECT %s FROM `entity_instances` WHERE containedBy=%d;", tag_table_whereID[ENTITY_INSTANCE_IDS], instance->tag->id ) );
    AttachIterator( &Iter, list );
    while( ( row = (MYSQL_ROW *)NextInList( &Iter ) ) != NULL )
    {

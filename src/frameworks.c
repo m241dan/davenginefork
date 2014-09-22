@@ -83,17 +83,15 @@ int free_eFramework( ENTITY_FRAMEWORK *frame )
 ENTITY_FRAMEWORK *load_eFramework_by_query( const char *query )
 {
    ENTITY_FRAMEWORK *frame = NULL;
-   MYSQL_ROW *row;
+   MYSQL_ROW row;
 
-   row = malloc( sizeof( MYSQL_ROW ) );
-
-   if( !db_query_single_row( row, query ) )
+   if( ( row = db_query_single_row( query ) ) == NULL )
       return NULL;
 
    if( ( frame = init_eFramework() ) == NULL )
       return NULL;
 
-   db_load_eFramework( frame, row );
+   db_load_eFramework( frame, &row );
    load_specifications_to_list( frame->specifications, quick_format( "f%d", frame->tag->id ) );
    load_fixed_possessions_to_list( frame->fixed_contents, frame->tag->id );
    free( row );
