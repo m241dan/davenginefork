@@ -455,6 +455,36 @@ int add_instance_to_workspace( ENTITY_INSTANCE *instance, WORKSPACE *wSpace )
    return ret;
 }
 
+int add_workspace_to_olc( WORKSPACE *wSpace, INCEPTION *olc )
+{
+   ACCOUNT_DATA *account;
+   ITERATOR Iter;
+   char who_using[MAX_BUFFER];
+   int ret = RET_SUCCESS;
+
+   if( SizeOfList( wSpace->who_using ) > 0 )
+   {
+      memset( &who_using[0], 0, sizeof( who_using ) );
+      AttachIterator( &Iter, wSpace->who_using );
+      while( ( account = (ACCOUNT_DATA *)NextInList( &Iter ) ) != NULL )
+      {
+         if( who_using[0] != '\0' )
+            strcat( who_using, ", " );
+         strcat( who_using, account->name );
+      }
+      DetachIterator( &Iter );
+      text_to_olc( olc, " These users(%s) are already using this workspace.", who_using );
+   }
+   text_to_olc( olc, "\r\n" );
+   AttachToList( wSpace,  olc->wSpaces );
+   AttachToList( olc->account, wSpace->who_using );
+
+   if( olc->project && !workspace_list_has_by_id( olc->project->workspaces, wSpace->tag->id ) )
+      add_workspace_to_project( wSpace, olc->project );
+
+   return ret;
+}
+
 int new_workspace_entry( WORKSPACE *wSpace, ID_TAG *tag )
 {
    int ret = RET_SUCCESS;
@@ -688,14 +718,12 @@ void workspace_new( void *passed, char *arg )
 
 void workspace_load( void *passed, char *arg )
 {
-   ACCOUNT_DATA *account;
    INCEPTION *olc = (INCEPTION *)passed;
    WORKSPACE *wSpace;
    LLIST *list;
    MYSQL_ROW row;
-   ITERATOR Iter, IterTwo;
+   ITERATOR Iter;
    char buf[MAX_BUFFER];
-   char who_using[MAX_BUFFER];
    bool found = FALSE;
    int x;
 
@@ -726,22 +754,7 @@ void workspace_load( void *passed, char *arg )
          else
          {
             text_to_olc( olc, "Workspace %s loaded into your OLC.", wSpace->name );
-            if( SizeOfList( wSpace->who_using ) > 0 )
-            {
-               memset( &who_using[0], 0, sizeof( who_using ) );
-               AttachIterator( &IterTwo, wSpace->who_using );
-               while( ( account = (ACCOUNT_DATA *)NextInList( &IterTwo ) ) != NULL )
-               {
-                  if( who_using[0] != '\0' )
-                     strcat( who_using, ", " );
-                  strcat( who_using, account->name );
-               }
-               DetachIterator( &IterTwo );
-               text_to_olc( olc, " These users(%s) are already using this workspace.", who_using );
-            }
-            text_to_olc( olc, "\r\n" );
-            AttachToList( wSpace, olc->wSpaces );
-            AttachToList( olc->account, wSpace->who_using );
+            add_workspace_to_olc( wSpace, olc );
          }
       }
    }
@@ -765,9 +778,8 @@ void workspace_load( void *passed, char *arg )
          load_workspace_entries( wSpace );
          found = TRUE;
          AttachToList( wSpace, active_wSpaces );
-         AttachToList( wSpace, olc->wSpaces );
-         AttachToList( olc->account, wSpace->who_using );
-         text_to_olc( olc, "Workspace %s loaded from database.\r\n", wSpace->name );
+         text_to_olc( olc, "Workspace %s loaded from database.", wSpace->name );
+         add_workspace_to_olc( wSpace, olc );
       }
       DetachIterator( &Iter );
    }

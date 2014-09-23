@@ -170,6 +170,22 @@ void load_project_entries( PROJECT *project )
    return;
 }
 
+void load_project_workspaces_into_olc( PROJECT *project, INCEPTION *olc )
+{
+   WORKSPACE *wSpace;
+   ITERATOR Iter;
+
+   if( SizeOfList( project->workspaces ) < 1 )
+      return;
+
+   AttachIterator( &Iter, project->workspaces );
+   while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
+      AttachToList( wSpace, olc->wSpaces );
+   DetachIterator( &Iter );
+
+   return;
+}
+
 void add_workspace_to_project( WORKSPACE *wSpace, PROJECT *project )
 {
    if( !wSpace )
@@ -195,6 +211,23 @@ void add_workspace_to_project( WORKSPACE *wSpace, PROJECT *project )
 
 void rem_workspace_from_project( WORKSPACE *wSpace, PROJECT *project )
 {
+   return;
+}
+
+void load_project_into_olc( PROJECT *project, INCEPTION *olc )
+{
+   if( !olc )
+   {
+      bug( "%s: trying to load project into NULL olc.", __FUNCTION__ );
+      return;
+   }
+   if( !project )
+   {
+       bug( "%s: trying load add NULL project into olc.", __FUNCTION__ );
+       return;
+   }
+   olc->project = project;
+   load_project_workspaces_into_olc( project, olc );
    return;
 }
 
@@ -226,14 +259,33 @@ void project_newProject( void *passed, char *arg )
       return;
    }
    FREE( project->name );
-   project->name = strdup( arg );
+   project->name = strdup( format_string_for_sql( arg ) );
    new_project( project );
-   olc->project = project;
+   load_project_into_olc( project, olc );
    text_to_olc( olc, "You start a new project named: %s.\r\n", arg );
    return;
 }
 
 void project_openProject( void *passed, char *arg )
 {
+   INCEPTION *olc = (INCEPTION *)passed;
+   PROJECT *project;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Open what project?\r\n" );
+      olc_short_prompt( olc );
+      return;
+   }
+
+   if( ( project = load_project_by_name( arg ) ) == NULL )
+   {
+      text_to_olc( olc, "There is no project by the name %s.\r\n", arg );
+      olc_short_prompt( olc );
+      return;
+   }
+
+   load_project_into_olc( project, olc );
+   text_to_olc( olc, "You open the %s project and load it into your olc.\r\n", project->name );
    return;
 }

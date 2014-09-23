@@ -462,6 +462,7 @@ char *fit_string_to_space( const char *orig, int space );
 char *print_bar( const char *pattern, int width );
 const char *itos( int value );
 const char *quick_format( const char *Format, ... );
+const char *format_string_for_sql( const char *string );
 
 /*
  * help.c

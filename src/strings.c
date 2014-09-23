@@ -711,3 +711,25 @@ const char *quick_format( const char *format, ... )
    }
    return buf;
 }
+
+const char *format_string_for_sql( const char *string )
+{
+   static char buf[MAX_BUFFER];
+   char *buf_ptr;
+   memset( &buf[0], 0, sizeof( buf ) );
+   buf_ptr = buf;
+
+   while( *string != '\0' )
+   {
+      if( *string == ';' )
+      {
+         string++;
+         continue;
+      }
+      if( *string == '\'' )
+         *buf_ptr++ = '\'';
+      *buf_ptr++ = *string++;
+   }
+   buf[strlen(buf)] = '\0';
+   return buf;
+}
