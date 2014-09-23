@@ -158,7 +158,7 @@ WORKSPACE *get_active_workspace_by_id( int id )
 
 WORKSPACE *load_workspace_by_id( int id )
 {
-   return load_workspace_by_query( quick_format( "SELECT * FROM `$s` WHERE %s=%d;", tag_table_strings[WORKSPACE_IDS], tag_table_whereID[WORKSPACE_IDS], id ) );
+   return load_workspace_by_query( quick_format( "SELECT * FROM `%s` WHERE %s=%d;", tag_table_strings[WORKSPACE_IDS], tag_table_whereID[WORKSPACE_IDS], id ) );
 }
 
 WORKSPACE *get_workspace_by_name( const char *name )
