@@ -628,6 +628,97 @@ bool workspace_list_has_name( LLIST *wSpaces, const char *name )
 }
 
 
+WORKSPACE *copy_workspace( WORKSPACE *wSpace )
+{
+   WORKSPACE *wSpace_copy;
+   ENTITY_FRAMEWORK *frame;
+   ENTITY_INSTANCE *instance;
+   ITERATOR Iter;
+
+   if( !wSpace )
+   {
+      bug( "%s: passed a NULL wSpace.", __FUNCTION__ );
+      return NULL;
+   }
+
+   CREATE( wSpace_copy, WORKSPACE, 1 );
+   wSpace_copy->tag = copy_tag( wSpace->tag );
+
+   wSpace_copy->name = strdup( wSpace->name );
+   wSpace_copy->description = strdup( wSpace->description );
+
+   wSpace_copy->Public = wSpace->Public;
+   wSpace_copy->hide_frameworks = wSpace->hide_frameworks;
+   wSpace_copy->hide_instances = wSpace->hide_instances;
+
+   wSpace_copy->frameworks = AllocList();
+   AttachIterator( &Iter, wSpace->frameworks );
+   while( ( frame = (ENTITY_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
+      AttachToList( frame, wSpace_copy->frameworks );
+   DetachIterator( &Iter );
+
+   wSpace_copy->instances = AllocList();
+   AttachIterator( &Iter, wSpace->instances );
+   while( ( instance = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
+      AttachToList( instance, wSpace_copy->instances );
+   DetachIterator( &Iter );
+
+   return wSpace_copy;
+}
+
+LLIST *copy_workspace_list( LLIST *wSpaces )
+{
+   LLIST *wSpaces_copy;
+   WORKSPACE *wSpace_copy;
+   WORKSPACE *wSpace;
+   ITERATOR Iter;
+
+   if( !wSpaces || SizeOfList( wSpaces ) < 1 )
+   {
+       bug( "%s: was passed an empty or NULL wSpaces.", __FUNCTION__ );
+       return NULL;
+   }
+
+   wSpaces_copy = AllocList();
+   AttachIterator( &Iter, wSpaces );
+   while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
+   {
+      wSpace_copy = copy_workspace( wSpace );
+      AttachToList( wSpace_copy, wSpaces_copy );
+   }
+   DetachIterator( &Iter );
+
+   return wSpaces_copy;
+}
+
+void copy_workspaces_into_list( LLIST *wSpaces, LLIST *copy_into_list )
+{
+   WORKSPACE *wSpace;
+   WORKSPACE *wSpace_copy;
+   ITERATOR Iter;
+
+   if( !wSpaces )
+   {
+      bug( "%s: was passed a NULL wSpaces.", __FUNCTION__ );
+      return;
+   }
+   if( !copy_into_list )
+   {
+      bug( "%s: was passed a NULL copy_into_list.", __FUNCTION__ );
+      return;
+   }
+
+   AttachIterator( &Iter, wSpaces );
+   while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
+   {
+      wSpace_copy = copy_workspace( wSpace );
+      AttachToList( wSpace_copy, copy_into_list );
+   }
+   DetachIterator( &Iter );
+
+   return;
+}
+
 void olc_file( void *passed, char *arg )
 {
    INCEPTION *olc = (INCEPTION *)passed;

@@ -326,3 +326,24 @@ int get_potential_id( int type )
    }
    return handler->top_id;
 }
+
+ID_TAG *copy_tag( ID_TAG *tag )
+{
+   ID_TAG *tag_copy;
+
+   if( !tag )
+   {
+      bug( "%s: passed a NULL tag.", __FUNCTION__ );
+      return NULL;
+   }
+
+   tag_copy = init_tag();
+   tag_copy->type = tag->type;
+   tag_copy->id = tag->id;
+   tag_copy->created_by = strdup( tag->created_by );
+   tag_copy->created_on = strdup( tag->created_on );
+   tag_copy->modified_by = strdup( tag->modified_by );
+   tag_copy->modified_on = strdup( tag->modified_on );
+
+   return tag_copy;
+}

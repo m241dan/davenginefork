@@ -231,6 +231,54 @@ void load_project_into_olc( PROJECT *project, INCEPTION *olc )
    return;
 }
 
+void export_project( PROJECT *project )
+{
+   LLIST *workspace_list;
+   LLIST *framework_list;
+   LLIST *instance_list;
+
+   if( !project )
+   {
+      bug( "%s: passed a NULL project.", __FUNCTION__ );
+      return;
+   }
+
+   workspace_list = AllocList();
+   framework_list = AllocList();
+   instance_list = AllocList();
+
+   copy_all_workspace_and_contents( project, workspace_list, framework_list, instance_list );
+
+}
+
+void copy_all_workspace_and_contents( PROJECT *project, LLIST *workspace_list, LLIST *framework_list, LLIST *instance_list )
+{
+   if( !project )
+   {
+      bug( "%s: passed a NULL project.", __FUNCTION__ );
+      return;
+   }
+   if( !workspace_list )
+   {
+      bug( "%s: passed a NULL workspace_list.", __FUNCTION__ );
+      return;
+   }
+   if( !framework_list )
+   {
+      bug( "%s: passed a NULL framework_list.", __FUNCTION__ );
+      return;
+   }
+   if( !instance_list )
+   {
+      bug( "%s: passed a NULL instance_list.", __FUNCTION__ );
+      return;
+   }
+
+   
+
+}
+
+
 void project_newProject( void *passed, char *arg )
 {
    INCEPTION *olc = (INCEPTION *)passed;

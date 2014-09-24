@@ -27,6 +27,7 @@ void rem_workspace_from_project( WORKSPACE *wSpace, PROJECT *project );
 void load_project_into_olc( PROJECT *project, INCEPTION *olc );
 
 void export_project( PROJECT *project );
+void copy_all_workspace_and_contents( PROJECT *project, LLIST *workspace_list, LLIST *framework_list, LLIST *instance_list );
 
 void project_newProject( void *passed, char *arg );
 void project_openProject( void *passed, char *arg );
