@@ -26,5 +26,7 @@ void add_workspace_to_project( WORKSPACE *wSpace, PROJECT *project );
 void rem_workspace_from_project( WORKSPACE *wSpace, PROJECT *project );
 void load_project_into_olc( PROJECT *project, INCEPTION *olc );
 
+void export_project( PROJECT *project );
+
 void project_newProject( void *passed, char *arg );
 void project_openProject( void *passed, char *arg );
