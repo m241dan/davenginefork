@@ -666,9 +666,9 @@ WORKSPACE *copy_workspace( WORKSPACE *wSpace )
    return wSpace_copy;
 }
 
-LLIST *copy_workspace_list( LLIST *wSpaces )
+LLIST *copy_workspace_list( LLIST *wSpaces, bool copy_content )
 {
-   LLIST *wSpaces_copy;
+   LLIST *list;
    WORKSPACE *wSpace_copy;
    WORKSPACE *wSpace;
    ITERATOR Iter;
@@ -679,19 +679,24 @@ LLIST *copy_workspace_list( LLIST *wSpaces )
        return NULL;
    }
 
-   wSpaces_copy = AllocList();
+   list = AllocList();
    AttachIterator( &Iter, wSpaces );
    while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
    {
-      wSpace_copy = copy_workspace( wSpace );
-      AttachToList( wSpace_copy, wSpaces_copy );
+      if( copy_content )
+      {
+         wSpace_copy = copy_workspace( wSpace );
+         AttachToList( wSpace_copy, list );
+         continue;
+      }
+      AttachToList( wSpace, list );
    }
    DetachIterator( &Iter );
 
-   return wSpaces_copy;
+   return list;
 }
 
-void copy_workspaces_into_list( LLIST *wSpaces, LLIST *copy_into_list )
+void copy_workspaces_into_list( LLIST *wSpaces, LLIST *copy_into_list, bool copy_content )
 {
    WORKSPACE *wSpace;
    WORKSPACE *wSpace_copy;
@@ -711,8 +716,13 @@ void copy_workspaces_into_list( LLIST *wSpaces, LLIST *copy_into_list )
    AttachIterator( &Iter, wSpaces );
    while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
    {
-      wSpace_copy = copy_workspace( wSpace );
-      AttachToList( wSpace_copy, copy_into_list );
+      if( copy_content )
+      {
+         wSpace_copy = copy_workspace( wSpace );
+         AttachToList( wSpace_copy, copy_into_list );
+         continue;
+      }
+      AttachToList( wSpace, copy_into_list );
    }
    DetachIterator( &Iter );
 

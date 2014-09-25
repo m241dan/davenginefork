@@ -231,6 +231,91 @@ int load_fixed_possessions_to_list( LLIST *fixed_contents, int id )
   return ret;
 }
 
+ENTITY_FRAMEWORK *copy_framework( ENTITY_FRAMEWORK *frame )
+{
+   ENTITY_FRAMEWORK *frame_copy;
+
+   if( !frame )
+   {
+      bug( "%s: passed a NULL frame.", __FUNCTION__ );
+      return NULL;
+   }
+
+   CREATE( frame_copy, ENTITY_FRAMEWORK, 1 );
+   frame_copy->tag = copy_tag( frame->tag );
+   frame_copy->name = strdup( frame->name );
+   frame_copy->short_descr = strdup( frame->short_descr );
+   frame_copy->long_descr = strdup( frame->long_descr );
+   frame_copy->description = strdup( frame->description );
+
+   frame_copy->fixed_contents = copy_framework_list( frame->fixed_contents, TRUE );
+   frame_copy->specifications = copy_specification_list( frame->specifications, FALSE );
+
+   frame_copy->inherits = copy_framework( frame->inherits );
+
+   return frame_copy;
+}
+
+LLIST *copy_framework_list( LLIST *frameworks, bool copy_content )
+{
+   ENTITY_FRAMEWORK *frame, *frame_copy;
+   LLIST *list;
+   ITERATOR Iter;
+
+   if( !frameworks )
+   {
+      bug( "%s: passed a NULL frameworks.", __FUNCTION__ );
+      return NULL;
+   }
+
+   list = AllocList();
+   AttachIterator( &Iter, frameworks );
+   while( ( frame = (ENTITY_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
+   {
+      if( copy_content )
+      {
+         frame_copy = copy_framework( frame );
+         AttachToList( frame_copy, list );
+         continue;
+      }
+      AttachToList( frame, list );
+   }
+   DetachIterator( &Iter );
+
+   return list;
+}
+
+void copy_frameworks_into_list( LLIST *frame_list, LLIST *copy_into_list, bool copy_content )
+{
+   ENTITY_FRAMEWORK *frame, *frame_copy;
+   ITERATOR Iter;
+
+   if( !frame_list )
+   {
+      bug( "%s: passed a NULL frame_list.", __FUNCTION__ );
+      return;
+   }
+   if( !copy_into_list )
+   {
+      bug( "%s: passed a NULL copy_into_list.", __FUNCTION__ );
+      return;
+   }
+
+   AttachIterator( &Iter, frame_list );
+   while( ( frame = (ENTITY_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
+   {
+      if( copy_content )
+      {
+         frame_copy = copy_framework( frame );
+         AttachToList( frame_copy, copy_into_list );
+         continue;
+      }
+      AttachToList( frame, copy_into_list );
+   }
+   DetachIterator( &Iter );
+   return;
+}
+
 ENTITY_FRAMEWORK *framework_list_has_by_id( LLIST *frameworks, int id )
 {
    ENTITY_FRAMEWORK *frame;
