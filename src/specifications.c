@@ -152,7 +152,7 @@ SPECIFICATION *copy_spec( SPECIFICATION *spec )
       return NULL;
    }
 
-   CREATE( spec, SPECIFICATION, 1 );
+   CREATE( spec_copy, SPECIFICATION, 1 );
    spec_copy->type = spec->type;
    spec_copy->value = spec->value;
    spec_copy->owner = strdup( spec->owner );
@@ -161,9 +161,7 @@ SPECIFICATION *copy_spec( SPECIFICATION *spec )
 
 LLIST *copy_specification_list( LLIST *spec_list, bool copy_content )
 {
-   SPECIFICATION *spec, *spec_copy;
    LLIST *list;
-   ITERATOR Iter;
 
    if( !spec_list )
    {
@@ -172,18 +170,7 @@ LLIST *copy_specification_list( LLIST *spec_list, bool copy_content )
    }
 
    list = AllocList();
-   AttachIterator( &Iter, spec_list );
-   while( ( spec = (SPECIFICATION *)NextInList( &Iter ) ) != NULL )
-   {
-      if( copy_content )
-      {
-         spec_copy = copy_spec( spec );
-         AttachToList( spec_copy, list );
-         continue;
-      }
-      AttachToList( spec, list );
-   }
-   DetachIterator( &Iter );
+   copy_specifications_into_list( spec_list, list, copy_content );
 
    return list;
 }
