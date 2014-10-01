@@ -258,9 +258,7 @@ ENTITY_FRAMEWORK *copy_framework( ENTITY_FRAMEWORK *frame )
 
 LLIST *copy_framework_list( LLIST *frameworks, bool copy_content )
 {
-   ENTITY_FRAMEWORK *frame, *frame_copy;
    LLIST *list;
-   ITERATOR Iter;
 
    if( !frameworks )
    {
@@ -269,18 +267,7 @@ LLIST *copy_framework_list( LLIST *frameworks, bool copy_content )
    }
 
    list = AllocList();
-   AttachIterator( &Iter, frameworks );
-   while( ( frame = (ENTITY_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
-   {
-      if( copy_content )
-      {
-         frame_copy = copy_framework( frame );
-         AttachToList( frame_copy, list );
-         continue;
-      }
-      AttachToList( frame, list );
-   }
-   DetachIterator( &Iter );
+   copy_frameworks_into_list( frameworks, list, copy_content ); 
 
    return list;
 }

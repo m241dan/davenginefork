@@ -669,9 +669,6 @@ WORKSPACE *copy_workspace( WORKSPACE *wSpace )
 LLIST *copy_workspace_list( LLIST *wSpaces, bool copy_content )
 {
    LLIST *list;
-   WORKSPACE *wSpace_copy;
-   WORKSPACE *wSpace;
-   ITERATOR Iter;
 
    if( !wSpaces || SizeOfList( wSpaces ) < 1 )
    {
@@ -680,18 +677,7 @@ LLIST *copy_workspace_list( LLIST *wSpaces, bool copy_content )
    }
 
    list = AllocList();
-   AttachIterator( &Iter, wSpaces );
-   while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
-   {
-      if( copy_content )
-      {
-         wSpace_copy = copy_workspace( wSpace );
-         AttachToList( wSpace_copy, list );
-         continue;
-      }
-      AttachToList( wSpace, list );
-   }
-   DetachIterator( &Iter );
+   copy_workspaces_into_list( wSpaces, list, copy_content );
 
    return list;
 }

@@ -275,6 +275,7 @@ void copy_all_workspace_and_contents( PROJECT *project, LLIST *workspace_list, L
    }
 
    copy_workspaces_into_list( project->workspaces, workspace_list, TRUE );
+   
    return;
 
 }
