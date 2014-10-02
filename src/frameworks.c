@@ -231,7 +231,7 @@ int load_fixed_possessions_to_list( LLIST *fixed_contents, int id )
   return ret;
 }
 
-ENTITY_FRAMEWORK *copy_framework( ENTITY_FRAMEWORK *frame )
+ENTITY_FRAMEWORK *copy_framework( ENTITY_FRAMEWORK *frame, bool copy_id, bool copy_content, bool copy_specs, bool copy_inheritance )
 {
    ENTITY_FRAMEWORK *frame_copy;
 
@@ -242,21 +242,34 @@ ENTITY_FRAMEWORK *copy_framework( ENTITY_FRAMEWORK *frame )
    }
 
    CREATE( frame_copy, ENTITY_FRAMEWORK, 1 );
-   frame_copy->tag = copy_tag( frame->tag );
    frame_copy->name = strdup( frame->name );
    frame_copy->short_descr = strdup( frame->short_descr );
    frame_copy->long_descr = strdup( frame->long_descr );
    frame_copy->description = strdup( frame->description );
 
-   frame_copy->fixed_contents = copy_framework_list( frame->fixed_contents, TRUE );
-   frame_copy->specifications = copy_specification_list( frame->specifications, FALSE );
+   if( copy_id )
+      frame_copy->tag = copy_tag( frame->tag );
+   else
+      frame_copy->tag = init_tag();
 
-   frame_copy->inherits = copy_framework( frame->inherits );
+   if( copy_content )
+      frame_copy->fixed_contents = copy_framework_list( frame->fixed_contents, TRUE, TRUE, TRUE, TRUE );
+   else
+      frame_copy->fixed_contents = AllocList();
+
+   if( copy_specs )
+      frame_copy->specifications = copy_specification_list( frame->specifications, TRUE );
+   else
+      frame_copy->specifications = AllocList();
+
+   if( copy_inheritance )
+      frame_copy->inherits = copy_framework( frame->inherits, TRUE, TRUE, TRUE, TRUE );
+   else
+      frame_copy->inherits = frame->inherits;
 
    return frame_copy;
 }
-
-LLIST *copy_framework_list( LLIST *frameworks, bool copy_content )
+LLIST *copy_framework_list( LLIST *frameworks, bool copy_id, bool copy_content, bool copy_specs, bool copy_inheritance )
 {
    LLIST *list;
 
@@ -267,12 +280,11 @@ LLIST *copy_framework_list( LLIST *frameworks, bool copy_content )
    }
 
    list = AllocList();
-   copy_frameworks_into_list( frameworks, list, copy_content ); 
+   copy_frameworks_into_list( frameworks, list, copy_id, copy_content, copy_specs, copy_inheritance );
 
    return list;
 }
-
-void copy_frameworks_into_list( LLIST *frame_list, LLIST *copy_into_list, bool copy_content )
+void copy_frameworks_into_list( LLIST *frame_list, LLIST *copy_into_list, bool copy_id, bool copy_content, bool copy_specs, bool copy_inheritance )
 {
    ENTITY_FRAMEWORK *frame, *frame_copy;
    ITERATOR Iter;
@@ -291,9 +303,9 @@ void copy_frameworks_into_list( LLIST *frame_list, LLIST *copy_into_list, bool c
    AttachIterator( &Iter, frame_list );
    while( ( frame = (ENTITY_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
    {
-      if( copy_content )
+      if( copy_id || copy_content || copy_specs || copy_inheritance )
       {
-         frame_copy = copy_framework( frame );
+         frame_copy = copy_framework( frame, copy_id, copy_content, copy_specs, copy_inheritance );
          AttachToList( frame_copy, copy_into_list );
          continue;
       }

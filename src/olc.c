@@ -628,12 +628,9 @@ bool workspace_list_has_name( LLIST *wSpaces, const char *name )
 }
 
 
-WORKSPACE *copy_workspace( WORKSPACE *wSpace )
+WORKSPACE *copy_workspace( WORKSPACE *wSpace, bool copy_frameworks, bool copy_instances )
 {
    WORKSPACE *wSpace_copy;
-   ENTITY_FRAMEWORK *frame;
-   ENTITY_INSTANCE *instance;
-   ITERATOR Iter;
 
    if( !wSpace )
    {
@@ -651,22 +648,13 @@ WORKSPACE *copy_workspace( WORKSPACE *wSpace )
    wSpace_copy->hide_frameworks = wSpace->hide_frameworks;
    wSpace_copy->hide_instances = wSpace->hide_instances;
 
-   wSpace_copy->frameworks = AllocList();
-   AttachIterator( &Iter, wSpace->frameworks );
-   while( ( frame = (ENTITY_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
-      AttachToList( frame, wSpace_copy->frameworks );
-   DetachIterator( &Iter );
-
-   wSpace_copy->instances = AllocList();
-   AttachIterator( &Iter, wSpace->instances );
-   while( ( instance = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
-      AttachToList( instance, wSpace_copy->instances );
-   DetachIterator( &Iter );
+   wSpace_copy->frameworks = copy_framework_list( wSpace->frameworks, copy_frameworks, copy_frameworks, copy_frameworks, copy_frameworks );
+   wSpace_copy->instances = copy_instance_list( wSpace->instances, copy_instances, copy_instances, copy_instances, copy_instances );
 
    return wSpace_copy;
 }
 
-LLIST *copy_workspace_list( LLIST *wSpaces, bool copy_content )
+LLIST *copy_workspace_list( LLIST *wSpaces, bool copy_instances, bool copy_frameworks )
 {
    LLIST *list;
 
@@ -677,12 +665,12 @@ LLIST *copy_workspace_list( LLIST *wSpaces, bool copy_content )
    }
 
    list = AllocList();
-   copy_workspaces_into_list( wSpaces, list, copy_content );
+   copy_workspaces_into_list( wSpaces, list, copy_instances, copy_frameworks);
 
    return list;
 }
 
-void copy_workspaces_into_list( LLIST *wSpaces, LLIST *copy_into_list, bool copy_content )
+void copy_workspaces_into_list( LLIST *wSpaces, LLIST *copy_into_list, bool copy_instances, bool copy_frameworks )
 {
    WORKSPACE *wSpace;
    WORKSPACE *wSpace_copy;
@@ -702,9 +690,9 @@ void copy_workspaces_into_list( LLIST *wSpaces, LLIST *copy_into_list, bool copy
    AttachIterator( &Iter, wSpaces );
    while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
    {
-      if( copy_content )
+      if( copy_instances || copy_frameworks )
       {
-         wSpace_copy = copy_workspace( wSpace );
+         wSpace_copy = copy_workspace( wSpace, copy_instances, copy_frameworks );
          AttachToList( wSpace_copy, copy_into_list );
          continue;
       }

@@ -348,6 +348,90 @@ void entity_from_contents_quick_sort( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *
    return;
 }
 
+ENTITY_INSTANCE *copy_instance( ENTITY_INSTANCE *instance, bool copy_id, bool copy_contents, bool copy_specs, bool copy_frame )
+{
+   ENTITY_INSTANCE *instance_copy;
+
+   if( !instance )
+   {
+      bug( "%s: passed a NULL instance.", __FUNCTION__ );
+      return NULL;
+   }
+
+   CREATE( instance_copy, ENTITY_INSTANCE, 1 );
+   instance_copy->level = instance->level;
+
+   if( copy_id )
+      instance_copy->tag = copy_tag( instance->tag );
+   else
+      instance_copy->tag = init_tag();
+
+   if( copy_contents )
+      instance_copy->contents = copy_instance_list( instance->contents, TRUE, TRUE, TRUE, TRUE );
+   else
+      instance_copy->contents = AllocList();
+
+   if( copy_specs )
+      instance_copy->specifications = copy_specification_list( instance->specifications, TRUE );
+   else
+      instance_copy->specifications = AllocList();
+
+   if( copy_frame )
+      instance_copy->framework = copy_framework( instance->framework, TRUE, TRUE, TRUE, TRUE );
+   else
+      instance_copy->framework = instance->framework;
+
+   return instance_copy;
+}
+
+LLIST *copy_instance_list( LLIST *instances, bool copy_id, bool copy_contents, bool copy_specs, bool copy_frame )
+{
+   LLIST *list;
+
+   if( !instances )
+   {
+      bug( "%s: passed a NULL instances.", __FUNCTION__ );
+      return NULL;
+   }
+
+   list = AllocList();
+   copy_instances_into_list( instances, list, copy_id, copy_contents, copy_specs, copy_frame );
+
+   return list;
+}
+void copy_instances_into_list( LLIST *instance_list, LLIST *copy_into_list, bool copy_id, bool copy_contents, bool copy_specs, bool copy_frame )
+{
+   ENTITY_INSTANCE *instance, *instance_copy;
+   ITERATOR Iter;
+
+   if( !instance_list )
+   {
+      bug( "%s: passed a NULL instance_list.", __FUNCTION__ );
+      return;
+   }
+
+   if( !copy_into_list )
+   {
+      bug( "%s: passed a NULL copy_into_list.", __FUNCTION__ );
+      return;
+   }
+
+   AttachIterator( &Iter, instance_list );
+   while( ( instance = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
+   {
+      if( copy_id || copy_contents || copy_specs || copy_frame )
+      {
+         instance_copy = copy_instance( instance, copy_id, copy_contents, copy_specs, copy_frame );
+         AttachToList( instance_copy, copy_into_list );
+         continue;
+      }
+      AttachToList( instance, copy_into_list );
+   }
+   DetachIterator( &Iter );
+   return;
+}
+
+
 ENTITY_INSTANCE *instance_list_has_by_id( LLIST *instance_list, int id )
 {
    ENTITY_INSTANCE *eInstance;

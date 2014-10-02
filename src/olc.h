@@ -60,9 +60,10 @@ int add_instance_to_workspace( ENTITY_INSTANCE *instance, WORKSPACE *wSpace );
 int add_workspace_to_olc( WORKSPACE *wSpace, INCEPTION *olc );
 int new_workspace_entry( WORKSPACE *wSpace, ID_TAG *tag );
 int load_workspace_entries( WORKSPACE *wSpace );
-WORKSPACE *copy_workspace( WORKSPACE *wSpace );
-LLIST *copy_workspace_list( LLIST *wSpaces, bool copy_content );
-void copy_workspaces_into_list( LLIST *wSpaces_list, LLIST *copy_into_list, bool copy_content );
+
+WORKSPACE *copy_workspace( WORKSPACE *wSpace, bool copy_instances, bool copy_frameworks );
+LLIST *copy_workspace_list( LLIST *wSpaces, bool copy_instances, bool copy_frameworks );
+void copy_workspaces_into_list( LLIST *wSpaces_list, LLIST *copy_into_list, bool copy_instances, bool copy_frameworks );
 
 bool workspace_list_has_name( LLIST *wSpaces, const char *name );
 
