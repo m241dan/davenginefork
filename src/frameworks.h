@@ -41,6 +41,8 @@ int load_fixed_possessions_to_list( LLIST *fixed_contents, int id );
 ENTITY_FRAMEWORK *copy_framework( ENTITY_FRAMEWORK *frame, bool copy_id, bool copy_content, bool copy_specs, bool copy_inheritance );
 LLIST *copy_framework_list( LLIST *frameworks, bool copy_id, bool copy_content, bool copy_specs, bool copy_inheritance );
 void copy_frameworks_into_list( LLIST *frame_list, LLIST *copy_into_list, bool copy_id, bool copy_content, bool copy_specs, bool copy_inheritance );
+ENTITY_FRAMEWORK *copy_framework_ndi( ENTITY_FRAMEWORK *frame, LLIST *frame_list );
+void copy_framework_list_ndi( LLIST *frame_list, LLIST *copy_into_list );
 
 ENTITY_FRAMEWORK *framework_list_has_by_id( LLIST *frameworks, int id );
 ENTITY_FRAMEWORK *framework_list_has_by_name( LLIST *frameworks, const char *name );
