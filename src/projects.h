@@ -29,7 +29,7 @@ void load_project_into_olc( PROJECT *project, INCEPTION *olc );
 void export_project( PROJECT *project );
 void copy_all_workspace_and_contents( PROJECT *project, LLIST *workspace_list, LLIST *framework_list, LLIST *instance_list );
 void copy_all_instance_frames_into_list_ndi( LLIST *instance_list, LLIST *frame_list );
-void copy_all_framework_inheritance_into_list_ndi( LLIST *frame_list, LLIST *copy_into_list );
+void swap_and_track_workspace_ids( LLIST *workspace_list, int *id_tracker_table );
 
 void project_newProject( void *passed, char *arg );
 void project_openProject( void *passed, char *arg );

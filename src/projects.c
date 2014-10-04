@@ -230,12 +230,16 @@ void load_project_into_olc( PROJECT *project, INCEPTION *olc )
    load_project_workspaces_into_olc( project, olc );
    return;
 }
-
+/*
 void export_project( PROJECT *project )
 {
    LLIST *workspace_list;
    LLIST *framework_list;
    LLIST *instance_list;
+
+   int *workspace_ids;
+   int *instance_ids;
+   int *framework_ids;
 
    if( !project )
    {
@@ -249,14 +253,17 @@ void export_project( PROJECT *project )
 
    copy_all_workspace_and_contents( project, workspace_list, framework_list, instance_list );
    copy_all_instance_frames_into_list_ndi( instance_list, framework_list );
-   copy_all_framework_inheritance_into_list_ndi( framework_list, framework_list );
+
+   CREATE( workspace_ids, int, SizeOfList( workspace_list ) );
+   CREATE( instance_ids, int, SizeOfList( instance_list ) );
+   CREATE( framework_ids, int, SizeOfList( framework_list ) );
+
+   swap_and_track_workspace_ids( workspace_list, workspace_ids );
 
 }
-
+*/
 void copy_all_workspace_and_contents( PROJECT *project, LLIST *workspace_list, LLIST *framework_list, LLIST *instance_list )
 {
-   ENTITY_INSTANCE *instance;
-   ENTITY_FRAMEWORK *frame;
    WORKSPACE *wSpace;
    ITERATOR Iter;
 
@@ -288,13 +295,37 @@ void copy_all_workspace_and_contents( PROJECT *project, LLIST *workspace_list, L
    while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
    {
       copy_instance_list_ndi( wSpace->instances, instance_list );
-      copy_framework_list_ndi( wSpace->frameworks, frameworklist);
+      copy_framework_list_ndi( wSpace->frameworks, framework_list);
    }
    DetachIterator( &Iter );
 
    return;
 }
 
+void copy_all_instance_frames_into_list_ndi( LLIST *instance_list, LLIST *frame_list )
+{
+   ENTITY_INSTANCE *instance;
+   ITERATOR Iter;
+
+   if( !instance_list )
+   {
+      bug( "%s: passed a NULL instance_list.", __FUNCTION__ );
+      return;
+   }
+
+   if( !frame_list )
+   {
+      bug( "%s: passed a NULL frame_list.", __FUNCTION__ );
+      return;
+   }
+
+   AttachIterator( &Iter, instance_list );
+   while( ( instance = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
+      copy_framework_ndi( instance->framework, frame_list );
+   DetachIterator( &Iter );
+
+   return;
+}
 
 void project_newProject( void *passed, char *arg )
 {
