@@ -39,3 +39,8 @@ int get_new_id( int type );
 int get_potential_id( int type );
 
 ID_TAG *copy_tag( ID_TAG *tag );
+
+int *build_workspace_id_table( LLIST *workspace_list );
+int *build_instance_id_table( LLIST *instance_list );
+int *build_framework_id_table( LLIST *framework_list );
+int get_id_table_position( int *table, int id );

@@ -499,6 +499,34 @@ void copy_instance_list_ndi( LLIST *instance_list, LLIST *copy_into_list )
    return;
 }
 
+void append_instance_lists_ndi( LLIST *instance_list, LLIST *append_list )
+{
+   ENTITY_INSTANCE *instance;
+   ITERATOR Iter;
+
+   if( !instance_list )
+   {
+      bug( "%s: passed NULL instance_list.", __FUNCTION__ );
+      return;
+   }
+   if( !append_list )
+   {
+      bug( "%s: passed a NULL append_list,", __FUNCTION__ );
+      return;
+   }
+
+   AttachIterator( &Iter, instance_list );
+   while( ( instance = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
+   {
+      if( instance_list_has_by_id( instance, append_list ) )
+         continue;
+      AttachToList( instance, append_list );
+   }
+   DetachIterator( &Iter );
+
+   return;
+}
+
 ENTITY_INSTANCE *instance_list_has_by_id( LLIST *instance_list, int id )
 {
    ENTITY_INSTANCE *eInstance;

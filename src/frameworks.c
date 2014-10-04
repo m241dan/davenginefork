@@ -384,6 +384,34 @@ void copy_framework_list_ndi( LLIST *frame_list, LLIST *copy_into_list )
    return;
 }
 
+void append_framework_lists_ndi( LLIST *frame_list, LLIST *append_list )
+{
+   ENTITY_FRAMEWORK *frame;
+   ITERATOR Iter;
+
+   if( !frame_list )
+   {
+      bug( "%s: passed a NULL frame_list.", __FUNCTION__ );
+      return;
+   }
+   if( !append_list )
+   {
+      bug( "%s: passed a NULL append_list.", __FUNCTION__ );
+      return;
+   }
+
+   AttachIterator( &Iter, frame_list );
+   while( ( frame = (ENTITY_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
+   {
+      if( framework_list_has_by_id( frame, append_list ) )
+         continue;
+      AttachToList( frame, append_list );
+   }
+   DetachIterator( &Iter );
+
+   return;
+}
+
 ENTITY_FRAMEWORK *framework_list_has_by_id( LLIST *frameworks, int id )
 {
    ENTITY_FRAMEWORK *frame;

@@ -347,3 +347,80 @@ ID_TAG *copy_tag( ID_TAG *tag )
 
    return tag_copy;
 }
+
+int *build_workspace_id_table( LLIST *workspace_list )
+{
+   WORKSPACE *wSpace;
+   int *table;
+   ITERATOR Iter;
+
+   if( !workspace_list )
+   {
+      bug( "%s: passed a NULL workspace_list.", __FUNCTION__ );
+      return NULL;
+   }
+
+   CREATE( table, int, SizeOfList( workspace_list ) );
+   AttachIterator( &Iter, workspace_list );
+   while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
+      *table++ = wSpace->tag->id;
+   DetachIterator( &Iter );
+
+   *table = -1; /* terminator */
+   return table;
+}
+
+int *build_instance_id_table( LLIST *instance_list )
+{
+   ENTITY_INSTANCE *instance;
+   int *table;
+   ITERATOR Iter;
+
+   if( !instance_list )
+   {
+      bug( "%s: passed a NULL instance_list.", __FUNCTION__ );
+      return NULL;
+   }
+
+   CREATE( table, int, SizeOfList( instance_list ) );
+   AttachIterator( &Iter, instance_list );
+   while( ( instance = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
+      *table++ = instance->tag->id;
+   DetachIterator( &Iter ):
+
+   *table = -1; /* terminator */
+   return table;
+}
+
+int *build_framework_id_table( LLIST *framework_list )
+{
+   ENTITY_FRAMEWORK *frame;
+   int *table;
+   ITERATOR Iter;
+
+   if( !framework_list )
+   {
+      bug( "%s: passed a NULL framework_list.", __FUNCTION__ );
+      return NULL;
+   }
+
+   CREATE( table, int, SizeOfList( framework_list ) );
+   AttachIterator( &Iter, framework_list );
+   while( ( frame = (ENTITY_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
+      *table++ = frame->tag->id;
+   DetachIterator( &Iter );
+
+   *table = -1; /* terminator */
+   return table;
+}
+
+int get_id_table_position( int *table, int id )
+{
+   int x;
+
+   for( x = 0; table[x] != -1; x++ )
+      if( table[x] == id )
+         return x;
+
+   return -1;
+}

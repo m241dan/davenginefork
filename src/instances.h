@@ -58,6 +58,7 @@ LLIST *copy_instance_list( LLIST *instances, bool copy_id, bool copy_contents, b
 void copy_instances_into_list( LLIST *instance_list, LLIST *copy_into_list, bool copy_id, bool copy_contents, bool copy_specs, bool copy_frame );
 ENTITY_INSTANCE *copy_instance_ndi( ENTITY_INSTANCE *instance, LLIST *instance_list ); /* no duplicate ids */
 void copy_instance_list_ndi( LLIST *instance_list, LLIST *copy_into_list );
+void append_instance_lists_ndi( LLIST *instance_list, LLIST *append_list );
 
 ENTITY_INSTANCE *instance_list_has_by_id( LLIST *instance_list, int id );
 ENTITY_INSTANCE *instance_list_has_by_name( LLIST *instance_list, const char *name );

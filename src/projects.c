@@ -231,11 +231,13 @@ void load_project_into_olc( PROJECT *project, INCEPTION *olc )
    return;
 }
 
+/* this monster needs factoring */
 void export_project( PROJECT *project )
 {
    WORKSPACE *wSpace;
    ENTITY_FRAMEWORK *frame;
    ENTITY_INSTANCE *instance;
+   LLIST *frame_list, *instance_list;
    ITERATOR Iter, IterTwo;
    char pDir[MAX_BUFFER];
 
@@ -243,22 +245,8 @@ void export_project( PROJECT *project )
    int *framework_id_table;
    int *instance_id_table;
 
-   int max_workspaces = 0;
-   int max_frameworks = 0;
-   int max_instances = 0;
-
-   max_workspaces = SizeOfList( project->workspaces );
-   AttachIterator( &Iter, project->workspaces );
-   while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
-   {
-      max_frameworks += SizeOfList( wSpace->frameworks );
-      max_instances += SizeOfList( wSpace->instances );
-   }
-   DetachIterator( &Iter );
-
-   CREATE( workspace_id_table, int, max_workspaces );
-   CREATE( framework_id_table, int, max_frameworks );
-   CREATE( instance_id_table, int, max_instances );
+   frame_list = AllocList();
+   instance_list = AllocList();
 
    mud_printf( pDir, "../projects/%s-%s", project->name, ctime( &current_time ) );
    if( opendir( pDir ) == NULL )
@@ -270,28 +258,47 @@ void export_project( PROJECT *project )
       }
    }
 
+   /* write our grand lists for id tables */
    AttachIterator( &Iter, project->workspaces );
    while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
    {
-      AttachIterator( &IterTwo, wSpace->instances );
-      while( ( instance = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
-      {
-         if( check_exported( instance->tag, instance_id_table ) )
-            continue;
-         save_instance_export( &pDir, instance, instance_id_table, framework_id_table );
-      }
-      DetachIterator( &IterTwo );
-      AttachIterator( &IterTwo, wSpace->frameworks );
-      while( ( frame = (ENTITY_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
-      {
-         if( check_exported( frame->tag, framework_id_table ) )
-            continue;
-         save_framework_export( &pDir, frame, framework_id_table );
-      }
-      DetachIterator( &IterTwo );
-      save_workspace_export( &pDir, wSpace, workspace_id_table );
+      append_instance_lists_ndi( wSpace->instances, instance_list );
+      append_framework_lists_ndi( wSpace->frameworks, framework_list );
    }
    DetachIterator( &Iter );
+
+   /* make sure to include instanced content, need to factor out a method for recursion before this willfully work */
+   AttachIterator( &Iter, instance_list );
+   while( ( instance = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
+      append_instance_lists_ndi( instance->contents, instance_list );
+   DetachIterator( &Iter, instance_list );
+
+   /* make sure to include framework fixed_content, need to factor out a method for recursion before this will fully work */
+   AttachIterator( &Iter, framework_list );
+   while( ( frame = (ENTITY_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
+      append_framework_lists_ndi( frame->fixed_contents, framework_list );
+   DetachIterator( &Iter );
+
+   /* make sure to include inheritance */
+   AttachIterator( &Iter, framework_list );
+   while( ( frame = (ENTITY_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
+   {
+      while( ( frame = frame->inherits ) != NULL )
+      {
+         if( !framework_list_has_by_id( frame->inherits, framework_list )
+            AttachToList( frame->inherits, framework_list );
+      }
+   }
+   DetachIterator( &Iter );
+
+   /* build workspace_id_table first */
+   workspace_id_table = build_workspace_id_table( workspace_list );
+   instance_id_table = build_instance_id_table( instance_list );
+   framework_id_table = build_framework_id_table( framework_list );
+
+   /* commence writing */
+   /* writing is here*/
+
    FREE( workspace_id_table );
    FREE( instance_id_table );
    FREE( framework_id_table );
