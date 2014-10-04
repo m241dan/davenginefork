@@ -27,9 +27,11 @@ void rem_workspace_from_project( WORKSPACE *wSpace, PROJECT *project );
 void load_project_into_olc( PROJECT *project, INCEPTION *olc );
 
 void export_project( PROJECT *project );
+void save_instance_export( char *pDir, ENTITY_INSTANCE *instance, int *instance_id_table, int *framework_id_table );
+void fwrite_instance_export( ENTITY_INSTANCE *instance, int *instance_id_table, int *framework_id_table );
+
 void copy_all_workspace_and_contents( PROJECT *project, LLIST *workspace_list, LLIST *framework_list, LLIST *instance_list );
 void copy_all_instance_frames_into_list_ndi( LLIST *instance_list, LLIST *frame_list );
-void swap_and_track_workspace_ids( LLIST *workspace_list, int *id_tracker_table );
 
 void project_newProject( void *passed, char *arg );
 void project_openProject( void *passed, char *arg );

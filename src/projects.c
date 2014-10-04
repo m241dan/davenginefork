@@ -237,6 +237,7 @@ void export_project( PROJECT *project )
    ENTITY_FRAMEWORK *frame;
    ENTITY_INSTANCE *instance;
    ITERATOR Iter, IterTwo;
+   char pDir[MAX_BUFFER];
 
    int *workspace_id_table;
    int *framework_id_table;
@@ -259,6 +260,16 @@ void export_project( PROJECT *project )
    CREATE( framework_id_table, int, max_frameworks );
    CREATE( instance_id_table, int, max_instances );
 
+   mud_printf( pDir, "../projects/%s-%s", project->name, ctime( &current_time ) );
+   if( opendir( pDir ) == NULL )
+   {
+      if( ( mkdir( pDir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH ) ) != 0 ) /* was unsuccessful */
+      {
+         bug( "Unable to create folder for the new account: %s", account->name );
+         return;
+      }
+   }
+
    AttachIterator( &Iter, project->workspaces );
    while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
    {
@@ -267,7 +278,7 @@ void export_project( PROJECT *project )
       {
          if( check_exported( instance->tag, instance_id_table ) )
             continue;
-         fwrite_instance_export( instance, instance_id_table, framework_id_table );
+         save_instance_export( &pDir, instance, instance_id_table, framework_id_table );
       }
       DetachIterator( &IterTwo );
       AttachIterator( &IterTwo, wSpace->frameworks );
@@ -275,10 +286,10 @@ void export_project( PROJECT *project )
       {
          if( check_exported( frame->tag, framework_id_table ) )
             continue;
-         fwrite_framework_export( frame, framework_id_table );
+         save_framework_export( &pDir, frame, framework_id_table );
       }
       DetachIterator( &IterTwo );
-      fwrite_workspace_export( wSpace, workspace_id_table );
+      save_workspace_export( &pDir, wSpace, workspace_id_table );
    }
    DetachIterator( &Iter );
    FREE( workspace_id_table );
@@ -287,10 +298,37 @@ void export_project( PROJECT *project )
    return;
 }
 
-void fwrite_instance_export( ENTITY_INSTANCE *instance, int *instance_id_table, int *framework_id_table )
+void save_instance_export( char *pDir, ENTITY_INSTANCE *instance, int *instance_id_table, int *frameworK_id_table )
 {
+   FILE *fp;
+   int new_id;
 
+   new_id = update_id_table( instance->tag, instance_id_table );
+   if( ( fp = fopen( quick_format( "%s/%d.instance", pDir, new_id ), "w" ) ) == NULL )
+   {
+      bug( "%s: Unable to write instance (%d)%s.", instance->tag, instance_name( instance ) );
+      return;
+   }
+   fwrite_instance_export( fp, instance, instance_id_table, framework_id_table );
+   fprintf( fp, "%s\n", FILE_TERMINATOR );
+   fclose( fp );
+   return;
 }
+
+void fwrite_instance_export( FILE *fp, ENTITY_INSTANCE *instance, int *instance_id_table, int *framework_id_table )
+{
+   fprintf( fp, "#IDTAG\n" );
+   fprintf( fp, "ID           %d\n", get_new_id_from_table( instance->tag ) );
+   fprintf( fp, "CreatedOn    %s~\n", instance->tag->created_on );
+   fprintf( fp, "CreatedBy    %s~\n", instance->tag->created_by );
+   fprintf( fp, "ModifiedOn   %s~\n", instance->tag->modified_on );
+   fprintf( fp, "ModifiedBy   %s~\n", instance->tag->modified_by );
+   fprintf( fp, "END\n\n" );
+
+   fprintf( fp, "#INSTANCE\n" );
+   fprintf( fp, "Level        %d\n", instance->level );
+}
+
 /*
 void export_project( PROJECT *project )
 {
