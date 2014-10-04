@@ -230,6 +230,67 @@ void load_project_into_olc( PROJECT *project, INCEPTION *olc )
    load_project_workspaces_into_olc( project, olc );
    return;
 }
+
+void export_project( PROJECT *project )
+{
+   WORKSPACE *wSpace;
+   ENTITY_FRAMEWORK *frame;
+   ENTITY_INSTANCE *instance;
+   ITERATOR Iter, IterTwo;
+
+   int *workspace_id_table;
+   int *framework_id_table;
+   int *instance_id_table;
+
+   int max_workspaces = 0;
+   int max_frameworks = 0;
+   int max_instances = 0;
+
+   max_workspaces = SizeOfList( project->workspaces );
+   AttachIterator( &Iter, project->workspaces );
+   while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
+   {
+      max_frameworks += SizeOfList( wSpace->frameworks );
+      max_instances += SizeOfList( wSpace->instances );
+   }
+   DetachIterator( &Iter );
+
+   CREATE( workspace_id_table, int, max_workspaces );
+   CREATE( framework_id_table, int, max_frameworks );
+   CREATE( instance_id_table, int, max_instances );
+
+   AttachIterator( &Iter, project->workspaces );
+   while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
+   {
+      AttachIterator( &IterTwo, wSpace->instances );
+      while( ( instance = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
+      {
+         if( check_exported( instance->tag, instance_id_table ) )
+            continue;
+         fwrite_instance_export( instance, instance_id_table, framework_id_table );
+      }
+      DetachIterator( &IterTwo );
+      AttachIterator( &IterTwo, wSpace->frameworks );
+      while( ( frame = (ENTITY_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
+      {
+         if( check_exported( frame->tag, framework_id_table ) )
+            continue;
+         fwrite_framework_export( frame, framework_id_table );
+      }
+      DetachIterator( &IterTwo );
+      fwrite_workspace_export( wSpace, workspace_id_table );
+   }
+   DetachIterator( &Iter );
+   FREE( workspace_id_table );
+   FREE( instance_id_table );
+   FREE( framework_id_table );
+   return;
+}
+
+void fwrite_instance_export( ENTITY_INSTANCE *instance, int *instance_id_table, int *framework_id_table )
+{
+
+}
 /*
 void export_project( PROJECT *project )
 {
