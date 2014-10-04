@@ -248,11 +248,18 @@ void export_project( PROJECT *project )
    instance_list = AllocList();
 
    copy_all_workspace_and_contents( project, workspace_list, framework_list, instance_list );
+   copy_all_instance_frames_into_list_ndi( instance_list, framework_list );
+   copy_all_framework_inheritance_into_list_ndi( framework_list, framework_list );
 
 }
 
 void copy_all_workspace_and_contents( PROJECT *project, LLIST *workspace_list, LLIST *framework_list, LLIST *instance_list )
 {
+   ENTITY_INSTANCE *instance;
+   ENTITY_FRAMEWORK *frame;
+   WORKSPACE *wSpace;
+   ITERATOR Iter;
+
    if( !project )
    {
       bug( "%s: passed a NULL project.", __FUNCTION__ );
@@ -273,8 +280,19 @@ void copy_all_workspace_and_contents( PROJECT *project, LLIST *workspace_list, L
       bug( "%s: passed a NULL instance_list.", __FUNCTION__ );
       return;
    }
-   return;
 
+   copy_workspaces_into_list( project->workspaces, workspace_list, FALSE, FALSE );
+
+   /* instances first then frameworks per workspace, this could be factored later */
+   AttachIterator( &Iter, workspace_list );
+   while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
+   {
+      copy_instance_list_ndi( wSpace->instances, instance_list );
+      copy_framework_list_ndi( wSpace->frameworks, frameworklist);
+   }
+   DetachIterator( &Iter );
+
+   return;
 }
 
 
