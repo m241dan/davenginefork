@@ -286,7 +286,10 @@ void save_instance_export( char *pDir, ENTITY_INSTANCE *instance, int *instance_
    int new_id;
 
    new_id = get_id_table_position( instance_id_table, instance->tag->id );
-   if( ( fp = fopen( quick_format( "%s/%d.instance", pDir, new_id ), "w" ) ) == NULL )
+
+   bug( "%s: %d", new_id );
+
+   if( ( fp = fopen( quick_format( "%s/i%d.instance", pDir, new_id ), "w" ) ) == NULL )
    {
       bug( "%s: Unable to write instance (%d)%s.", instance->tag, instance_name( instance ) );
       return;
@@ -367,9 +370,10 @@ void export_project( PROJECT *project )
 char *create_project_directory( PROJECT *project )
 {
    static char pDir[MAX_BUFFER];
+   memset( &pDir[0], 0, sizeof( pDir ) );
 
    mud_printf( pDir, "../projects/%s-%s", project->name, ctime( &current_time ) );
-   if( opendir( pDir ) == NULL )
+   if( opendir( smash_newline( pDir ) ) == NULL )
    {
       if( ( mkdir( pDir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH ) ) != 0 ) /* was unsuccessful */
       {

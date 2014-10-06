@@ -454,6 +454,7 @@ char *strip_nl( const char *str );
 const char *handle_pagewidth( int width, const char *txt );
 bool is_number( const char *arg );
 char *smash_color( const char *str );
+char *smash_newline( const char * str );
 int color_count( const char *str );
 void add_spaces( char *str, int amount );
 void add_lead_space( char *str, int amount );

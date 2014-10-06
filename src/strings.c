@@ -514,6 +514,28 @@ char *smash_color( const char *str )
    return ret;
 }
 
+char *smash_newline( const char *str )
+{
+   static char ret[MAX_BUFFER];
+   char *retptr;
+
+   memset( &ret[0], 0, sizeof( ret ) );
+   retptr = ret;
+
+   if( str == NULL )
+      return NULL;
+
+   for( ; *str != '\0'; str++ )
+   {
+      if( *str == '\n' )
+         str++;
+      else
+         *retptr = *str;
+   }
+   *retptr = '\0';
+   return ret;
+}
+
 int color_count( const char *str )
 {
    int count = 0;
@@ -697,6 +719,7 @@ const char *itos( int value )
 const char *quick_format( const char *format, ... )
 {
    static char buf[MAX_BUFFER];
+   memset( &buf, 0, sizeof( buf ) );
    va_list va;
    int res;
 
