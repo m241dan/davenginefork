@@ -27,10 +27,21 @@ void rem_workspace_from_project( WORKSPACE *wSpace, PROJECT *project );
 void load_project_into_olc( PROJECT *project, INCEPTION *olc );
 
 void export_project( PROJECT *project );
+
+void save_workspace_list_export( LLIST *workspace_list, char *directory, int *workspace_id_table, int *instance_id_table, int *framework_id_table );
+void save_workspace_export( char *pDir, WORKSPACE *wSpace, int *workspace_id_table, int *instance_id_table, int *framework_id_table );
+void fwrite_workspace_export( FILE *fp, WORKSPACE *wSpace, int *workspace_id_table, int *instance_id_table, int *framework_id_table );
+void fwrite_workspace_entries_export( FILE *fp, WORKSPACE *wSpace, int *instance_id_table, int *framework_id_table );
+
 void save_instance_list_export( LLIST *instance_list, char *directory, int *instance_id_table, int *framework_id_table );
 void save_instance_export( char *pDir, ENTITY_INSTANCE *instance, int *instance_id_table, int *framework_id_table );
 void fwrite_instance_export( FILE *fp, ENTITY_INSTANCE *instance, int *instance_id_table, int *framework_id_table );
-void fwrite_instance_content_list_export( FILE *fp, LLIST *contents	, int *instance_id_table );
+void fwrite_instance_content_list_export( FILE *fp, LLIST *contents, int *instance_id_table );
+
+void save_framework_list_export( LLIST *instance_list, char *directory, int *framework_id_table );
+void save_framework_export( char *pDir, ENTITY_FRAMEWORK *frame, int *framework_id_table );
+void fwrite_frameowrk_export( FILE *fp, WORKSPACE *wSpace, int *framework_id_table );
+void fwrite_framework_content_list_export( FILE *fp, LLIST *contents, int *framework_id_table );
 
 char *create_project_directory( PROJECT *project );
 void create_complete_framework_and_instance_list_from_workspace_list( LLIST *workspace_list, LLIST *instance_list, LLIST *framework_list );
