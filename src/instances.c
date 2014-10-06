@@ -170,7 +170,7 @@ void full_load_instance( ENTITY_INSTANCE *instance )
 {
    ENTITY_FRAMEWORK *frame;
    ENTITY_INSTANCE *instance_to_contain;
-   MYSQL_ROW *row;
+   MYSQL_ROW row;
    LLIST *list;
    ITERATOR Iter;
    int id_to_load;
@@ -194,13 +194,21 @@ void full_load_instance( ENTITY_INSTANCE *instance )
    }
 
    list = AllocList();
-   db_query_list_row( list, quick_format( "SELECT %s FROM `entity_instances` WHERE containedBy=%d;", tag_table_whereID[ENTITY_INSTANCE_IDS], instance->tag->id ) );
-   AttachIterator( &Iter, list );
-   while( ( row = (MYSQL_ROW *)NextInList( &Iter ) ) != NULL )
+   if( !db_query_list_row( list, quick_format( "SELECT %s FROM `entity_instances` WHERE containedBy=%d;", tag_table_whereID[ENTITY_INSTANCE_IDS], instance->tag->id ) ) )
    {
-      id_to_load = atoi( (*row)[0] );
+      FreeList( list );
+      bug( "%s: could not load contents, bad list.", __FUNCTION__ );
+      return;
+   }
+   AttachIterator( &Iter, list );
+   while( ( row = (MYSQL_ROW)NextInList( &Iter ) ) != NULL )
+   {
+      id_to_load = atoi( (row)[0] );
       if( ( instance_to_contain = get_instance_by_id( id_to_load ) ) == NULL )
+      {
+         bug( "continuing" );
          continue;
+      }
       full_load_instance( instance_to_contain );
       if( !instance_list_has_by_id( instance->contents, id_to_load ) )
          entity_to_contents( instance_to_contain, instance );
@@ -518,7 +526,7 @@ void append_instance_lists_ndi( LLIST *instance_list, LLIST *append_list )
    AttachIterator( &Iter, instance_list );
    while( ( instance = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
    {
-      if( instance_list_has_by_id( instance, append_list ) )
+      if( instance_list_has_by_id( append_list, instance->tag->id ) )
          continue;
       AttachToList( instance, append_list );
    }
@@ -1102,6 +1110,7 @@ void entity_look( void *passed, char *arg )
    ENTITY_INSTANCE *instance = (ENTITY_INSTANCE *)passed;
    show_ent_to_ent( instance, instance->contained_by );
    show_ent_contents_to_ent( instance, instance->contained_by );
+   text_to_entity( instance, "\r\n" );
    return;
 }
 

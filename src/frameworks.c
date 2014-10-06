@@ -403,7 +403,7 @@ void append_framework_lists_ndi( LLIST *frame_list, LLIST *append_list )
    AttachIterator( &Iter, frame_list );
    while( ( frame = (ENTITY_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
    {
-      if( framework_list_has_by_id( frame, append_list ) )
+      if( framework_list_has_by_id( append_list, frame->tag->id ) )
          continue;
       AttachToList( frame, append_list );
    }

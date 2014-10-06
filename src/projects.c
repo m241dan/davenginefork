@@ -234,83 +234,58 @@ void load_project_into_olc( PROJECT *project, INCEPTION *olc )
 /* this monster needs factoring */
 void export_project( PROJECT *project )
 {
-   WORKSPACE *wSpace;
-   ENTITY_FRAMEWORK *frame;
-   ENTITY_INSTANCE *instance;
-   LLIST *frame_list, *instance_list;
-   ITERATOR Iter, IterTwo;
-   char pDir[MAX_BUFFER];
-
+   LLIST *framework_list, *instance_list;
    int *workspace_id_table;
    int *framework_id_table;
    int *instance_id_table;
+   char directory[MAX_BUFFER];
 
-   frame_list = AllocList();
+   /* craft directory for our project */
+   mud_printf( directory, "%s", create_project_directory( project ) );
+
+   framework_list = AllocList();
    instance_list = AllocList();
 
-   mud_printf( pDir, "../projects/%s-%s", project->name, ctime( &current_time ) );
-   if( opendir( pDir ) == NULL )
-   {
-      if( ( mkdir( pDir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH ) ) != 0 ) /* was unsuccessful */
-      {
-         bug( "Unable to create folder for the new account: %s", account->name );
-         return;
-      }
-   }
-
    /* write our grand lists for id tables */
-   AttachIterator( &Iter, project->workspaces );
-   while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
-   {
-      append_instance_lists_ndi( wSpace->instances, instance_list );
-      append_framework_lists_ndi( wSpace->frameworks, framework_list );
-   }
-   DetachIterator( &Iter );
-
-   /* make sure to include instanced content, need to factor out a method for recursion before this willfully work */
-   AttachIterator( &Iter, instance_list );
-   while( ( instance = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
-      append_instance_lists_ndi( instance->contents, instance_list );
-   DetachIterator( &Iter, instance_list );
-
-   /* make sure to include framework fixed_content, need to factor out a method for recursion before this will fully work */
-   AttachIterator( &Iter, framework_list );
-   while( ( frame = (ENTITY_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
-      append_framework_lists_ndi( frame->fixed_contents, framework_list );
-   DetachIterator( &Iter );
-
-   /* make sure to include inheritance */
-   AttachIterator( &Iter, framework_list );
-   while( ( frame = (ENTITY_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
-   {
-      while( ( frame = frame->inherits ) != NULL )
-      {
-         if( !framework_list_has_by_id( frame->inherits, framework_list )
-            AttachToList( frame->inherits, framework_list );
-      }
-   }
-   DetachIterator( &Iter );
+   create_complete_framework_and_instance_list_from_workspace_list( project->workspaces, instance_list, framework_list );
 
    /* build workspace_id_table first */
-   workspace_id_table = build_workspace_id_table( workspace_list );
+   workspace_id_table = build_workspace_id_table( project->workspaces );
    instance_id_table = build_instance_id_table( instance_list );
    framework_id_table = build_framework_id_table( framework_list );
 
    /* commence writing */
-   /* writing is here*/
+/*  save_workspace_list_export( project->workspaces, &directory, workspace_id_table ); */
+   save_instance_list_export( instance_list, directory, instance_id_table, framework_id_table );
+/*   save_framework_list_export( framework_list, &directory, framework_id_table ); */
 
+   /* free memory */
+   CLEARLIST( framework_list, ENTITY_FRAMEWORK );
+   FreeList( framework_list );
+   CLEARLIST( instance_list, ENTITY_INSTANCE );
+   FreeList( instance_list );
    FREE( workspace_id_table );
    FREE( instance_id_table );
    FREE( framework_id_table );
    return;
 }
 
-void save_instance_export( char *pDir, ENTITY_INSTANCE *instance, int *instance_id_table, int *frameworK_id_table )
+void save_instance_list_export( LLIST *instance_list, char *directory, int *instance_id_table, int *framework_id_table )
+{
+   ENTITY_INSTANCE *instance;
+   ITERATOR Iter;
+
+   AttachIterator( &Iter, instance_list );
+   while( ( instance = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
+      save_instance_export( directory, instance, instance_id_table, framework_id_table );
+}
+
+void save_instance_export( char *pDir, ENTITY_INSTANCE *instance, int *instance_id_table, int *framework_id_table )
 {
    FILE *fp;
    int new_id;
 
-   new_id = update_id_table( instance->tag, instance_id_table );
+   new_id = get_id_table_position( instance_id_table, instance->tag->id );
    if( ( fp = fopen( quick_format( "%s/%d.instance", pDir, new_id ), "w" ) ) == NULL )
    {
       bug( "%s: Unable to write instance (%d)%s.", instance->tag, instance_name( instance ) );
@@ -325,7 +300,7 @@ void save_instance_export( char *pDir, ENTITY_INSTANCE *instance, int *instance_
 void fwrite_instance_export( FILE *fp, ENTITY_INSTANCE *instance, int *instance_id_table, int *framework_id_table )
 {
    fprintf( fp, "#IDTAG\n" );
-   fprintf( fp, "ID           %d\n", get_new_id_from_table( instance->tag ) );
+   fprintf( fp, "ID           %d\n", get_id_table_position( instance_id_table, instance->tag->id ) );
    fprintf( fp, "CreatedOn    %s~\n", instance->tag->created_on );
    fprintf( fp, "CreatedBy    %s~\n", instance->tag->created_by );
    fprintf( fp, "ModifiedOn   %s~\n", instance->tag->modified_on );
@@ -334,6 +309,26 @@ void fwrite_instance_export( FILE *fp, ENTITY_INSTANCE *instance, int *instance_
 
    fprintf( fp, "#INSTANCE\n" );
    fprintf( fp, "Level        %d\n", instance->level );
+
+   fwrite_instance_content_list_export( fp, instance->contents, instance_id_table );
+   fwrite_specifications( fp, instance->specifications );
+
+   fprintf( fp, "Framework    %d\n", get_id_table_position( framework_id_table, instance->framework->tag->id ) );
+   fprintf( fp, "ContainedBy  %d\n", get_id_table_position( instance_id_table, instance->contained_by->tag->id ) );
+   fprintf( fp, "END\n\n" );
+}
+
+void fwrite_instance_content_list_export( FILE *fp, LLIST *contents, int *instance_id_table )
+{
+   ENTITY_INSTANCE *content;
+   ITERATOR Iter;
+
+   AttachIterator( &Iter, contents );
+   while( ( content = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
+      fprintf( fp, "Content      %d\n", get_id_table_position( instance_id_table, content->tag->id ) );
+   DetachIterator( &Iter );
+
+   return;
 }
 
 /*
@@ -368,6 +363,103 @@ void export_project( PROJECT *project )
 
 }
 */
+
+char *create_project_directory( PROJECT *project )
+{
+   static char pDir[MAX_BUFFER];
+
+   mud_printf( pDir, "../projects/%s-%s", project->name, ctime( &current_time ) );
+   if( opendir( pDir ) == NULL )
+   {
+      if( ( mkdir( pDir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH ) ) != 0 ) /* was unsuccessful */
+      {
+         bug( "%s: unable to create directory: %s.", __FUNCTION__, pDir );
+         return NULL;
+      }
+   }
+   return pDir;
+}
+
+void create_complete_framework_and_instance_list_from_workspace_list( LLIST *workspace_list, LLIST *instance_list, LLIST *framework_list )
+{
+   WORKSPACE *wSpace;
+   ITERATOR Iter;
+
+   AttachIterator( &Iter, workspace_list );
+   while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
+   {
+      append_instance_lists_ndi( wSpace->instances, instance_list );
+      append_framework_lists_ndi( wSpace->frameworks, framework_list );
+   }
+   DetachIterator( &Iter );
+
+   append_instance_list_content_to_list_recursive_ndi( instance_list, instance_list );
+   append_framework_list_content_to_list_recursive_ndi( framework_list, framework_list );
+   append_framework_list_inheritance_to_list_recursive_ndi( framework_list, framework_list );
+   return;
+}
+
+void append_instance_list_content_to_list_recursive_ndi( LLIST *instance_list, LLIST *append_list )
+{
+   ENTITY_INSTANCE *instance;
+   ITERATOR Iter, IterTwo;
+
+   AttachIterator( &Iter, instance_list );
+   while( ( instance = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
+   {
+      AttachIterator( &IterTwo, instance->contents );
+      while( ( instance = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
+      {
+         if( !instance_list_has_by_id( append_list, instance->tag->id ) )
+            AttachToList( instance, append_list );
+         append_instance_list_content_to_list_recursive_ndi( instance->contents, append_list );
+      }
+      DetachIterator( &IterTwo );
+   }
+   DetachIterator( &Iter );
+
+   return;
+}
+
+void append_framework_list_content_to_list_recursive_ndi( LLIST *framework_list, LLIST *append_list )
+{
+   ENTITY_FRAMEWORK *frame;
+   ITERATOR Iter, IterTwo;
+
+   AttachIterator( &Iter, framework_list );
+   while( ( frame = (ENTITY_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
+   {
+      AttachIterator( &IterTwo, frame->fixed_contents );
+      while( ( frame = (ENTITY_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
+      {
+         if( !framework_list_has_by_id( append_list, frame->tag->id ) )
+            AttachToList( frame, append_list );
+         append_framework_list_content_to_list_recursive_ndi( frame->fixed_contents, append_list );
+      }
+      DetachIterator( &IterTwo );
+   }
+   DetachIterator( &Iter );
+
+   return;
+}
+
+void append_framework_list_inheritance_to_list_recursive_ndi( LLIST *framework_list, LLIST *append_list )
+{
+   ENTITY_FRAMEWORK *frame;
+   ITERATOR Iter;
+
+   AttachIterator( &Iter, framework_list );
+   while( ( frame = (ENTITY_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
+   {
+      while( ( frame = frame->inherits ) != NULL )
+         if( !framework_list_has_by_id( append_list, frame->tag->id ) )
+            AttachToList( frame, append_list );
+   }
+   DetachIterator( &Iter );
+
+   return;
+}
+
 void copy_all_workspace_and_contents( PROJECT *project, LLIST *workspace_list, LLIST *framework_list, LLIST *instance_list )
 {
    WORKSPACE *wSpace;
@@ -489,5 +581,36 @@ void project_openProject( void *passed, char *arg )
 
    load_project_into_olc( project, olc );
    text_to_olc( olc, "You open the %s project and load it into your olc.\r\n", project->name );
+   return;
+}
+
+void project_exportProject( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   PROJECT *project;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      if( !olc->project )
+      {
+         text_to_olc( olc, "Export what project?\r\n" );
+         olc_short_prompt( olc );
+         return;
+      }
+      project = olc->project;
+   }
+   else
+   {
+      if( ( project = load_project_by_name( arg ) ) == NULL )
+      {
+         text_to_olc( olc, "There is no project by the name %s.\r\n", arg );
+         olc_short_prompt( olc );
+         return;
+      }
+   }
+
+   export_project( project );
+   text_to_olc( olc, "You export %s.\r\n", project->name );
+   olc_short_prompt( olc );
    return;
 }

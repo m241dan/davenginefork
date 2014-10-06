@@ -207,6 +207,24 @@ void copy_specifications_into_list( LLIST *spec_list, LLIST *copy_into_list, boo
    return;
 }
 
+void fwrite_specifications( FILE *fp, LLIST *specifications )
+{
+   SPECIFICATION *spec;
+   ITERATOR Iter;
+
+   AttachIterator( &Iter, specifications );
+   while( ( spec = (SPECIFICATION *)NextInList( &Iter ) ) != NULL )
+      fwrite_spec( fp, spec );
+   DetachIterator( &Iter );
+
+   return;
+}
+
+void fwrite_spec( FILE *fp, SPECIFICATION *spec )
+{
+   fprintf( fp, "Spec       %d %d\n", spec->type, spec->value );
+}
+
 SPECIFICATION *spec_list_has_by_type( LLIST *spec_list, int type )
 {
    SPECIFICATION *spec;

@@ -386,7 +386,7 @@ int *build_instance_id_table( LLIST *instance_list )
    AttachIterator( &Iter, instance_list );
    while( ( instance = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
       *table++ = instance->tag->id;
-   DetachIterator( &Iter ):
+   DetachIterator( &Iter );
 
    *table = -1; /* terminator */
    return table;
