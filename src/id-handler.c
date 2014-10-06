@@ -353,6 +353,7 @@ int *build_workspace_id_table( LLIST *workspace_list )
    WORKSPACE *wSpace;
    int *table;
    ITERATOR Iter;
+   int x = 0;
 
    if( !workspace_list )
    {
@@ -360,13 +361,13 @@ int *build_workspace_id_table( LLIST *workspace_list )
       return NULL;
    }
 
-   CREATE( table, int, SizeOfList( workspace_list ) );
+   CREATE( table, int, ( SizeOfList( workspace_list ) + 1 ) );
    AttachIterator( &Iter, workspace_list );
    while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
-      *table++ = wSpace->tag->id;
+      table[x++] = wSpace->tag->id;
    DetachIterator( &Iter );
 
-   *table = -1; /* terminator */
+   table[x] = -1; /* terminator */
    return table;
 }
 
@@ -375,6 +376,7 @@ int *build_instance_id_table( LLIST *instance_list )
    ENTITY_INSTANCE *instance;
    int *table;
    ITERATOR Iter;
+   int x = 0;
 
    if( !instance_list )
    {
@@ -382,13 +384,13 @@ int *build_instance_id_table( LLIST *instance_list )
       return NULL;
    }
 
-   CREATE( table, int, SizeOfList( instance_list ) );
+   CREATE( table, int, ( SizeOfList( instance_list ) + 1 ) );
    AttachIterator( &Iter, instance_list );
    while( ( instance = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
-      *table++ = instance->tag->id;
+      table[x++] = instance->tag->id;
    DetachIterator( &Iter );
 
-   *table = -1; /* terminator */
+   table[x] = -1; /* terminator */
    return table;
 }
 
@@ -397,6 +399,7 @@ int *build_framework_id_table( LLIST *framework_list )
    ENTITY_FRAMEWORK *frame;
    int *table;
    ITERATOR Iter;
+   int x = 0;
 
    if( !framework_list )
    {
@@ -404,13 +407,13 @@ int *build_framework_id_table( LLIST *framework_list )
       return NULL;
    }
 
-   CREATE( table, int, SizeOfList( framework_list ) );
+   CREATE( table, int, ( SizeOfList( framework_list ) + 1 ) );
    AttachIterator( &Iter, framework_list );
    while( ( frame = (ENTITY_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
-      *table++ = frame->tag->id;
+      table[x++] = frame->tag->id;
    DetachIterator( &Iter );
 
-   *table = -1; /* terminator */
+   table[x] = -1; /* terminator */
    return table;
 }
 
@@ -423,4 +426,15 @@ int get_id_table_position( int *table, int id )
          return x;
 
    return -1;
+}
+
+void print_table( int *table )
+{
+   int x = 0;
+   int value;
+
+   while( ( value = *table++ ) != -1 )
+      bug( "%s: [%d] = %d.", __FUNCTION__, x++, value );
+
+   return;
 }

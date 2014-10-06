@@ -44,3 +44,4 @@ int *build_workspace_id_table( LLIST *workspace_list );
 int *build_instance_id_table( LLIST *instance_list );
 int *build_framework_id_table( LLIST *framework_list );
 int get_id_table_position( int *table, int id );
+void print_table( int *table );

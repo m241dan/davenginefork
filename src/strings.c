@@ -528,9 +528,12 @@ char *smash_newline( const char *str )
    for( ; *str != '\0'; str++ )
    {
       if( *str == '\n' )
-         str++;
+         continue;
       else
+      {
          *retptr = *str;
+         retptr++;
+      }
    }
    *retptr = '\0';
    return ret;

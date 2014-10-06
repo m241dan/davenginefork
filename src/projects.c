@@ -265,8 +265,8 @@ void export_project( PROJECT *project )
    CLEARLIST( instance_list, ENTITY_INSTANCE );
    FreeList( instance_list );
    FREE( workspace_id_table );
-   FREE( instance_id_table );
    FREE( framework_id_table );
+   FREE( instance_id_table );
    return;
 }
 
@@ -285,11 +285,10 @@ void save_instance_export( char *pDir, ENTITY_INSTANCE *instance, int *instance_
    FILE *fp;
    int new_id;
 
+   bug( "%s: pdir = %s", __FUNCTION__, pDir );
+
    new_id = get_id_table_position( instance_id_table, instance->tag->id );
-
-   bug( "%s: %d", new_id );
-
-   if( ( fp = fopen( quick_format( "%s/i%d.instance", pDir, new_id ), "w" ) ) == NULL )
+   if( ( fp = fopen( quick_format( "%s/%d.instance", pDir, new_id ), "w" ) ) == NULL )
    {
       bug( "%s: Unable to write instance (%d)%s.", instance->tag, instance_name( instance ) );
       return;
@@ -317,7 +316,7 @@ void fwrite_instance_export( FILE *fp, ENTITY_INSTANCE *instance, int *instance_
    fwrite_specifications( fp, instance->specifications );
 
    fprintf( fp, "Framework    %d\n", get_id_table_position( framework_id_table, instance->framework->tag->id ) );
-   fprintf( fp, "ContainedBy  %d\n", get_id_table_position( instance_id_table, instance->contained_by->tag->id ) );
+   fprintf( fp, "ContainedBy  %d\n", get_id_table_position( instance_id_table, instance->contained_by_id ) );
    fprintf( fp, "END\n\n" );
 }
 
@@ -372,9 +371,10 @@ char *create_project_directory( PROJECT *project )
    static char pDir[MAX_BUFFER];
    memset( &pDir[0], 0, sizeof( pDir ) );
 
-   mud_printf( pDir, "../projects/%s-%s", project->name, ctime( &current_time ) );
-   if( opendir( smash_newline( pDir ) ) == NULL )
+   mud_printf( pDir, "../projects/%s-%s", project->name, smash_newline( ctime( &current_time ) ) );
+   if( opendir( pDir ) == NULL )
    {
+      bug( "%s: pDir = %s", __FUNCTION__, pDir );
       if( ( mkdir( pDir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH ) ) != 0 ) /* was unsuccessful */
       {
          bug( "%s: unable to create directory: %s.", __FUNCTION__, pDir );
