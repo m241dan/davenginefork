@@ -255,9 +255,9 @@ void export_project( PROJECT *project )
    framework_id_table = build_framework_id_table( framework_list );
 
    /* commence writing */
-/*  save_workspace_list_export( project->workspaces, &directory, workspace_id_table ); */
+   save_workspace_list_export( project->workspaces, directory, workspace_id_table, instance_id_table, framework_id_table );
    save_instance_list_export( instance_list, directory, instance_id_table, framework_id_table );
-/*   save_framework_list_export( framework_list, &directory, framework_id_table ); */
+   save_framework_list_export( framework_list, directory, framework_id_table );
 
    /* free memory */
    CLEARLIST( framework_list, ENTITY_FRAMEWORK );
@@ -328,12 +328,12 @@ void fwrite_workspace_entries_export( FILE *fp, WORKSPACE *wSpace, int *instance
 
    AttachIterator( &Iter, wSpace->instances );
    while( ( instance = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
-      fprintf( fp, "Instance     %d\n", get_id_table_position( instance_id_table, instance->tag->id );
+      fprintf( fp, "Instance     %d\n", get_id_table_position( instance_id_table, instance->tag->id ) );
    DetachIterator( &Iter );
 
    AttachIterator( &Iter, wSpace->frameworks );
    while( ( frame = (ENTITY_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
-      fprintf( fp, "Framework    %d\n", get_id_table_position( framework_id_table, frame->tag->id );
+      fprintf( fp, "Framework    %d\n", get_id_table_position( framework_id_table, frame->tag->id ) );
    DetachIterator( &Iter );
 
    return;
@@ -347,7 +347,7 @@ void save_instance_list_export( LLIST *instance_list, char *directory, int *inst
    AttachIterator( &Iter, instance_list );
    while( ( instance = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
       save_instance_export( directory, instance, instance_id_table, framework_id_table );
-   DetachIterator( &iter );
+   DetachIterator( &Iter );
 
    return;
 }
@@ -409,14 +409,14 @@ void save_framework_list_export( LLIST *framework_list, char *directory, int *fr
    ITERATOR Iter;
 
    AttachIterator( &Iter, framework_list );
-   while( ( frame = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
-      save_frame_export( directory, frame, framework_id_table );
-   DetachIterator( &iter );
+   while( ( frame = (ENTITY_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
+      save_framework_export( directory, frame, framework_id_table );
+   DetachIterator( &Iter );
 
    return;
 }
 
-void save_framework_export( char *pDir, ENTITY_FRAMEWORK *frame,int *framework_id_table )
+void save_framework_export( char *pDir, ENTITY_FRAMEWORK *frame, int *framework_id_table )
 {
    FILE *fp;
    int new_id;
@@ -452,8 +452,8 @@ void fwrite_framework_export( FILE *fp, ENTITY_FRAMEWORK *frame, int *framework_
    fwrite_framework_content_list_export( fp, frame->fixed_contents, framework_id_table );
    fwrite_specifications( fp, frame->specifications );
 
-   fprintf( fp, "Inherits     %d\n", get_id_table_position( framework_id_table, frame->inherits->tag->id );
-   fprintf( fp, "END\n\" );
+   fprintf( fp, "Inherits     %d\n", frame->inherits ? get_id_table_position( framework_id_table, frame->inherits->tag->id ) : -1 );
+   fprintf( fp, "END\n\n" );
    return;
 }
 
@@ -464,7 +464,7 @@ void fwrite_framework_content_list_export( FILE *fp, LLIST *contents, int *frame
 
    AttachIterator( &Iter, contents );
    while( ( frame = (ENTITY_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
-      fprintf( fp, "FContent     %d\n", get_id_table_position( frame->tag->id, framework_id_table );
+      fprintf( fp, "FContent     %d\n", get_id_table_position( framework_id_table, frame->tag->id ) );
    DetachIterator( &Iter );
 
    return;

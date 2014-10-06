@@ -40,7 +40,7 @@ void fwrite_instance_content_list_export( FILE *fp, LLIST *contents, int *instan
 
 void save_framework_list_export( LLIST *instance_list, char *directory, int *framework_id_table );
 void save_framework_export( char *pDir, ENTITY_FRAMEWORK *frame, int *framework_id_table );
-void fwrite_frameowrk_export( FILE *fp, WORKSPACE *wSpace, int *framework_id_table );
+void fwrite_framework_export( FILE *fp, ENTITY_FRAMEWORK *wSpace, int *framework_id_table );
 void fwrite_framework_content_list_export( FILE *fp, LLIST *contents, int *framework_id_table );
 
 char *create_project_directory( PROJECT *project );
