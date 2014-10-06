@@ -270,6 +270,75 @@ void export_project( PROJECT *project )
    return;
 }
 
+void save_workspace_list_export( LLIST *workspace_list, char *directory, int *workspace_id_table, int *instance_id_table, int *framework_id_table )
+{
+   WORKSPACE *wSpace;
+   ITERATOR Iter;
+
+   AttachIterator( &Iter, workspace_list );
+   while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
+      save_workspace_export( directory, wSpace, workspace_id_table, instance_id_table, framework_id_table );
+   DetachIterator( &Iter );
+
+   return;
+}
+
+void save_workspace_export( char *pDir, WORKSPACE *wSpace, int *workspace_id_table, int *instance_id_table, int *framework_id_table )
+{
+   FILE *fp;
+   int new_id;
+
+   new_id = get_id_table_position( workspace_id_table, wSpace->tag->id );
+   if( ( fp = fopen( quick_format( "%s/%d.workspace", pDir, new_id ), "w" ) ) == NULL )
+   {
+      bug( "%s: Unable to write workspace (%d)%s.", __FUNCTION__, wSpace->tag->id, wSpace->name );
+      return;
+   }
+   fwrite_workspace_export( fp, wSpace, workspace_id_table, instance_id_table, framework_id_table );
+   fprintf( fp, "%s\n", FILE_TERMINATOR );
+   fclose( fp );
+   return;
+}
+
+void fwrite_workspace_export( FILE *fp, WORKSPACE *wSpace, int *workspace_id_table, int *instance_id_table, int *framework_id_table )
+{
+   fprintf( fp, "#IDTAG\n" );
+   fprintf( fp, "ID           %d\n", get_id_table_position( workspace_id_table, wSpace->tag->id ) );
+   fprintf( fp, "CreatedOn    %s~\n", wSpace->tag->created_on );
+   fprintf( fp, "CreatedBy    %s~\n", wSpace->tag->created_by );
+   fprintf( fp, "ModifiedOn   %s~\n", wSpace->tag->modified_on );
+   fprintf( fp, "ModifiedBy   %s~\n", wSpace->tag->modified_by );
+   fprintf( fp, "END\n\n" );
+
+   fprintf( fp, "#WORKSPACE\n" );
+   fprintf( fp, "Name         %s~\n", wSpace->name );
+   fprintf( fp, "Descr        %s~\n", wSpace->description );
+   fprintf( fp, "Public       %d\n", (int)wSpace->Public );
+
+   fwrite_workspace_entries_export( fp, wSpace, instance_id_table, framework_id_table );
+   fprintf( fp, "END\n\n" );
+   return;
+}
+
+void fwrite_workspace_entries_export( FILE *fp, WORKSPACE *wSpace, int *instance_id_table, int *framework_id_table )
+{
+   ENTITY_FRAMEWORK *frame;
+   ENTITY_INSTANCE *instance;
+   ITERATOR Iter;
+
+   AttachIterator( &Iter, wSpace->instances );
+   while( ( instance = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
+      fprintf( fp, "Instance     %d\n", get_id_table_position( instance_id_table, instance->tag->id );
+   DetachIterator( &Iter );
+
+   AttachIterator( &Iter, wSpace->frameworks );
+   while( ( frame = (ENTITY_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
+      fprintf( fp, "Framework    %d\n", get_id_table_position( framework_id_table, frame->tag->id );
+   DetachIterator( &Iter );
+
+   return;
+}
+
 void save_instance_list_export( LLIST *instance_list, char *directory, int *instance_id_table, int *framework_id_table )
 {
    ENTITY_INSTANCE *instance;
@@ -278,6 +347,9 @@ void save_instance_list_export( LLIST *instance_list, char *directory, int *inst
    AttachIterator( &Iter, instance_list );
    while( ( instance = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
       save_instance_export( directory, instance, instance_id_table, framework_id_table );
+   DetachIterator( &iter );
+
+   return;
 }
 
 void save_instance_export( char *pDir, ENTITY_INSTANCE *instance, int *instance_id_table, int *framework_id_table )
@@ -285,12 +357,10 @@ void save_instance_export( char *pDir, ENTITY_INSTANCE *instance, int *instance_
    FILE *fp;
    int new_id;
 
-   bug( "%s: pdir = %s", __FUNCTION__, pDir );
-
    new_id = get_id_table_position( instance_id_table, instance->tag->id );
    if( ( fp = fopen( quick_format( "%s/%d.instance", pDir, new_id ), "w" ) ) == NULL )
    {
-      bug( "%s: Unable to write instance (%d)%s.", instance->tag, instance_name( instance ) );
+      bug( "%s: Unable to write instance (%d)%s.", __FUNCTION__, instance->tag->id, instance_name( instance ) );
       return;
    }
    fwrite_instance_export( fp, instance, instance_id_table, framework_id_table );
@@ -328,6 +398,73 @@ void fwrite_instance_content_list_export( FILE *fp, LLIST *contents, int *instan
    AttachIterator( &Iter, contents );
    while( ( content = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
       fprintf( fp, "Content      %d\n", get_id_table_position( instance_id_table, content->tag->id ) );
+   DetachIterator( &Iter );
+
+   return;
+}
+
+void save_framework_list_export( LLIST *framework_list, char *directory, int *framework_id_table )
+{
+   ENTITY_FRAMEWORK *frame;
+   ITERATOR Iter;
+
+   AttachIterator( &Iter, framework_list );
+   while( ( frame = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
+      save_frame_export( directory, frame, framework_id_table );
+   DetachIterator( &iter );
+
+   return;
+}
+
+void save_framework_export( char *pDir, ENTITY_FRAMEWORK *frame,int *framework_id_table )
+{
+   FILE *fp;
+   int new_id;
+
+   new_id = get_id_table_position( framework_id_table, frame->tag->id );
+   if( ( fp = fopen( quick_format( "%s/%d.framework", pDir, new_id ), "w" ) ) == NULL )
+   {
+      bug( "%s: Unable to write framework (%d)%s.", __FUNCTION__, frame->tag->id, chase_name( frame ) );
+      return;
+   }
+   fwrite_framework_export( fp, frame, framework_id_table );
+   fprintf( fp, "%s\n", FILE_TERMINATOR );
+   fclose( fp );
+   return;
+}
+
+void fwrite_framework_export( FILE *fp, ENTITY_FRAMEWORK *frame, int *framework_id_table )
+{
+   fprintf( fp, "#IDTAG\n" );
+   fprintf( fp, "ID           %d\n", get_id_table_position( framework_id_table, frame->tag->id ) );
+   fprintf( fp, "CreatedOn    %s~\n", frame->tag->created_on );
+   fprintf( fp, "CreatedBy    %s~\n", frame->tag->created_by );
+   fprintf( fp, "ModifiedOn   %s~\n", frame->tag->modified_on );
+   fprintf( fp, "ModifiedBy   %s~\n", frame->tag->modified_by );
+   fprintf( fp, "END\n\n" );
+
+   fprintf( fp, "#FRAMEWORK\n" );
+   fprintf( fp, "Name         %s~\n", frame->name );
+   fprintf( fp, "Short_Descr  %s~\n", frame->short_descr );
+   fprintf( fp, "Long_Descr   %s~\n", frame->long_descr );
+   fprintf( fp, "Description  %s~\n", frame->description );
+
+   fwrite_framework_content_list_export( fp, frame->fixed_contents, framework_id_table );
+   fwrite_specifications( fp, frame->specifications );
+
+   fprintf( fp, "Inherits     %d\n", get_id_table_position( framework_id_table, frame->inherits->tag->id );
+   fprintf( fp, "END\n\" );
+   return;
+}
+
+void fwrite_framework_content_list_export( FILE *fp, LLIST *contents, int *framework_id_table )
+{
+   ENTITY_FRAMEWORK *frame;
+   ITERATOR Iter;
+
+   AttachIterator( &Iter, contents );
+   while( ( frame = (ENTITY_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
+      fprintf( fp, "FContent     %d\n", get_id_table_position( frame->tag->id, framework_id_table );
    DetachIterator( &Iter );
 
    return;
@@ -374,7 +511,6 @@ char *create_project_directory( PROJECT *project )
    mud_printf( pDir, "../projects/%s-%s", project->name, smash_newline( ctime( &current_time ) ) );
    if( opendir( pDir ) == NULL )
    {
-      bug( "%s: pDir = %s", __FUNCTION__, pDir );
       if( ( mkdir( pDir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH ) ) != 0 ) /* was unsuccessful */
       {
          bug( "%s: unable to create directory: %s.", __FUNCTION__, pDir );
