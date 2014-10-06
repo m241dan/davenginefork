@@ -326,3 +326,115 @@ int get_potential_id( int type )
    }
    return handler->top_id;
 }
+
+ID_TAG *copy_tag( ID_TAG *tag )
+{
+   ID_TAG *tag_copy;
+
+   if( !tag )
+   {
+      bug( "%s: passed a NULL tag.", __FUNCTION__ );
+      return NULL;
+   }
+
+   tag_copy = init_tag();
+   tag_copy->type = tag->type;
+   tag_copy->id = tag->id;
+   tag_copy->created_by = strdup( tag->created_by );
+   tag_copy->created_on = strdup( tag->created_on );
+   tag_copy->modified_by = strdup( tag->modified_by );
+   tag_copy->modified_on = strdup( tag->modified_on );
+
+   return tag_copy;
+}
+
+int *build_workspace_id_table( LLIST *workspace_list )
+{
+   WORKSPACE *wSpace;
+   int *table;
+   ITERATOR Iter;
+   int x = 0;
+
+   if( !workspace_list )
+   {
+      bug( "%s: passed a NULL workspace_list.", __FUNCTION__ );
+      return NULL;
+   }
+
+   CREATE( table, int, ( SizeOfList( workspace_list ) + 1 ) );
+   AttachIterator( &Iter, workspace_list );
+   while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
+      table[x++] = wSpace->tag->id;
+   DetachIterator( &Iter );
+
+   table[x] = -1; /* terminator */
+   return table;
+}
+
+int *build_instance_id_table( LLIST *instance_list )
+{
+   ENTITY_INSTANCE *instance;
+   int *table;
+   ITERATOR Iter;
+   int x = 0;
+
+   if( !instance_list )
+   {
+      bug( "%s: passed a NULL instance_list.", __FUNCTION__ );
+      return NULL;
+   }
+
+   CREATE( table, int, ( SizeOfList( instance_list ) + 1 ) );
+   AttachIterator( &Iter, instance_list );
+   while( ( instance = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
+      table[x++] = instance->tag->id;
+   DetachIterator( &Iter );
+
+   table[x] = -1; /* terminator */
+   return table;
+}
+
+int *build_framework_id_table( LLIST *framework_list )
+{
+   ENTITY_FRAMEWORK *frame;
+   int *table;
+   ITERATOR Iter;
+   int x = 0;
+
+   if( !framework_list )
+   {
+      bug( "%s: passed a NULL framework_list.", __FUNCTION__ );
+      return NULL;
+   }
+
+   CREATE( table, int, ( SizeOfList( framework_list ) + 1 ) );
+   AttachIterator( &Iter, framework_list );
+   while( ( frame = (ENTITY_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
+      table[x++] = frame->tag->id;
+   DetachIterator( &Iter );
+
+   table[x] = -1; /* terminator */
+   return table;
+}
+
+int get_id_table_position( int *table, int id )
+{
+   int x;
+
+   for( x = 0; table[x] != -1; x++ )
+      if( table[x] == id )
+         return x;
+
+   return -1;
+}
+
+void print_table( int *table )
+{
+   int x = 0;
+   int value;
+
+   while( ( value = *table++ ) != -1 )
+      bug( "%s: [%d] = %d.", __FUNCTION__, x++, value );
+
+   return;
+}

@@ -158,7 +158,7 @@ WORKSPACE *get_active_workspace_by_id( int id )
 
 WORKSPACE *load_workspace_by_id( int id )
 {
-   return load_workspace_by_query( quick_format( "SELECT * FROM `$s` WHERE %s=%d;", tag_table_strings[WORKSPACE_IDS], tag_table_whereID[WORKSPACE_IDS], id ) );
+   return load_workspace_by_query( quick_format( "SELECT * FROM `%s` WHERE %s=%d;", tag_table_strings[WORKSPACE_IDS], tag_table_whereID[WORKSPACE_IDS], id ) );
 }
 
 WORKSPACE *get_workspace_by_name( const char *name )
@@ -303,7 +303,11 @@ int olc_prompt( D_SOCKET *dsock )
 
    space_after_pipes = account->pagewidth - 2;
 
-   bprintf( buf, "/%s\\\r\n", print_header( "Inception OLC", "-", space_after_pipes ) );
+   if( !olc->project )
+      bprintf( buf, "/%s\\\r\n", print_header( "Inception OLC", "-", space_after_pipes ) );
+   else
+      bprintf( buf, "/%s\\\r\n", print_header( quick_format( "Inception OLC - Project: %s", olc->project->name ), "-", space_after_pipes ) );
+
    mud_printf( tempstring, " You have %d workspaces loaded.", SizeOfList( olc->wSpaces ) );
    bprintf( buf, "|%s|\r\n", fit_string_to_space( tempstring, space_after_pipes ) );
    if( SizeOfList( olc->wSpaces ) > 0 )
@@ -451,6 +455,36 @@ int add_instance_to_workspace( ENTITY_INSTANCE *instance, WORKSPACE *wSpace )
    return ret;
 }
 
+int add_workspace_to_olc( WORKSPACE *wSpace, INCEPTION *olc )
+{
+   ACCOUNT_DATA *account;
+   ITERATOR Iter;
+   char who_using[MAX_BUFFER];
+   int ret = RET_SUCCESS;
+
+   if( SizeOfList( wSpace->who_using ) > 0 )
+   {
+      memset( &who_using[0], 0, sizeof( who_using ) );
+      AttachIterator( &Iter, wSpace->who_using );
+      while( ( account = (ACCOUNT_DATA *)NextInList( &Iter ) ) != NULL )
+      {
+         if( who_using[0] != '\0' )
+            strcat( who_using, ", " );
+         strcat( who_using, account->name );
+      }
+      DetachIterator( &Iter );
+      text_to_olc( olc, " These users(%s) are already using this workspace.", who_using );
+   }
+   text_to_olc( olc, "\r\n" );
+   AttachToList( wSpace,  olc->wSpaces );
+   AttachToList( olc->account, wSpace->who_using );
+
+   if( olc->project && !workspace_list_has_by_id( olc->project->workspaces, wSpace->tag->id ) )
+      add_workspace_to_project( wSpace, olc->project );
+
+   return ret;
+}
+
 int new_workspace_entry( WORKSPACE *wSpace, ID_TAG *tag )
 {
    int ret = RET_SUCCESS;
@@ -594,11 +628,102 @@ bool workspace_list_has_name( LLIST *wSpaces, const char *name )
 }
 
 
+WORKSPACE *copy_workspace( WORKSPACE *wSpace, bool copy_frameworks, bool copy_instances )
+{
+   WORKSPACE *wSpace_copy;
+
+   if( !wSpace )
+   {
+      bug( "%s: passed a NULL wSpace.", __FUNCTION__ );
+      return NULL;
+   }
+
+   CREATE( wSpace_copy, WORKSPACE, 1 );
+   wSpace_copy->tag = copy_tag( wSpace->tag );
+
+   wSpace_copy->name = strdup( wSpace->name );
+   wSpace_copy->description = strdup( wSpace->description );
+
+   wSpace_copy->Public = wSpace->Public;
+   wSpace_copy->hide_frameworks = wSpace->hide_frameworks;
+   wSpace_copy->hide_instances = wSpace->hide_instances;
+
+   wSpace_copy->frameworks = copy_framework_list( wSpace->frameworks, copy_frameworks, copy_frameworks, copy_frameworks, copy_frameworks );
+   wSpace_copy->instances = copy_instance_list( wSpace->instances, copy_instances, copy_instances, copy_instances, copy_instances );
+
+   return wSpace_copy;
+}
+
+LLIST *copy_workspace_list( LLIST *wSpaces, bool copy_instances, bool copy_frameworks )
+{
+   LLIST *list;
+
+   if( !wSpaces || SizeOfList( wSpaces ) < 1 )
+   {
+       bug( "%s: was passed an empty or NULL wSpaces.", __FUNCTION__ );
+       return NULL;
+   }
+
+   list = AllocList();
+   copy_workspaces_into_list( wSpaces, list, copy_instances, copy_frameworks);
+
+   return list;
+}
+
+void copy_workspaces_into_list( LLIST *wSpaces, LLIST *copy_into_list, bool copy_instances, bool copy_frameworks )
+{
+   WORKSPACE *wSpace;
+   WORKSPACE *wSpace_copy;
+   ITERATOR Iter;
+
+   if( !wSpaces )
+   {
+      bug( "%s: was passed a NULL wSpaces.", __FUNCTION__ );
+      return;
+   }
+   if( !copy_into_list )
+   {
+      bug( "%s: was passed a NULL copy_into_list.", __FUNCTION__ );
+      return;
+   }
+
+   AttachIterator( &Iter, wSpaces );
+   while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
+   {
+      if( copy_instances || copy_frameworks )
+      {
+         wSpace_copy = copy_workspace( wSpace, copy_instances, copy_frameworks );
+         AttachToList( wSpace_copy, copy_into_list );
+         continue;
+      }
+      AttachToList( wSpace, copy_into_list );
+   }
+   DetachIterator( &Iter );
+
+   return;
+}
+
 void olc_file( void *passed, char *arg )
 {
    INCEPTION *olc = (INCEPTION *)passed;
+   COMMAND *file_command;
 
-   text_to_olc( olc, "You used the file command.\r\n" );
+   if( ( file_command = olc->account->executing_command ) == NULL )
+      return;
+
+   if( file_command->sub_commands )
+   {
+      free_command_list( file_command->sub_commands );
+      FreeList( file_command->sub_commands );
+      file_command->sub_commands = NULL;
+      text_to_olc( olc, "File Menu Closed.\r\n" );
+   }
+   else
+   {
+      file_command->sub_commands = AllocList();
+      load_commands( file_command->sub_commands, file_sub_commands, olc->account->level );
+      text_to_olc( olc, "File Menu Opened.\r\n" );
+   }
    return;
 }
 
@@ -623,6 +748,7 @@ void olc_workspace( void *passed, char *arg )
       load_commands( workspace_command->sub_commands, workspace_sub_commands, olc->account->level );
       text_to_olc( olc, "Workspace Commands Menu Opened.\r\n" );
    }
+   return;
 }
 
 void workspace_new( void *passed, char *arg )
@@ -647,8 +773,10 @@ void workspace_new( void *passed, char *arg )
    {
       text_to_olc( olc, "You could not get a new tag for your workspace, therefore, it was not created.\r\n" );
       free_workspace( wSpace );
+      olc_short_prompt( olc );
       return;
    }
+   FREE( wSpace->name );
    wSpace->name = strdup( arg );
    if( new_workspace( wSpace ) != RET_SUCCESS )
    {
@@ -665,14 +793,12 @@ void workspace_new( void *passed, char *arg )
 
 void workspace_load( void *passed, char *arg )
 {
-   ACCOUNT_DATA *account;
    INCEPTION *olc = (INCEPTION *)passed;
    WORKSPACE *wSpace;
    LLIST *list;
    MYSQL_ROW row;
-   ITERATOR Iter, IterTwo;
+   ITERATOR Iter;
    char buf[MAX_BUFFER];
-   char who_using[MAX_BUFFER];
    bool found = FALSE;
    int x;
 
@@ -703,22 +829,7 @@ void workspace_load( void *passed, char *arg )
          else
          {
             text_to_olc( olc, "Workspace %s loaded into your OLC.", wSpace->name );
-            if( SizeOfList( wSpace->who_using ) > 0 )
-            {
-               memset( &who_using[0], 0, sizeof( who_using ) );
-               AttachIterator( &IterTwo, wSpace->who_using );
-               while( ( account = (ACCOUNT_DATA *)NextInList( &IterTwo ) ) != NULL )
-               {
-                  if( who_using[0] != '\0' )
-                     strcat( who_using, ", " );
-                  strcat( who_using, account->name );
-               }
-               DetachIterator( &IterTwo );
-               text_to_olc( olc, " These users(%s) are already using this workspace.", who_using );
-            }
-            text_to_olc( olc, "\r\n" );
-            AttachToList( wSpace, olc->wSpaces );
-            AttachToList( olc->account, wSpace->who_using );
+            add_workspace_to_olc( wSpace, olc );
          }
       }
    }
@@ -742,9 +853,8 @@ void workspace_load( void *passed, char *arg )
          load_workspace_entries( wSpace );
          found = TRUE;
          AttachToList( wSpace, active_wSpaces );
-         AttachToList( wSpace, olc->wSpaces );
-         AttachToList( olc->account, wSpace->who_using );
-         text_to_olc( olc, "Workspace %s loaded from database.\r\n", wSpace->name );
+         text_to_olc( olc, "Workspace %s loaded from database.", wSpace->name );
+         add_workspace_to_olc( wSpace, olc );
       }
       DetachIterator( &Iter );
    }

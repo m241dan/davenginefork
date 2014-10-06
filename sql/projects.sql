@@ -9,7 +9,6 @@ CREATE TABLE IF NOT EXISTS `projects` (
    `modified_by` varchar(50) NOT NULL DEFAULT 'system',
    `modified_on` varchar(35) NOT NULL DEFAULT '',
    `name` varchar(20) NOT NULL DEFAULT 'unknown',
-   `description` text NOT NULL DEFAULT '',
    `public` smallint NOT NULL DEFAULT '0',
    PRIMARY KEY (`projectID`),
    UNIQUE INDEX `name` (`name`)

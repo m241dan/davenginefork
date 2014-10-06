@@ -514,6 +514,31 @@ char *smash_color( const char *str )
    return ret;
 }
 
+char *smash_newline( const char *str )
+{
+   static char ret[MAX_BUFFER];
+   char *retptr;
+
+   memset( &ret[0], 0, sizeof( ret ) );
+   retptr = ret;
+
+   if( str == NULL )
+      return NULL;
+
+   for( ; *str != '\0'; str++ )
+   {
+      if( *str == '\n' )
+         continue;
+      else
+      {
+         *retptr = *str;
+         retptr++;
+      }
+   }
+   *retptr = '\0';
+   return ret;
+}
+
 int color_count( const char *str )
 {
    int count = 0;
@@ -697,6 +722,7 @@ const char *itos( int value )
 const char *quick_format( const char *format, ... )
 {
    static char buf[MAX_BUFFER];
+   memset( &buf, 0, sizeof( buf ) );
    va_list va;
    int res;
 
@@ -709,5 +735,27 @@ const char *quick_format( const char *format, ... )
       buf[0] = '\0';
       bug( "Overflow when printing string %s", format );
    }
+   return buf;
+}
+
+const char *format_string_for_sql( const char *string )
+{
+   static char buf[MAX_BUFFER];
+   char *buf_ptr;
+   memset( &buf[0], 0, sizeof( buf ) );
+   buf_ptr = buf;
+
+   while( *string != '\0' )
+   {
+      if( *string == ';' )
+      {
+         string++;
+         continue;
+      }
+      if( *string == '\'' )
+         *buf_ptr++ = '\'';
+      *buf_ptr++ = *string++;
+   }
+   buf[strlen(buf)] = '\0';
    return buf;
 }

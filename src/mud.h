@@ -454,6 +454,7 @@ char *strip_nl( const char *str );
 const char *handle_pagewidth( int width, const char *txt );
 bool is_number( const char *arg );
 char *smash_color( const char *str );
+char *smash_newline( const char * str );
 int color_count( const char *str );
 void add_spaces( char *str, int amount );
 void add_lead_space( char *str, int amount );
@@ -462,6 +463,7 @@ char *fit_string_to_space( const char *orig, int space );
 char *print_bar( const char *pattern, int width );
 const char *itos( int value );
 const char *quick_format( const char *Format, ... );
+const char *format_string_for_sql( const char *string );
 
 /*
  * help.c

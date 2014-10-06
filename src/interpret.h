@@ -13,6 +13,8 @@ const char *chatas_desc( void *extra );
 
 extern struct typCmd olc_commands[];
 
+extern struct typCmd file_sub_commands[];
+
 extern struct typCmd workspace_sub_commands[];
 
 extern struct typCmd frameworks_sub_commands[];

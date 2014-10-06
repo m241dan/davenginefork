@@ -142,6 +142,89 @@ int db_load_spec( SPECIFICATION *spec, MYSQL_ROW *row )
    return RET_SUCCESS;
 }
 
+SPECIFICATION *copy_spec( SPECIFICATION *spec )
+{
+   SPECIFICATION *spec_copy;
+
+   if( !spec )
+   {
+      bug( "%s: passed a NULL spec.", __FUNCTION__ );
+      return NULL;
+   }
+
+   CREATE( spec_copy, SPECIFICATION, 1 );
+   spec_copy->type = spec->type;
+   spec_copy->value = spec->value;
+   spec_copy->owner = strdup( spec->owner );
+   return spec_copy;
+}
+
+LLIST *copy_specification_list( LLIST *spec_list, bool copy_content )
+{
+   LLIST *list;
+
+   if( !spec_list )
+   {
+      bug( "%s: passed a NULL spec_list.", __FUNCTION__ );
+      return NULL;
+   }
+
+   list = AllocList();
+   copy_specifications_into_list( spec_list, list, copy_content );
+
+   return list;
+}
+
+void copy_specifications_into_list( LLIST *spec_list, LLIST *copy_into_list, bool copy_content )
+{
+   SPECIFICATION *spec, *spec_copy;
+   ITERATOR Iter;
+
+   if( !spec_list )
+   {
+      bug( "%s: passed a NULL spec_list.", __FUNCTION__ );
+      return;
+   }
+   if( !copy_into_list )
+   {
+      bug( "%s: passed a NULL copy_into_list.", __FUNCTION__ );
+      return;
+   }
+
+   AttachIterator( &Iter, spec_list );
+   while( ( spec = (SPECIFICATION *)NextInList( &Iter ) ) != NULL )
+   {
+      if( copy_content )
+      {
+         spec_copy = copy_spec( spec );
+         AttachToList( spec_copy, copy_into_list );
+         continue;
+      }
+      AttachToList( spec, copy_into_list );
+   }
+   DetachIterator( &Iter );
+
+   return;
+}
+
+void fwrite_specifications( FILE *fp, LLIST *specifications )
+{
+   SPECIFICATION *spec;
+   ITERATOR Iter;
+
+   AttachIterator( &Iter, specifications );
+   while( ( spec = (SPECIFICATION *)NextInList( &Iter ) ) != NULL )
+      fwrite_spec( fp, spec );
+   DetachIterator( &Iter );
+
+   return;
+}
+
+void fwrite_spec( FILE *fp, SPECIFICATION *spec )
+{
+   fprintf( fp, "Spec       %d %d\n", spec->type, spec->value );
+}
+
 SPECIFICATION *spec_list_has_by_type( LLIST *spec_list, int type )
 {
    SPECIFICATION *spec;

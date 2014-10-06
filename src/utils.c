@@ -145,7 +145,7 @@ bool db_query_list_row( LLIST *list, const char *query )
       AttachToList( row_ptr, list );
    }
 
-/*   debug_row_list( list ); */
+  /* debug_row_list( list ); */
 
    mysql_free_result( result );
    return TRUE;
@@ -196,7 +196,7 @@ void debug_row_list( LLIST *list )
 
    AttachIterator( &Iter, list );
    while( ( row_ptr = (MYSQL_ROW *)NextInList( &Iter ) ) != NULL )
-      debug_row( row_ptr, 9 );
+      debug_row( row_ptr, 1 );
    DetachIterator( &Iter );
 }
 

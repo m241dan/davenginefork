@@ -170,7 +170,7 @@ void full_load_instance( ENTITY_INSTANCE *instance )
 {
    ENTITY_FRAMEWORK *frame;
    ENTITY_INSTANCE *instance_to_contain;
-   MYSQL_ROW *row;
+   MYSQL_ROW row;
    LLIST *list;
    ITERATOR Iter;
    int id_to_load;
@@ -194,13 +194,21 @@ void full_load_instance( ENTITY_INSTANCE *instance )
    }
 
    list = AllocList();
-   db_query_list_row( list, quick_format( "SELECT %s FROM `entity_instances` WHERE containedBy=%d;", tag_table_whereID[ENTITY_INSTANCE_IDS], instance->tag->id ) );
-   AttachIterator( &Iter, list );
-   while( ( row = (MYSQL_ROW *)NextInList( &Iter ) ) != NULL )
+   if( !db_query_list_row( list, quick_format( "SELECT %s FROM `entity_instances` WHERE containedBy=%d;", tag_table_whereID[ENTITY_INSTANCE_IDS], instance->tag->id ) ) )
    {
-      id_to_load = atoi( (*row)[0] );
+      FreeList( list );
+      bug( "%s: could not load contents, bad list.", __FUNCTION__ );
+      return;
+   }
+   AttachIterator( &Iter, list );
+   while( ( row = (MYSQL_ROW)NextInList( &Iter ) ) != NULL )
+   {
+      id_to_load = atoi( (row)[0] );
       if( ( instance_to_contain = get_instance_by_id( id_to_load ) ) == NULL )
+      {
+         bug( "continuing" );
          continue;
+      }
       full_load_instance( instance_to_contain );
       if( !instance_list_has_by_id( instance->contents, id_to_load ) )
          entity_to_contents( instance_to_contain, instance );
@@ -344,6 +352,185 @@ void entity_from_contents_quick_sort( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *
    for( x = 0; x < MAX_QUICK_SORT; x++ )
       if( has_spec( entity, spec_table[x] ) )
          DetachFromList( entity, container->contents_sorted[x] );
+
+   return;
+}
+
+ENTITY_INSTANCE *copy_instance( ENTITY_INSTANCE *instance, bool copy_id, bool copy_contents, bool copy_specs, bool copy_frame )
+{
+   ENTITY_INSTANCE *instance_copy;
+   int x;
+
+   if( !instance )
+   {
+      bug( "%s: passed a NULL instance.", __FUNCTION__ );
+      return NULL;
+   }
+
+   CREATE( instance_copy, ENTITY_INSTANCE, 1 );
+   instance_copy->level = instance->level;
+   for( x = 0; x < MAX_QUICK_SORT; x++ )
+     instance_copy->contents_sorted[x] = AllocList();
+
+
+   if( copy_id )
+      instance_copy->tag = copy_tag( instance->tag );
+   else
+      instance_copy->tag = init_tag();
+
+   if( copy_contents )
+      instance_copy->contents = copy_instance_list( instance->contents, TRUE, TRUE, TRUE, TRUE );
+   else
+      instance_copy->contents = AllocList();
+
+   if( copy_specs )
+      instance_copy->specifications = copy_specification_list( instance->specifications, TRUE );
+   else
+      instance_copy->specifications = AllocList();
+
+   if( copy_frame )
+      instance_copy->framework = copy_framework( instance->framework, TRUE, TRUE, TRUE, TRUE );
+   else
+      instance_copy->framework = instance->framework;
+
+   return instance_copy;
+}
+
+LLIST *copy_instance_list( LLIST *instances, bool copy_id, bool copy_contents, bool copy_specs, bool copy_frame )
+{
+   LLIST *list;
+
+   if( !instances )
+   {
+      bug( "%s: passed a NULL instances.", __FUNCTION__ );
+      return NULL;
+   }
+
+   list = AllocList();
+   copy_instances_into_list( instances, list, copy_id, copy_contents, copy_specs, copy_frame );
+
+   return list;
+}
+void copy_instances_into_list( LLIST *instance_list, LLIST *copy_into_list, bool copy_id, bool copy_contents, bool copy_specs, bool copy_frame )
+{
+   ENTITY_INSTANCE *instance, *instance_copy;
+   ITERATOR Iter;
+
+   if( !instance_list )
+   {
+      bug( "%s: passed a NULL instance_list.", __FUNCTION__ );
+      return;
+   }
+
+   if( !copy_into_list )
+   {
+      bug( "%s: passed a NULL copy_into_list.", __FUNCTION__ );
+      return;
+   }
+
+   AttachIterator( &Iter, instance_list );
+   while( ( instance = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
+   {
+      if( copy_id || copy_contents || copy_specs || copy_frame )
+      {
+         instance_copy = copy_instance( instance, copy_id, copy_contents, copy_specs, copy_frame );
+         AttachToList( instance_copy, copy_into_list );
+         continue;
+      }
+      AttachToList( instance, copy_into_list );
+   }
+   DetachIterator( &Iter );
+   return;
+}
+
+ENTITY_INSTANCE *copy_instance_ndi( ENTITY_INSTANCE *instance, LLIST *instance_list ) /* no duplicate ids */
+{
+   ENTITY_INSTANCE *instance_copy, *instance_content, *instance_content_copy;
+   ITERATOR Iter;
+   int x;
+
+   if( !instance )
+   {
+      bug( "%s: passed a NULL instance.", __FUNCTION__ );
+      return NULL;
+   }
+
+   if( ( instance_copy = instance_list_has_by_id( instance_list, instance->tag->id ) ) != NULL )
+      return instance_copy;
+
+   CREATE( instance_copy, ENTITY_INSTANCE, 1 );
+   instance_copy->contents = AllocList();
+   for( x = 0; x < MAX_QUICK_SORT; x++ )
+     instance_copy->contents_sorted[x] = AllocList();
+   instance_copy->specifications = AllocList();
+
+   instance_copy->tag = copy_tag( instance->tag );
+   instance_copy->level = instance->level;
+
+   AttachIterator( &Iter, instance->contents ); /* I hate having to iterate in this function but it's so specific  */
+   while( ( instance_content = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
+   {
+      instance_content_copy = copy_instance_ndi( instance_content, instance_list );
+      AttachToList( instance_content_copy, instance_copy->contents );
+   }
+   DetachIterator( &Iter );
+
+   copy_instance_list_ndi( instance->contents, instance_copy->contents );
+   copy_specifications_into_list( instance->specifications, instance_copy->specifications, TRUE );
+   instance_copy->framework = instance->framework;
+   AttachToList( instance_copy, instance_list );
+
+   return instance_copy;
+}
+
+void copy_instance_list_ndi( LLIST *instance_list, LLIST *copy_into_list )
+{
+   ENTITY_INSTANCE *instance;
+   ITERATOR Iter;
+
+   if( !instance_list )
+   {
+      bug( "%s: passed a NULL instance_list.", __FUNCTION__ );
+      return;
+   }
+   if( !copy_into_list )
+   {
+      bug( "%s: passed a NULL copy_into_list.", __FUNCTION__ );
+      return;
+   }
+
+   AttachIterator( &Iter, instance_list );
+   while( ( instance = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
+      copy_instance_ndi( instance, copy_into_list );
+   DetachIterator( &Iter );
+
+   return;
+}
+
+void append_instance_lists_ndi( LLIST *instance_list, LLIST *append_list )
+{
+   ENTITY_INSTANCE *instance;
+   ITERATOR Iter;
+
+   if( !instance_list )
+   {
+      bug( "%s: passed NULL instance_list.", __FUNCTION__ );
+      return;
+   }
+   if( !append_list )
+   {
+      bug( "%s: passed a NULL append_list,", __FUNCTION__ );
+      return;
+   }
+
+   AttachIterator( &Iter, instance_list );
+   while( ( instance = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
+   {
+      if( instance_list_has_by_id( append_list, instance->tag->id ) )
+         continue;
+      AttachToList( instance, append_list );
+   }
+   DetachIterator( &Iter );
 
    return;
 }
@@ -923,6 +1110,7 @@ void entity_look( void *passed, char *arg )
    ENTITY_INSTANCE *instance = (ENTITY_INSTANCE *)passed;
    show_ent_to_ent( instance, instance->contained_by );
    show_ent_contents_to_ent( instance, instance->contained_by );
+   text_to_entity( instance, "\r\n" );
    return;
 }
 
