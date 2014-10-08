@@ -311,12 +311,13 @@ char *fread_word(FILE *fp)
 
 int directory_file_count_regex( DIR *directory, const char *regex_string )
 {
-   DIR_FILE file;
+   DIR_FILE *file;
    int size = 0;
 
    for( file = readdir( directory ); file; file = readdir( directory ) )
       if( string_contains( file->d_name, regex_string ) )
          size++;
 
+   rewinddir( directory );
    return size;
 }

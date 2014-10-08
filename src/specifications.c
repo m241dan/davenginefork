@@ -223,7 +223,7 @@ void fwrite_specifications( FILE *fp, LLIST *specifications, int *id_table )
 void fwrite_spec( FILE *fp, SPECIFICATION *spec, int *id_table )
 {
    if( spec->type == SPEC_ISROOM )
-      fprintf( fp, "Spec       %d %d\n", spec->type, id_table ? get_id_table_position( spec->value ) : spec->value );
+      fprintf( fp, "Spec       %d %d\n", spec->type, id_table ? get_id_table_position( id_table, spec->value ) : spec->value );
    else
       fprintf( fp, "Spec       %d %d\n", spec->type, spec->value );
 }

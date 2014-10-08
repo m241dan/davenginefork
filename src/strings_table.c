@@ -16,7 +16,7 @@ const char *const tag_table_whereID[MAX_ID_HANDLER+1] = {
 };
 
 const char *const tag_table_extensions[MAX_ID_HANDLER+1] = {
-   ".account", ".workspace", ".framework", ".instance", ".project"
+   ".account", ".workspace", ".framework", ".instance", ".project",
    '\0'
 };
 

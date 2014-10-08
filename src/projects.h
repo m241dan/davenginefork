@@ -26,7 +26,7 @@ void add_workspace_to_project( WORKSPACE *wSpace, PROJECT *project );
 void rem_workspace_from_project( WORKSPACE *wSpace, PROJECT *project );
 void load_project_into_olc( PROJECT *project, INCEPTION *olc );
 
-void import_project( const char *project_directory );
+void import_project( DIR *project_directory, const char *dir_name );
 void export_project( PROJECT *project );
 
 void save_project( PROJECT *project, char *directory );

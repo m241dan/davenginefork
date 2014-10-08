@@ -231,7 +231,7 @@ void load_project_into_olc( PROJECT *project, INCEPTION *olc )
    return;
 }
 
-void import_project( DIR *project_directory, char *dir_name )
+void import_project( DIR *project_directory, const char *dir_name )
 {
    PROJECT *project;
    int *workspace_id_table;
@@ -342,7 +342,7 @@ PROJECT *init_project_from_info( const char *dir_name )
             if( !strcmp( word, "#IDTAG" ) )
             {
                found = TRUE;
-               project->tag = fread_id_tag_import( fp, NULL )
+               project->tag = fread_id_tag_import( fp, NULL );
                project->tag->id = get_new_id( PROJECT_IDS );
                break;
             }
@@ -375,7 +375,7 @@ void load_workspaces_from_directory_into_db_and_project( PROJECT *project, DIR *
 {
    WORKSPACE *wSpace;
    FILE *fp;
-   DIR_FILE file;
+   DIR_FILE *file;
 
    for( file = readdir( project_directory ); file; file = readdir( project_directory ) )
    {
@@ -472,23 +472,24 @@ WORKSPACE *fread_workspace_import( FILE *fp, int *workspace_id_table, int *frame
 void load_frameworks_from_directory_into_db( DIR *project_directory, const char *dir_name, int *framework_id_table )
 {
    FILE *fp;
-   DIR_FILE file;
+   DIR_FILE *file;
 
    for( file = readdir( project_directory ); file; file = readdir( project_directory ) )
    {
       if( string_contains( file->d_name, ".framework" ) )
       {
-         if( ( fp = fopen( quick_format( "%s/%s", dir_name, file->d_name ), "w" ) ) = NULL )
+         if( ( fp = fopen( quick_format( "%s/%s", dir_name, file->d_name ), "w" ) ) == NULL )
          {
             bug( "%s: could not read %s.", __FUNCTION__, file->d_name );
             continue;
          }
          fread_framework_import( fp, framework_id_table );
+         fclose( fp );
       }
    }
 }
 
-void fread_framework_import( FILE *fp, int *framework_id_table );
+void fread_framework_import( FILE *fp, int *framework_id_table )
 {
    ENTITY_FRAMEWORK *frame;
    char *word;
@@ -520,7 +521,7 @@ void fread_framework_import( FILE *fp, int *framework_id_table );
                frame->tag = fread_id_tag_import( fp, framework_id_table );
                break;
             }
-            if( !strcmp( word, "#INSTANCE" ) )
+            if( !strcmp( word, "#FRAMEWORK" ) )
             {
                found = TRUE;
                break;
@@ -556,9 +557,9 @@ void fread_framework_import( FILE *fp, int *framework_id_table );
 
                type = fread_number( fp );
                value = fread_number( fp );
-               if( type = SPEC_ISROOM )
+               if( type == SPEC_ISROOM )
                   value = framework_id_table[value];
-               quick_query( "INSERT INTO live_specs VALUES ( '%s', %d, 'f%d' );", spec_table[type], spec->value, frame->tag->id );
+               quick_query( "INSERT INTO live_specs VALUES ( '%s', %d, 'f%d' );", spec_table[type], value, frame->tag->id );
                break;
             }
             break;
@@ -577,12 +578,116 @@ void fread_framework_import( FILE *fp, int *framework_id_table );
 
 void load_instances_from_directory_into_db( DIR *project_directory, const char *dir_name, int *instance_id_table, int *framework_id_table )
 {
+   FILE *fp;
+   DIR_FILE *file;
 
+   for( file = readdir( project_directory ); file; file = readdir( project_directory ) )
+   {
+      if( string_contains( file->d_name, ".instance" ) )
+      {
+         if( ( fp = fopen( quick_format( "%s/%s", dir_name, file->d_name ), "w" ) ) == NULL )
+         {
+            bug( "%s: could not read %s.", __FUNCTION__, file->d_name );
+            continue;
+         }
+         fread_instance_import( fp, instance_id_table, framework_id_table );
+         fclose( fp );
+      }
+   }
+   return;
 }
 
 void fread_instance_import( FILE *fp, int *instance_id_table, int *framework_id_table )
 {
+   ENTITY_INSTANCE *instance;
+   char *word;
+   int position, frame, contained_by;
+   bool found, done = FALSE;
 
+   CREATE( instance, ENTITY_INSTANCE, 1 );
+
+   word = ( feof( fp ) ? "#END" : fread_word( fp ) );
+   while( !done )
+   {
+      found = FALSE;
+      switch( word[0] )
+      {
+         case '#':
+            if( !strcmp( word, "#END" ) )
+            {
+               found = FALSE;
+               quick_query( "INSERT INTO entity_instances VALUES( %d, %d, '%s', '%s', '%s', '%s', %d, %d, %d, %d );",
+                  instance->tag->id, instance->tag->type, instance->tag->created_by,
+                  instance->tag->created_on, instance->tag->modified_by, instance->tag->modified_on,
+                  contained_by, frame,
+                  (int)instance->live, (int)instance->loaded );
+                  free_eInstance( instance );
+               return;
+            }
+            if( !strcmp( word, "#IDTAG" ) )
+            {
+               found = TRUE;
+               instance->tag = fread_id_tag_import( fp, instance_id_table );
+               break;
+            }
+            if( !strcmp( word, "#INSTANCE" ) )
+            {
+               found = TRUE;
+               break;
+            }
+            break;
+         case 'C':
+            if( !strcmp( word, "ContainedBy" ) )
+            {
+               found = TRUE;
+               contained_by = fread_number( fp );
+               contained_by = instance_id_table[contained_by];
+               break;
+            }
+            if( !strcmp( word, "Content" ) )
+            {
+               found = TRUE;
+               position = fread_number( fp );
+               quick_query( "INSERT INTO `entity_instance_possessions` VALUES ( %d, %d );", instance->tag->id, instance_id_table[position] );
+               break;
+            }
+            break;
+         case 'F':
+            if( !strcmp( word, "Framework" ) )
+            {
+               found = TRUE;
+               frame = fread_number( fp );
+               frame = framework_id_table[frame];
+               break;
+            }
+         case 'L':
+            IREAD( "Level", instance->level );
+            break;
+         case 'S':
+            if( !strcmp( word, "Spec" ) )
+            {
+               int type, value;
+               found = TRUE;
+
+               type = fread_number( fp );
+               value = fread_number( fp );
+               if( type == SPEC_ISROOM )
+                  value = instance_id_table[value];
+               quick_query( "INSERT INTO live_specs VALUES ( '%s', %d, '%d' );", spec_table[type], value, instance->tag->id );
+               break;
+            }
+            break;
+      }
+      if( !found )
+      {
+         bug( "%s: bad file format: %s", __FUNCTION__, word );
+         continue;
+      }
+      if( !done )
+         word = ( feof( fp ) ? "#END" : fread_word( fp ) );
+   }
+   free_eInstance( instance );
+   return;
 }
 
 void save_workspace_list_export( LLIST *workspace_list, char *directory, int *workspace_id_table, int *instance_id_table, int *framework_id_table )
@@ -684,10 +789,11 @@ void fwrite_instance_export( FILE *fp, ENTITY_INSTANCE *instance, int *instance_
    fprintf( fp, "Level        %d\n", instance->level );
 
    fwrite_instance_content_list_export( fp, instance->contents, instance_id_table );
-   fwrite_specifications( fp, instance->specifications );
+   fwrite_specifications( fp, instance->specifications, instance_id_table );
 
    fprintf( fp, "Framework    %d\n", get_id_table_position( framework_id_table, instance->framework->tag->id ) );
-   fprintf( fp, "ContainedBy  %d\n", get_id_table_position( instance_id_table, instance->contained_by_id ) );
+   if( instance->contained_by )
+      fprintf( fp, "ContainedBy  %d\n", get_id_table_position( instance_id_table, instance->contained_by->tag->id ) );
    fprintf( fp, "#END\n\n" );
 }
 
@@ -745,7 +851,7 @@ void fwrite_framework_export( FILE *fp, ENTITY_FRAMEWORK *frame, int *framework_
    fprintf( fp, "Description  %s~\n", frame->description );
 
    fwrite_framework_content_list_export( fp, frame->fixed_contents, framework_id_table );
-   fwrite_specifications( fp, frame->specifications );
+   fwrite_specifications( fp, frame->specifications, framework_id_table );
 
    fprintf( fp, "Inherits     %d\n", frame->inherits ? get_id_table_position( framework_id_table, frame->inherits->tag->id ) : -1 );
    fprintf( fp, "#END\n\n" );

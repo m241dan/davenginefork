@@ -15,7 +15,6 @@ struct entity_instance
    ENTITY_FRAMEWORK *framework;
 
    ENTITY_INSTANCE *contained_by;
-   int contained_by_id; /* loading considerations */
 
    D_SOCKET *socket;
    ACCOUNT_DATA *account;

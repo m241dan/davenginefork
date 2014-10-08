@@ -29,7 +29,6 @@ int clear_eInstance( ENTITY_INSTANCE *eInstance )
    eInstance->socket = NULL;
    eInstance->account = NULL;
    eInstance->contained_by = NULL;
-   eInstance->contained_by_id = -1;
    return RET_SUCCESS;
 }
 
@@ -194,7 +193,7 @@ void full_load_instance( ENTITY_INSTANCE *instance )
    }
 
    list = AllocList();
-   if( !db_query_list_row( list, quick_format( "SELECT %s FROM `entity_instances` WHERE containedBy=%d;", tag_table_whereID[ENTITY_INSTANCE_IDS], instance->tag->id ) ) )
+   if( !db_query_list_row( list, quick_format( "SELECT content_instanceID FROM `entity_instance_possessions` WHERE %s=%d;", tag_table_whereID[ENTITY_INSTANCE_IDS], instance->tag->id ) ) )
    {
       FreeList( list );
       bug( "%s: could not load contents, bad list.", __FUNCTION__ );
@@ -242,7 +241,7 @@ int new_eInstance( ENTITY_INSTANCE *eInstance )
    if( !quick_query( "INSERT INTO entity_instances VALUES( %d, %d, '%s', '%s', '%s', '%s', %d, %d, %d, %d );",
          eInstance->tag->id, eInstance->tag->type, eInstance->tag->created_by,
          eInstance->tag->created_on, eInstance->tag->modified_by, eInstance->tag->modified_on,
-         eInstance->contained_by ? eInstance->contained_by->tag->id : 0, eInstance->framework->tag->id,
+         eInstance->contained_by ? eInstance->contained_by->tag->id : -1, eInstance->framework->tag->id,
          (int)eInstance->live, (int)eInstance->loaded ) )
       return RET_FAILED_OTHER;
 
@@ -265,7 +264,7 @@ void db_load_eInstance( ENTITY_INSTANCE *eInstance, MYSQL_ROW *row )
 
    counter = db_load_tag( eInstance->tag, row );
 
-   eInstance->contained_by_id = atoi( (*row)[counter++] );
+   eInstance->contained_by = get_instance_by_id( atoi( (*row)[counter++] ) );
    framework_id = atoi( (*row)[counter++] ); /* don't grab containedBY just yet */
    eInstance->live = atoi( (*row)[counter++] );
    eInstance->loaded = atoi( (*row)[counter++] );
@@ -281,8 +280,8 @@ void entity_from_container( ENTITY_INSTANCE *entity )
    if( entity->contained_by )
    {
       detach_entity_from_contents( entity, entity->contained_by );
-      if( !quick_query( "UPDATE `entity_instances` SET containedBy='%d' WHERE entityInstanceId=%d;", entity->contained_by_id, entity->tag->id ) )
-         bug( "%s: could not update databaes with %d's new location in the world.", __FUNCTION__, entity->tag->id );
+      if( !quick_query( "DELETE FROM `entity_instance_possessions` WHERE entityInstanceID=%d AND content_instanceID=%d;", entity->contained_by->tag->id, entity->tag->id ) )
+         bug( "%s: could not delete from database possession entry for %d.", __FUNCTION__, entity->contained_by->tag->id );
    }
    return;
 
@@ -301,8 +300,9 @@ void entity_to_world( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container )
    if( container && container->builder ) /* don't save for now if the person who is holding it is a builder */
       return;
 
-   if( !quick_query( "UPDATE `entity_instances` SET containedBy='%d' WHERE entityInstanceId=%d;", entity->contained_by_id, entity->tag->id ) )
-      bug( "%s: could not update databaes with %d's new location in the world.", __FUNCTION__, entity->tag->id );
+   if( entity->contained_by )
+      if( !quick_query( "INSERT INTO `entity_instance_possessions` VALUES ( %d, %d );", entity->contained_by->tag->id, entity->tag->id ) )
+         bug( "%s: could not insert into database with %d's new location in the world.", __FUNCTION__, entity->tag->id );
    return;
 }
 
@@ -311,7 +311,6 @@ void entity_to_contents( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container )
    if( !container )
    {
       entity->contained_by = NULL;
-      entity->contained_by_id = -1;
       return;
    }
    attach_entity_to_contents( entity, container );
@@ -323,7 +322,6 @@ void attach_entity_to_contents( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *contai
    AttachToList( entity, container->contents );
    entity_to_contents_quick_sort( entity, container );
    entity->contained_by = container;
-   entity->contained_by_id = container->tag->id;
 }
 
 void detach_entity_from_contents( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container )
@@ -331,7 +329,6 @@ void detach_entity_from_contents( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *cont
    DetachFromList( entity, container->contents );
    entity_from_contents_quick_sort( entity, container );
    entity->contained_by = NULL;
-   entity->contained_by_id = -1;
 }
 
 void entity_to_contents_quick_sort( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container )
@@ -745,7 +742,7 @@ void move_create( ENTITY_INSTANCE *entity, ENTITY_FRAMEWORK *exit_frame, char *a
 
       spec = init_specification();
       spec->type = SPEC_ISEXIT;
-      spec->value = entity->contained_by_id;
+      spec->value = entity->contained_by->tag->id;
       mud_printf( spec->owner, "%d", mirrored_exit_instance->tag->id );
       new_specification( spec );
       add_spec_to_instance( spec, mirrored_exit_instance );
@@ -1358,7 +1355,7 @@ void entity_load( void *passed, char *arg )
 
    if( !arg || arg[0] == '\0' )
    {
-      if( entity->contained_by && entity->contained_by_id != -1 )
+      if( entity->contained_by )
       {
          text_to_entity( entity, "Loading the entity you are within.\r\n" );
          full_load_instance( entity->contained_by );

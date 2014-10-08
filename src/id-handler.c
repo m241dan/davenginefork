@@ -359,7 +359,7 @@ void fwrite_id_tag_export( FILE *fp, ID_TAG *tag, int *id_table )
    fprintf( fp, "END\n\n" );
 }
 
-ID_TAG *fread_id_tag_export( FILE *fp, int *id_table )
+ID_TAG *fread_id_tag_import( FILE *fp, int *id_table )
 {
    ID_TAG *tag;
    char *word;
@@ -504,7 +504,6 @@ void print_table( int *table )
 
 int *build_id_table_import( DIR *project_directory, int type )
 {
-   DIR_FILE file;
    int *id_table;
    int size, x;
 
@@ -516,6 +515,5 @@ int *build_id_table_import( DIR *project_directory, int type )
       id_table[x] = get_new_id( type );
    id_table[x] = -1;
 
-   rewinddir( project_directory );
    return id_table;
 }

@@ -18,6 +18,7 @@
 #include <stdarg.h>
 #include <ctype.h>
 #include <mysql.h>
+#include <regex.h>
 
 #include "llist.h"
 #include "stack.h"
@@ -264,7 +265,7 @@ typedef struct  inception_olc  INCEPTION;
 typedef struct  workspace      WORKSPACE;
 typedef struct  typSpec        SPECIFICATION;
 typedef struct  project        PROJECT;
-typedef struct dirent *entry   DIR_FILE;
+typedef struct  dirent         DIR_FILE;
 /* the actual structures */
 struct dSocket
 {
