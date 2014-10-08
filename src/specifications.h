@@ -23,8 +23,9 @@ int db_load_spec( SPECIFICATION *spec, MYSQL_ROW *row );
 SPECIFICATION *copy_spec( SPECIFICATION *spec );
 LLIST *copy_specification_list( LLIST *spec_list, bool copy_content );
 void copy_specifications_into_list( LLIST *spec_list, LLIST *copy_into_list, bool copy_content );
-void fwrite_specifications( FILE *fp, LLIST *specifications );
-void fwrite_spec( FILE *fp, SPECIFICATION *spec );
+void fwrite_specifications( FILE *fp, LLIST *specifications, int *id_table );
+void fwrite_spec( FILE *fp, SPECIFICATION *spec, int *id_table );
+SPECIFICATION *fread_specification( FILE *fp, int *id_table );
 
 
 SPECIFICATION *spec_list_has_by_type( LLIST *spec_list, int type );

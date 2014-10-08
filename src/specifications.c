@@ -207,22 +207,37 @@ void copy_specifications_into_list( LLIST *spec_list, LLIST *copy_into_list, boo
    return;
 }
 
-void fwrite_specifications( FILE *fp, LLIST *specifications )
+void fwrite_specifications( FILE *fp, LLIST *specifications, int *id_table )
 {
    SPECIFICATION *spec;
    ITERATOR Iter;
 
    AttachIterator( &Iter, specifications );
    while( ( spec = (SPECIFICATION *)NextInList( &Iter ) ) != NULL )
-      fwrite_spec( fp, spec );
+      fwrite_spec( fp, spec, id_table );
    DetachIterator( &Iter );
 
    return;
 }
 
-void fwrite_spec( FILE *fp, SPECIFICATION *spec )
+void fwrite_spec( FILE *fp, SPECIFICATION *spec, int *id_table )
 {
-   fprintf( fp, "Spec       %d %d\n", spec->type, spec->value );
+   if( spec->type == SPEC_ISROOM )
+      fprintf( fp, "Spec       %d %d\n", spec->type, id_table ? get_id_table_position( spec->value ) : spec->value );
+   else
+      fprintf( fp, "Spec       %d %d\n", spec->type, spec->value );
+}
+
+SPECIFICATION *fread_specification( FILE *fp, int *id_table )
+{
+   SPECIFICATION *spec;
+
+   CREATE( spec, SPECIFICATION, 1 );
+   spec->type = fread_number( fp );
+   spec->value = fread_number( fp );
+   if( id_table )
+      spec->value = id_table[spec->value];
+   return spec;
 }
 
 SPECIFICATION *spec_list_has_by_type( LLIST *spec_list, int type )

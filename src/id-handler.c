@@ -348,6 +348,69 @@ ID_TAG *copy_tag( ID_TAG *tag )
    return tag_copy;
 }
 
+void fwrite_id_tag_export( FILE *fp, ID_TAG *tag, int *id_table )
+{
+   fprintf( fp, "#IDTAG\n" );
+   fprintf( fp, "ID           %d\n", id_table ? get_id_table_position( id_table, tag->id ) : 0 );
+   fprintf( fp, "CreatedOn    %s~\n", tag->created_on );
+   fprintf( fp, "CreatedBy    %s~\n", tag->created_by );
+   fprintf( fp, "ModifiedOn   %s~\n", tag->modified_on );
+   fprintf( fp, "ModifiedBy   %s~\n", tag->modified_by );
+   fprintf( fp, "END\n\n" );
+}
+
+ID_TAG *fread_id_tag_export( FILE *fp, int *id_table )
+{
+   ID_TAG *tag;
+   char *word;
+   int position;
+   bool found, done = FALSE;
+
+   CREATE( tag, ID_TAG, 1 );
+
+   word = ( feof( fp ) ? "END" : fread_word( fp ) );
+   while( !done )
+   {
+      found = FALSE;
+      switch( word[0] )
+      {
+         case 'C':
+            SREAD( "CreatedBy", tag->created_by );
+            SREAD( "CreatedOn", tag->created_on );
+            break;
+         case 'E':
+            if( !strcmp( word, "END" ) )
+               return tag;
+            break;
+         case 'I':
+            if( !strcmp( word, "ID" ) )
+            {
+               if( id_table )
+               {
+                  found = TRUE;
+                  position = fread_number( fp );
+                  tag->id = id_table[position];
+               }
+               break;
+            }
+            break;
+         case 'M':
+            SREAD( "ModifiedBy", tag->modified_by );
+            SREAD( "ModifiedOn", tag->modified_on );
+            break;
+      }
+      if( !found )
+      {
+         bug( "%s: bad file foramt %s", __FUNCTION__, word );
+         continue;
+      }
+      if( !done )
+         word = ( feof( fp ) ? "END" : fread_word( fp ) );
+   }
+   free_tag( tag );
+   return NULL;
+}
+
 int *build_workspace_id_table( LLIST *workspace_list )
 {
    WORKSPACE *wSpace;
@@ -437,4 +500,22 @@ void print_table( int *table )
       bug( "%s: [%d] = %d.", __FUNCTION__, x++, value );
 
    return;
+}
+
+int *build_id_table_import( DIR *project_directory, int type )
+{
+   DIR_FILE file;
+   int *id_table;
+   int size, x;
+
+   if( ( size = directory_file_count_regex( project_directory, tag_table_extensions[type] ) ) == 0 )
+      return NULL;
+
+   CREATE( id_table, int, ( size + 1 ) );
+   for( x = 0; x < size; x++ )
+      id_table[x] = get_new_id( type );
+   id_table[x] = -1;
+
+   rewinddir( project_directory );
+   return id_table;
 }

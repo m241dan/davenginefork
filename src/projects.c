@@ -231,6 +231,31 @@ void load_project_into_olc( PROJECT *project, INCEPTION *olc )
    return;
 }
 
+void import_project( DIR *project_directory, char *dir_name )
+{
+   PROJECT *project;
+   int *workspace_id_table;
+   int *framework_id_table;
+   int *instance_id_table;
+
+   /* build id tables */
+   workspace_id_table = build_id_table_import( project_directory, WORKSPACE_IDS );
+   framework_id_table = build_id_table_import( project_directory, ENTITY_FRAMEWORK_IDS );
+   instance_id_table = build_id_table_import( project_directory, ENTITY_INSTANCE_IDS );
+
+   project = init_project_from_info( dir_name );
+   new_project( project );
+
+   load_workspaces_from_directory_into_db_and_project( project, project_directory, dir_name, workspace_id_table, framework_id_table, instance_id_table );
+   load_frameworks_from_directory_into_db( project_directory, dir_name, framework_id_table );
+   load_instances_from_directory_into_db( project_directory, dir_name, instance_id_table, framework_id_table );
+
+   free_project( project );
+   FREE( workspace_id_table );
+   FREE( framework_id_table );
+   FREE( instance_id_table );
+}
+
 /* this monster needs factoring */
 void export_project( PROJECT *project )
 {
@@ -255,6 +280,7 @@ void export_project( PROJECT *project )
    framework_id_table = build_framework_id_table( framework_list );
 
    /* commence writing */
+   save_project( project, directory );
    save_workspace_list_export( project->workspaces, directory, workspace_id_table, instance_id_table, framework_id_table );
    save_instance_list_export( instance_list, directory, instance_id_table, framework_id_table );
    save_framework_list_export( framework_list, directory, framework_id_table );
@@ -268,6 +294,295 @@ void export_project( PROJECT *project )
    FREE( framework_id_table );
    FREE( instance_id_table );
    return;
+}
+
+void save_project( PROJECT *project, char *directory )
+{
+   FILE *fp;
+
+   if( ( fp = fopen( quick_format( "%s/info.project", directory ), "w" ) ) == NULL )
+   {
+      bug( "%s: Unable to write project info.", __FUNCTION__ );
+      return;
+   }
+   fwrite_id_tag_export( fp, project->tag, NULL );
+   fprintf( fp, "#PROJECT\n\n" );
+   fprintf( fp, "Name         %s~\n", project->name );
+   fprintf( fp, "Public       %d~\n", (int)project->Public );
+   fprintf( fp, "#END\n" );
+   fprintf( fp, "%s\n", FILE_TERMINATOR );
+   fclose( fp );
+   return;
+}
+
+PROJECT *init_project_from_info( const char *dir_name )
+{
+   PROJECT *project;
+   FILE *fp;
+   char *word;
+   bool found, done = FALSE;
+
+   if( ( fp = fopen( quick_format( "%s/info.project", dir_name ), "w" ) ) == NULL )
+   {
+      bug( "%s: Unable to read project info.", __FUNCTION__ );
+      return NULL;
+   }
+
+   CREATE( project, PROJECT, 1 );
+
+   word = ( feof( fp ) ? "#END" : fread_word( fp ) );
+   while( !done )
+   {
+      found = FALSE;
+      switch( word[0] )
+      {
+         case '#':
+            if( !strcmp( word, "#END" ) )
+               return project;
+            if( !strcmp( word, "#IDTAG" ) )
+            {
+               found = TRUE;
+               project->tag = fread_id_tag_import( fp, NULL )
+               project->tag->id = get_new_id( PROJECT_IDS );
+               break;
+            }
+            if( !strcmp( word, "#PROJECT" ) )
+            {
+               found = TRUE;
+               break;
+            }
+            break;
+         case 'N':
+            SREAD( "Name", project->name );
+            break;
+         case 'P':
+            IREAD( "Public", project->Public );
+            break;
+      }
+      if( !found )
+      {
+         bug( "%s: bad file format: %s", __FUNCTION__, word );
+         continue;
+      }
+      if( !done )
+         word = ( feof( fp ) ? "#END" : fread_word( fp ) );
+   }
+   free_project( project );
+   return NULL;
+}
+
+void load_workspaces_from_directory_into_db_and_project( PROJECT *project, DIR *project_directory, const char *dir_name, int *workspace_id_table, int *framework_id_table, int *instance_id_table )
+{
+   WORKSPACE *wSpace;
+   FILE *fp;
+   DIR_FILE file;
+
+   for( file = readdir( project_directory ); file; file = readdir( project_directory ) )
+   {
+      if( string_contains( file->d_name, ".workspace" ) )
+      {
+         if( ( fp = fopen( quick_format( "%s/%s", dir_name, file->d_name ), "w" ) ) == NULL )
+         {
+            bug( "%s: could not read %s.", __FUNCTION__, file->d_name );
+            continue;
+         }
+         if( ( wSpace = fread_workspace_import( fp, workspace_id_table, framework_id_table, instance_id_table ) ) == NULL )
+         {
+            bug( "%s: bad workspace file %s.", __FUNCTION__, file->d_name );
+            continue;
+         }
+         add_workspace_to_project( wSpace, project );
+         free_workspace( wSpace );
+      }
+   }
+   return;
+}
+
+WORKSPACE *fread_workspace_import( FILE *fp, int *workspace_id_table, int *framework_id_table, int *instance_id_table )
+{
+   WORKSPACE *wSpace;
+   char *word;
+   int position;
+   bool found, done = FALSE;
+
+   CREATE( wSpace, WORKSPACE, 1 );
+
+   word = ( feof( fp ) ? "#END" : fread_word( fp ) );
+   while( !done )
+   {
+      found = FALSE;
+      switch( word[0] )
+      {
+         case '#':
+            if( !strcmp( word, "#END" ) )
+            {
+               new_workspace( wSpace );
+               return wSpace;
+            }
+            if( !strcmp( word, "#IDTAG" ) )
+            {
+               found = TRUE;
+               wSpace->tag = fread_id_tag_import( fp, workspace_id_table );
+               break;
+            }
+            break;
+            if( !strcmp( word, "#WORKSPACE" ) )
+            {
+               found = TRUE;
+               break;
+            }
+            break;
+         case 'D':
+            SREAD( "Descr", wSpace->description );
+            break;
+         case 'F':
+            if( !strcmp( word, "Framework" ) )
+            {
+               found = TRUE;
+               position = fread_number( fp );
+               quick_query( "INSERT INTO workspace_entries VALUES ( %d, 'f%d' );", wSpace->tag->id, framework_id_table[position] );
+               break;
+            }
+            break;
+         case 'I':
+            if( !strcmp( word, "Instance" ) )
+            {
+               found = TRUE;
+               position = fread_number( fp );
+               quick_query( "INSERT INTO workspace_entries VALUES ( %d, 'i%d' );", wSpace->tag->id, instance_id_table[position] );
+               break;
+            }
+            break;
+         case 'P':
+            IREAD( "Public", wSpace->Public );
+            break;
+      }
+      if( !found )
+      {
+         bug( "%s: bad file format: %s", __FUNCTION__, word );
+         continue;
+      }
+      if( !done )
+         word = ( feof( fp ) ? "#END" : fread_word( fp ) );
+   }
+   free_workspace( wSpace );
+   return NULL;
+}
+
+void load_frameworks_from_directory_into_db( DIR *project_directory, const char *dir_name, int *framework_id_table )
+{
+   FILE *fp;
+   DIR_FILE file;
+
+   for( file = readdir( project_directory ); file; file = readdir( project_directory ) )
+   {
+      if( string_contains( file->d_name, ".framework" ) )
+      {
+         if( ( fp = fopen( quick_format( "%s/%s", dir_name, file->d_name ), "w" ) ) = NULL )
+         {
+            bug( "%s: could not read %s.", __FUNCTION__, file->d_name );
+            continue;
+         }
+         fread_framework_import( fp, framework_id_table );
+      }
+   }
+}
+
+void fread_framework_import( FILE *fp, int *framework_id_table );
+{
+   ENTITY_FRAMEWORK *frame;
+   char *word;
+   int position, inherits;
+   bool found, done = FALSE;
+
+   CREATE( frame, ENTITY_FRAMEWORK, 1 );
+
+   word = ( feof( fp ) ? "#END" : fread_word( fp ) );
+   while( !done )
+   {
+      found = FALSE;
+      switch( word[0] )
+      {
+         case '#':
+            if( !strcmp( word, "#END" ) )
+            {
+               quick_query( "INSERT INTO entity_frameworks VALUES ( %d, %d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d' );",
+                  frame->tag->id, frame->tag->type, frame->tag->created_by,
+                  frame->tag->created_on, frame->tag->modified_by, frame->tag->modified_on,
+                  frame->name, frame->short_descr, frame->long_descr, frame->description,
+                  inherits == -1 ? inherits : framework_id_table[inherits] );
+               free_eFramework( frame );
+               return;
+            }
+            if( !strcmp( word, "#IDTAG" ) )
+            {
+               found = TRUE;
+               frame->tag = fread_id_tag_import( fp, framework_id_table );
+               break;
+            }
+            if( !strcmp( word, "#INSTANCE" ) )
+            {
+               found = TRUE;
+               break;
+            }
+            break;
+         case 'D':
+            SREAD( "Description", frame->description );
+            break;
+         case 'F':
+            if( !strcmp( word, "FContent" ) )
+            {
+               found = TRUE;
+               position = fread_number( fp );
+               quick_query( "INSERT INTO `framework_fixed_possessions` VALUES ( %d, %d );", frame->tag->id, framework_id_table[position] );
+               break;
+            }
+            break;
+         case 'I':
+            IREAD( "Inherits", inherits );
+            break;
+         case 'L':
+            SREAD( "Long_Descr", frame->long_descr );
+            break;
+         case 'N':
+            SREAD( "Name", frame->name );
+            break;
+         case 'S':
+            SREAD( "Short_Descr", frame->short_descr );
+            if( !strcmp( word, "Spec" ) )
+            {
+               int type, value;
+               found = TRUE;
+
+               type = fread_number( fp );
+               value = fread_number( fp );
+               if( type = SPEC_ISROOM )
+                  value = framework_id_table[value];
+               quick_query( "INSERT INTO live_specs VALUES ( '%s', %d, 'f%d' );", spec_table[type], spec->value, frame->tag->id );
+               break;
+            }
+            break;
+      }
+      if( !found )
+      {
+         bug( "%s: bad file format: %s", __FUNCTION__, word );
+         continue;
+      }
+      if( !done )
+         word = ( feof( fp ) ? "#END" : fread_word( fp ) );
+   }
+   free_eFramework( frame );
+   return;
+}
+
+void load_instances_from_directory_into_db( DIR *project_directory, const char *dir_name, int *instance_id_table, int *framework_id_table )
+{
+
+}
+
+void fread_instance_import( FILE *fp, int *instance_id_table, int *framework_id_table )
+{
+
 }
 
 void save_workspace_list_export( LLIST *workspace_list, char *directory, int *workspace_id_table, int *instance_id_table, int *framework_id_table )
@@ -302,21 +617,14 @@ void save_workspace_export( char *pDir, WORKSPACE *wSpace, int *workspace_id_tab
 
 void fwrite_workspace_export( FILE *fp, WORKSPACE *wSpace, int *workspace_id_table, int *instance_id_table, int *framework_id_table )
 {
-   fprintf( fp, "#IDTAG\n" );
-   fprintf( fp, "ID           %d\n", get_id_table_position( workspace_id_table, wSpace->tag->id ) );
-   fprintf( fp, "CreatedOn    %s~\n", wSpace->tag->created_on );
-   fprintf( fp, "CreatedBy    %s~\n", wSpace->tag->created_by );
-   fprintf( fp, "ModifiedOn   %s~\n", wSpace->tag->modified_on );
-   fprintf( fp, "ModifiedBy   %s~\n", wSpace->tag->modified_by );
-   fprintf( fp, "END\n\n" );
-
+   fwrite_id_tag_export( fp, wSpace->tag, workspace_id_table);
    fprintf( fp, "#WORKSPACE\n" );
    fprintf( fp, "Name         %s~\n", wSpace->name );
    fprintf( fp, "Descr        %s~\n", wSpace->description );
    fprintf( fp, "Public       %d\n", (int)wSpace->Public );
 
    fwrite_workspace_entries_export( fp, wSpace, instance_id_table, framework_id_table );
-   fprintf( fp, "END\n\n" );
+   fprintf( fp, "#END\n\n" );
    return;
 }
 
@@ -371,14 +679,7 @@ void save_instance_export( char *pDir, ENTITY_INSTANCE *instance, int *instance_
 
 void fwrite_instance_export( FILE *fp, ENTITY_INSTANCE *instance, int *instance_id_table, int *framework_id_table )
 {
-   fprintf( fp, "#IDTAG\n" );
-   fprintf( fp, "ID           %d\n", get_id_table_position( instance_id_table, instance->tag->id ) );
-   fprintf( fp, "CreatedOn    %s~\n", instance->tag->created_on );
-   fprintf( fp, "CreatedBy    %s~\n", instance->tag->created_by );
-   fprintf( fp, "ModifiedOn   %s~\n", instance->tag->modified_on );
-   fprintf( fp, "ModifiedBy   %s~\n", instance->tag->modified_by );
-   fprintf( fp, "END\n\n" );
-
+   fwrite_id_tag_export( fp, instance->tag, instance_id_table);
    fprintf( fp, "#INSTANCE\n" );
    fprintf( fp, "Level        %d\n", instance->level );
 
@@ -387,7 +688,7 @@ void fwrite_instance_export( FILE *fp, ENTITY_INSTANCE *instance, int *instance_
 
    fprintf( fp, "Framework    %d\n", get_id_table_position( framework_id_table, instance->framework->tag->id ) );
    fprintf( fp, "ContainedBy  %d\n", get_id_table_position( instance_id_table, instance->contained_by_id ) );
-   fprintf( fp, "END\n\n" );
+   fprintf( fp, "#END\n\n" );
 }
 
 void fwrite_instance_content_list_export( FILE *fp, LLIST *contents, int *instance_id_table )
@@ -435,13 +736,7 @@ void save_framework_export( char *pDir, ENTITY_FRAMEWORK *frame, int *framework_
 
 void fwrite_framework_export( FILE *fp, ENTITY_FRAMEWORK *frame, int *framework_id_table )
 {
-   fprintf( fp, "#IDTAG\n" );
-   fprintf( fp, "ID           %d\n", get_id_table_position( framework_id_table, frame->tag->id ) );
-   fprintf( fp, "CreatedOn    %s~\n", frame->tag->created_on );
-   fprintf( fp, "CreatedBy    %s~\n", frame->tag->created_by );
-   fprintf( fp, "ModifiedOn   %s~\n", frame->tag->modified_on );
-   fprintf( fp, "ModifiedBy   %s~\n", frame->tag->modified_by );
-   fprintf( fp, "END\n\n" );
+   fwrite_id_tag_export( fp, frame->tag, framework_id_table );
 
    fprintf( fp, "#FRAMEWORK\n" );
    fprintf( fp, "Name         %s~\n", frame->name );
@@ -453,7 +748,7 @@ void fwrite_framework_export( FILE *fp, ENTITY_FRAMEWORK *frame, int *framework_
    fwrite_specifications( fp, frame->specifications );
 
    fprintf( fp, "Inherits     %d\n", frame->inherits ? get_id_table_position( framework_id_table, frame->inherits->tag->id ) : -1 );
-   fprintf( fp, "END\n\n" );
+   fprintf( fp, "#END\n\n" );
    return;
 }
 

@@ -15,6 +15,11 @@ const char *const tag_table_whereID[MAX_ID_HANDLER+1] = {
    '\0'
 };
 
+const char *const tag_table_extensions[MAX_ID_HANDLER+1] = {
+   ".account", ".workspace", ".framework", ".instance", ".project"
+   '\0'
+};
+
 const char const tag_table_characters[MAX_ID_HANDLER+1] = {
    'a', 'w', 'f', 'i', 'p',
    '\0'

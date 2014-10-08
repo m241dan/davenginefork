@@ -26,7 +26,18 @@ void add_workspace_to_project( WORKSPACE *wSpace, PROJECT *project );
 void rem_workspace_from_project( WORKSPACE *wSpace, PROJECT *project );
 void load_project_into_olc( PROJECT *project, INCEPTION *olc );
 
+void import_project( const char *project_directory );
 void export_project( PROJECT *project );
+
+void save_project( PROJECT *project, char *directory );
+PROJECT *init_project_from_info( const char *dir_name );
+
+void load_workspaces_from_directory_into_db_and_project( PROJECT *project, DIR *project_directory, const char *dir_name, int *workspace_id_table, int *framework_id_table, int *instance_id_table );
+WORKSPACE *fread_workspace_import( FILE *fp, int *workspace_id_table, int *framework_id_table, int *instance_id_table );
+void load_frameworks_from_directory_into_db( DIR *project_directory, const char *dir_name, int *framework_id_table );
+void fread_framework_import( FILE *fp, int *framework_id_table );
+void load_instances_from_directory_into_db( DIR *project_directory, const char *dir_name, int *instance_id_table, int *framework_id_table );
+void fread_instance_import( FILE *fp, int *instance_id_table, int *framework_id_table );
 
 void save_workspace_list_export( LLIST *workspace_list, char *directory, int *workspace_id_table, int *instance_id_table, int *framework_id_table );
 void save_workspace_export( char *pDir, WORKSPACE *wSpace, int *workspace_id_table, int *instance_id_table, int *framework_id_table );

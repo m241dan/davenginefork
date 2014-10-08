@@ -40,8 +40,12 @@ int get_potential_id( int type );
 
 ID_TAG *copy_tag( ID_TAG *tag );
 
+void fwrite_id_tag_export( FILE *fp, ID_TAG *tag, int *id_table );
+ID_TAG *fread_id_tag_import( FILE *fp, int *id_table );
+
 int *build_workspace_id_table( LLIST *workspace_list );
 int *build_instance_id_table( LLIST *instance_list );
 int *build_framework_id_table( LLIST *framework_list );
 int get_id_table_position( int *table, int id );
 void print_table( int *table );
+int *build_id_table_import( DIR *project_directory, int type );

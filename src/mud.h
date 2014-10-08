@@ -264,7 +264,7 @@ typedef struct  inception_olc  INCEPTION;
 typedef struct  workspace      WORKSPACE;
 typedef struct  typSpec        SPECIFICATION;
 typedef struct  project        PROJECT;
-
+typedef struct dirent *entry   DIR_FILE;
 /* the actual structures */
 struct dSocket
 {
@@ -424,6 +424,7 @@ char   *fread_line            ( FILE *fp );                 /* pointer         *
 char   *fread_string          ( FILE *fp );                 /* allocated data  */
 char   *fread_word            ( FILE *fp );                 /* pointer         */
 int     fread_number          ( FILE *fp );                 /* just an integer */
+int directory_file_count_regex( DIR *directory, const char *regex_string );
 
 /*
  * socket.c
@@ -464,6 +465,7 @@ char *print_bar( const char *pattern, int width );
 const char *itos( int value );
 const char *quick_format( const char *Format, ... );
 const char *format_string_for_sql( const char *string );
+bool string_contains( char *string, const char *regex_string );
 
 /*
  * help.c

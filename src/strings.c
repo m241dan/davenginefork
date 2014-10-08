@@ -759,3 +759,29 @@ const char *format_string_for_sql( const char *string )
    buf[strlen(buf)] = '\0';
    return buf;
 }
+
+bool string_contains( char *string, const char *regex_string )
+{
+   /* Using Regular Expression */
+   regex_t regex;
+   int reti;
+
+   reti = regcomp(&regex, regex_string, 0 );
+   if( reti )
+   {
+      bug( "%s: bad regex '%s'", __FUNCTION__, regex_string );
+      return FALSE;
+   }
+
+   if( !(reti = regexec( &regex, string, 0, NULL, 0 ) ) )
+      return TRUE;
+   else if( reti == REG_NOMATCH )
+      return FALSE;
+   else
+   {
+      log_string( "didn't know what to do with: %s", regex_string);
+      return FALSE;
+   }
+   return FALSE;
+}
+
