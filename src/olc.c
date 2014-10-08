@@ -785,8 +785,7 @@ void workspace_new( void *passed, char *arg )
       return;
    }
    AttachToList( wSpace, olc->wSpaces );
-   AttachToList( wSpace, active_wSpaces );
-   AttachToList( olc->account, wSpace->who_using );
+   add_workspace_to_olc( wSpace, olc );
    text_to_olc( olc, "A new workspace %s has been created and loaded.\r\n", wSpace->name );
    return;
 }

@@ -177,7 +177,7 @@ void full_load_instance( ENTITY_INSTANCE *instance )
    if( !instance->loaded )
    {
       if( SizeOfList( instance->framework->fixed_contents ) == 0 )
-         instance->loaded = TRUE;
+         set_to_loaded( instance );
       else
       {
          AttachIterator( &Iter, instance->framework->fixed_contents );
@@ -187,8 +187,7 @@ void full_load_instance( ENTITY_INSTANCE *instance )
             entity_to_world( instance_to_contain, instance );
          }
          DetachIterator( &Iter );
-
-         instance->loaded = TRUE;
+         set_to_loaded( instance );
       }
    }
 
@@ -205,7 +204,7 @@ void full_load_instance( ENTITY_INSTANCE *instance )
       id_to_load = atoi( (row)[0] );
       if( ( instance_to_contain = get_instance_by_id( id_to_load ) ) == NULL )
       {
-         bug( "continuing" );
+         bug( "%s: trying to load an instance that doesnt exist: ID %d", __FUNCTION__, id_to_load );
          continue;
       }
       full_load_instance( instance_to_contain );
@@ -214,6 +213,14 @@ void full_load_instance( ENTITY_INSTANCE *instance )
    }
    DetachIterator( &Iter );
    FreeList( list );
+   return;
+}
+
+void set_to_loaded( ENTITY_INSTANCE *instance )
+{
+   instance->loaded = TRUE;
+   if( !quick_query( "UPDATE `entity_instances` SET loaded=1 WHERE %s=%d;", tag_table_whereID[ENTITY_INSTANCE_IDS], instance->tag->id ) )
+      bug( "%s: could not set entity to loaded: ID %d", __FUNCTION__, instance->tag->id );
    return;
 }
 
@@ -279,9 +286,9 @@ void entity_from_container( ENTITY_INSTANCE *entity )
 {
    if( entity->contained_by )
    {
-      detach_entity_from_contents( entity, entity->contained_by );
       if( !quick_query( "DELETE FROM `entity_instance_possessions` WHERE entityInstanceID=%d AND content_instanceID=%d;", entity->contained_by->tag->id, entity->tag->id ) )
          bug( "%s: could not delete from database possession entry for %d.", __FUNCTION__, entity->contained_by->tag->id );
+      detach_entity_from_contents( entity, entity->contained_by );
    }
    return;
 
@@ -650,6 +657,7 @@ ENTITY_INSTANCE *create_mobile_instance( const char *name  )
 
 }
 
+/* factor me PLEASE */
 void move_create( ENTITY_INSTANCE *entity, ENTITY_FRAMEWORK *exit_frame, char *arg )
 {
    ENTITY_FRAMEWORK *room_frame;
@@ -962,7 +970,7 @@ int show_ent_objects_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing )
          continue;
       if( instance_list_has_by_id( viewing->contents_sorted[SPEC_ISMOB], obj->tag->id ) )
          continue;
-      text_to_entity( entity, "%s", instance_long_descr( obj ) );
+      text_to_entity( entity, "%s\n", instance_long_descr( obj ) );
    }
    DetachIterator( &Iter );
    return ret;
@@ -1038,7 +1046,18 @@ void entity_goto( void *passed, char *arg )
    else
    {
       if( interpret_entity_selection( buf ) )
-         ent_to_goto = (ENTITY_INSTANCE *)retrieve_entity_selection();
+      {
+         switch( input_selection_typing )
+         {
+            default: break;
+            case SEL_INSTANCE:
+               ent_to_goto = (ENTITY_INSTANCE *)retrieve_entity_selection();
+               break;
+            case SEL_STRING:
+               text_to_entity( entity, (char *)retrieve_entity_selection() );
+               return;
+         }
+      }
    }
 
    if( !ent_to_goto )

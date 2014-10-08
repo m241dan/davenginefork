@@ -41,6 +41,7 @@ ENTITY_INSTANCE *load_eInstance_by_name( const char *name );
 
 ENTITY_INSTANCE *full_load_eFramework( ENTITY_FRAMEWORK *frame );
 void full_load_instance( ENTITY_INSTANCE *instance );
+void set_to_loaded( ENTITY_INSTANCE *instance );
 
 int new_eInstance( ENTITY_INSTANCE *eInstance );
 void db_load_eInstance( ENTITY_INSTANCE *eInstance, MYSQL_ROW *row );

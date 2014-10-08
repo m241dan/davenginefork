@@ -676,6 +676,7 @@ void fread_instance_import( FILE *fp, int *instance_id_table, int *framework_id_
             }
          case 'L':
             IREAD( "Level", instance->level );
+            IREAD( "Loaded", instance->loaded );
             break;
          case 'S':
             if( !strcmp( word, "Spec" ) )
@@ -801,7 +802,7 @@ void fwrite_instance_export( FILE *fp, ENTITY_INSTANCE *instance, int *instance_
    fwrite_id_tag_export( fp, instance->tag, instance_id_table);
    fprintf( fp, "#INSTANCE\n" );
    fprintf( fp, "Level        %d\n", instance->level );
-
+   fprintf( fp, "Loaded       %d\n", (int)instance->loaded );
    fwrite_instance_content_list_export( fp, instance->contents, instance_id_table );
    fwrite_specifications( fp, instance->specifications, instance_id_table );
 
@@ -1191,8 +1192,14 @@ void project_importProject( void *passed, char *arg )
 
    if( !strcmp( arg, "list" ) )
    {
+      text_to_olc( olc, "Projects:\n\r" );
       for( file = readdir( directory ); file; file = readdir( directory ) )
-         text_to_olc( olc, "%s\n", file->d_name );
+      {
+         if( !strcmp( file->d_name, "." ) || !strcmp( file->d_name, ".." ) )
+            continue;
+         text_to_olc( olc, " %s\n", file->d_name );
+         olc_short_prompt( olc );
+      }
    }
    else
    {
