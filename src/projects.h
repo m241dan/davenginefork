@@ -25,6 +25,7 @@ void load_project_workspaces_into_olc( PROJECT *project, INCEPTION *olc );
 void add_workspace_to_project( WORKSPACE *wSpace, PROJECT *project );
 void rem_workspace_from_project( WORKSPACE *wSpace, PROJECT *project );
 void load_project_into_olc( PROJECT *project, INCEPTION *olc );
+DIR *open_projects_dir( void );
 
 void import_project( DIR *project_directory, const char *dir_name );
 void export_project( PROJECT *project );
@@ -65,3 +66,4 @@ void copy_all_instance_frames_into_list_ndi( LLIST *instance_list, LLIST *frame_
 void project_newProject( void *passed, char *arg );
 void project_openProject( void *passed, char *arg );
 void project_exportProject( void *passed, char *arg );
+void project_importProject( void *passed, char *arg );

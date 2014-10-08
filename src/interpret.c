@@ -105,7 +105,7 @@ struct typCmd olc_commands[] = {
 * NAME, CMD_FUNC, LEVEL, SUB_COMMANDS, CAN_SUB, DESC_FUN, FROM_TABLE           *
 *******************************************************************************/
 struct typCmd file_sub_commands[] = {
-   { "ImportProject", NULL, LEVEL_BASIC, NULL, FALSE, NULL, file_sub_commands },
+   { "ImportProject", project_importProject, LEVEL_BASIC, NULL, FALSE, NULL, file_sub_commands },
    { "ExportProject", project_exportProject, LEVEL_BASIC, NULL, FALSE, NULL, file_sub_commands },
    { "OpenProject", project_openProject, LEVEL_BASIC, NULL, FALSE, NULL, file_sub_commands },
    { "NewProject", project_newProject, LEVEL_BASIC, NULL, FALSE, NULL, file_sub_commands },

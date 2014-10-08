@@ -231,6 +231,18 @@ void load_project_into_olc( PROJECT *project, INCEPTION *olc )
    return;
 }
 
+DIR *open_projects_dir( void )
+{
+   DIR *projects_dir;
+
+   if( ( projects_dir = opendir( "../projects/" ) ) == NULL )
+   {
+      bug( "%s: there's something wrong with the projects directory.", __FUNCTION__ );
+      return NULL;
+   }
+   return projects_dir;
+}
+
 void import_project( DIR *project_directory, const char *dir_name )
 {
    PROJECT *project;
@@ -244,7 +256,6 @@ void import_project( DIR *project_directory, const char *dir_name )
    instance_id_table = build_id_table_import( project_directory, ENTITY_INSTANCE_IDS );
 
    project = init_project_from_info( dir_name );
-   new_project( project );
 
    load_workspaces_from_directory_into_db_and_project( project, project_directory, dir_name, workspace_id_table, framework_id_table, instance_id_table );
    load_frameworks_from_directory_into_db( project_directory, dir_name, framework_id_table );
@@ -338,7 +349,10 @@ PROJECT *init_project_from_info( const char *dir_name )
       {
          case '#':
             if( !strcmp( word, "#END" ) )
+            {
+               new_project( project );
                return project;
+            }
             if( !strcmp( word, "#IDTAG" ) )
             {
                found = TRUE;
@@ -640,8 +654,8 @@ void fread_instance_import( FILE *fp, int *instance_id_table, int *framework_id_
             if( !strcmp( word, "ContainedBy" ) )
             {
                found = TRUE;
-               contained_by = fread_number( fp );
-               contained_by = instance_id_table[contained_by];
+               if( ( contained_by = fread_number( fp ) ) == -1 )
+                  contained_by = instance_id_table[contained_by];
                break;
             }
             if( !strcmp( word, "Content" ) )
@@ -906,11 +920,12 @@ void export_project( PROJECT *project )
 
 char *create_project_directory( PROJECT *project )
 {
+   DIR *directory;
    static char pDir[MAX_BUFFER];
    memset( &pDir[0], 0, sizeof( pDir ) );
 
    mud_printf( pDir, "../projects/%s-%s", project->name, smash_newline( ctime( &current_time ) ) );
-   if( opendir( pDir ) == NULL )
+   if( ( directory = opendir( pDir ) ) == NULL )
    {
       if( ( mkdir( pDir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH ) ) != 0 ) /* was unsuccessful */
       {
@@ -918,6 +933,7 @@ char *create_project_directory( PROJECT *project )
          return NULL;
       }
    }
+   closedir( directory );
    return pDir;
 }
 
@@ -1153,5 +1169,52 @@ void project_exportProject( void *passed, char *arg )
    export_project( project );
    text_to_olc( olc, "You export %s.\r\n", project->name );
    olc_short_prompt( olc );
+   return;
+}
+
+void project_importProject( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   DIR *directory, *project_dir;
+   DIR_FILE *file;
+   char *dir_name = NULL;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      /* nanny stuff */
+      text_to_olc( olc, "Import what project?\r\n - try \"ImportProject list\"\r\n" );
+      return;
+   }
+
+   if( ( directory = open_projects_dir() ) == NULL )
+      return;
+
+   if( !strcmp( arg, "list" ) )
+   {
+      for( file = readdir( directory ); file; file = readdir( directory ) )
+         text_to_olc( olc, "%s\n", file->d_name );
+   }
+   else
+   {
+      for( file = readdir( directory ); file; file = readdir( directory ) )
+      {
+         if( !strcasecmp( arg, file->d_name ) )
+         {
+            dir_name = strdup( quick_format( "../projects/%s/", arg ) );
+            break;
+         }
+      }
+      if( !dir_name )
+         text_to_olc( olc, "No such project to import.\r\n" );
+      else
+      {
+         project_dir = opendir( dir_name );
+         import_project( project_dir, dir_name );
+         FREE( dir_name );
+         closedir( project_dir );
+         text_to_olc( olc, "Project Imported, feel free to open it.\r\n" );
+      }
+   }
+   closedir( directory );
    return;
 }
