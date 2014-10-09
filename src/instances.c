@@ -728,7 +728,7 @@ void move_create( ENTITY_INSTANCE *entity, ENTITY_FRAMEWORK *exit_frame, char *a
    add_spec_to_instance( spec, exit_instance );
 
    entity_to_world( exit_instance, entity->contained_by );
-   text_to_entity( entity, "You create a new room(%d) to the %s.\r\n", room_instance->tag->id, instance_name( exit_instance ) );
+   text_to_entity( entity, "You create a new room(%d) to the %s.\r\n\r\n\r\n", room_instance->tag->id, instance_name( exit_instance ) );
 
    /* create mirrored exit */
    if( mirror )
@@ -815,18 +815,23 @@ int text_to_entity( ENTITY_INSTANCE *entity, const char *fmt, ... )
 
 int builder_prompt( D_SOCKET *dsock )
 {
+   INCEPTION *olc;
+   BUFFER *buf = buffer_new( MAX_BUFFER );
    int ret = RET_SUCCESS;
 
    if( !dsock->controlling )
       bug( "%s: socket is controlling nothing...", __FUNCTION__ );
 
-   /* ugly but works for now */
+   olc = dsock->controlling->account->olc;
+   if( olc->using_workspace )
+      bprintf( buf, "UW: \"%s\" :\r\n", olc->using_workspace->name );
 
    if( dsock->controlling->contained_by )
-      text_to_entity( dsock->controlling, "Builder Mode:(%d)> ", dsock->controlling->contained_by->tag->id );
+      bprintf( buf, "Location: %d :> ", dsock->controlling->contained_by->tag->id );
    else
-      text_to_buffer( dsock, "Builder Mode:> " );
+      bprintf( buf, "Location: \"TheEther\" :> " );
 
+   text_to_buffer( dsock, buf->data );
    return ret;
 }
 
