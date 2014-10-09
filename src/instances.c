@@ -165,6 +165,19 @@ ENTITY_INSTANCE *full_load_eFramework( ENTITY_FRAMEWORK *frame )
    return instance;
 }
 
+void full_load_workspace( WORKSPACE *wSpace )
+{
+   ENTITY_INSTANCE *instance;
+   ITERATOR Iter;
+
+   AttachIterator( &Iter, wSpace->instances );
+   while( ( instance = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
+      full_load_instance( instance );
+   DetachIterator( &Iter );
+
+   return;
+}
+
 /* could be factored */
 void full_load_instance( ENTITY_INSTANCE *instance )
 {
@@ -828,7 +841,7 @@ int builder_prompt( D_SOCKET *dsock )
       bprintf( buf, "UW: \"%s\" :\r\n", olc->using_workspace->name );
 
    if( dsock->controlling->contained_by )
-      bprintf( buf, "Location: %d :> ", dsock->controlling->contained_by->tag->id );
+      bprintf( buf, "Location:(%d):> ", dsock->controlling->contained_by->tag->id );
    else
       bprintf( buf, "Location: \"TheEther\" :> " );
 
@@ -852,7 +865,7 @@ int show_ent_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing )
    }
 
    if( entity->builder )
-      text_to_entity( entity, "%s(%d)\r\n", instance_short_descr( viewing ), viewing->tag->id );
+      text_to_entity( entity, "%s - ID:%d\r\n", instance_short_descr( viewing ), viewing->tag->id );
    else
       text_to_entity( entity, "%s\r\n", instance_short_descr( viewing ) );
    text_to_entity( entity, "%s\r\n", print_bar( "-", entity->socket->account ? entity->socket->account->pagewidth : 80 ) );
@@ -920,10 +933,7 @@ int show_ent_exits_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing )
       exit_to = get_active_instance_by_id( get_spec_value( exit, "IsExit" ) );
       if( entity == exit || entity == exit_to )
          continue;
-      if( entity->builder )
-         text_to_entity( entity, "(%d)%s - (%d)%s\r\n", exit->tag->id, instance_short_descr( exit ), exit_to ? exit_to->tag->id : -1, exit_to ? instance_short_descr( exit_to ) : "Nowhere" );
-      else
-         text_to_entity( entity, "%s - %s\r\n", instance_short_descr( exit ),  exit_to ? instance_short_descr( exit_to ) : "Nowhere" );
+      text_to_entity( entity, "%s - %s\r\n", instance_short_descr( exit ),  exit_to ? instance_short_descr( exit_to ) : "Nowhere" );
    }
    DetachIterator( &Iter );
    text_to_entity( entity, "\r\n" );
@@ -953,7 +963,7 @@ int show_ent_mobiles_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing )
       if( entity == mob )
          continue;
       if( entity->builder )
-         text_to_entity( entity, "(%d)%s.\r\n", mob->tag->id, instance_long_descr( mob ) );
+         text_to_entity( entity, "(ID:%d) %s.\r\n", mob->tag->id, instance_long_descr( mob ) );
       else
          text_to_entity( entity, "%s.\r\n", instance_long_descr( mob ) );
    }
@@ -986,7 +996,7 @@ int show_ent_objects_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing )
       if( instance_list_has_by_id( viewing->contents_sorted[SPEC_ISMOB], obj->tag->id ) )
          continue;
       if( entity->builder )
-         text_to_entity( entity, "(%d)%s\n", obj->tag->id, instance_long_descr( obj ) );
+         text_to_entity( entity, "(ID:%d) %s\n", obj->tag->id, instance_long_descr( obj ) );
       else
          text_to_entity( entity, "%s\n", instance_long_descr( obj ) );
    }
@@ -1018,7 +1028,7 @@ int show_ent_rooms_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing )
       if( entity == room )
          continue;
       if( entity->builder )
-         text_to_entity( entity, "(%d)%s - %s.\r\n", room->tag->id, instance_short_descr( room ), instance_long_descr( room ) );
+         text_to_entity( entity, "(ID:%d) %s - %s.\r\n", room->tag->id, instance_short_descr( room ), instance_long_descr( room ) );
       else
          text_to_entity( entity, "%s - %s.\r\n", instance_short_descr( room ), instance_long_descr( room ) );
    }

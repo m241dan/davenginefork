@@ -28,6 +28,14 @@ struct workspace
    LLIST *who_using;
 };
 
+struct grab_params
+{
+   bool no_exits;
+   bool no_objects;
+   bool no_rooms;
+   bool no_mobiles;
+};
+
 INCEPTION *init_olc( void );
 int free_olc( INCEPTION *olc );
 int clear_olc( INCEPTION *olc );
@@ -60,6 +68,13 @@ int add_instance_to_workspace( ENTITY_INSTANCE *instance, WORKSPACE *wSpace );
 int add_workspace_to_olc( WORKSPACE *wSpace, INCEPTION *olc );
 int new_workspace_entry( WORKSPACE *wSpace, ID_TAG *tag );
 int load_workspace_entries( WORKSPACE *wSpace );
+void grab_entity( INCEPTION *olc, char *arg, GRAB_PARAMS *params );
+void grab_entity_range( INCEPTION *olc, char *arg );
+GRAB_PARAMS grab_params( char *ranges, char *arg );
+
+bool should_grab_instance( ENTITY_INSTANCE *instance, GRAB_PARAMS *params );
+bool should_grab_framework( ENTITY_FRAMEWORK *framework, GRAB_PARAMS *params );
+bool should_grab_from_specs( LLIST *specs, GRAB_PARAMS *params );
 
 WORKSPACE *copy_workspace( WORKSPACE *wSpace, bool copy_instances, bool copy_frameworks );
 LLIST *copy_workspace_list( LLIST *wSpaces, bool copy_instances, bool copy_frameworks );
