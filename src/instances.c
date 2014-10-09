@@ -79,6 +79,7 @@ ENTITY_INSTANCE *init_builder( void )
    ENTITY_INSTANCE *builder;
 
    builder = init_eInstance();
+   builder->tag->id = -69;
    builder->framework = init_eFramework();
 
    builder->framework->name = strdup( "Builder" );
@@ -176,9 +177,8 @@ void full_load_instance( ENTITY_INSTANCE *instance )
 
    if( !instance->loaded )
    {
-      if( SizeOfList( instance->framework->fixed_contents ) == 0 )
-         instance->loaded = TRUE;
-      else
+      set_to_loaded( instance );
+      if( SizeOfList( instance->framework->fixed_contents ) > 0 )
       {
          AttachIterator( &Iter, instance->framework->fixed_contents );
          while( ( frame = (ENTITY_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
@@ -187,9 +187,8 @@ void full_load_instance( ENTITY_INSTANCE *instance )
             entity_to_world( instance_to_contain, instance );
          }
          DetachIterator( &Iter );
-
-         instance->loaded = TRUE;
       }
+      return;
    }
 
    list = AllocList();
@@ -205,7 +204,7 @@ void full_load_instance( ENTITY_INSTANCE *instance )
       id_to_load = atoi( (row)[0] );
       if( ( instance_to_contain = get_instance_by_id( id_to_load ) ) == NULL )
       {
-         bug( "continuing" );
+         bug( "%s: trying to load an instance that doesnt exist: ID %d", __FUNCTION__, id_to_load );
          continue;
       }
       full_load_instance( instance_to_contain );
@@ -214,6 +213,14 @@ void full_load_instance( ENTITY_INSTANCE *instance )
    }
    DetachIterator( &Iter );
    FreeList( list );
+   return;
+}
+
+void set_to_loaded( ENTITY_INSTANCE *instance )
+{
+   instance->loaded = TRUE;
+   if( !quick_query( "UPDATE `entity_instances` SET loaded=1 WHERE %s=%d;", tag_table_whereID[ENTITY_INSTANCE_IDS], instance->tag->id ) )
+      bug( "%s: could not set entity to loaded: ID %d", __FUNCTION__, instance->tag->id );
    return;
 }
 
@@ -259,18 +266,14 @@ int new_eInstance( ENTITY_INSTANCE *eInstance )
 
 void db_load_eInstance( ENTITY_INSTANCE *eInstance, MYSQL_ROW *row )
 {
-   int framework_id;
    int counter;
 
    counter = db_load_tag( eInstance->tag, row );
 
    eInstance->contained_by = get_instance_by_id( atoi( (*row)[counter++] ) );
-   framework_id = atoi( (*row)[counter++] ); /* don't grab containedBY just yet */
+   eInstance->framework = get_framework_by_id( atoi( (*row)[counter++] ) );
    eInstance->live = atoi( (*row)[counter++] );
    eInstance->loaded = atoi( (*row)[counter++] );
-
-   if( ( eInstance->framework = get_framework_by_id( framework_id ) ) == NULL )
-      bug( "%s: instance has a NULL framework: ID %d", __FUNCTION__, eInstance->tag->id );
 
    return;
 }
@@ -279,9 +282,12 @@ void entity_from_container( ENTITY_INSTANCE *entity )
 {
    if( entity->contained_by )
    {
+      if( !quick_query( "UPDATE `entity_instances` SET containedBy=-1 WHERE entityInstanceId=%d;", entity->tag->id ) )
+         bug( "%s: could not update entity's containedBy variable for %d.", __FUNCTION__, entity->tag->id );
+      if( !entity->builder )
+         if( !quick_query( "DELETE FROM `entity_instance_possessions` WHERE entityInstanceID=%d AND content_instanceID=%d;", entity->contained_by->tag->id, entity->tag->id ) )
+            bug( "%s: could not delete from database possession entry for %d.", __FUNCTION__, entity->contained_by->tag->id );
       detach_entity_from_contents( entity, entity->contained_by );
-      if( !quick_query( "DELETE FROM `entity_instance_possessions` WHERE entityInstanceID=%d AND content_instanceID=%d;", entity->contained_by->tag->id, entity->tag->id ) )
-         bug( "%s: could not delete from database possession entry for %d.", __FUNCTION__, entity->contained_by->tag->id );
    }
    return;
 
@@ -296,13 +302,6 @@ void entity_to_world( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container )
       entity_from_container( entity );
 
    entity_to_contents( entity, container );
-
-   if( container && container->builder ) /* don't save for now if the person who is holding it is a builder */
-      return;
-
-   if( entity->contained_by )
-      if( !quick_query( "INSERT INTO `entity_instance_possessions` VALUES ( %d, %d );", entity->contained_by->tag->id, entity->tag->id ) )
-         bug( "%s: could not insert into database with %d's new location in the world.", __FUNCTION__, entity->tag->id );
    return;
 }
 
@@ -314,6 +313,9 @@ void entity_to_contents( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container )
       return;
    }
    attach_entity_to_contents( entity, container );
+   if( !entity->builder )
+      if( !quick_query( "INSERT INTO `entity_instance_possessions` VALUES ( %d, %d );", entity->contained_by->tag->id, entity->tag->id ) )
+         bug( "%s: could not insert into database with %d's new location in the world.", __FUNCTION__, entity->tag->id );
    return;
 }
 
@@ -650,6 +652,7 @@ ENTITY_INSTANCE *create_mobile_instance( const char *name  )
 
 }
 
+/* factor me PLEASE */
 void move_create( ENTITY_INSTANCE *entity, ENTITY_FRAMEWORK *exit_frame, char *arg )
 {
    ENTITY_FRAMEWORK *room_frame;
@@ -713,7 +716,6 @@ void move_create( ENTITY_INSTANCE *entity, ENTITY_FRAMEWORK *exit_frame, char *a
       new_eInstance( room_instance );
    }
    entity_to_world( room_instance, NULL );
-
    /* create exit */
    exit_instance = eInstantiate( exit_frame );
    new_eInstance( exit_instance );
@@ -962,7 +964,7 @@ int show_ent_objects_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing )
          continue;
       if( instance_list_has_by_id( viewing->contents_sorted[SPEC_ISMOB], obj->tag->id ) )
          continue;
-      text_to_entity( entity, "%s", instance_long_descr( obj ) );
+      text_to_entity( entity, "%s\n", instance_long_descr( obj ) );
    }
    DetachIterator( &Iter );
    return ret;
@@ -1038,7 +1040,18 @@ void entity_goto( void *passed, char *arg )
    else
    {
       if( interpret_entity_selection( buf ) )
-         ent_to_goto = (ENTITY_INSTANCE *)retrieve_entity_selection();
+      {
+         switch( input_selection_typing )
+         {
+            default: break;
+            case SEL_INSTANCE:
+               ent_to_goto = (ENTITY_INSTANCE *)retrieve_entity_selection();
+               break;
+            case SEL_STRING:
+               text_to_entity( entity, (char *)retrieve_entity_selection() );
+               return;
+         }
+      }
    }
 
    if( !ent_to_goto )
@@ -1202,6 +1215,7 @@ void entity_quit( void *passed, char *arg )
    text_to_entity( entity, "You quit builder-mode.\r\n" );
    change_socket_state( entity->socket, STATE_OLC );
    socket_uncontrol_entity( entity );
+   entity_to_world( entity, NULL );
    free_eInstance( entity );
    return;
 }

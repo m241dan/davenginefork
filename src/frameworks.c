@@ -197,7 +197,7 @@ int load_fixed_possessions_to_list( LLIST *fixed_contents, int id )
 {
    ENTITY_FRAMEWORK *frame;
    LLIST *row_list;
-   MYSQL_ROW *row;
+   MYSQL_ROW row;
    ITERATOR Iter;
    int value;
 
@@ -217,9 +217,9 @@ int load_fixed_possessions_to_list( LLIST *fixed_contents, int id )
    }
 
    AttachIterator( &Iter, row_list );
-   while( ( row = (MYSQL_ROW *)NextInList( &Iter ) ) != NULL )
+   while( ( row = (MYSQL_ROW)NextInList( &Iter ) ) != NULL )
    {
-      value = atoi( (*row)[0] );
+      value = atoi( (row)[0] );
       if( ( frame = get_framework_by_id( value ) ) == NULL )
          continue;
 

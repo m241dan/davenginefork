@@ -352,6 +352,7 @@ void fwrite_id_tag_export( FILE *fp, ID_TAG *tag, int *id_table )
 {
    fprintf( fp, "#IDTAG\n" );
    fprintf( fp, "ID           %d\n", id_table ? get_id_table_position( id_table, tag->id ) : 0 );
+   fprintf( fp, "Type         %d\n", tag->type );
    fprintf( fp, "CreatedOn    %s~\n", tag->created_on );
    fprintf( fp, "CreatedBy    %s~\n", tag->created_by );
    fprintf( fp, "ModifiedOn   %s~\n", tag->modified_on );
@@ -385,12 +386,14 @@ ID_TAG *fread_id_tag_import( FILE *fp, int *id_table )
          case 'I':
             if( !strcmp( word, "ID" ) )
             {
+               found = TRUE;
                if( id_table )
                {
-                  found = TRUE;
                   position = fread_number( fp );
                   tag->id = id_table[position];
                }
+               else
+                  tag->id = fread_number( fp );
                break;
             }
             break;
@@ -398,12 +401,11 @@ ID_TAG *fread_id_tag_import( FILE *fp, int *id_table )
             SREAD( "ModifiedBy", tag->modified_by );
             SREAD( "ModifiedOn", tag->modified_on );
             break;
+         case 'T':
+            IREAD( "Type", tag->type );
       }
       if( !found )
-      {
-         bug( "%s: bad file foramt %s", __FUNCTION__, word );
-         continue;
-      }
+         bug( "%s: bad file format %s", __FUNCTION__, word );
       if( !done )
          word = ( feof( fp ) ? "END" : fread_word( fp ) );
    }

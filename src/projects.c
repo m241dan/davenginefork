@@ -319,7 +319,7 @@ void save_project( PROJECT *project, char *directory )
    fwrite_id_tag_export( fp, project->tag, NULL );
    fprintf( fp, "#PROJECT\n\n" );
    fprintf( fp, "Name         %s~\n", project->name );
-   fprintf( fp, "Public       %d~\n", (int)project->Public );
+   fprintf( fp, "Public       %d\n", (int)project->Public );
    fprintf( fp, "#END\n" );
    fprintf( fp, "%s\n", FILE_TERMINATOR );
    fclose( fp );
@@ -333,13 +333,14 @@ PROJECT *init_project_from_info( const char *dir_name )
    char *word;
    bool found, done = FALSE;
 
-   if( ( fp = fopen( quick_format( "%s/info.project", dir_name ), "w" ) ) == NULL )
+   if( ( fp = fopen( quick_format( "%sinfo.project", dir_name ), "r" ) ) == NULL )
    {
       bug( "%s: Unable to read project info.", __FUNCTION__ );
       return NULL;
    }
 
    CREATE( project, PROJECT, 1 );
+   project->workspaces = AllocList();
 
    word = ( feof( fp ) ? "#END" : fread_word( fp ) );
    while( !done )
@@ -350,6 +351,7 @@ PROJECT *init_project_from_info( const char *dir_name )
          case '#':
             if( !strcmp( word, "#END" ) )
             {
+               project->tag->id = get_new_id( PROJECT_IDS );
                new_project( project );
                return project;
             }
@@ -374,10 +376,7 @@ PROJECT *init_project_from_info( const char *dir_name )
             break;
       }
       if( !found )
-      {
          bug( "%s: bad file format: %s", __FUNCTION__, word );
-         continue;
-      }
       if( !done )
          word = ( feof( fp ) ? "#END" : fread_word( fp ) );
    }
@@ -395,7 +394,7 @@ void load_workspaces_from_directory_into_db_and_project( PROJECT *project, DIR *
    {
       if( string_contains( file->d_name, ".workspace" ) )
       {
-         if( ( fp = fopen( quick_format( "%s/%s", dir_name, file->d_name ), "w" ) ) == NULL )
+         if( ( fp = fopen( quick_format( "%s/%s", dir_name, file->d_name ), "r" ) ) == NULL )
          {
             bug( "%s: could not read %s.", __FUNCTION__, file->d_name );
             continue;
@@ -409,6 +408,7 @@ void load_workspaces_from_directory_into_db_and_project( PROJECT *project, DIR *
          free_workspace( wSpace );
       }
    }
+   rewinddir( project_directory );
    return;
 }
 
@@ -420,6 +420,9 @@ WORKSPACE *fread_workspace_import( FILE *fp, int *workspace_id_table, int *frame
    bool found, done = FALSE;
 
    CREATE( wSpace, WORKSPACE, 1 );
+   wSpace->frameworks = AllocList();
+   wSpace->instances = AllocList();
+   wSpace->who_using = AllocList();
 
    word = ( feof( fp ) ? "#END" : fread_word( fp ) );
    while( !done )
@@ -439,7 +442,6 @@ WORKSPACE *fread_workspace_import( FILE *fp, int *workspace_id_table, int *frame
                wSpace->tag = fread_id_tag_import( fp, workspace_id_table );
                break;
             }
-            break;
             if( !strcmp( word, "#WORKSPACE" ) )
             {
                found = TRUE;
@@ -467,15 +469,15 @@ WORKSPACE *fread_workspace_import( FILE *fp, int *workspace_id_table, int *frame
                break;
             }
             break;
+         case 'N':
+            SREAD( "Name", wSpace->name );
+            break;
          case 'P':
             IREAD( "Public", wSpace->Public );
             break;
       }
       if( !found )
-      {
          bug( "%s: bad file format: %s", __FUNCTION__, word );
-         continue;
-      }
       if( !done )
          word = ( feof( fp ) ? "#END" : fread_word( fp ) );
    }
@@ -492,7 +494,7 @@ void load_frameworks_from_directory_into_db( DIR *project_directory, const char 
    {
       if( string_contains( file->d_name, ".framework" ) )
       {
-         if( ( fp = fopen( quick_format( "%s/%s", dir_name, file->d_name ), "w" ) ) == NULL )
+         if( ( fp = fopen( quick_format( "%s/%s", dir_name, file->d_name ), "r" ) ) == NULL )
          {
             bug( "%s: could not read %s.", __FUNCTION__, file->d_name );
             continue;
@@ -501,6 +503,8 @@ void load_frameworks_from_directory_into_db( DIR *project_directory, const char 
          fclose( fp );
       }
    }
+   rewinddir( project_directory );
+   return;
 }
 
 void fread_framework_import( FILE *fp, int *framework_id_table )
@@ -511,6 +515,7 @@ void fread_framework_import( FILE *fp, int *framework_id_table )
    bool found, done = FALSE;
 
    CREATE( frame, ENTITY_FRAMEWORK, 1 );
+   frame->specifications = AllocList();
 
    word = ( feof( fp ) ? "#END" : fread_word( fp ) );
    while( !done )
@@ -521,7 +526,7 @@ void fread_framework_import( FILE *fp, int *framework_id_table )
          case '#':
             if( !strcmp( word, "#END" ) )
             {
-               quick_query( "INSERT INTO entity_frameworks VALUES ( %d, %d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d' );",
+               quick_query( "INSERT INTO `entity_frameworks` VALUES ( %d, %d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d' );",
                   frame->tag->id, frame->tag->type, frame->tag->created_by,
                   frame->tag->created_on, frame->tag->modified_by, frame->tag->modified_on,
                   frame->name, frame->short_descr, frame->long_descr, frame->description,
@@ -571,7 +576,7 @@ void fread_framework_import( FILE *fp, int *framework_id_table )
 
                type = fread_number( fp );
                value = fread_number( fp );
-               if( type == SPEC_ISROOM )
+               if( type == SPEC_ISEXIT )
                   value = framework_id_table[value];
                quick_query( "INSERT INTO live_specs VALUES ( '%s', %d, 'f%d' );", spec_table[type], value, frame->tag->id );
                break;
@@ -579,10 +584,7 @@ void fread_framework_import( FILE *fp, int *framework_id_table )
             break;
       }
       if( !found )
-      {
          bug( "%s: bad file format: %s", __FUNCTION__, word );
-         continue;
-      }
       if( !done )
          word = ( feof( fp ) ? "#END" : fread_word( fp ) );
    }
@@ -599,7 +601,7 @@ void load_instances_from_directory_into_db( DIR *project_directory, const char *
    {
       if( string_contains( file->d_name, ".instance" ) )
       {
-         if( ( fp = fopen( quick_format( "%s/%s", dir_name, file->d_name ), "w" ) ) == NULL )
+         if( ( fp = fopen( quick_format( "%s/%s", dir_name, file->d_name ), "r" ) ) == NULL )
          {
             bug( "%s: could not read %s.", __FUNCTION__, file->d_name );
             continue;
@@ -608,6 +610,7 @@ void load_instances_from_directory_into_db( DIR *project_directory, const char *
          fclose( fp );
       }
    }
+   rewinddir( project_directory );
    return;
 }
 
@@ -615,10 +618,11 @@ void fread_instance_import( FILE *fp, int *instance_id_table, int *framework_id_
 {
    ENTITY_INSTANCE *instance;
    char *word;
-   int position, frame, contained_by;
+   int position, frame, contained_by = -1;
    bool found, done = FALSE;
 
    CREATE( instance, ENTITY_INSTANCE, 1 );
+   instance->specifications = AllocList();
 
    word = ( feof( fp ) ? "#END" : fread_word( fp ) );
    while( !done )
@@ -654,7 +658,7 @@ void fread_instance_import( FILE *fp, int *instance_id_table, int *framework_id_
             if( !strcmp( word, "ContainedBy" ) )
             {
                found = TRUE;
-               if( ( contained_by = fread_number( fp ) ) == -1 )
+               if( ( contained_by = fread_number( fp ) ) != -1 )
                   contained_by = instance_id_table[contained_by];
                break;
             }
@@ -676,6 +680,7 @@ void fread_instance_import( FILE *fp, int *instance_id_table, int *framework_id_
             }
          case 'L':
             IREAD( "Level", instance->level );
+            IREAD( "Loaded", instance->loaded );
             break;
          case 'S':
             if( !strcmp( word, "Spec" ) )
@@ -685,7 +690,7 @@ void fread_instance_import( FILE *fp, int *instance_id_table, int *framework_id_
 
                type = fread_number( fp );
                value = fread_number( fp );
-               if( type == SPEC_ISROOM )
+               if( type == SPEC_ISEXIT )
                   value = instance_id_table[value];
                quick_query( "INSERT INTO live_specs VALUES ( '%s', %d, '%d' );", spec_table[type], value, instance->tag->id );
                break;
@@ -693,10 +698,7 @@ void fread_instance_import( FILE *fp, int *instance_id_table, int *framework_id_
             break;
       }
       if( !found )
-      {
          bug( "%s: bad file format: %s", __FUNCTION__, word );
-         continue;
-      }
       if( !done )
          word = ( feof( fp ) ? "#END" : fread_word( fp ) );
    }
@@ -801,13 +803,15 @@ void fwrite_instance_export( FILE *fp, ENTITY_INSTANCE *instance, int *instance_
    fwrite_id_tag_export( fp, instance->tag, instance_id_table);
    fprintf( fp, "#INSTANCE\n" );
    fprintf( fp, "Level        %d\n", instance->level );
-
+   fprintf( fp, "Loaded       %d\n", (int)instance->loaded );
    fwrite_instance_content_list_export( fp, instance->contents, instance_id_table );
    fwrite_specifications( fp, instance->specifications, instance_id_table );
 
    fprintf( fp, "Framework    %d\n", get_id_table_position( framework_id_table, instance->framework->tag->id ) );
    if( instance->contained_by )
       fprintf( fp, "ContainedBy  %d\n", get_id_table_position( instance_id_table, instance->contained_by->tag->id ) );
+   else
+      fprintf( fp, "ContainedBy  %d\n", -1 );
    fprintf( fp, "#END\n\n" );
 }
 
@@ -815,10 +819,14 @@ void fwrite_instance_content_list_export( FILE *fp, LLIST *contents, int *instan
 {
    ENTITY_INSTANCE *content;
    ITERATOR Iter;
+   int position;
 
    AttachIterator( &Iter, contents );
    while( ( content = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
-      fprintf( fp, "Content      %d\n", get_id_table_position( instance_id_table, content->tag->id ) );
+   {
+      if( ( position = get_id_table_position( instance_id_table, content->tag->id ) ) != -1 )
+         fprintf( fp, "Content      %d\n", position );
+   }
    DetachIterator( &Iter );
 
    return;
@@ -876,10 +884,14 @@ void fwrite_framework_content_list_export( FILE *fp, LLIST *contents, int *frame
 {
    ENTITY_FRAMEWORK *frame;
    ITERATOR Iter;
+   int position;
 
    AttachIterator( &Iter, contents );
    while( ( frame = (ENTITY_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
-      fprintf( fp, "FContent     %d\n", get_id_table_position( framework_id_table, frame->tag->id ) );
+   {
+      if( ( position = get_id_table_position( framework_id_table, frame->tag->id ) ) != -1 )
+         fprintf( fp, "FContent     %d\n", get_id_table_position( framework_id_table, frame->tag->id ) );
+   }
    DetachIterator( &Iter );
 
    return;
@@ -951,6 +963,7 @@ void create_complete_framework_and_instance_list_from_workspace_list( LLIST *wor
    DetachIterator( &Iter );
 
    append_instance_list_content_to_list_recursive_ndi( instance_list, instance_list );
+   append_instance_list_framework_to_list_ndi( instance_list, framework_list );
    append_framework_list_content_to_list_recursive_ndi( framework_list, framework_list );
    append_framework_list_inheritance_to_list_recursive_ndi( framework_list, framework_list );
    return;
@@ -958,20 +971,36 @@ void create_complete_framework_and_instance_list_from_workspace_list( LLIST *wor
 
 void append_instance_list_content_to_list_recursive_ndi( LLIST *instance_list, LLIST *append_list )
 {
-   ENTITY_INSTANCE *instance;
+   ENTITY_INSTANCE *instance, *instance_content;
    ITERATOR Iter, IterTwo;
 
    AttachIterator( &Iter, instance_list );
    while( ( instance = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
    {
       AttachIterator( &IterTwo, instance->contents );
-      while( ( instance = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
+      while( ( instance_content = (ENTITY_INSTANCE *)NextInList( &IterTwo ) ) != NULL )
       {
-         if( !instance_list_has_by_id( append_list, instance->tag->id ) )
-            AttachToList( instance, append_list );
-         append_instance_list_content_to_list_recursive_ndi( instance->contents, append_list );
+         if( !instance_list_has_by_id( append_list, instance_content->tag->id ) )
+            AttachToList( instance_content, append_list );
+         append_instance_list_content_to_list_recursive_ndi( instance_content->contents, append_list );
       }
       DetachIterator( &IterTwo );
+   }
+   DetachIterator( &Iter );
+
+   return;
+}
+
+void append_instance_list_framework_to_list_ndi( LLIST *instance_list, LLIST *framework_list )
+{
+   ENTITY_INSTANCE *instance;
+   ITERATOR Iter;
+
+   AttachIterator( &Iter, instance_list );
+   while( ( instance = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
+   {
+      if( !framework_list_has_by_id( framework_list, instance->framework->tag->id ) )
+         AttachToList( instance->framework, framework_list );
    }
    DetachIterator( &Iter );
 
@@ -987,7 +1016,7 @@ void append_framework_list_content_to_list_recursive_ndi( LLIST *framework_list,
    while( ( frame = (ENTITY_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
    {
       AttachIterator( &IterTwo, frame->fixed_contents );
-      while( ( frame = (ENTITY_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
+      while( ( frame = (ENTITY_FRAMEWORK *)NextInList( &IterTwo ) ) != NULL )
       {
          if( !framework_list_has_by_id( append_list, frame->tag->id ) )
             AttachToList( frame, append_list );
@@ -1191,8 +1220,14 @@ void project_importProject( void *passed, char *arg )
 
    if( !strcmp( arg, "list" ) )
    {
+      text_to_olc( olc, "Projects:\n\r" );
       for( file = readdir( directory ); file; file = readdir( directory ) )
-         text_to_olc( olc, "%s\n", file->d_name );
+      {
+         if( !strcmp( file->d_name, "." ) || !strcmp( file->d_name, ".." ) )
+            continue;
+         text_to_olc( olc, " %s\n", file->d_name );
+         olc_short_prompt( olc );
+      }
    }
    else
    {
