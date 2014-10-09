@@ -728,7 +728,7 @@ void move_create( ENTITY_INSTANCE *entity, ENTITY_FRAMEWORK *exit_frame, char *a
    add_spec_to_instance( spec, exit_instance );
 
    entity_to_world( exit_instance, entity->contained_by );
-   text_to_entity( entity, "You create a new room(%d) to the %s.\r\n\r\n\r\n", room_instance->tag->id, instance_name( exit_instance ) );
+   text_to_entity( entity, "You create a new room(%d) to the %s.\r\n", room_instance->tag->id, instance_name( exit_instance ) );
 
    /* create mirrored exit */
    if( mirror )
@@ -751,6 +751,7 @@ void move_create( ENTITY_INSTANCE *entity, ENTITY_FRAMEWORK *exit_frame, char *a
 
       entity_to_world( mirrored_exit_instance, room_instance );
    }
+   text_to_entity( entity, "\r\n\r\n" );
    move_entity( entity, exit_instance );
    return;
 }
