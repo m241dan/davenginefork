@@ -1,0 +1,20 @@
+#IDTAG
+ID           0
+Type         2
+CreatedOn    initscript~
+CreatedBy    Davenge~
+ModifiedOn   initscript~
+ModifiedBy   Davenge~
+END
+
+#FRAMEWORK
+Name         East~
+Short_Descr  East~
+Long_Descr   Easthern exit is here.~
+Description  An exit to the east.~
+Spec       7 3
+Spec       1 1
+Inherits     -1
+#END
+
+EOF

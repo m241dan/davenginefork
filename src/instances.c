@@ -759,7 +759,13 @@ bool should_move_create( ENTITY_INSTANCE *entity, char *arg )
 {
    ENTITY_INSTANCE *exit;
 
-   if( entity->contained_by && ( exit = instance_list_has_by_short_prefix( entity->contained_by->contents_sorted[SPEC_ISEXIT], arg ) ) != NULL )
+   if( !entity->contained_by )
+   {
+      text_to_entity( entity, "You are float around meaninglessly in a world of nothingness.\r\n" );
+      return FALSE;
+   }
+
+   if( ( exit = instance_list_has_by_short_prefix( entity->contained_by->contents_sorted[SPEC_ISEXIT], arg ) ) != NULL )
    {
       move_entity( entity, exit );
       return FALSE;
