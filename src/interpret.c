@@ -146,6 +146,7 @@ struct typCmd create_eFramework_commands[] = {
 };
 
 struct typCmd builder_commands[] = {
+   { "grab", entity_grab, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
    { "chat", entity_chat, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
    { "load", entity_load, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
    { "iedit", entity_iedit, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },

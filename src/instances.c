@@ -1498,3 +1498,35 @@ void entity_chat( void *passed, char *arg )
    text_to_entity( entity, ":> " );
    return;
 }
+
+void entity_grab( void *passed, char *arg )
+{
+   ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
+   INCEPTION *olc;
+
+   if( !entity->account || !entity->account->olc )
+   {
+      text_to_entity( entity, "You are missing an account or an olc.\r\n" );
+      return;
+   }
+   olc = entity->account->olc;
+
+   if( !olc->using_workspace )
+   {
+      text_to_entity( entity, "You are not using a workspace.\r\n" );
+      return;
+   }
+
+   if( !arg || arg[0] == '\0' )
+   {
+      if( !entity->contained_by )
+      {
+         text_to_entity( entity, "You are not being contained by anything, you can't grab.\r\n" );
+         return;
+      }
+      add_instance_to_workspace( entity->contained_by, olc->using_workspace );
+      text_to_entity( entity, "You grab %s what is containing you and add it to %s.\r\n", instance_short_descr( entity->contained_by ), olc->using_workspace->name );
+      return;
+   }
+   return;
+}
