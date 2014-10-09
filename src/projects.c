@@ -515,6 +515,7 @@ void fread_framework_import( FILE *fp, int *framework_id_table )
    bool found, done = FALSE;
 
    CREATE( frame, ENTITY_FRAMEWORK, 1 );
+   frame->specifications = AllocList();
 
    word = ( feof( fp ) ? "#END" : fread_word( fp ) );
    while( !done )
@@ -617,10 +618,11 @@ void fread_instance_import( FILE *fp, int *instance_id_table, int *framework_id_
 {
    ENTITY_INSTANCE *instance;
    char *word;
-   int position, frame, contained_by;
+   int position, frame, contained_by = -1;
    bool found, done = FALSE;
 
    CREATE( instance, ENTITY_INSTANCE, 1 );
+   instance->specifications = AllocList();
 
    word = ( feof( fp ) ? "#END" : fread_word( fp ) );
    while( !done )
@@ -656,7 +658,7 @@ void fread_instance_import( FILE *fp, int *instance_id_table, int *framework_id_
             if( !strcmp( word, "ContainedBy" ) )
             {
                found = TRUE;
-               if( ( contained_by = fread_number( fp ) ) == -1 )
+               if( ( contained_by = fread_number( fp ) ) != -1 )
                   contained_by = instance_id_table[contained_by];
                break;
             }
@@ -805,12 +807,11 @@ void fwrite_instance_export( FILE *fp, ENTITY_INSTANCE *instance, int *instance_
    fwrite_instance_content_list_export( fp, instance->contents, instance_id_table );
    fwrite_specifications( fp, instance->specifications, instance_id_table );
 
-   if( !instance->framework )
-      bug( "%s: missing framework on instance id %d", __FUNCTION__, instance->tag->id );
-   else
-      fprintf( fp, "Framework    %d\n", get_id_table_position( framework_id_table, instance->framework->tag->id ) );
+   fprintf( fp, "Framework    %d\n", get_id_table_position( framework_id_table, instance->framework->tag->id ) );
    if( instance->contained_by )
       fprintf( fp, "ContainedBy  %d\n", get_id_table_position( instance_id_table, instance->contained_by->tag->id ) );
+   else
+      fprintf( fp, "ContainedBy  %d\n", -1 );
    fprintf( fp, "#END\n\n" );
 }
 
@@ -998,7 +999,6 @@ void append_instance_list_framework_to_list_ndi( LLIST *instance_list, LLIST *fr
    AttachIterator( &Iter, instance_list );
    while( ( instance = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
    {
-      bug( "%s: instance id = %d", __FUNCTION__, instance->tag->id );
       if( !framework_list_has_by_id( framework_list, instance->framework->tag->id ) )
          AttachToList( instance->framework, framework_list );
    }

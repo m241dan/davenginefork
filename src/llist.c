@@ -136,6 +136,9 @@ void FreeList(LLIST *pList)
 {
   CELL *pCell, *pNextCell;
 
+  if( !pList )
+     return;
+
   /* if we have any unfinished iterators, wait for later */
   if (pList->_iterators > 0)
   {
