@@ -210,7 +210,7 @@ int load_fixed_possessions_to_list( LLIST *fixed_contents, int id )
    }
 
    row_list = AllocList();
-   if( !db_query_list_row( row_list, quick_format( "SELECT content_frameworkID FROM `framework_fixed_possessions` WHERE frameworkID=%d;", id ) ) )
+   if( !db_query_list_row( row_list, quick_format( "SELECT content_frameworkID FROM `framework_fixed_possessions` WHERE entityFrameworkID=%d;", id ) ) )
    {
       FreeList( row_list );
       return RET_FAILED_OTHER;
