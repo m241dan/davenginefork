@@ -1517,7 +1517,7 @@ void entity_grab( void *passed, char *arg )
       return;
    }
 
-   if( !arg || arg[0] )
+   if( !arg || arg[0] == '\0' )
    {
       if( !entity->contained_by )
       {
