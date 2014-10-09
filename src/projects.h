@@ -58,6 +58,7 @@ void fwrite_framework_content_list_export( FILE *fp, LLIST *contents, int *frame
 char *create_project_directory( PROJECT *project );
 void create_complete_framework_and_instance_list_from_workspace_list( LLIST *workspace_list, LLIST *instance_list, LLIST *framework_list );
 void append_instance_list_content_to_list_recursive_ndi( LLIST *instance_list, LLIST *append_list );
+void append_instance_list_framework_to_list_ndi( LLIST *instance_list, LLIST *framework_list );
 void append_framework_list_content_to_list_recursive_ndi( LLIST *framework_list, LLIST *append_list );
 void append_framework_list_inheritance_to_list_recursive_ndi( LLIST *framework_list, LLIST *append_list );
 void copy_all_workspace_and_contents( PROJECT *project, LLIST *workspace_list, LLIST *framework_list, LLIST *instance_list );

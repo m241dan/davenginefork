@@ -79,6 +79,7 @@ ENTITY_INSTANCE *init_builder( void )
    ENTITY_INSTANCE *builder;
 
    builder = init_eInstance();
+   builder->tag->id = -69;
    builder->framework = init_eFramework();
 
    builder->framework->name = strdup( "Builder" );
@@ -176,9 +177,8 @@ void full_load_instance( ENTITY_INSTANCE *instance )
 
    if( !instance->loaded )
    {
-      if( SizeOfList( instance->framework->fixed_contents ) == 0 )
-         set_to_loaded( instance );
-      else
+      set_to_loaded( instance );
+      if( SizeOfList( instance->framework->fixed_contents ) > 0 )
       {
          AttachIterator( &Iter, instance->framework->fixed_contents );
          while( ( frame = (ENTITY_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
@@ -187,8 +187,8 @@ void full_load_instance( ENTITY_INSTANCE *instance )
             entity_to_world( instance_to_contain, instance );
          }
          DetachIterator( &Iter );
-         set_to_loaded( instance );
       }
+      return;
    }
 
    list = AllocList();
@@ -266,18 +266,14 @@ int new_eInstance( ENTITY_INSTANCE *eInstance )
 
 void db_load_eInstance( ENTITY_INSTANCE *eInstance, MYSQL_ROW *row )
 {
-   int framework_id;
    int counter;
 
    counter = db_load_tag( eInstance->tag, row );
 
    eInstance->contained_by = get_instance_by_id( atoi( (*row)[counter++] ) );
-   framework_id = atoi( (*row)[counter++] ); /* don't grab containedBY just yet */
+   eInstance->framework = get_framework_by_id( atoi( (*row)[counter++] ) );
    eInstance->live = atoi( (*row)[counter++] );
    eInstance->loaded = atoi( (*row)[counter++] );
-
-   if( ( eInstance->framework = get_framework_by_id( framework_id ) ) == NULL )
-      bug( "%s: instance has a NULL framework: ID %d", __FUNCTION__, eInstance->tag->id );
 
    return;
 }
@@ -286,8 +282,11 @@ void entity_from_container( ENTITY_INSTANCE *entity )
 {
    if( entity->contained_by )
    {
-      if( !quick_query( "DELETE FROM `entity_instance_possessions` WHERE entityInstanceID=%d AND content_instanceID=%d;", entity->contained_by->tag->id, entity->tag->id ) )
-         bug( "%s: could not delete from database possession entry for %d.", __FUNCTION__, entity->contained_by->tag->id );
+      if( !quick_query( "UPDATE `entity_instances` SET containedBy=-1 WHERE entityInstanceId=%d;", entity->tag->id ) )
+         bug( "%s: could not update entity's containedBy variable for %d.", __FUNCTION__, entity->tag->id );
+      if( !entity->builder )
+         if( !quick_query( "DELETE FROM `entity_instance_possessions` WHERE entityInstanceID=%d AND content_instanceID=%d;", entity->contained_by->tag->id, entity->tag->id ) )
+            bug( "%s: could not delete from database possession entry for %d.", __FUNCTION__, entity->contained_by->tag->id );
       detach_entity_from_contents( entity, entity->contained_by );
    }
    return;
@@ -303,13 +302,6 @@ void entity_to_world( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container )
       entity_from_container( entity );
 
    entity_to_contents( entity, container );
-
-   if( container && container->builder ) /* don't save for now if the person who is holding it is a builder */
-      return;
-
-   if( entity->contained_by )
-      if( !quick_query( "INSERT INTO `entity_instance_possessions` VALUES ( %d, %d );", entity->contained_by->tag->id, entity->tag->id ) )
-         bug( "%s: could not insert into database with %d's new location in the world.", __FUNCTION__, entity->tag->id );
    return;
 }
 
@@ -321,6 +313,9 @@ void entity_to_contents( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container )
       return;
    }
    attach_entity_to_contents( entity, container );
+   if( !entity->builder )
+      if( !quick_query( "INSERT INTO `entity_instance_possessions` VALUES ( %d, %d );", entity->contained_by->tag->id, entity->tag->id ) )
+         bug( "%s: could not insert into database with %d's new location in the world.", __FUNCTION__, entity->tag->id );
    return;
 }
 
@@ -721,7 +716,6 @@ void move_create( ENTITY_INSTANCE *entity, ENTITY_FRAMEWORK *exit_frame, char *a
       new_eInstance( room_instance );
    }
    entity_to_world( room_instance, NULL );
-
    /* create exit */
    exit_instance = eInstantiate( exit_frame );
    new_eInstance( exit_instance );
@@ -1221,6 +1215,7 @@ void entity_quit( void *passed, char *arg )
    text_to_entity( entity, "You quit builder-mode.\r\n" );
    change_socket_state( entity->socket, STATE_OLC );
    socket_uncontrol_entity( entity );
+   entity_to_world( entity, NULL );
    free_eInstance( entity );
    return;
 }
