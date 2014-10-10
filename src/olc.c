@@ -272,8 +272,8 @@ int olc_prompt( D_SOCKET *dsock )
 {
    ENTITY_FRAMEWORK *frame;
    ENTITY_INSTANCE *instance;
-   BUFFER *buf = buffer_new( MAX_BUFFER );
    ACCOUNT_DATA *account = dsock->account;
+   BUFFER *buf = buffer_new( MAX_BUFFER );
    INCEPTION *olc;
    WORKSPACE *wSpace;
    ITERATOR Iter, IterF, IterI;
@@ -304,19 +304,19 @@ int olc_prompt( D_SOCKET *dsock )
    space_after_pipes = account->pagewidth - 2;
 
    if( !olc->project )
-      bprintf( buf, "/%s\\\r\n", print_header( "Inception OLC", "-", space_after_pipes ) );
+      text_to_olc( olc, "/%s\\\r\n", print_header( "Inception OLC", "-", space_after_pipes ) );
    else
-      bprintf( buf, "/%s\\\r\n", print_header( quick_format( "Inception OLC - Project: %s", olc->project->name ), "-", space_after_pipes ) );
+      text_to_olc( olc, "/%s\\\r\n", print_header( quick_format( "Inception OLC - Project: %s", olc->project->name ), "-", space_after_pipes ) );
 
    mud_printf( tempstring, " You have %d workspaces loaded.", SizeOfList( olc->wSpaces ) );
-   bprintf( buf, "|%s|\r\n", fit_string_to_space( tempstring, space_after_pipes ) );
+   text_to_olc( olc, "|%s|\r\n", fit_string_to_space( tempstring, space_after_pipes ) );
    if( SizeOfList( olc->wSpaces ) > 0 )
    {
       AttachIterator( &Iter, olc->wSpaces );
       while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
       {
          mud_printf( tempstring, "- %s", wSpace->name );
-         bprintf( buf, "|%s|\r\n", fit_string_to_space( tempstring, space_after_pipes ) );
+         text_to_olc( olc, "|%s|\r\n", fit_string_to_space( tempstring, space_after_pipes ) );
       }
       DetachIterator( &Iter );
    }
@@ -331,21 +331,21 @@ int olc_prompt( D_SOCKET *dsock )
          style = 2;
 
       mud_printf( tempstring, "%s Workspace", olc->using_workspace->name );
-      bprintf( buf, "|%s|\r\n", print_header( tempstring, "-", space_after_pipes ) );
+      text_to_olc( olc, "|%s|\r\n", print_header( tempstring, "-", space_after_pipes ) );
 
 
       switch( style )
       {
          case 1:
-            bprintf( buf, "|%s|", print_header( "Frameworks", " ", ( space_after_pipes - 1 ) / 2 ) );
-            bprintf( buf, " %s|\r\n", print_header( "Instances", " ", ( space_after_pipes - 1 ) / 2 ) );
+            text_to_olc( olc, "|%s|", print_header( "Frameworks", " ", ( space_after_pipes - 1 ) / 2 ) );
+            text_to_olc( olc, " %s|\r\n", print_header( "Instances", " ", ( space_after_pipes - 1 ) / 2 ) );
             break;
          case 2:
-            bprintf( buf, "|%s|", print_header( "Instances", " ", ( space_after_pipes - 1 ) / 2 ) );
-            bprintf( buf, " %s|\r\n", print_header( "Frameworks", " ", ( space_after_pipes - 1 ) / 2 ) );
+            text_to_olc( olc, "|%s|", print_header( "Instances", " ", ( space_after_pipes - 1 ) / 2 ) );
+            text_to_olc( olc, " %s|\r\n", print_header( "Frameworks", " ", ( space_after_pipes - 1 ) / 2 ) );
             break;
       }
-      bprintf( buf, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
+      text_to_olc( olc, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
 
       AttachIterator( &IterF, olc->using_workspace->frameworks );
       AttachIterator( &IterI, olc->using_workspace->instances );
@@ -356,30 +356,29 @@ int olc_prompt( D_SOCKET *dsock )
          switch( style )
          {
             case 1:
-               bprintf( buf, "|%s|", fit_string_to_space( quick_format( " %-7d: %s", frame->tag->id, frame->name ), ( space_after_pipes - 1 ) / 2 ) );
+               text_to_olc( olc, "|%s|", fit_string_to_space( quick_format( " %-7d: %s", frame->tag->id, frame->name ), ( space_after_pipes - 1 ) / 2 ) );
                if( !instance )
-                  bprintf( buf, " %s|\r\n", print_header( " ", " ", ( space_after_pipes - 1 ) / 2 ) );
+                  text_to_olc( olc, " %s|\r\n", print_header( " ", " ", ( space_after_pipes - 1 ) / 2 ) );
                else
-                  bprintf( buf, " %s|\r\n", fit_string_to_space( quick_format( " %-7d: %s", instance->tag->id, instance_name( instance ) ), ( space_after_pipes - 1 ) / 2 ) );
+                  text_to_olc( olc, " %s|\r\n", fit_string_to_space( quick_format( " %-7d: %s", instance->tag->id, instance_name( instance ) ), ( space_after_pipes - 1 ) / 2 ) );
                break;
             case 2:
-               bprintf( buf, "|%s|", fit_string_to_space( quick_format( " %-7d: %s", instance->tag->id, instance_name( instance ) ) , ( space_after_pipes - 1 ) / 2 ) );
+               text_to_olc( olc, "|%s|", fit_string_to_space( quick_format( " %-7d: %s", instance->tag->id, instance_name( instance ) ) , ( space_after_pipes - 1 ) / 2 ) );
                if( !frame )
-                  bprintf( buf, " %s|\r\n", print_header( " ", " ", ( space_after_pipes - 1 ) / 2 ) );
+                  text_to_olc( olc, " %s|\r\n", print_header( " ", " ", ( space_after_pipes - 1 ) / 2 ) );
                else
-                  bprintf( buf, " %s|\r\n", fit_string_to_space( quick_format( " %-7d: %s", frame->tag->id, frame->name ), ( space_after_pipes - 1 ) / 2 ) );
+                  text_to_olc( olc, " %s|\r\n", fit_string_to_space( quick_format( " %-7d: %s", frame->tag->id, frame->name ), ( space_after_pipes - 1 ) / 2 ) );
                break;
          }
       }
       DetachIterator( &IterF );
       DetachIterator( &IterI );
    }
-   bprintf( buf, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
+   text_to_olc( olc, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
    print_commands( dsock->account->olc, dsock->account->olc->commands, buf, 0, account->pagewidth );
-   bprintf( buf, "\\%s/\r\n", print_header( "Version 0.1", "-", space_after_pipes ) );
-   text_to_buffer( dsock, buf->data );
-
+   text_to_olc( olc, buf->data );
    buffer_free( buf );
+   text_to_olc( olc, "\\%s/\r\n", print_header( "Version 0.1", "-", space_after_pipes ) );
    return ret;
 }
 
