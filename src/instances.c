@@ -865,7 +865,7 @@ int show_ent_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing )
    }
 
    if( entity->builder )
-      text_to_entity( entity, "%s - ID:%d\r\n", instance_short_descr( viewing ), viewing->tag->id );
+      text_to_entity( entity, "(ID:%d) %s\r\n", viewing->tag->id, instance_short_descr( viewing ) );
    else
       text_to_entity( entity, "%s\r\n", instance_short_descr( viewing ) );
    text_to_entity( entity, "%s\r\n", print_bar( "-", entity->socket->account ? entity->socket->account->pagewidth : 80 ) );
