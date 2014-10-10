@@ -626,7 +626,7 @@ ENTITY_FRAMEWORK *olc_edit_selection( INCEPTION *olc, const char *arg )
          to_edit = to_edit_i->framework;
          break;
       case SEL_STRING:
-         text_to_olc( olc, (char *)retrieve_entity_selection() );
+         text_to_olc( olc, (char *)retrieve_entity_selection(), arg );
          return NULL;
    }
    if( !to_edit )

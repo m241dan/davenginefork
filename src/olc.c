@@ -603,7 +603,7 @@ void grab_entity( INCEPTION *olc, char *arg, GRAB_PARAMS *params )
             }
             break;
          case SEL_STRING:
-            text_to_olc( olc, (char *)retrieve_entity_selection() );
+            text_to_olc( olc, (char *)retrieve_entity_selection(), buf );
             olc_short_prompt( olc );
             break;
       }
@@ -1236,7 +1236,7 @@ void olc_instantiate( void *passed, char *arg )
       case SEL_FRAME:
          frame = (ENTITY_FRAMEWORK *)retrieve_entity_selection();
       case SEL_STRING:
-         text_to_olc( olc, (char *)retrieve_entity_selection() );
+         text_to_olc( olc, (char *)retrieve_entity_selection(), arg );
    }
 
    if( ( instance = eInstantiate( frame ) ) == NULL )
@@ -1374,7 +1374,7 @@ void olc_load( void *passed, char *arg )
          text_to_olc( olc, "You load all the instances in %s.\r\n", wSpace->name );
          return;
       case SEL_STRING:
-         text_to_olc( olc, (char *)retrieve_entity_selection() );
+         text_to_olc( olc, (char *)retrieve_entity_selection(), arg );
          return;
    }
 
