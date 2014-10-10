@@ -709,7 +709,7 @@ void move_create( ENTITY_INSTANCE *entity, ENTITY_FRAMEWORK *exit_frame, char *a
             room_instance = (ENTITY_INSTANCE *)retrieve_entity_selection();
             break;
          case SEL_STRING:
-            text_to_entity( entity, (char *)retrieve_entity_selection() );
+            text_to_entity( entity, (char *)retrieve_entity_selection(), buf );
             break;
       }
       if( count == 2 )
@@ -865,7 +865,7 @@ int show_ent_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing )
    }
 
    if( entity->builder )
-      text_to_entity( entity, "%s - ID:%d\r\n", instance_short_descr( viewing ), viewing->tag->id );
+      text_to_entity( entity, "(ID:%d) %s\r\n", viewing->tag->id, instance_short_descr( viewing ) );
    else
       text_to_entity( entity, "%s\r\n", instance_short_descr( viewing ) );
    text_to_entity( entity, "%s\r\n", print_bar( "-", entity->socket->account ? entity->socket->account->pagewidth : 80 ) );
@@ -1085,7 +1085,7 @@ void entity_goto( void *passed, char *arg )
                ent_to_goto = (ENTITY_INSTANCE *)retrieve_entity_selection();
                break;
             case SEL_STRING:
-               text_to_entity( entity, (char *)retrieve_entity_selection() );
+               text_to_entity( entity, (char *)retrieve_entity_selection(), buf );
                return;
          }
       }
@@ -1131,7 +1131,7 @@ void entity_instance( void *passed, char *arg )
          frame_to_instance = ent_to_instance->framework;
          break;
       case SEL_STRING:
-         text_to_entity( entity, (char *)retrieve_entity_selection() );
+         text_to_entity( entity, (char *)retrieve_entity_selection(), buf );
          return;
    }
 
@@ -1452,7 +1452,7 @@ void entity_load( void *passed, char *arg )
          full_load_instance( instance );
          break;
       case SEL_STRING:
-         text_to_entity( entity, (char *)retrieve_entity_selection() );
+         text_to_entity( entity, (char *)retrieve_entity_selection(), arg );
          return;
    }
 
