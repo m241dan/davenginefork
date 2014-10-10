@@ -637,7 +637,12 @@ void grab_entity_range( INCEPTION *olc, char *arg )
          memset( &range_end[0], 0, sizeof( range_end ) );
          rng_start = range_start;
          rng_end = range_end;
-         rng_end = one_arg( buf, rng_start );
+         rng_end = one_arg_delim( buf, rng_start, '-' );
+         if( !is_number( rng_start + 1 ) || !is_number( rng_end ) )
+         {
+            text_to_olc( olc, "Improper range: %s\r\n", buf );
+            continue;
+         }
          start = atoi( rng_start + 1 );
          end = atoi( rng_end );
 
@@ -657,6 +662,8 @@ GRAB_PARAMS grab_params( char *ranges, char *arg )
 {
    GRAB_PARAMS params;
    char buf[MAX_BUFFER];
+
+   reset_params( &params );
 
    while( arg && arg[0] != '\0' )
    {
@@ -723,6 +730,14 @@ bool should_grab_from_specs( LLIST *specs, GRAB_PARAMS *params )
    if( params->no_mobiles && spec_list_has_by_type( specs, SPEC_ISMOB ) )
       return FALSE;
    return TRUE;
+}
+
+void reset_params( GRAB_PARAMS *params )
+{
+  params->no_exits = FALSE;
+  params->no_objects = FALSE;
+  params->no_rooms = FALSE;
+  params->no_mobiles = FALSE;
 }
 
 int text_to_olc( INCEPTION *olc, const char *fmt, ... )
