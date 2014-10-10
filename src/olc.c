@@ -561,6 +561,184 @@ int load_workspace_entries( WORKSPACE *wSpace )
    return ret;
 }
 
+void grab_entity( INCEPTION *olc, char *arg, GRAB_PARAMS *params )
+{
+   ENTITY_FRAMEWORK *frame;
+   ENTITY_INSTANCE *instance;
+   char buf[MAX_BUFFER];
+   int ret;
+
+   while( arg && arg[0] != '\0' )
+   {
+      arg = one_arg( arg, buf );
+
+      if( !interpret_entity_selection( buf ) )
+         continue;
+
+      switch( input_selection_typing )
+      {
+         default: continue;
+         case SEL_FRAME:
+            frame = (ENTITY_FRAMEWORK *)retrieve_entity_selection();
+            if( !should_grab_framework( frame, params ) )
+               break;
+            if( ( ret = add_frame_to_workspace( frame, olc->using_workspace ) ) == RET_SUCCESS )
+               text_to_olc( olc, "Framework %d: %s loaded into %s workspace.\r\n", frame->tag->id, frame->name, olc->using_workspace->name );
+            else if( ret == RET_LIST_HAS )
+            {
+               text_to_olc( olc, "This workspace already has the framework.\r\n" );
+               olc_short_prompt( olc );
+            }
+            break;
+         case SEL_INSTANCE:
+            instance = (ENTITY_INSTANCE *)retrieve_entity_selection();
+            if( !should_grab_instance( instance, params ) )
+               break;
+            if( ( ret = add_instance_to_workspace( instance, olc->using_workspace ) ) == RET_SUCCESS )
+               text_to_olc( olc, "Instance %d: %s loaded into %s workspace.\r\n", instance->tag->id, instance_name( instance ), olc->using_workspace->name );
+            else if( ret == RET_LIST_HAS )
+            {
+               text_to_olc( olc, "this workspace already has that instance.\r\n" );
+               olc_short_prompt( olc );
+            }
+            break;
+         case SEL_STRING:
+            text_to_olc( olc, (char *)retrieve_entity_selection() );
+            olc_short_prompt( olc );
+            break;
+      }
+   }
+   return;
+}
+
+void grab_entity_range( INCEPTION *olc, char *arg )
+{
+   GRAB_PARAMS params;
+   char ranges[MAX_BUFFER];
+   char buf[MAX_BUFFER];
+   char range_start[MAX_BUFFER], range_end[MAX_BUFFER];
+   char grab_str[MAX_BUFFER];
+   char *rng_ptr;
+   char *rng_start;
+   char *rng_end;
+   int start, end;
+   int x;
+
+   memset( &ranges[0], 0, sizeof( ranges ) );
+   params = grab_params( ranges, arg );
+
+   rng_ptr = ranges;
+   while( rng_ptr && rng_ptr[0] != '\0' )
+   {
+      rng_ptr = one_arg( rng_ptr, buf );
+      if( string_contains( buf, "-" ) )
+      {
+         memset( &range_start[0], 0, sizeof( range_start ) );
+         memset( &range_end[0], 0, sizeof( range_end ) );
+         rng_start = range_start;
+         rng_end = range_end;
+         rng_end = one_arg_delim( buf, rng_start, '-' );
+         if( !is_number( rng_start + 1 ) || !is_number( rng_end ) )
+         {
+            text_to_olc( olc, "Improper range: %s\r\n", buf );
+            continue;
+         }
+         start = atoi( rng_start + 1 );
+         end = atoi( rng_end );
+
+         for( x = start; x < end; x++ )
+         {
+            mud_printf( grab_str, "%c%d", rng_start[0], x );
+            grab_entity( olc, grab_str, &params );
+         }
+      }
+      else
+         grab_entity( olc, buf, &params );
+   }
+   return;
+}
+
+GRAB_PARAMS grab_params( char *ranges, char *arg )
+{
+   GRAB_PARAMS params;
+   char buf[MAX_BUFFER];
+
+   reset_params( &params );
+
+   while( arg && arg[0] != '\0' )
+   {
+      arg = one_arg( arg, buf );
+      if( !strcmp( buf, "noexits" ) )
+      {
+         params.no_exits = TRUE;
+         continue;
+      }
+      if( !strcmp( buf, "noobjects" ) )
+      {
+         params.no_objects = TRUE;
+         continue;
+      }
+      if( !strcmp( buf, "norooms" ) )
+      {
+         params.no_rooms = TRUE;
+         continue;
+      }
+      if( !strcmp( buf, "nomobiles" ) || !strcmp( buf, "nomobs" ) )
+      {
+         params.no_mobiles = TRUE;
+         continue;
+      }
+      strcat( ranges, buf );
+      strcat( ranges, " " );
+   }
+   return params;
+}
+
+bool should_grab_instance( ENTITY_INSTANCE *instance, GRAB_PARAMS *params )
+{
+   if( !params )
+      return TRUE;
+
+   if( should_grab_from_specs( instance->specifications, params ) )
+      if( should_grab_framework( instance->framework, params ) )
+         return TRUE;
+   return FALSE;
+
+}
+
+bool should_grab_framework( ENTITY_FRAMEWORK *frame, GRAB_PARAMS *params )
+{
+   if( !params )
+      return TRUE;
+
+   if( !should_grab_from_specs( frame->specifications, params ) )
+      return FALSE;
+   if( frame->inherits )
+      if( !should_grab_framework( frame->inherits, params ) )
+         return FALSE;
+   return TRUE;
+}
+
+bool should_grab_from_specs( LLIST *specs, GRAB_PARAMS *params )
+{
+   if( params->no_exits && spec_list_has_by_type( specs, SPEC_ISEXIT ) )
+      return FALSE;
+   if( params->no_objects && spec_list_has_by_type( specs, SPEC_ISOBJECT ) )
+      return FALSE;
+   if( params->no_rooms && spec_list_has_by_type( specs, SPEC_ISROOM ) )
+      return FALSE;
+   if( params->no_mobiles && spec_list_has_by_type( specs, SPEC_ISMOB ) )
+      return FALSE;
+   return TRUE;
+}
+
+void reset_params( GRAB_PARAMS *params )
+{
+  params->no_exits = FALSE;
+  params->no_objects = FALSE;
+  params->no_rooms = FALSE;
+  params->no_mobiles = FALSE;
+}
 
 int text_to_olc( INCEPTION *olc, const char *fmt, ... )
 {
@@ -904,10 +1082,6 @@ void workspace_unload( void *passed, char *arg )
 void workspace_grab( void *passed, char *arg )
 {
    INCEPTION *olc = (INCEPTION *)passed;
-   ENTITY_FRAMEWORK *frame;
-   ENTITY_INSTANCE *instance;
-   char buf[MAX_BUFFER];
-   int ret;
 
    if( !arg || arg[0] == '\0' )
    {
@@ -922,42 +1096,11 @@ void workspace_grab( void *passed, char *arg )
       return;
    }
 
-   while( arg && arg[0] != '\0' )
-   {
-      arg = one_arg( arg, buf );
+   if( string_contains( arg, "-" ) )
+      grab_entity_range( olc, arg );
+   else
+      grab_entity( olc, arg, NULL );
 
-      if( !interpret_entity_selection( buf ) )
-         continue;
-
-      switch( input_selection_typing )
-      {
-         default: continue;
-         case SEL_FRAME:
-            frame = (ENTITY_FRAMEWORK *)retrieve_entity_selection();
-            if( ( ret = add_frame_to_workspace( frame, olc->using_workspace ) ) == RET_SUCCESS )
-               text_to_olc( olc, "Framework %d: %s loaded into %s workspace.\r\n", frame->tag->id, frame->name, olc->using_workspace->name );
-            else if( ret == RET_LIST_HAS )
-            {
-               text_to_olc( olc, "This workspace already has the framework.\r\n" );
-               olc_short_prompt( olc );
-            }
-            break;
-         case SEL_INSTANCE:
-            instance = (ENTITY_INSTANCE *)retrieve_entity_selection();
-            if( ( ret = add_instance_to_workspace( instance, olc->using_workspace ) ) == RET_SUCCESS )
-               text_to_olc( olc, "Instance %d: %s loaded into %s workspace.\r\n", instance->tag->id, instance_name( instance ), olc->using_workspace->name );
-            else if( ret == RET_LIST_HAS )
-            {
-               text_to_olc( olc, "this workspace already has that instance.\r\n" );
-               olc_short_prompt( olc );
-            }
-            break;
-         case SEL_STRING:
-            text_to_olc( olc, (char *)retrieve_entity_selection() );
-            olc_short_prompt( olc );
-            break;
-      }
-   }
    return;
 
 }
@@ -1196,6 +1339,7 @@ void olc_load( void *passed, char *arg )
    INCEPTION *olc = (INCEPTION *)passed;
    ENTITY_FRAMEWORK *frame;
    ENTITY_INSTANCE *instance;
+   WORKSPACE *wSpace;
 
    if( !arg || arg[0] == '\0' )
    {
@@ -1214,7 +1358,7 @@ void olc_load( void *passed, char *arg )
    {
       default:
          clear_entity_selection();
-         text_to_olc( olc, "Invalid selection type, frames and instances only.\r\n" );
+         text_to_olc( olc, "Invalid selection type, frames, instances and workspaces only.\r\n" );
          return;
       case SEL_FRAME:
          frame = (ENTITY_FRAMEWORK *)retrieve_entity_selection();
@@ -1224,6 +1368,11 @@ void olc_load( void *passed, char *arg )
          instance = (ENTITY_INSTANCE *)retrieve_entity_selection();
          full_load_instance( instance );
          break;
+      case SEL_WORKSPACE:
+         wSpace = (WORKSPACE *)retrieve_entity_selection();
+         full_load_workspace( wSpace );
+         text_to_olc( olc, "You load all the instances in %s.\r\n", wSpace->name );
+         return;
       case SEL_STRING:
          text_to_olc( olc, (char *)retrieve_entity_selection() );
          return;

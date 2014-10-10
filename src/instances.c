@@ -165,6 +165,19 @@ ENTITY_INSTANCE *full_load_eFramework( ENTITY_FRAMEWORK *frame )
    return instance;
 }
 
+void full_load_workspace( WORKSPACE *wSpace )
+{
+   ENTITY_INSTANCE *instance;
+   ITERATOR Iter;
+
+   AttachIterator( &Iter, wSpace->instances );
+   while( ( instance = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
+      full_load_instance( instance );
+   DetachIterator( &Iter );
+
+   return;
+}
+
 /* could be factored */
 void full_load_instance( ENTITY_INSTANCE *instance )
 {
@@ -751,6 +764,7 @@ void move_create( ENTITY_INSTANCE *entity, ENTITY_FRAMEWORK *exit_frame, char *a
 
       entity_to_world( mirrored_exit_instance, room_instance );
    }
+   text_to_entity( entity, "\r\n\r\n" );
    move_entity( entity, exit_instance );
    return;
 }
@@ -759,7 +773,13 @@ bool should_move_create( ENTITY_INSTANCE *entity, char *arg )
 {
    ENTITY_INSTANCE *exit;
 
-   if( entity->contained_by && ( exit = instance_list_has_by_short_prefix( entity->contained_by->contents_sorted[SPEC_ISEXIT], arg ) ) != NULL )
+   if( !entity->contained_by )
+   {
+      text_to_entity( entity, "You are float around meaninglessly in a world of nothingness.\r\n" );
+      return FALSE;
+   }
+
+   if( ( exit = instance_list_has_by_short_prefix( entity->contained_by->contents_sorted[SPEC_ISEXIT], arg ) ) != NULL )
    {
       move_entity( entity, exit );
       return FALSE;
@@ -809,18 +829,23 @@ int text_to_entity( ENTITY_INSTANCE *entity, const char *fmt, ... )
 
 int builder_prompt( D_SOCKET *dsock )
 {
+   INCEPTION *olc;
+   BUFFER *buf = buffer_new( MAX_BUFFER );
    int ret = RET_SUCCESS;
 
    if( !dsock->controlling )
       bug( "%s: socket is controlling nothing...", __FUNCTION__ );
 
-   /* ugly but works for now */
+   olc = dsock->controlling->account->olc;
+   if( olc->using_workspace )
+      bprintf( buf, "UW: \"%s\" :\r\n", olc->using_workspace->name );
 
    if( dsock->controlling->contained_by )
-      text_to_entity( dsock->controlling, "Builder Mode:(%d)> ", dsock->controlling->contained_by->tag->id );
+      bprintf( buf, "Location:(%d):> ", dsock->controlling->contained_by->tag->id );
    else
-      text_to_buffer( dsock, "Builder Mode:> " );
+      bprintf( buf, "Location: \"TheEther\" :> " );
 
+   text_to_buffer( dsock, buf->data );
    return ret;
 }
 
@@ -839,7 +864,10 @@ int show_ent_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing )
       return ret;
    }
 
-   text_to_entity( entity, "%s\r\n", instance_short_descr( viewing ) );
+   if( entity->builder )
+      text_to_entity( entity, "%s - ID:%d\r\n", instance_short_descr( viewing ), viewing->tag->id );
+   else
+      text_to_entity( entity, "%s\r\n", instance_short_descr( viewing ) );
    text_to_entity( entity, "%s\r\n", print_bar( "-", entity->socket->account ? entity->socket->account->pagewidth : 80 ) );
    text_to_entity( entity, "%s\r\n", instance_description( viewing ) );
    text_to_entity( entity, "%s\r\n", print_bar( "-", entity->socket->account ? entity->socket->account->pagewidth : 80 ) );
@@ -934,7 +962,10 @@ int show_ent_mobiles_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing )
    {
       if( entity == mob )
          continue;
-      text_to_entity( entity, "%s.\r\n", instance_long_descr( mob ) );
+      if( entity->builder )
+         text_to_entity( entity, "(ID:%d) %s.\r\n", mob->tag->id, instance_long_descr( mob ) );
+      else
+         text_to_entity( entity, "%s.\r\n", instance_long_descr( mob ) );
    }
    DetachIterator( &Iter );
    return ret;
@@ -964,7 +995,10 @@ int show_ent_objects_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing )
          continue;
       if( instance_list_has_by_id( viewing->contents_sorted[SPEC_ISMOB], obj->tag->id ) )
          continue;
-      text_to_entity( entity, "%s\n", instance_long_descr( obj ) );
+      if( entity->builder )
+         text_to_entity( entity, "(ID:%d) %s\n", obj->tag->id, instance_long_descr( obj ) );
+      else
+         text_to_entity( entity, "%s\n", instance_long_descr( obj ) );
    }
    DetachIterator( &Iter );
    return ret;
@@ -993,7 +1027,10 @@ int show_ent_rooms_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing )
    {
       if( entity == room )
          continue;
-      text_to_entity( entity, "%s - %s.\r\n", instance_short_descr( room ), instance_long_descr( room ) );
+      if( entity->builder )
+         text_to_entity( entity, "(ID:%d) %s - %s.\r\n", room->tag->id, instance_short_descr( room ), instance_long_descr( room ) );
+      else
+         text_to_entity( entity, "%s - %s.\r\n", instance_short_descr( room ), instance_long_descr( room ) );
    }
    DetachIterator( &Iter );
    return ret;

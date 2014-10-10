@@ -40,6 +40,7 @@ ENTITY_INSTANCE *get_active_instance_by_name( const char *name );
 ENTITY_INSTANCE *load_eInstance_by_name( const char *name );
 
 ENTITY_INSTANCE *full_load_eFramework( ENTITY_FRAMEWORK *frame );
+void full_load_workspace( WORKSPACE *wSpace );
 void full_load_instance( ENTITY_INSTANCE *instance );
 void set_to_loaded( ENTITY_INSTANCE *instance );
 
