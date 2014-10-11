@@ -267,6 +267,7 @@ typedef struct  typSpec        SPECIFICATION;
 typedef struct  project        PROJECT;
 typedef struct  dirent         DIR_FILE;
 typedef struct  grab_params    GRAB_PARAMS;
+typedef struct  workspace_filter WORKSPACE_FILTER;
 
 /* the actual structures */
 struct dSocket
