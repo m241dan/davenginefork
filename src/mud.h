@@ -268,7 +268,7 @@ typedef struct  project        PROJECT;
 typedef struct  dirent         DIR_FILE;
 typedef struct  grab_params    GRAB_PARAMS;
 typedef struct  workspace_filter WORKSPACE_FILTER;
-
+typedef struct  d_string       STRING;
 /* the actual structures */
 struct dSocket
 {
@@ -324,6 +324,7 @@ typedef struct buffer_type
 } BUFFER;
 
 /* here we include external structure headers */
+#include "strings.h"
 #include "event.h"
 #include "account.h"
 #include "strings_table.h"

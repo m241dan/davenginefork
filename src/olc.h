@@ -27,12 +27,12 @@ struct workspace
 
 struct workspace_filter
 {
-   GRAB_PARAMS spec_filters;
+   GRAB_PARAMS *spec_filters;
    char **filter_name;
    int name_count;
    char **filter_short;
    int short_count;
-   char **fitler_long;
+   char **filter_long;
    int long_count;
    char **filter_desc;
    int desc_count;

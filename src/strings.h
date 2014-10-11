@@ -41,6 +41,6 @@ char *print_bar( const char *pattern, int width );
 const char *itos( int value );
 const char *quick_format( const char *Format, ... );
 const char *format_string_for_sql( const char *string );
-bool string_contains( char *string, const char *regex_string )
+bool string_contains( char *string, const char *regex_string );
 
 
