@@ -9,6 +9,7 @@ INCEPTION *init_olc( void )
    CREATE( olc, INCEPTION, 1 );
    olc->commands = AllocList();
    olc->wSpaces = AllocList();
+   olc->using_filter = init_wfilter();
    if( clear_olc( olc ) != RET_SUCCESS )
    {
       free_olc( olc );
@@ -49,6 +50,9 @@ int free_olc( INCEPTION *olc )
    free_command_list( olc->commands );
    FreeList( olc->commands );
    olc->commands = NULL;
+
+   free_wfilter( olc->using_filter );
+   olc->using_filter = NULL;
 
    olc->account = NULL;
    olc->using_workspace = NULL;
@@ -120,6 +124,59 @@ int free_workspace( WORKSPACE *wSpace )
    FREE( wSpace );
 
    return ret;
+}
+
+WORKSPACE_FILTER *init_wfilter( void )
+{
+   WORKSPACE_FILTER *filter;
+
+   CREATE( filter, WORKSPACE_FILTER, 1 );
+   CREATE( filter->spec_filters, GRAB_PARAMS, 1 );
+   return filter;
+}
+
+int free_wfilter( WORKSPACE_FILTER *filter )
+{
+   int x, ret = RET_SUCCESS;
+
+   if( filter->name_count > 0 )
+   {
+      for( x = 0; x < filter->name_count; x++ )
+        FREE( filter->filter_name[x] );
+      FREE( filter->filter_name );
+   }
+
+   if( filter->short_count > 0 )
+   {
+      for( x = 0; x < filter->short_count; x++ )
+         FREE( filter->filter_short[x] );
+      FREE( filter->filter_short );
+   }
+
+   if( filter->long_count > 0 )
+   {
+      for( x = 0; x < filter->long_count; x++ )
+         FREE( filter->filter_long[x] );
+      FREE( filter->filter_long );
+   }
+
+   if( filter->desc_count > 0 )
+   {
+      for( x = 0; x < filter->desc_count; x++ )
+         FREE( filter->filter_desc[x] );
+      FREE( filter->filter_desc );
+   }
+
+   FREE( filter->spec_filters );
+
+   return ret;
+}
+
+WORKSPACE_FILTER *reset_wfilter( WORKSPACE_FILTER *filter )
+{
+   free_wfilter( filter );
+   filter = init_wfilter();
+   return filter;
 }
 
 WORKSPACE *load_workspace_by_query( const char *query )
@@ -279,7 +336,8 @@ int olc_prompt( D_SOCKET *dsock )
    ITERATOR Iter, IterF, IterI;
    char tempstring[MAX_BUFFER];
    int ret = RET_SUCCESS;
-   int space_after_pipes, max_list, max_frameworks, x, style;
+   int space_after_pipes, max_list, x;
+   /* int style, max_frameworks; */
    if( !account )
    {
       BAD_POINTER( "account" );
@@ -320,6 +378,46 @@ int olc_prompt( D_SOCKET *dsock )
       }
       DetachIterator( &Iter );
    }
+
+   if( olc->using_workspace )
+   {
+      max_list = UMAX( SizeOfList( olc->using_workspace->frameworks ), SizeOfList( olc->using_workspace->instances ) );
+      text_to_olc( olc, "|%s|\r\n", print_header( quick_format( "%s Workspace", olc->using_workspace->name ), "-", space_after_pipes ) );
+      text_to_olc( olc, "|%s|", print_header( "Frameworks", " ", ( space_after_pipes -1 ) / 2 ) );
+      text_to_olc( olc, "%s |\r\n", print_header( "Instances", " ", ( space_after_pipes - 1 ) / 2 ) );
+      text_to_olc( olc, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
+
+      AttachIterator( &IterF, olc->using_workspace->frameworks );
+      AttachIterator( &IterI, olc->using_workspace->instances );
+      for( x = 0; x < max_list; x++ )
+      {
+         while( ( frame = (ENTITY_FRAMEWORK *)NextInList( &IterF ) ) != NULL )
+         {
+            if( !frame_filter_pass( frame, olc->using_filter ) )
+               continue;
+            break;
+         }
+         while( ( instance = (ENTITY_INSTANCE *)NextInList( &IterI ) ) != NULL )
+         {
+            if( !instance_filter_pass( instance, olc->using_filter ) )
+               continue;
+            break;
+         }
+
+         if( frame )
+            text_to_olc( olc, "|%s|", fit_string_to_space( quick_format( " %-7d: %s", frame->tag->id, frame->name ), ( space_after_pipes - 1 ) / 2 ) );
+         else
+            text_to_olc( olc, "|%s|", print_header( " ", " ", ( space_after_pipes - 1 ) / 2 ) );
+
+         if( instance )
+            text_to_olc( olc, " %s|\r\n", fit_string_to_space( quick_format( " %-7d: %s", instance->tag->id, instance_name( instance ) ), ( space_after_pipes - 1 ) / 2 ) );
+         else
+            text_to_olc( olc, " %s|\r\n", print_header( " ", " ", ( space_after_pipes - 1 ) / 2 ) );
+      }
+      DetachIterator( &IterF );
+      DetachIterator( &IterI );
+   }
+/*
    if( olc->using_workspace )
    {
       max_frameworks = SizeOfList( olc->using_workspace->frameworks );
@@ -374,6 +472,7 @@ int olc_prompt( D_SOCKET *dsock )
       DetachIterator( &IterF );
       DetachIterator( &IterI );
    }
+*/
    text_to_olc( olc, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
    print_commands( dsock->account->olc, dsock->account->olc->commands, buf, 0, account->pagewidth );
    text_to_olc( olc, buf->data );
@@ -805,6 +904,7 @@ bool workspace_list_has_name( LLIST *wSpaces, const char *name )
 }
 
 
+
 WORKSPACE *copy_workspace( WORKSPACE *wSpace, bool copy_frameworks, bool copy_instances )
 {
    WORKSPACE *wSpace_copy;
@@ -822,9 +922,12 @@ WORKSPACE *copy_workspace( WORKSPACE *wSpace, bool copy_frameworks, bool copy_in
    wSpace_copy->description = strdup( wSpace->description );
 
    wSpace_copy->Public = wSpace->Public;
+
+   /* new filter copying needs to be here...
+
    wSpace_copy->hide_frameworks = wSpace->hide_frameworks;
    wSpace_copy->hide_instances = wSpace->hide_instances;
-
+   */
    wSpace_copy->frameworks = copy_framework_list( wSpace->frameworks, copy_frameworks, copy_frameworks, copy_frameworks, copy_frameworks );
    wSpace_copy->instances = copy_instance_list( wSpace->instances, copy_instances, copy_instances, copy_instances, copy_instances );
 
@@ -878,6 +981,233 @@ void copy_workspaces_into_list( LLIST *wSpaces, LLIST *copy_into_list, bool copy
    DetachIterator( &Iter );
 
    return;
+}
+
+void toggle_no_exit( INCEPTION *olc )
+{
+   GRAB_PARAMS *spec_filters = olc->using_filter->spec_filters;
+
+   if( spec_filters->no_exits )
+      spec_filters->no_exits = FALSE;
+   else
+      spec_filters->no_exits = TRUE;
+
+   text_to_olc( olc, "You toggle No Exits %s.\r\n", spec_filters->no_exits ? "on" : "off" );
+   return;
+}
+
+void toggle_no_objects( INCEPTION *olc )
+{
+   GRAB_PARAMS *spec_filters = olc->using_filter->spec_filters;
+
+   if( spec_filters->no_objects )
+      spec_filters->no_objects = FALSE;
+   else
+      spec_filters->no_objects = TRUE;
+
+   text_to_olc( olc, "You toggle No Objects %s.\r\n", spec_filters->no_objects ? "on" : "off" );
+   return;
+}
+
+void toggle_no_rooms( INCEPTION *olc )
+{
+   GRAB_PARAMS *spec_filters = olc->using_filter->spec_filters;
+
+   if( spec_filters->no_rooms )
+      spec_filters->no_rooms = FALSE;
+   else
+      spec_filters->no_rooms = TRUE;
+
+   text_to_olc( olc, "You toggle No Rooms %s.\r\n", spec_filters->no_rooms ? "on" : "off" );
+   return;
+}
+
+void toggle_no_mobiles( INCEPTION *olc )
+{
+   GRAB_PARAMS *spec_filters = olc->using_filter->spec_filters;
+
+   if( spec_filters->no_mobiles )
+      spec_filters->no_mobiles = FALSE;
+   else
+      spec_filters->no_mobiles = TRUE;
+
+   text_to_olc( olc, "You toggle No Mobs %s.\r\n", spec_filters->no_mobiles ? "on" : "off" );
+   return;
+}
+
+void toggle_name_filter( INCEPTION *olc, char *arg )
+{
+   WORKSPACE_FILTER *filter = olc->using_filter;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Filter out what names?\r\n" );
+      return;
+   }
+
+   if( filter->name_count < 1 )
+   {
+      CREATE( filter->filter_name, char *, 1 );
+      filter->filter_name[0] = strdup( arg );
+      filter->name_count++;
+      text_to_olc( olc, "You are now filtering any instance or framework with the name %s.\r\n", arg );
+      return;
+   }
+
+   text_to_olc( olc, "You are now %sfiltering any instance or framework with the name %s.\r\n",  handle_string_filter( &filter->filter_name, arg, &filter->name_count ) ? "" : "no longer ", arg );
+   return;
+}
+
+void toggle_short_filter( INCEPTION *olc, char *arg )
+{
+   WORKSPACE_FILTER *filter = olc->using_filter;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Filter out what shorts?\r\n" );
+      return;
+   }
+
+   if( filter->short_count < 1 )
+   {
+      CREATE( filter->filter_short, char *, 1 );
+      filter->filter_short[0] = strdup( arg );
+      filter->short_count++;
+      text_to_olc( olc, "You are now filtering any instance or framework with a short description containing %s.\r\n", arg  );
+      return;
+   }
+
+   text_to_olc( olc, "You are now %sfiltering any instance or framework with the short description containing %s.\r\n", handle_string_filter( &filter->filter_short, arg, &filter->short_count ) ? "" : "no longer ", arg );
+   return;
+}
+
+void toggle_long_filter( INCEPTION *olc, char *arg )
+{
+   WORKSPACE_FILTER *filter = olc->using_filter;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Filter out what longs?\r\n" );
+      return;
+   }
+
+   if( filter->long_count < 1 )
+   {
+      CREATE( filter->filter_long, char *, 1 );
+      filter->filter_long[0] = strdup( arg );
+      filter->long_count++;
+      text_to_olc( olc, "You are now filtering any instance or framework with a long description containing %s.\r\n", arg );
+      return;
+   }
+
+   text_to_olc( olc, "You are now %sfiltering any instance or framework with the long description containg %s.\r\n", handle_string_filter( &filter->filter_long, arg, &filter->long_count ) ? "" : "no longer ", arg );
+   return;
+}
+
+void toggle_desc_filter( INCEPTION *olc, char *arg )
+{
+   WORKSPACE_FILTER *filter = olc->using_filter;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Filter out what descriptions?\r\n" );
+      return;
+   }
+
+   if( filter->desc_count < 1 )
+   {
+      CREATE( filter->filter_desc, char *, 1 );
+      filter->filter_desc[0] = strdup( arg );
+      filter->desc_count++;
+      text_to_olc( olc, "You are now filtering any instance or framework with a description containing %s.\r\n", arg );
+      return;
+   }
+
+   text_to_olc( olc, "You are now %sfiltering any instance or framework with a description containg %s.\r\n", arg );
+   return;
+}
+
+bool handle_string_filter( char ***filter_string, char *arg, int *count )
+{
+   char **realloc_filter;
+   char **char_swap;
+   int x, y;
+
+   for( x = 0; x < *count; x++ )
+   {
+      if( !strcmp( (*filter_string)[x], arg ) )
+      {
+         CREATE( char_swap, char *, ( *count - 1 ) );
+         for( y = 0, x = 0; y < *count; y++)
+         {
+            if( strcmp( (*filter_string)[y], arg ) )
+               char_swap[x++] = strdup( (*filter_string)[y] );
+            FREE( (*filter_string)[y] );
+         }
+         *count -= 1;
+         realloc_filter = (char **)realloc( *filter_string, *count * sizeof( char ** ) );
+         *filter_string = realloc_filter;
+         for( y = 0; y < *count; y++ )
+            (*filter_string)[y] = strdup( char_swap[y] );
+         return FALSE;
+      }
+   }
+   *count += 1;
+   realloc_filter = (char **)realloc( *filter_string, *count * sizeof( char ** ) );
+   *filter_string = realloc_filter;
+   (*filter_string)[*count - 1] = strdup( arg );
+   return TRUE;
+}
+
+bool frame_filter_pass( ENTITY_FRAMEWORK *frame, WORKSPACE_FILTER *filter )
+{
+   if( !should_grab_framework( frame, filter->spec_filters ) )
+      return FALSE;
+   if( !filter_string_check( chase_name( frame ), filter->filter_name, filter->name_count, TRUE ) )
+      return FALSE;
+   if( !filter_string_check( chase_short_descr( frame ), filter->filter_short, filter->short_count, FALSE ) )
+      return FALSE;
+   if( !filter_string_check( chase_long_descr( frame ), filter->filter_long, filter->long_count, FALSE ) )
+      return FALSE;
+   if( !filter_string_check( chase_description( frame ), filter->filter_desc, filter->desc_count, FALSE ) )
+      return FALSE;
+   return TRUE;
+
+}
+
+bool instance_filter_pass( ENTITY_INSTANCE *instance, WORKSPACE_FILTER *filter )
+{
+   if( !should_grab_instance( instance, filter->spec_filters ) )
+      return FALSE;
+   if( !filter_string_check( instance_name( instance ), filter->filter_name, filter->name_count, TRUE ) )
+      return FALSE;
+   if( !filter_string_check( instance_short_descr( instance ), filter->filter_short, filter->short_count, FALSE ) )
+      return FALSE;
+   if( !filter_string_check( instance_long_descr( instance ), filter->filter_long, filter->long_count, FALSE ) )
+      return FALSE;
+   if( !filter_string_check( instance_description( instance ), filter->filter_desc, filter->desc_count, FALSE ) )
+      return FALSE;
+   return TRUE;
+}
+
+bool filter_string_check( const char *arg, char **arg_list, int max, bool precise )
+{
+   int x;
+
+   for( x = 0; x < max; x++ )
+   {
+      if( precise )
+      {
+         if( !strcmp( arg, arg_list[x] ) )
+            return FALSE;
+      }
+      else
+      {
+         if( string_contains( arg, arg_list[x] ) )
+            return FALSE;
+      }
+   }
+   return TRUE;
 }
 
 void olc_file( void *passed, char *arg )
@@ -1397,5 +1727,105 @@ void olc_chat( void *passed, char *arg )
    communicate( CHAT_LEVEL, olc->account, arg );
    olc->account->socket->bust_prompt = NO_PROMPT;
    text_to_olc( olc, ":> " );
+   return;
+}
+
+void olc_ufilter( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   WORKSPACE_FILTER *filter = olc->using_filter;
+   GRAB_PARAMS *spec_filters = filter->spec_filters;
+   char input[MAX_BUFFER], buf[MAX_BUFFER];
+   char *input_ptr = input;
+   int x;
+
+   /* factor this */
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "/%s\\\r\n", print_header( "Using Workspace Spec Filters", "-", olc->account->pagewidth - 2 ) );
+      text_to_olc( olc, "|%s|\r\n", print_header( quick_format( "[%s] No Exits [%s] No Objects [%s] No Rooms [%s] No Mobs", 
+         spec_filters->no_exits ? "X" : " ", spec_filters->no_objects ? "X": " ", spec_filters->no_rooms ? "X" : " ",
+         spec_filters->no_mobiles ? "X" : " " ), "-", olc->account->pagewidth - 2 ) );
+      text_to_olc( olc, "\\%s/\r\n", print_bar( "-", olc->account->pagewidth - 2 ) );
+      if( filter->name_count > 0 )
+         for( x = 0; x < filter->name_count; x++ )
+            text_to_olc( olc, "Name Filter : \"%s\"\r\n", filter->filter_name[x] );
+      if( filter->short_count > 0 )
+         for( x = 0; x < filter->short_count; x++ )
+            text_to_olc( olc, "Short Filter : \"%s\"\r\n", filter->filter_short[x] );
+      if( filter->long_count > 0 )
+         for( x = 0; x < filter->long_count; x++ )
+            text_to_olc( olc, "Long Filter : \"%s\"\r\n", filter->filter_long[x] );
+      if( filter->desc_count > 0 )
+         for( x = 0; x < filter->desc_count; x++ )
+            text_to_olc( olc, "Desc Filter : \"%s\"\r\n", filter->filter_desc[x] );
+      text_to_olc( olc, "\r\n%s\r\n", print_header( "Proper Use", "-", olc->account->pagewidth ) );
+      text_to_olc( olc, " Type ufilter <flag> - takes comma lists\r\n" );
+      text_to_olc( olc, " Repeat To Remove.\r\n" );
+      text_to_olc( olc, " Flags - no_exit, no_objects, no_rooms, no_mobs\r\n" );
+      text_to_olc( olc, "       - name <keyword(s) to filter>\r\n" );
+      text_to_olc( olc, "       - short <keyword(s) to filter>\r\n" );
+      text_to_olc( olc, "       - long <keyword(s) to filter>\r\n" );
+      text_to_olc( olc, "       - desc <keyword(s) to filter>\r\n" );
+      text_to_olc( olc, "\r\n" );
+      olc_short_prompt( olc );
+      return;
+   }
+
+   if( !strcasecmp( arg, "reset" ) )
+   {
+      olc->using_filter = reset_wfilter( olc->using_filter );
+      text_to_olc( olc, "Using Filter reset.\r\n" );
+      olc_short_prompt( olc );
+      return;
+   }
+
+   while( arg && arg[0] != '\0' )
+   {
+      arg = one_arg_delim( arg, input, ',' );
+      input_ptr = one_arg( input, buf );
+
+      if( !strcmp( buf, "no_exits" ) )
+      {
+         toggle_no_exit( olc );
+         continue;
+      }
+      if( !strcmp( buf, "no_objects" ) )
+      {
+         toggle_no_objects( olc );
+         continue;
+      }
+      if( !strcmp( buf, "no_rooms" ) )
+      {
+         toggle_no_rooms( olc );
+         continue;
+      }
+      if( !strcmp( buf, "no_mobs" ) )
+      {
+         toggle_no_mobiles( olc );
+         continue;
+      }
+      if( !strcmp( buf, "name" ) )
+      {
+         toggle_name_filter( olc, input_ptr );
+         continue;
+      }
+      if( !strcmp( buf, "short" ) )
+      {
+         toggle_short_filter( olc, input_ptr );
+         continue;
+      }
+      if( !strcmp( buf, "long" ) )
+      {
+         toggle_long_filter( olc, input_ptr );
+         continue;
+      }
+      if( !strcmp( buf, "desc" ) )
+      {
+         toggle_desc_filter( olc, input_ptr );
+         continue;
+      }
+      text_to_olc( olc, "Improper usage: %s %s\r\n", buf, input_ptr );
+   }
    return;
 }

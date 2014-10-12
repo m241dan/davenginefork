@@ -8,6 +8,7 @@ struct inception_olc
    LLIST *wSpaces;
    PROJECT *project;
    WORKSPACE *using_workspace;
+   WORKSPACE_FILTER *using_filter;
    void *editing;
    int editing_state;
 };
@@ -20,12 +21,23 @@ struct workspace
    bool Public;
 
    LLIST *frameworks;
-   bool hide_frameworks;
-
    LLIST *instances;
-   bool hide_instances;
-
    LLIST *who_using;
+};
+
+struct workspace_filter
+{
+   GRAB_PARAMS *spec_filters;
+   char **filter_name;
+   int name_count;
+   char **filter_short;
+   int short_count;
+   char **filter_long;
+   int long_count;
+   char **filter_desc;
+   int desc_count;
+   bool hide_frameworks;
+   bool hide_instances;
 };
 
 struct grab_params
@@ -43,6 +55,11 @@ int clear_olc( INCEPTION *olc );
 WORKSPACE *init_workspace( void );
 int free_workspace( WORKSPACE *wSpace );
 int clear_workspace( WORKSPACE *wSpace );
+
+WORKSPACE_FILTER *init_wfilter( void );
+int free_wfilter( WORKSPACE_FILTER *filter );
+WORKSPACE_FILTER *reset_wfilter( WORKSPACE_FILTER *filter );
+
 WORKSPACE *load_workspace_by_query( const char *query );
 WORKSPACE *get_workspace_by_id( int id );
 WORKSPACE *get_active_workspace_by_id( int id );
@@ -83,6 +100,19 @@ void copy_workspaces_into_list( LLIST *wSpaces_list, LLIST *copy_into_list, bool
 
 bool workspace_list_has_name( LLIST *wSpaces, const char *name );
 
+void toggle_no_exit( INCEPTION *olc );
+void toggle_no_objects( INCEPTION *olc );
+void toggle_no_rooms( INCEPTION *olc );
+void toggle_no_mobiles( INCEPTION *olc );
+void toggle_name_filter( INCEPTION *olc, char *arg );
+void toggle_short_filter( INCEPTION *olc, char *arg );
+void toggle_long_filter( INCEPTION *olc, char *arg );
+void toggle_desc_filter( INCEPTION *olc, char *arg );
+bool handle_string_filter( char ***filter_string, char *arg, int *count );
+bool frame_filter_pass( ENTITY_FRAMEWORK *frame, WORKSPACE_FILTER *filter );
+bool instance_filter_pass( ENTITY_INSTANCE *instance, WORKSPACE_FILTER *filter );
+bool filter_string_check( const char *arg, char **arg_list, int max, bool precise );
+
 void olc_file( void *passed, char *arg );
 void olc_workspace( void *passed, char *arg );
 void workspace_new( void *passed, char *arg );
@@ -100,3 +130,4 @@ void olc_show( void *passed, char *arg );
 void olc_quit( void *passed, char *arg );
 void olc_load( void *passed, char *arg );
 void olc_chat( void *passed, char *arg );
+void olc_ufilter( void *passed, char * arg );

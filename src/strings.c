@@ -760,7 +760,7 @@ const char *format_string_for_sql( const char *string )
    return buf;
 }
 
-bool string_contains( char *string, const char *regex_string )
+bool string_contains( const char *string, const char *regex_string )
 {
    /* Using Regular Expression */
    regex_t regex;
