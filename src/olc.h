@@ -109,6 +109,9 @@ void toggle_short_filter( INCEPTION *olc, char *arg );
 void toggle_long_filter( INCEPTION *olc, char *arg );
 void toggle_desc_filter( INCEPTION *olc, char *arg );
 bool handle_string_filter( char ***filter_string, char *arg, int *count );
+bool frame_filter_pass( ENTITY_FRAMEWORK *frame, WORKSPACE_FILTER *filter );
+bool instance_filter_pass( ENTITY_INSTANCE *instance, WORKSPACE_FILTER *filter );
+bool filter_string_check( const char *arg, char **arg_list, int max, bool precise );
 
 void olc_file( void *passed, char *arg );
 void olc_workspace( void *passed, char *arg );
