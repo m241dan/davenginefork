@@ -985,9 +985,9 @@ void toggle_no_mobiles( INCEPTION *olc )
    GRAB_PARAMS *spec_filters = olc->using_filter->spec_filters;
 
    if( spec_filters->no_mobiles )
-      spec_filters->no_rooms = FALSE;
+      spec_filters->no_mobiles = FALSE;
    else
-      spec_filters->no_rooms = TRUE;
+      spec_filters->no_mobiles = TRUE;
 
    text_to_olc( olc, "You toggle No Mobs %s.\r\n", spec_filters->no_mobiles ? "on" : "off" );
    return;
@@ -1038,6 +1038,7 @@ void toggle_desc_filter( INCEPTION *olc, char *arg )
 
 bool handle_string_filter( char ***filter_string, char *arg, int *count )
 {
+   char **realloc_filter;
    char **char_swap;
    int x, y;
 
@@ -1057,8 +1058,8 @@ bool handle_string_filter( char ***filter_string, char *arg, int *count )
             FREE( (*filter_string)[y] );
          }
          *count -= 1;
-         *filter_string = (char **)calloc( *count, sizeof( char** ) );
-/*         *filter_string = (char **)realloc( *filter_string, *count ); */
+         realloc_filter = (char **)realloc( *filter_string, *count * sizeof( char ** ) );
+         *filter_string = realloc_filter;
          for( y = 0; y < *count; y++ )
          {
             bug( "test 2: y %d %s", y, char_swap[y] );
@@ -1068,7 +1069,8 @@ bool handle_string_filter( char ***filter_string, char *arg, int *count )
       }
    }
    *count += 1;
-   *filter_string = (char **)realloc( *filter_string, *count );
+   realloc_filter = (char **)realloc( *filter_string, *count * sizeof( char ** ) );
+   *filter_string = realloc_filter;
    (*filter_string)[*count - 1] = strdup( arg );
    return TRUE;
 }
@@ -1640,7 +1642,7 @@ void olc_ufilter( void *passed, char *arg )
       arg = one_arg_delim( arg, input, ',' );
       input_ptr = one_arg( input, buf );
 
-      if( !strcmp( buf, "no_exit" ) )
+      if( !strcmp( buf, "no_exits" ) )
       {
          toggle_no_exit( olc );
          continue;
