@@ -1253,6 +1253,7 @@ void entity_quit( void *passed, char *arg )
    change_socket_state( entity->socket, STATE_OLC );
    socket_uncontrol_entity( entity );
    entity_to_world( entity, NULL );
+   DetachFromList( entity, eInstances_list );
    free_eInstance( entity );
    return;
 }

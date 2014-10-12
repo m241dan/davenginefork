@@ -3,6 +3,7 @@
 struct game_account
 {
    D_SOCKET *socket;
+   sh_int sock_state;
    LLIST *characters;
    LLIST *command_tables;
    LLIST *commands;
@@ -19,6 +20,7 @@ struct game_account
    char *chatting_as;
 
    INCEPTION *olc;
+   ENTITY_INSTANCE *controlling;
 };
 
 /* creation */

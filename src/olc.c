@@ -1642,6 +1642,7 @@ void olc_builder( void *passed, char *arg )
    text_to_olc( olc, "You enter builder mode.\r\n" );
    socket_control_entity( olc->account->socket, builder );
    change_socket_state( olc->account->socket, STATE_BUILDER );
+   AttachToList( builder, eInstances_list );
    return;
 
 }

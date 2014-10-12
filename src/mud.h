@@ -272,7 +272,6 @@ typedef struct  d_string       STRING;
 /* the actual structures */
 struct dSocket
 {
-  NANNY_DATA    * nanny;
   LLIST          * events;
   char          * hostname;
   char            inbuf[MAX_BUFFER];
@@ -288,6 +287,7 @@ struct dSocket
   z_stream      * out_compress;                /* MCCP support */
   unsigned char * out_compress_buf;            /* MCCP support */
 
+   NANNY_DATA    * nanny;
    ACCOUNT_DATA *account;
    ENTITY_INSTANCE *controlling;
 };

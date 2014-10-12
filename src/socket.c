@@ -1,4 +1,4 @@
-/*
+	/*
  * This file contains the socket code, used for accepting
  * new connections as well as reading and writing to
  * sockets, and closing down unused sockets.
@@ -410,6 +410,9 @@ bool new_socket(int sock)
   /* send the greeting */
   text_to_buffer(sock_new, greeting);
 
+  /* initialize socket events */
+  init_events_socket(sock_new);
+
   {
      NANNY_DATA *nanny = init_nanny();
      nanny->info = &nanny_lib[NANNY_LOGIN];
@@ -418,8 +421,6 @@ bool new_socket(int sock)
      change_socket_state( sock_new, STATE_NANNY );
   }
 
-  /* initialize socket events */
-  init_events_socket(sock_new);
 
   /* everything went as it was supposed to */
   return TRUE;
@@ -453,13 +454,14 @@ void close_socket(D_SOCKET *dsock, bool reconnect)
       free_nanny( dsock->nanny );
    dsock->nanny = NULL;
 
-   if( !reconnect && dsock->account )
-      free_account( dsock->account );
-   dsock->account = NULL;
+   if( !reconnect )
+   {
+      dsock->account->socket = NULL;
+      dsock->account = NULL;
+   }
 
-   if( !reconnect && dsock->controlling )
-      free_eInstance( dsock->controlling );
-   dsock->controlling = NULL;
+   if( !reconnect )
+      dsock->controlling = NULL;
 
   /* dequeue all events for this socket */
   AttachIterator(&Iter, dsock->events);
@@ -469,6 +471,8 @@ void close_socket(D_SOCKET *dsock, bool reconnect)
 
   /* set the closed state */
   dsock->state = STATE_CLOSED;
+
+   recycle_sockets();
 }
 
 /* 
@@ -1021,6 +1025,8 @@ int change_socket_state( D_SOCKET *dsock, int state )
 
    dsock->prev_state = dsock->state;
    dsock->state = state;
+   if( dsock->account )
+      dsock->account->sock_state = state;
    switch( state )
    {
       default:
@@ -1055,6 +1061,9 @@ void socket_control_entity( D_SOCKET *socket, ENTITY_INSTANCE *entity )
    if( !socket || !entity )
       return;
 
+   if( socket->account )
+      socket->account->controlling = entity;
+
    socket->controlling = entity;
    entity->socket = socket;
 
@@ -1065,6 +1074,9 @@ void socket_uncontrol_entity( ENTITY_INSTANCE *entity )
 {
    if( !entity )
       return;
+
+   if( entity->account )
+      entity->account->controlling = NULL;
 
    entity->socket->controlling = NULL;
    entity->socket = NULL;

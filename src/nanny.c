@@ -84,16 +84,19 @@ int nanny_password( NANNY_DATA *nanny, char *arg )
          socket->account = account;
          account->socket = nanny->socket;
          nanny->content = account;
+         if( account->controlling )
+            socket_control_entity( socket, account->controlling );
          log_string( "%s has reconnected.", account->name );
          text_to_nanny( nanny, "You take over your account already in use.\r\n" );
       }
       else
       {
+         nanny->socket->account->sock_state = STATE_ACCOUNT;
          log_string( "Account: %s has logged in.", nanny->socket->account->name );
          AttachToList( nanny->socket->account, account_list );
       }
 
-      change_socket_state( nanny->socket, STATE_ACCOUNT );
+      change_socket_state( nanny->socket, nanny->socket->account->sock_state );
       strip_event_socket( nanny->socket, EVENT_SOCKET_IDLE );
       nanny->socket->nanny = NULL;
       free_nanny( nanny );
