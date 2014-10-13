@@ -42,3 +42,4 @@ const char *itos( int value );
 const char *quick_format( const char *Format, ... );
 const char *format_string_for_sql( const char *string );
 bool string_contains( const char *string, const char *regex_string );
+bool grab_range_and_type( char *arg, char *type, int *start, int *end );

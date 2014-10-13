@@ -88,7 +88,7 @@ int load_workspace_entries( WORKSPACE *wSpace );
 
 void grab_entity( INCEPTION *olc, char *arg, GRAB_PARAMS *params );
 void grab_entity_range( INCEPTION *olc, char *arg );
-GRAB_PARAMS grab_params( char *ranges, char *arg );
+GRAB_PARAMS grab_params( char *ranges, char *arg, char delim );
 bool should_grab_instance( ENTITY_INSTANCE *instance, GRAB_PARAMS *params );
 bool should_grab_framework( ENTITY_FRAMEWORK *framework, GRAB_PARAMS *params );
 bool should_grab_from_specs( LLIST *specs, GRAB_PARAMS *params );

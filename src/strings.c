@@ -785,3 +785,28 @@ bool string_contains( const char *string, const char *regex_string )
    return FALSE;
 }
 
+bool grab_range_and_type( char *arg, char *type, int *start, int *end )
+{
+   char range_start[MAX_BUFFER], range_end[MAX_BUFFER];
+   char *rng_start, *rng_end;
+
+   if( !string_contains( arg, "-" ) )
+      return FALSE;
+
+   memset( &range_start[0], 0, sizeof( range_start ) );
+   memset( &range_end[0], 0, sizeof( range_end ) );
+   rng_start = range_start;
+   rng_end = range_end;
+
+   rng_end = one_arg_delim( arg, rng_start, '-' );
+
+   if( !is_number( rng_start + 1 ) || !is_number( rng_end ) )
+      return FALSE;
+
+   *type = rng_start[0];
+   *start = atoi( rng_start + 1 );
+   *end = atoi( rng_end );
+
+   return TRUE;
+
+}

@@ -684,7 +684,7 @@ void grab_entity( INCEPTION *olc, char *arg, GRAB_PARAMS *params )
                text_to_olc( olc, "Framework %d: %s loaded into %s workspace.\r\n", frame->tag->id, frame->name, olc->using_workspace->name );
             else if( ret == RET_LIST_HAS )
             {
-               text_to_olc( olc, "This workspace already has the framework.\r\n" );
+               text_to_olc( olc, "This workspace already has the framework: %s\r\n", buf );
                olc_short_prompt( olc );
             }
             break;
@@ -696,7 +696,7 @@ void grab_entity( INCEPTION *olc, char *arg, GRAB_PARAMS *params )
                text_to_olc( olc, "Instance %d: %s loaded into %s workspace.\r\n", instance->tag->id, instance_name( instance ), olc->using_workspace->name );
             else if( ret == RET_LIST_HAS )
             {
-               text_to_olc( olc, "this workspace already has that instance.\r\n" );
+               text_to_olc( olc, "this workspace already has that instance: %s\r\n", buf );
                olc_short_prompt( olc );
             }
             break;
@@ -712,18 +712,16 @@ void grab_entity( INCEPTION *olc, char *arg, GRAB_PARAMS *params )
 void grab_entity_range( INCEPTION *olc, char *arg )
 {
    GRAB_PARAMS params;
+   char *rng_ptr;
    char ranges[MAX_BUFFER];
    char buf[MAX_BUFFER];
-   char range_start[MAX_BUFFER], range_end[MAX_BUFFER];
    char grab_str[MAX_BUFFER];
-   char *rng_ptr;
-   char *rng_start;
-   char *rng_end;
+   char type;
    int start, end;
    int x;
 
    memset( &ranges[0], 0, sizeof( ranges ) );
-   params = grab_params( ranges, arg );
+   params = grab_params( ranges, arg, ' ' );
 
    rng_ptr = ranges;
    while( rng_ptr && rng_ptr[0] != '\0' )
@@ -731,22 +729,21 @@ void grab_entity_range( INCEPTION *olc, char *arg )
       rng_ptr = one_arg( rng_ptr, buf );
       if( string_contains( buf, "-" ) )
       {
-         memset( &range_start[0], 0, sizeof( range_start ) );
-         memset( &range_end[0], 0, sizeof( range_end ) );
-         rng_start = range_start;
-         rng_end = range_end;
-         rng_end = one_arg_delim( buf, rng_start, '-' );
-         if( !is_number( rng_start + 1 ) || !is_number( rng_end ) )
+         if( !grab_range_and_type( buf, &type, &start, &end ) )
          {
             text_to_olc( olc, "Improper range: %s\r\n", buf );
             continue;
          }
-         start = atoi( rng_start + 1 );
-         end = atoi( rng_end );
 
-         for( x = start; x < end; x++ )
+         if( type != 'f' && type != 'i' )
          {
-            mud_printf( grab_str, "%c%d", rng_start[0], x );
+            text_to_olc( olc, "'%c' is invalid, (f)rameworks and (i)nstances only.", type );
+            continue;
+         }
+
+         for( x = start; x <= end; x++ )
+         {
+            mud_printf( grab_str, "%c%d", type, x );
             grab_entity( olc, grab_str, &params );
          }
       }
@@ -756,7 +753,7 @@ void grab_entity_range( INCEPTION *olc, char *arg )
    return;
 }
 
-GRAB_PARAMS grab_params( char *ranges, char *arg )
+GRAB_PARAMS grab_params( char *ranges, char *arg, char delim )
 {
    GRAB_PARAMS params;
    char buf[MAX_BUFFER];
@@ -765,7 +762,7 @@ GRAB_PARAMS grab_params( char *ranges, char *arg )
 
    while( arg && arg[0] != '\0' )
    {
-      arg = one_arg( arg, buf );
+      arg = one_arg_delim( arg, buf, delim );
       if( !strcmp( buf, "noexits" ) )
       {
          params.no_exits = TRUE;
@@ -787,7 +784,7 @@ GRAB_PARAMS grab_params( char *ranges, char *arg )
          continue;
       }
       strcat( ranges, buf );
-      strcat( ranges, " " );
+      strcat( ranges, quick_format( "%c", delim ) );
    }
    return params;
 }
@@ -1830,3 +1827,32 @@ void olc_ufilter( void *passed, char *arg )
    }
    return;
 }
+
+void olc_list( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   GRAB_PARAMS params;
+   char buf[MAX_BUFFER];
+   char *buf_ptr;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "%s", print_header( "Proper Use", "-", olc->account->pagewidth ) );
+      text_to_olc( olc, " To List All Frameworks: list f\r\n" );
+      text_to_olc( olc, " To List All Instances:  list i\r\n" );
+      text_to_olc( olc, " To List All Workspaces: list w\r\n" );
+      text_to_olc( olc, " List also takes ranges: list i5-10\r\n" );
+      text_to_olc( olc, " List also takes comma lists and no_spec flags.\r\n" );
+      olc_short_prompt( olc );
+      return;
+   }
+
+   params = grab_params( buf, arg, ',' );
+   buf_ptr = buf;
+   while( buf_ptr && buf_ptr[0] != '\0' )
+   {
+      buf_ptr = one_arg
+   }
+   return;
+}
+
