@@ -113,6 +113,13 @@ bool frame_filter_pass( ENTITY_FRAMEWORK *frame, WORKSPACE_FILTER *filter );
 bool instance_filter_pass( ENTITY_INSTANCE *instance, WORKSPACE_FILTER *filter );
 bool filter_string_check( const char *arg, char **arg_list, int max, bool precise );
 
+void show_all_frameworks_to_olc( INCEPTION *olc );
+void show_all_instances_to_olc( INCEPTION *olc );
+void show_all_workspaces_to_olc( INCEPTION *olc );
+void show_range_frameworks_to_olc( INCEPTION *olc, int start, int end );
+void show_range_instances_to_olc( INCEPTION *olc, int start, int end );
+void show_range_workspaces_to_olc( INCEPTION *olc, int start, int end );
+
 void olc_file( void *passed, char *arg );
 void olc_workspace( void *passed, char *arg );
 void workspace_new( void *passed, char *arg );
@@ -130,4 +137,5 @@ void olc_show( void *passed, char *arg );
 void olc_quit( void *passed, char *arg );
 void olc_load( void *passed, char *arg );
 void olc_chat( void *passed, char *arg );
-void olc_ufilter( void *passed, char * arg );
+void olc_ufilter( void *passed, char *arg );
+void olc_list( void *passed, char *arg );

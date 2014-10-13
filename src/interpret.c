@@ -89,6 +89,7 @@ struct typCmd olc_commands[] = {
    { "chat", olc_chat, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
    { "show", olc_show, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
    { "builder", olc_builder, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
+   { "list", olc_list, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
    { "load", olc_load, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
    { "instance", olc_instantiate, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
    { "iedit", framework_iedit, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },

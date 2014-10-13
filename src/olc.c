@@ -1207,6 +1207,131 @@ bool filter_string_check( const char *arg, char **arg_list, int max, bool precis
    return TRUE;
 }
 
+void show_all_frameworks_to_olc( INCEPTION *olc )
+{
+   LLIST *list = AllocList();
+   MYSQL_ROW row;
+   ITERATOR Iter;
+
+   if( !db_query_list_row( list, "SELECT entityFrameworkID, name FROM `entity_frameworks`;" ) )
+   {
+      FreeList( list );
+      return;
+   }
+
+   AttachIterator( &Iter, list );
+   while( ( row = (MYSQL_ROW)NextInList( &Iter ) ) != NULL )
+      text_to_olc( olc, "Framework %d: %s\r\n", atoi( row[0] ), row[1] );
+   DetachIterator( &Iter );
+
+   FreeList( list );
+   return;
+}
+
+void show_all_instances_to_olc( INCEPTION *olc )
+{
+   LLIST *list = AllocList();
+   MYSQL_ROW row;
+   ITERATOR Iter;
+
+   if( !db_query_list_row( list, "SELECT `entity_instances`.entityInstanceID, `entity_frameworks`.name FROM `entity_instances` LEFT JOIN `entity_frameworks` ON `entity_instances`.frameworkID=`entity_frameworks`.entityFrameworkID ORDER BY `entity_instances`.entityInstanceID;" ) )
+   {
+      FreeList( list );
+      return;
+   }
+
+   AttachIterator( &Iter, list );
+   while( ( row = (MYSQL_ROW)NextInList( &Iter ) ) != NULL )
+      text_to_olc( olc, "Instance %d: %s\r\n", atoi( row[0] ), row[1] );
+   DetachIterator( &Iter );
+
+   FreeList( list );
+   return;
+}
+
+void show_all_workspaces_to_olc( INCEPTION *olc )
+{
+   LLIST *list = AllocList();
+   MYSQL_ROW row;
+   ITERATOR Iter;
+
+   if( !db_query_list_row( list, "SELECT workspaceID, name FROM `workspaces`;" ) )
+   {
+      FreeList( list );
+      return;
+   }
+
+   AttachIterator( &Iter, list );
+   while( ( row = (MYSQL_ROW)NextInList( &Iter ) ) != NULL )
+      text_to_olc( olc, "Workspace %d: %s\r\n", atoi( row[0] ), row[1] );
+   DetachIterator( &Iter );
+
+   FreeList( list );
+   return;
+}
+
+void show_range_frameworks_to_olc( INCEPTION *olc, int start, int end )
+{
+   LLIST *list = AllocList();
+   MYSQL_ROW row;
+   ITERATOR Iter;
+
+   if( !db_query_list_row( list, quick_format( "SELECT entityFrameworkID, name FROM `entity_frameworks` WHERE entityFrameworkID BETWEEN %d AND %d ORDER BY entityFrameworkID;", start, end ) ) )
+   {
+      FreeList( list );
+      return;
+   }
+
+   AttachIterator( &Iter, list );
+   while( ( row = (MYSQL_ROW)NextInList( &Iter ) ) != NULL )
+      text_to_olc( olc, "Framework %d: %s\r\n", atoi( row[0] ), row[1] );
+   DetachIterator( &Iter );
+
+   FreeList( list );
+   return;
+}
+
+void show_range_instances_to_olc( INCEPTION *olc, int start, int end )
+{
+   LLIST *list = AllocList();
+   MYSQL_ROW row;
+   ITERATOR Iter;
+   if( !db_query_list_row( list, quick_format( "SELECT `entity_instances`.entityInstanceID, `entity_frameworks`.name FROM `entity_instances` LEFT JOIN `entity_frameworks` ON `entity_instances`.frameworkID=`entity_frameworks`.entityFrameworkID WHERE `entity_instances`.entityInstanceID >= %d AND `entity_instances`.entityInstanceID <= %d ORDER BY `entity_instances`.entityInstanceID;", start, end ) ) )
+   {
+      FreeList( list );
+      return;
+   }
+
+   AttachIterator( &Iter, list );
+   while( ( row = (MYSQL_ROW)NextInList( &Iter ) ) != NULL )
+      text_to_olc( olc, "Instance %d: %s\r\n", atoi( row[0] ), row[1] );
+   DetachIterator( &Iter );
+
+   FreeList( list );
+   return;
+}
+
+void show_range_workspaces_to_olc( INCEPTION *olc, int start, int end )
+{
+   LLIST *list = AllocList();
+   MYSQL_ROW row;
+   ITERATOR Iter;
+
+   if( !db_query_list_row( list, quick_format( "SELECT workspaceID, name FROM `workspaces` WHERE workspaceID BETWEEN %d AND %d;", start, end ) ) )
+   {
+      FreeList( list );
+      return;
+   }
+
+   AttachIterator( &Iter, list );
+   while( ( row = (MYSQL_ROW)NextInList( &Iter ) ) != NULL )
+      text_to_olc( olc, "Workspace %d: %s\r\n", atoi( row[0] ), row[1] );
+   DetachIterator( &Iter );
+
+   FreeList( list );
+   return;
+}
+
 void olc_file( void *passed, char *arg )
 {
    INCEPTION *olc = (INCEPTION *)passed;
@@ -1831,9 +1956,9 @@ void olc_ufilter( void *passed, char *arg )
 void olc_list( void *passed, char *arg )
 {
    INCEPTION *olc = (INCEPTION *)passed;
-   GRAB_PARAMS params;
    char buf[MAX_BUFFER];
-   char *buf_ptr;
+   char type;
+   int start, end;
 
    if( !arg || arg[0] == '\0' )
    {
@@ -1841,17 +1966,57 @@ void olc_list( void *passed, char *arg )
       text_to_olc( olc, " To List All Frameworks: list f\r\n" );
       text_to_olc( olc, " To List All Instances:  list i\r\n" );
       text_to_olc( olc, " To List All Workspaces: list w\r\n" );
-      text_to_olc( olc, " List also takes ranges: list i5-10\r\n" );
+      text_to_olc( olc, " List also takes ranges: (example)list i5-10\r\n" );
       text_to_olc( olc, " List also takes comma lists and no_spec flags.\r\n" );
       olc_short_prompt( olc );
       return;
    }
 
-   params = grab_params( buf, arg, ',' );
-   buf_ptr = buf;
-   while( buf_ptr && buf_ptr[0] != '\0' )
+   while( arg && arg[0] != '\0' )
    {
-      buf_ptr = one_arg
+      arg = one_arg_delim( arg, buf, ',' );
+
+      type = tolower( buf[0] );
+      if( type != 'f' && type != 'i' && type != 'w' )
+      {
+         text_to_olc( olc, "%c not valid, (f)rameworks, (i)nstances and (w)orkspaces only.\r\n" );
+         continue;
+      }
+
+      if( strlen( buf ) == 1 )
+      {
+         switch( tolower( buf[0] ) )
+         {
+            case 'f':
+               show_all_frameworks_to_olc( olc );
+               return;
+            case 'i':
+               show_all_instances_to_olc( olc );
+               return;
+            case 'w':
+               show_all_workspaces_to_olc( olc );
+               return;
+         }
+      }
+
+      if( !grab_range_and_type( buf, &type, &start, &end ) )
+      {
+         text_to_olc( olc, "Invalid range given: %s\r\n", buf );
+         continue;
+      }
+      switch( tolower( buf[0] ) )
+      {
+         default:
+         case 'f':
+            show_range_frameworks_to_olc( olc, start, end );
+            continue;
+         case 'i':
+            show_range_instances_to_olc( olc, start, end );
+            continue;
+         case 'w':
+            show_range_workspaces_to_olc( olc, start, end );
+            continue;
+      }
    }
    return;
 }
