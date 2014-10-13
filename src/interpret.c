@@ -417,6 +417,10 @@ bool interpret_entity_selection( const char *input )
             if( ( input_selection_ptr = get_workspace_by_name( input+2 ) ) != NULL )
                input_selection_typing = SEL_WORKSPACE;
             break;
+         case 'p':
+            if( ( input_selection_ptr = load_project_by_name( input+2 ) ) != NULL )
+               input_selection_typing = SEL_PROJECT;
+            break;
       }
    }
    else if( input[1] != '_' && is_number( input+1 ) )
@@ -436,6 +440,10 @@ bool interpret_entity_selection( const char *input )
          case 'w':
             if( ( input_selection_ptr = get_workspace_by_id( id ) ) != NULL )
                input_selection_typing = SEL_WORKSPACE;
+            break;
+         case 'p':
+            if( ( input_selection_ptr = load_project_by_id( id ) ) != NULL )
+               input_selection_typing = SEL_PROJECT;
             break;
       }
    }
@@ -468,6 +476,7 @@ SEL_TYPING check_selection_type( const char *input )
       case 'f': return SEL_FRAME;
       case 'i': return SEL_INSTANCE;
       case 'w': return SEL_WORKSPACE;
+      case 'p': return SEL_PROJECT;
    }
    return SEL_NULL;
 }
@@ -481,6 +490,7 @@ const char *check_selection_type_string( const char *input )
       case 'f': return "frame";
       case 'i': return "instance";
       case 'w': return "workspace";
+      case 'p': return "project";
    }
    return "null";
 }

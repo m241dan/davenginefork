@@ -178,6 +178,19 @@ void full_load_workspace( WORKSPACE *wSpace )
    return;
 }
 
+void full_load_project( PROJECT *project )
+{
+   WORKSPACE *wSpace;
+   ITERATOR Iter;
+
+   AttachIterator( &Iter, project->workspaces );
+   while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
+      full_load_workspace( wSpace );
+   DetachIterator( &Iter );
+
+   return;
+}
+
 /* could be factored */
 void full_load_instance( ENTITY_INSTANCE *instance )
 {

@@ -1812,6 +1812,7 @@ void olc_load( void *passed, char *arg )
    INCEPTION *olc = (INCEPTION *)passed;
    ENTITY_FRAMEWORK *frame;
    ENTITY_INSTANCE *instance;
+   PROJECT *project;
    WORKSPACE *wSpace;
 
    if( !arg || arg[0] == '\0' )
@@ -1845,6 +1846,12 @@ void olc_load( void *passed, char *arg )
          wSpace = (WORKSPACE *)retrieve_entity_selection();
          full_load_workspace( wSpace );
          text_to_olc( olc, "You load all the instances in %s.\r\n", wSpace->name );
+         return;
+      case SEL_PROJECT:
+         project = (PROJECT *)retrieve_entity_selection();
+         full_load_project( project );
+         text_to_olc( olc, "You load all the instances in %s.\r\n", project->name );
+         free_project( project );
          return;
       case SEL_STRING:
          text_to_olc( olc, (char *)retrieve_entity_selection(), arg );
