@@ -381,7 +381,11 @@ int olc_prompt( D_SOCKET *dsock )
 
    if( olc->using_workspace )
    {
-      max_list = UMAX( SizeOfList( olc->using_workspace->frameworks ), SizeOfList( olc->using_workspace->instances ) );
+      if( olc->using_filter->limit == 0 )
+         max_list = UMAX( SizeOfList( olc->using_workspace->frameworks ), SizeOfList( olc->using_workspace->instances ) );
+      else
+         max_list = olc->using_filter->limit;
+
       text_to_olc( olc, "|%s|\r\n", print_header( quick_format( "%s Workspace", olc->using_workspace->name ), "-", space_after_pipes ) );
       text_to_olc( olc, "|%s|", print_header( "Frameworks", " ", ( space_after_pipes -1 ) / 2 ) );
       text_to_olc( olc, "%s |\r\n", print_header( "Instances", " ", ( space_after_pipes - 1 ) / 2 ) );
@@ -1030,6 +1034,23 @@ void toggle_no_mobiles( INCEPTION *olc )
 
    text_to_olc( olc, "You toggle No Mobs %s.\r\n", spec_filters->no_mobiles ? "on" : "off" );
    return;
+}
+
+void set_limit_filter( INCEPTION *olc, char *arg )
+{
+   int limit;
+
+   if( !is_number( arg ) )
+   {
+      text_to_olc( olc, "Limit only takes a whole number.\r\n" );
+      return;
+   }
+   limit = atoi( arg );
+
+   text_to_olc( olc, "Display limit on Using Workspace set to %s.\r\n", limit == 0 ? "unlimited" : quick_format( "%d", limit ) );
+   olc->using_filter->limit = limit;
+   return;
+
 }
 
 void toggle_name_filter( INCEPTION *olc, char *arg )
@@ -1886,6 +1907,7 @@ void olc_ufilter( void *passed, char *arg )
       text_to_olc( olc, " Type ufilter <flag> - takes comma lists\r\n" );
       text_to_olc( olc, " Repeat To Remove.\r\n" );
       text_to_olc( olc, " Flags - no_exit, no_objects, no_rooms, no_mobs\r\n" );
+      text_to_olc( olc, "       - limit <number> max number to show. (0 = unlimited)\r\n" );
       text_to_olc( olc, "       - name <keyword(s) to filter>\r\n" );
       text_to_olc( olc, "       - short <keyword(s) to filter>\r\n" );
       text_to_olc( olc, "       - long <keyword(s) to filter>\r\n" );
@@ -1928,6 +1950,12 @@ void olc_ufilter( void *passed, char *arg )
          toggle_no_mobiles( olc );
          continue;
       }
+      if( !strcmp( buf, "limit" ) )
+      {
+         set_limit_filter( olc, input_ptr );
+         continue;
+      }
+
       if( !strcmp( buf, "name" ) )
       {
          toggle_name_filter( olc, input_ptr );
@@ -1949,6 +1977,7 @@ void olc_ufilter( void *passed, char *arg )
          continue;
       }
       text_to_olc( olc, "Improper usage: %s %s\r\n", buf, input_ptr );
+      olc_short_prompt( olc );
    }
    return;
 }

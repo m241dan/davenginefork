@@ -38,6 +38,7 @@ struct workspace_filter
    int desc_count;
    bool hide_frameworks;
    bool hide_instances;
+   int limit;
 };
 
 struct grab_params
@@ -104,6 +105,7 @@ void toggle_no_exit( INCEPTION *olc );
 void toggle_no_objects( INCEPTION *olc );
 void toggle_no_rooms( INCEPTION *olc );
 void toggle_no_mobiles( INCEPTION *olc );
+void set_limit_filter( INCEPTION *olc, char *arg );
 void toggle_name_filter( INCEPTION *olc, char *arg );
 void toggle_short_filter( INCEPTION *olc, char *arg );
 void toggle_long_filter( INCEPTION *olc, char *arg );
