@@ -84,12 +84,21 @@ int new_specification( SPECIFICATION *spec )
 int add_spec_to_framework( SPECIFICATION *spec, ENTITY_FRAMEWORK *frame )
 {
    AttachToList( spec, frame->specifications );
+   if( !strcmp( frame->tag->created_by, "null" ) )
+      return RET_SUCCESS;
+   mud_printf( spec->owner, "f%d", frame->tag->id );
+   new_specification( spec );
+
    return RET_SUCCESS;
 }
 
 int add_spec_to_instance( SPECIFICATION *spec, ENTITY_INSTANCE *instance )
 {
    AttachToList( spec, instance->specifications );
+   if( !strcmp( instance->tag->created_by, "null" ) )
+      return RET_SUCCESS;
+   mud_printf( spec->owner, "%d", instance->tag->id );
+   new_specification( spec );
    return RET_SUCCESS;
 }
 
@@ -292,4 +301,16 @@ int get_spec_value( ENTITY_INSTANCE *entity, const char *spec_name )
       return -1;
    else
       return spec->value;
+}
+
+bool inherited_frame_has_any_spec( ENTITY_FRAMEWORK *frame )
+{
+   if( !frame->inherits )
+      return FALSE;
+
+   while( ( frame = frame->inherits ) != NULL )
+      if( SizeOfList( frame->specifications ) > 0 )
+         return TRUE;
+
+   return FALSE;
 }

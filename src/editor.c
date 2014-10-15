@@ -2,7 +2,7 @@
 
 #include "mud.h"
 
-int init_editor( INCEPTION *olc, ENTITY_FRAMEWORK *frame )
+int init_eFramework_editor( INCEPTION *olc, ENTITY_FRAMEWORK *frame )
 {
    int ret = RET_SUCCESS;
 
@@ -66,65 +66,15 @@ int editor_eFramework_prompt( D_SOCKET *dsock )
 
    bprintf( buf, "/%s\\\r\n", print_header( tempstring, "-", space_after_pipes ) );
 
-   mud_printf( tempstring, " Name : %s", chase_name( frame ) );
-   if( !strcmp( frame->name, "_inherited_" ) )
-      strcat( tempstring, " ( inherited )" );
-   bprintf( buf, "|%s|\r\n", fit_string_to_space( tempstring, space_after_pipes ) );
+   bprintf( buf, "%s", return_framework_strings( frame, "|~|", dsock->account->pagewidth ) );
 
-   mud_printf( tempstring, " Short: %s", chase_short_descr( frame ) );
-   if( !strcmp( frame->short_descr, "_inherited_" ) )
-      strcat( tempstring, " ( inherited )" );
-   bprintf( buf, "|%s|\r\n", fit_string_to_space( tempstring, space_after_pipes ) );
+   if( SizeOfList( frame->specifications ) > 0 || inherited_frame_has_any_spec( frame ) )
+      bprintf( buf, "%s", return_framework_specs_and_stats( frame, "|", dsock->account->pagewidth ) );
 
-   mud_printf( tempstring, " Long : %s", chase_long_descr( frame ) );
-   if( !strcmp( frame->long_descr, "_inherited_" ) )
-      strcat( tempstring, " ( inherited )" );
-   bprintf( buf, "|%s|\r\n", fit_string_to_space( tempstring, space_after_pipes ) );
+   if( SizeOfList( frame->fixed_contents ) > 0 || inherited_frame_has_any_fixed_possession( frame ) )
+      bprintf( buf, "%s", return_framework_fixed_content( frame, "|", dsock->account->pagewidth ) );
 
-   mud_printf( tempstring, " Desc : %s", chase_description( frame ) );
-   if( !strcmp( frame->description, "_inherited_" ) )
-      strcat( tempstring, " ( inherited )" );
-   bprintf( buf, "|%s|\r\n", fit_string_to_space( tempstring, space_after_pipes ) );
-
-   if( SizeOfList( frame->specifications ) > 0 )
-   {
-      ITERATOR IterSpec;
-      SPECIFICATION *spec;
-
-      bprintf( buf, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
-      bprintf( buf, "|%s|", print_header( "Specifications Here", " ", ( space_after_pipes - 1 ) / 2 ) );
-      bprintf( buf, " %s|\r\n", print_header( "Stats Here", " ", ( space_after_pipes - 1 ) / 2 ) );
-      bprintf( buf, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
-
-
-      AttachIterator( &IterSpec, frame->specifications );
-      while( ( spec = (SPECIFICATION *)NextInList( &IterSpec ) ) != NULL )
-      {
-         mud_printf( tempstring, " %s : %s", spec_table[spec->type], itos( spec->value ) );
-         bprintf( buf, "|%s|", fit_string_to_space( tempstring, ( space_after_pipes - 1 ) / 2 ) );
-         bprintf( buf, " %s|\r\n", fit_string_to_space( " ", ( space_after_pipes - 1 ) / 2 ) );
-      }
-      DetachIterator( &IterSpec );
-      bprintf( buf, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
-   }
-   if( SizeOfList( frame->fixed_contents ) > 0 )
-   {
-      ITERATOR IterFixed;
-      ENTITY_FRAMEWORK *fixed_content;
-
-      bprintf( buf, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
-      bprintf( buf, "|%s|\r\n", print_header( "Fixed Possessions", " ", space_after_pipes ) );
-      bprintf( buf, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
-
-      AttachIterator( &IterFixed, frame->fixed_contents );
-      while( ( fixed_content = (ENTITY_FRAMEWORK *)NextInList( &IterFixed ) ) != NULL )
-      {
-         mud_printf( tempstring, "(%-7d) %s, %s", fixed_content->tag->id, chase_name( fixed_content ), chase_short_descr( fixed_content ) );
-         bprintf( buf, "|%s|\r\n", fit_string_to_space( tempstring, space_after_pipes ) );
-      }
-      DetachIterator( &IterFixed );
-      bprintf( buf, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
-   }
+   bprintf( buf, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
 
    print_commands( dsock->account->olc, dsock->account->olc->editor_commands, buf, 0, dsock->account->pagewidth );
    bprintf( buf, "\\%s/\r\n", print_bar( "-", space_after_pipes ) );
@@ -132,6 +82,180 @@ int editor_eFramework_prompt( D_SOCKET *dsock )
    text_to_buffer( dsock, buf->data );
    buffer_free( buf );
    return ret;
+}
+
+const char *return_framework_strings( ENTITY_FRAMEWORK *frame, const char *border, int width )
+{
+   static char buf[MAX_BUFFER];
+   char tempstring[MAX_BUFFER];
+   int space_after_border;
+
+
+   memset( &buf[0], 0, sizeof( buf ) );
+   space_after_border = width - ( strlen( border ) * 2 );
+
+   mud_printf( tempstring, "%s%s%s\r\n", border,
+      fit_string_to_space(
+      quick_format( " Name : %s%s", chase_name( frame ), !strcmp( frame->name, "__inherited__" ) ? " ( inherited )" : "" ),
+      space_after_border ),
+      border );
+
+   strcat( buf, tempstring );
+
+   mud_printf( tempstring, "%s%s%s\r\n", border,
+      fit_string_to_space(
+      quick_format( " Short : %s%s", chase_short_descr( frame ), !strcmp( frame->short_descr, "__inherited__" ) ? " ( inherited )" : "" ),
+      space_after_border ),
+      border );
+
+   strcat( buf, tempstring );
+
+
+   mud_printf( tempstring, "%s%s%s\r\n", border,
+      fit_string_to_space(
+      quick_format( " Long : %s%s", chase_long_descr( frame ), !strcmp( frame->long_descr, "__inherited__" ) ? " ( inherited )" : "" ),
+      space_after_border ),
+      border );
+
+   strcat( buf, tempstring );
+
+   mud_printf( tempstring, "%s%s%s\r\n", border,
+      fit_string_to_space(
+      quick_format( " Desc : %s%s", chase_description( frame ), !strcmp( frame->description, "__inherited__" ) ? " ( inherited )" : "" ),
+      space_after_border ),
+      border );
+
+   strcat( buf, tempstring );
+
+   buf[strlen( buf )] = '\0';
+   return buf;
+}
+
+const char *return_framework_specs_and_stats( ENTITY_FRAMEWORK *frame, const char *border, int width )
+{
+   static char buf[MAX_BUFFER];
+   char tempstring[MAX_BUFFER];
+   int space_after_border;
+
+   memset( &buf[0], 0, sizeof( buf ) );
+   space_after_border = width - ( strlen( border ) * 2 );
+
+   mud_printf( tempstring, "%s%s%s\r\n", border, print_bar( "-", space_after_border ), border );
+   strcat( buf, tempstring );
+
+   space_after_border = width - ( strlen( border ) * 3 );
+
+   mud_printf( tempstring, "%s%s", border, print_header( "Specifications", " ", space_after_border / 2 ) );
+   strcat( buf, tempstring );
+
+   strcat( buf, border );
+
+   mud_printf( tempstring, " %s%s\r\n", print_header( "Stats", " ", space_after_border / 2 ), border );
+   strcat( buf, tempstring );
+
+   space_after_border = width - ( strlen( border ) * 2 );
+
+   mud_printf( tempstring, "%s%s%s\r\n", border, print_bar( "-", space_after_border ), border );
+   strcat( buf, tempstring );
+
+   strcat( buf, return_spec_and_stat_list( frame->specifications, border, width, FALSE ) );
+   while( ( frame = frame->inherits ) != NULL )
+      strcat( buf, return_spec_and_stat_list( frame->specifications, border, width, TRUE ) );
+
+   buf[strlen( buf )] = '\0';
+   return buf;
+}
+
+const char *return_spec_and_stat_list( LLIST *spec_list, const char *border, int width, bool inherited )
+{
+   SPECIFICATION *spec;
+   ITERATOR Iter;
+   static char buf[MAX_BUFFER];
+
+   memset( &buf[0], 0, sizeof( buf ) );
+
+   AttachIterator( &Iter, spec_list );
+   while( ( spec = (SPECIFICATION *)NextInList( &Iter ) ) != NULL )
+      strcat( buf, return_spec_and_stat( spec, border, width, inherited ) );
+   DetachIterator( &Iter );
+
+   buf[strlen( buf )] = '\0';
+   return buf;
+}
+
+const char *return_spec_and_stat( SPECIFICATION *spec, const char *border, int width, bool inherited )
+{
+   static char buf[MAX_BUFFER];
+   char tempstring[MAX_BUFFER];
+   int space_after_border;
+
+   memset( &buf[0], 0, sizeof( buf ) );
+   space_after_border = width - ( strlen( border ) * 2 );
+
+   mud_printf( tempstring, "%s%s", border,
+   fit_string_to_space(
+   quick_format( " %s : %d%s", spec_table[spec->type], spec->value, inherited ? " ( inherited )" : "" ), ( space_after_border / 2 ) - 1 ) );
+   strcat( buf, tempstring );
+
+   strcat( buf, border );
+
+   mud_printf( tempstring, " %s%s\r\n",
+   print_header( " ", " ", ( space_after_border / 2 ) - 1 ),
+   border );
+   strcat( buf, tempstring );
+
+   buf[strlen( buf )] = '\0';
+   return buf;
+}
+
+const char *return_framework_fixed_content( ENTITY_FRAMEWORK *frame, const char *border, int width )
+{
+   static char buf[MAX_BUFFER];
+   char tempstring[MAX_BUFFER];
+   int space_after_border;
+
+   memset( &buf[0], 0, sizeof( buf ) );
+   space_after_border = width - ( strlen( border ) * 2 );
+
+   mud_printf( tempstring, "%s%s%s\r\n", border, print_bar( "-", space_after_border ), border );
+   strcat( buf, tempstring );
+
+   mud_printf( tempstring, "%s%s%s\r\n", border, print_header( "Fixed Possessions", " ", space_after_border ), border );
+   strcat( buf, tempstring );
+
+   mud_printf( tempstring, "%s%s%s\r\n", border, print_bar( "-", space_after_border ), border );
+   strcat( buf, tempstring );
+
+   strcat( buf, return_fixed_content_list( frame->fixed_contents, border, width, FALSE ) );
+   while( ( frame = frame->inherits ) != NULL )
+      strcat( buf, return_fixed_content_list( frame->fixed_contents, border, width, TRUE ) );
+
+   buf[strlen( buf )] = '\0';
+   return buf;
+}
+
+const char *return_fixed_content_list( LLIST *fixed_list, const char *border, int width, bool inherited )
+{
+   ENTITY_FRAMEWORK *fixed_content;
+   ITERATOR Iter;
+   static char buf[MAX_BUFFER];
+   char tempstring[MAX_BUFFER];
+   int space_after_border;
+
+   memset( &buf[0], 0, sizeof( buf ) );
+   space_after_border = width - ( strlen( border ) * 2 );
+
+   AttachIterator( &Iter, fixed_list );
+   while( ( fixed_content = (ENTITY_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
+   {
+      mud_printf( tempstring, "%s%s%s\r\n", border,
+      fit_string_to_space( quick_format( "(%-7d) %s, %s%s", fixed_content->tag->id, chase_name( fixed_content ), chase_short_descr( fixed_content ), inherited ? " (inherited)" : "" ), space_after_border ), border );
+      strcat( buf, tempstring );
+   }
+   DetachIterator( &Iter );
+
+   buf[strlen( buf )] = '\0';
+   return buf;
 }
 
 void eFramework_name( void *passed, char *arg )

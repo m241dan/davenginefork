@@ -1627,7 +1627,7 @@ void framework_create( void *passed, char *arg )
       change_socket_state( olc->account->socket, olc->editing_state );
       return;
    }
-   init_editor( olc, NULL );
+   init_eFramework_editor( olc, NULL );
    change_socket_state( olc->account->socket, olc->editing_state );
    return;
 }
@@ -1646,7 +1646,7 @@ void framework_edit( void *passed, char *arg )
    if( ( to_edit = olc_edit_selection( olc, arg ) ) == NULL ) /* handles its own messaging */
       return;
 
-   init_editor( olc, to_edit );
+   init_eFramework_editor( olc, to_edit );
    text_to_olc( olc, "Editing Frame...\r\n" );
    change_socket_state( olc->account->socket, olc->editing_state );
    return;
@@ -1673,7 +1673,7 @@ void framework_iedit( void *passed, char *arg )
       return;
    }
 
-   init_editor( olc, inherited_to_edit );
+   init_eFramework_editor( olc, inherited_to_edit );
    change_socket_state( olc->account->socket, olc->editing_state );
    text_to_olc( olc, "You begin to edit %s.\r\n", chase_name( inherited_to_edit ) );
    return;
