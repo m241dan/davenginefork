@@ -84,12 +84,21 @@ int new_specification( SPECIFICATION *spec )
 int add_spec_to_framework( SPECIFICATION *spec, ENTITY_FRAMEWORK *frame )
 {
    AttachToList( spec, frame->specifications );
+   if( !strcmp( frame->tag->created_by, "null" ) )
+      return RET_SUCCESS;
+   mud_printf( spec->owner, "f%d", frame->tag->id );
+   new_specification( spec );
+
    return RET_SUCCESS;
 }
 
 int add_spec_to_instance( SPECIFICATION *spec, ENTITY_INSTANCE *instance )
 {
    AttachToList( spec, instance->specifications );
+   if( !strcmp( instance->tag->created_by, "null" ) )
+      return RET_SUCCESS;
+   mud_printf( spec->owner, "%d", instance->tag->id );
+   new_specification( spec );
    return RET_SUCCESS;
 }
 

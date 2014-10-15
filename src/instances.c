@@ -731,10 +731,7 @@ void move_create( ENTITY_INSTANCE *entity, ENTITY_FRAMEWORK *exit_frame, char *a
 
    /* create room */
    if( !have_frame )
-   {
-      room_frame = init_eFramework();
-      new_eFramework( room_frame );
-   }
+      room_frame = create_room_framework( "room" );
 
    if( !new_room )
    {
