@@ -1067,7 +1067,7 @@ int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *exit )
    }
 
    entity_to_world( entity, move_to );
-   text_to_entity( entity, "You move to the %s.\r\n", instance_short_descr( exit ) );
+   text_to_entity( entity, "You move to the %s.\r\n\n", instance_short_descr( exit ) );
    entity_look( entity, "" );
    return ret;
 }
