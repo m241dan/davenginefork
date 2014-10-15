@@ -4,9 +4,14 @@
 
 const char *const spec_table[] = {
    "IsRoom", "IsExit", "IsMob", "IsObject", "CanGet", "NoDrop", "CanMove", "MirrorExit", "IsDoor",
+   "Terrain",
    '\0' /* gandalf */
 };
 
+const char *const terrain_table[] = {
+   "Ether",
+   '\0' /* gandalf */
+};
 
 
 SPECIFICATION *init_specification( void )

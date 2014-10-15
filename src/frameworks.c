@@ -494,6 +494,11 @@ ENTITY_FRAMEWORK *create_room_framework( const char *name )
    pre_loaded_spec->value = 1;
    add_spec_to_framework( pre_loaded_spec, framework );
 
+   pre_loaded_spec = init_specification();
+   pre_loaded_spec->type = SPEC_TERRAIN;
+   pre_loaded_spec->value = TERRAIN_ETHER;
+   add_spec_to_framework( pre_loaded_spec, framework );
+
    new_eFramework( framework );
    return framework;
 }

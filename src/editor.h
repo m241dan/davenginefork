@@ -24,3 +24,6 @@ int init_project_editor( INCEPTION *olc, PROJECT *project );
 int editor_project_prompt( D_SOCKET *dsock );
 
 
+int init_workspace_editor( INCEPTION *olc, WORKSPACE *wSpace );
+
+int editor_workspace_prompt( D_SOCKET *dsock );
