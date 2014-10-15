@@ -462,6 +462,18 @@ bool live_frame( ENTITY_FRAMEWORK *frame )
    return TRUE;
 }
 
+bool inherited_frame_has_any_fixed_possession( ENTITY_FRAMEWORK *frame )
+{
+   if( !frame->inherits )
+      return FALSE;
+
+   while( ( frame = frame->inherits ) != NULL )
+      if( SizeOfList( frame->fixed_contents ) > 0 )
+         return TRUE;
+
+   return FALSE;
+}
+
 ENTITY_FRAMEWORK *create_room_framework( const char *name )
 {
    ENTITY_FRAMEWORK *framework;

@@ -1285,7 +1285,7 @@ void entity_create( void *passed, char *arg )
          return;
       }
 
-      init_editor( olc, NULL );
+      init_eFramework_editor( olc, NULL );
       change_socket_state( entity->socket, olc->editing_state );
       return;
    }
@@ -1298,7 +1298,7 @@ void entity_create( void *passed, char *arg )
       else
          frame = create_room_framework( NULL );
 
-      init_editor( olc, frame );
+      init_eFramework_editor( olc, frame );
       change_socket_state( entity->socket, olc->editing_state );
       return;
    }
@@ -1309,7 +1309,7 @@ void entity_create( void *passed, char *arg )
       else
          frame = create_mobile_framework( NULL );
 
-      init_editor( olc, frame );
+      init_eFramework_editor( olc, frame );
       change_socket_state( entity->socket, olc->editing_state );
       return;
    }
@@ -1318,7 +1318,7 @@ void entity_create( void *passed, char *arg )
       if( arg[0] == '\0' )
       {
          frame = create_exit_framework( NULL, 0 );
-         init_editor( olc, frame );
+         init_eFramework_editor( olc, frame );
          change_socket_state( entity->socket, olc->editing_state );
          return;
       }
@@ -1326,7 +1326,7 @@ void entity_create( void *passed, char *arg )
       if( arg[0] == '\0' || !is_number( arg ) )
       {
          frame = create_exit_framework( quick_format( "%s%s", buf, arg ), 0 );
-         init_editor( olc, frame );
+         init_eFramework_editor( olc, frame );
          change_socket_state( entity->socket, olc->editing_state );
          return;
       }
@@ -1369,7 +1369,7 @@ void entity_edit( void *passed, char *arg )
    if( ( to_edit = entity_edit_selection( entity, arg ) ) == NULL )
       return;
 
-   init_editor( olc, to_edit );
+   init_eFramework_editor( olc, to_edit );
    change_socket_state( entity->socket, olc->editing_state );
    text_to_entity( entity, "You begin to edit %s.\r\n", chase_name( to_edit ) );
    return;
@@ -1403,7 +1403,7 @@ void entity_iedit( void *passed, char *arg ) /* inheritance edit, not instance e
       return;
    }
 
-   init_editor( olc, inherited_to_edit );
+   init_eFramework_editor( olc, inherited_to_edit );
    change_socket_state( entity->socket, olc->editing_state );
    text_to_entity( entity, "You begin to edit %s.\r\n", chase_name( inherited_to_edit ) );
    return;

@@ -47,6 +47,7 @@ void append_framework_lists_ndi( LLIST *frame_list, LLIST *append_list );
 ENTITY_FRAMEWORK *framework_list_has_by_id( LLIST *frameworks, int id );
 ENTITY_FRAMEWORK *framework_list_has_by_name( LLIST *frameworks, const char *name );
 bool live_frame( ENTITY_FRAMEWORK *frame );
+bool inherited_frame_has_any_fixed_possession( ENTITY_FRAMEWORK *frame );
 
 ENTITY_FRAMEWORK *create_room_framework( const char *name );
 ENTITY_FRAMEWORK *create_exit_framework( const char *name, int dir );
