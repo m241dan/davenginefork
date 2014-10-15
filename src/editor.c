@@ -74,6 +74,8 @@ int editor_eFramework_prompt( D_SOCKET *dsock )
    if( SizeOfList( frame->fixed_contents ) > 0 || inherited_frame_has_any_fixed_possession( frame ) )
       bprintf( buf, "%s", return_framework_fixed_content( frame, "|", dsock->account->pagewidth ) );
 
+   bprintf( buf, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
+
    print_commands( dsock->account->olc, dsock->account->olc->editor_commands, buf, 0, dsock->account->pagewidth );
    bprintf( buf, "\\%s/\r\n", print_bar( "-", space_after_pipes ) );
 
@@ -227,9 +229,6 @@ const char *return_framework_fixed_content( ENTITY_FRAMEWORK *frame, const char 
    strcat( buf, return_fixed_content_list( frame->fixed_contents, border, width, FALSE ) );
    while( ( frame = frame->inherits ) != NULL )
       strcat( buf, return_fixed_content_list( frame->fixed_contents, border, width, TRUE ) );
-
-   mud_printf( tempstring, "%s%s%s\r\n", border, print_bar( "-", space_after_border ), border );
-   strcat( buf, tempstring );
 
    buf[strlen( buf )] = '\0';
    return buf;

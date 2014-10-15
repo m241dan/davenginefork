@@ -377,8 +377,6 @@ void print_commands( void *extra, LLIST *commands, BUFFER *buf, int sublevel, in
    ITERATOR Iter;
    COMMAND *com;
 
-   bprintf( buf, "|%s|\r\n", print_bar( "-", pagewidth -2 ) );
-
    AttachIterator( &Iter, commands );
    while( ( com = (COMMAND *)NextInList( &Iter ) ) != NULL )
    {
