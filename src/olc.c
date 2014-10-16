@@ -1487,7 +1487,7 @@ void workspace_load( void *passed, char *arg )
    /* needs factoring */
 
    list = AllocList();
-   if( db_query_list_row( list, quick_format( "SELECT * FROM workspaces WHERE name LIKE '%s%%';", buf ) ) )
+   if( db_query_list_row( list, quick_format( "SELECT * FROM workspaces WHERE name LIKE '%s%%';", format_string_for_sql( buf ) ) ) )
    {
       AttachIterator( &Iter, list );
       while( ( row = (MYSQL_ROW)NextInList( &Iter ) ) != NULL )
@@ -1664,7 +1664,7 @@ void olc_edit( void *passed, char *arg )
          olc->editing_state = STATE_EINSTANCE_EDITOR;
          break;
       case SEL_WORKSPACE:
-/*         init_workspace_editor( olc, (WORKSPACE *)to_edit ); */
+         init_workspace_editor( olc, (WORKSPACE *)to_edit );
          olc->editing_state = STATE_WORKSPACE_EDITOR;
          break;
       case SEL_PROJECT:

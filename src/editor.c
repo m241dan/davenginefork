@@ -278,7 +278,7 @@ void eFramework_name( void *passed, char *arg )
 
    if( live_frame( frame ) )
    {
-      quick_query( "UPDATE entity_frameworks SET name='%s' WHERE entityFrameworkID=%d;", frame->name, frame->tag->id );
+      quick_query( "UPDATE entity_frameworks SET name='%s' WHERE entityFrameworkID=%d;", format_string_for_sql( frame->name ), frame->tag->id );
       update_tag( frame->tag, olc->account->name );
    }
 
@@ -308,7 +308,7 @@ void eFramework_short( void *passed, char *arg )
 
    if( live_frame( frame ) )
    {
-      quick_query( "UPDATE entity_frameworks SET short_descr='%s' WHERE entityFrameworkID=%d;", frame->short_descr, frame->tag->id );
+      quick_query( "UPDATE entity_frameworks SET short_descr='%s' WHERE entityFrameworkID=%d;", format_string_for_sql( frame->short_descr ), frame->tag->id );
       update_tag( frame->tag, olc->account->name );
    }
 
@@ -338,7 +338,7 @@ void eFramework_long( void *passed, char *arg )
 
    if( live_frame( frame ) )
    {
-      quick_query( "UPDATE entity_frameworks SET long_descr='%s' WHERE entityFrameworkID=%d;", frame->long_descr, frame->tag->id );
+      quick_query( "UPDATE entity_frameworks SET long_descr='%s' WHERE entityFrameworkID=%d;", format_string_for_sql( frame->long_descr ), frame->tag->id );
       update_tag( frame->tag, olc->account->name );
    }
 
@@ -368,7 +368,7 @@ void eFramework_description( void *passed, char *arg )
 
    if( live_frame( frame ) )
    {
-      quick_query( "UPDATE entity_frameworks SET description='%s' WHERE entityFrameworkID=%d;", frame->description, frame->tag->id );
+      quick_query( "UPDATE entity_frameworks SET description='%s' WHERE entityFrameworkID=%d;", format_string_for_sql( frame->description ), frame->tag->id );
       update_tag( frame->tag, olc->account->name );
    }
 
@@ -526,7 +526,7 @@ int editor_project_prompt( D_SOCKET *dsock )
       mud_printf( tempstring, "Project ID: %d", project->tag->id );
 
    text_to_olc( olc, "/%s\\\r\n", print_header( tempstring, "-", dsock->account->pagewidth - 2 ) );
-   text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " Name : %s", project->name ), space_after_border ), border );
+   text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " Name   : %s", project->name ), space_after_border ), border );
    text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " Public : %s", project->Public ? "Yes" : "No" ), space_after_border ), border );
 
    if( SizeOfList( project->workspaces ) > 0 )
@@ -587,7 +587,7 @@ void project_name( void *passed, char *arg )
 
    if( strcmp( project->tag->created_by, "null" ) )
    {
-      quick_query( "UPDATE projects SET name='%s' WHERE projectID=%d;", project->name, project->tag->id );
+      quick_query( "UPDATE projects SET name='%s' WHERE projectID=%d;", format_string_for_sql( project->name ), project->tag->id );
       update_tag( project->tag, olc->account->name );
    }
    return;
@@ -630,3 +630,151 @@ void project_done( void *passed, char *arg )
    text_to_olc( olc, "Exiting the Project editor.\r\n" );
    return;
 }
+
+
+int init_workspace_editor( INCEPTION *olc, WORKSPACE *wSpace )
+{
+   int ret = RET_SUCCESS;
+
+   if( !wSpace )
+      olc->editing = init_workspace();
+   else
+      olc->editing = wSpace;
+
+   olc->editing_state = STATE_WORKSPACE_EDITOR;
+   text_to_olc( olc, "Opening the Workspace Editor...\r\n" );
+   olc->editor_commands = AllocList();
+
+   return ret;
+}
+
+int editor_workspace_prompt( D_SOCKET *dsock )
+{
+   INCEPTION *olc;
+   BUFFER *buf = buffer_new( MAX_BUFFER );
+   WORKSPACE *wSpace;
+   const char *border = "|";
+   char tempstring[MAX_BUFFER];
+   int space_after_border;
+   int ret = RET_SUCCESS;
+
+   wSpace = (WORKSPACE *)dsock->account->olc->editing;
+   olc = dsock->account->olc;
+   space_after_border = dsock->account->pagewidth - ( strlen( border ) * 2 );
+
+   if( !strcmp( wSpace->tag->created_by, "null" ) )
+      mud_printf( tempstring, "Potential Workspace ID: %d", get_potential_id( wSpace->tag->type ) );
+   else
+      mud_printf( tempstring, "Workspace ID: %d", wSpace->tag->id );
+
+   text_to_olc( olc, "/%s\\\r\n", print_header( tempstring, "-", dsock->account->pagewidth - 2 ) );
+   text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " Name      : %s", wSpace->name ), space_after_border ), border );
+   text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " Desc      : %s", wSpace->description ), space_after_border ), border );
+   text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " Public    : %s", wSpace->Public ? "Yes" : "No" ), space_after_border ), border );
+   text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " Frameworks: %d", SizeOfList( wSpace->frameworks ) ), space_after_border ), border );
+   text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " Instances : %d", SizeOfList( wSpace->instances ) ), space_after_border ), border );
+
+   text_to_olc( olc, "%s%s%s\r\n", border, print_bar( "-", space_after_border ), border );
+   print_commands( dsock->account->olc, dsock->account->olc->editor_commands, buf, 0, dsock->account->pagewidth );
+   bprintf( buf, "\\%s/\r\n", print_bar( "-", dsock->account->pagewidth - 2 ) );
+   text_to_olc( olc, buf->data );
+
+   buffer_free( buf );
+   return ret;
+}
+
+void workspace_name( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   WORKSPACE *wSpace = (WORKSPACE *)olc->editing;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Name it what?\r\n" );
+      return;
+   }
+
+   if( strlen( arg ) > 20 )
+   {
+      text_to_olc( olc, "%s is too long.\r\n", arg );
+      return;
+   }
+
+   FREE( wSpace->name );
+   wSpace->name = strdup( arg );
+   text_to_olc( olc, "Name changed.\r\n" );
+
+   if( strcmp( wSpace->tag->created_by, "null" ) )
+   {
+      quick_query( "UPDATE workspaces SET name='%s' WHERE workspaceID=%d;", format_string_for_sql( wSpace->name ), wSpace->tag->id );
+      update_tag( wSpace->tag, olc->account->name );
+   }
+   return;
+}
+
+void workspace_description( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   WORKSPACE *wSpace = (WORKSPACE *)olc->editing;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Describe it as...?\r\n" );
+      return;
+   }
+
+   if( strlen( arg ) > MAX_BUFFER )
+   {
+      text_to_olc( olc, "%s is too long.\r\n", arg );
+      return;
+   }
+
+   FREE( wSpace->description );
+   wSpace->description = strdup( arg );
+   text_to_olc( olc, "Description changed.\r\n" );
+
+   if( strcmp( wSpace->tag->created_by, "null" ) )
+   {
+      quick_query( "UPDATE workspaces SET description='%s' WHERE workspaceID=%d;", format_string_for_sql( wSpace->description ), wSpace->tag->id );
+      update_tag( wSpace->tag, olc->account->name );
+   }
+   return;
+
+}
+
+void workspace_public( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   WORKSPACE *wSpace = (WORKSPACE *)olc->editing;
+
+   if( wSpace->Public )
+      wSpace->Public = FALSE;
+   else
+      wSpace->Public = TRUE;
+
+   text_to_olc( olc, "Workspace changed to %s.\r\n", wSpace->Public ? "public" : "private" );
+
+   if( strcmp( wSpace->tag->created_by, "null" ) )
+   {
+      quick_query( "UPDATE workspaces SET public=%d WHERE workspaceID=%d;", (int)wSpace->Public, wSpace->tag->id );
+      update_tag( wSpace->tag, olc->account->name );
+   }
+   return;
+}
+
+void workspace_done( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   WORKSPACE *wSpace = (WORKSPACE *)olc->editing;
+
+   if( !strcmp( wSpace->tag->created_by, "null" ) )
+   {
+      new_tag( wSpace->tag, olc->account->name );
+      new_workspace( wSpace );
+   }
+   free_editor( olc );
+   change_socket_state( olc->account->socket, olc->account->socket->prev_state );
+   text_to_olc( olc, "Exiting the Workspace editor.\r\n" );
+   return;
+}
+

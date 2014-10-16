@@ -147,11 +147,19 @@ struct typCmd create_eFramework_commands[] = {
    { '\0', NULL, 0, NULL, FALSE, NULL }
 };
 
-struct typCmd create_project_commands [] = {
+struct typCmd create_project_commands[] = {
    { "done", project_done, LEVEL_BASIC, NULL, FALSE, NULL, create_project_commands },
    { "public", project_public, LEVEL_BASIC, NULL, FALSE, NULL, create_project_commands },
    { "name", project_name, LEVEL_BASIC, NULL, FALSE, NULL, create_project_commands },
+};
+
+struct typCmd create_workspace_commands[] = {
+   { "done", workspace_done, LEVEL_BASIC, NULL, FALSE, NULL, create_workspace_commands },
+   { "public", workspace_public, LEVEL_BASIC, NULL, FALSE, NULL, create_workspace_commands },
+   { "description", workspace_description, LEVEL_BASIC, NULL, FALSE, NULL, create_workspace_commands },
+   { "name", workspace_name, LEVEL_BASIC, NULL, FALSE, NULL, create_workspace_commands },
    { '\0', NULL, 0, NULL, FALSE, NULL }
+
 };
 
 struct typCmd builder_commands[] = {
@@ -266,6 +274,29 @@ int project_editor_handle_command( INCEPTION *olc, char *arg )
       execute_command( olc->account, com, olc, arg );
 
    return ret;
+}
+
+int workspace_editor_handle_command( INCEPTION *olc, char *arg )
+{
+   COMMAND *com;
+   char command[MAX_BUFFER];
+   int ret = RET_SUCCESS;
+
+   if( !olc )
+   {
+      BAD_POINTER( "olc" );
+      return ret;
+   }
+
+   arg = one_arg( arg, command );
+
+   if( ( com = find_loaded_command( olc->editor_commands, command ) ) == NULL )
+      text_to_olc( olc, "No such command.\r\n" );
+   else
+      execute_command( olc->account, com, olc, arg );
+
+   return ret;
+
 }
 
 int entity_handle_cmd( ENTITY_INSTANCE *entity, char *arg )

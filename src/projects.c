@@ -65,7 +65,7 @@ PROJECT *load_project_by_id( int id )
 
 PROJECT *load_project_by_name( const char *name )
 {
-   return load_project_by_query( quick_format( "SELECT * FROM `projects` WHERE name='%s';", name ) );
+   return load_project_by_query( quick_format( "SELECT * FROM `projects` WHERE name='%s';", format_string_for_sql( name ) ) );
 }
 
 int new_project( PROJECT *project )

@@ -32,6 +32,11 @@ int init_workspace_editor( INCEPTION *olc, WORKSPACE *wSpace );
 
 int editor_workspace_prompt( D_SOCKET *dsock );
 
+void workspace_name( void *passed, char *arg );
+void workspace_description( void *passed, char *arg );
+void workspace_public( void *passed, char *arg );
+void workspace_done( void *passed, char *arg );
+
 int init_instance_editor( INCEPTION *olc, ENTITY_INSTANCE *instance );
 
 int editor_instnace_prompt( D_SOCKET *dsock );
