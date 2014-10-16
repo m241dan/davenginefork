@@ -778,3 +778,69 @@ void workspace_done( void *passed, char *arg )
    return;
 }
 
+int init_instance_editor( INCEPTION *olc, ENTITY_INSTANCE *instance )
+{
+   int ret = RET_SUCCESS;
+
+   if( !instance )
+      olc->editing = init_eInstance();
+   else
+      olc->editing = instance;
+
+   olc->editing_state = STATE_EINSTANCE_EDITOR;
+   text_to_olc( olc, "Opening the Instance Editor...\r\n" );
+   olc->editor_commands = AllocList();
+
+   return ret;
+
+}
+/*
+   ID_TAG *tag;
+   bool loaded;
+   bool live;
+   bool builder;
+   sh_int level;
+
+   LLIST *contents;
+   LLIST *contents_sorted[MAX_QUICK_SORT];
+   LLIST *specifications;
+
+   ENTITY_FRAMEWORK *framework;
+
+   ENTITY_INSTANCE *contained_by;
+
+   D_SOCKET *socket;
+   ACCOUNT_DATA *account;
+   LLIST *commands
+*/
+int editor_instance_prompt( D_SOCKET *dsock )
+{
+   INCEPTION *olc;
+   ENTITY_INSTANCE *instance;
+   BUFFER *buf = buffer_new( MAX_BUFFER );
+   const char *border = "|";
+   char tempstring[MAX_BUFFER];
+   int space_after_pipes;
+   int ret = RET_SUCCESS;
+
+   instance = (ENTITY_INSTANCE *)dsock->account->olc->editing;
+   olc = dsock->account->olc;
+   space_after_border = dsock->account->pagewidth - ( strlen( border ) * 2 );
+
+   if( !strcmp( instance->tag->created_by, "null" ) )
+      mud_printf( tempstring, "Potential Instance ID: %d", get_potential_id( instance->tag->type ) );
+   else
+      mud_printf( tempstring, "Instance ID: %d", instance->tag->id );
+
+   strcat( temptsring, quick_format( "| Framework ID: %d", instance->framework->tag->id ) );
+
+   text_to_olc( olc, "/%s\\\r\n", print_header( tempstring, "-", dsock->account->pagewidth - 2 ) );
+   text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " Name(framework)  : %s", instance_name( instance ) ), space_after_border ), border );
+   text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " Short(framework) : %s", instance_short_descr( instance ) ), space_after ), border );
+   text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " Long(framework)  : %s", instance_long_descr( instance ) ), space_after_border ), border );
+   text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " Desc(framework)  : %s", instance_description( instance ) ), space_after_border ), border );
+   text_to_olc( olc, "%s%s%s\r\n", border, print_bar( "-", space_after_border ), border );
+   text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " This instance is level %d", instance->level ), space_after_border ), border );
+   text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " This instance is %slive.", instance->live, "" : "not" ), space_after_border ), border );
+
+}
