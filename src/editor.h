@@ -22,8 +22,16 @@ void eFramework_addContent( void *passed, char *arg );
 int init_project_editor( INCEPTION *olc, PROJECT *project );
 
 int editor_project_prompt( D_SOCKET *dsock );
+const char *return_project_workspaces_string( PROJECT *project, const char *border, int width );
 
+void project_name( void *passed, char *arg );
+void project_public( void *passed, char *arg );
+void project_done( void *passed, char *arg );
 
 int init_workspace_editor( INCEPTION *olc, WORKSPACE *wSpace );
 
 int editor_workspace_prompt( D_SOCKET *dsock );
+
+int init_instance_editor( INCEPTION *olc, ENTITY_INSTANCE *instance );
+
+int editor_instnace_prompt( D_SOCKET *dsock );

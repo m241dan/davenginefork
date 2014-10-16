@@ -7,10 +7,7 @@ int init_eFramework_editor( INCEPTION *olc, ENTITY_FRAMEWORK *frame )
    int ret = RET_SUCCESS;
 
    if( !frame )
-   {
-      CREATE( olc->editing, ENTITY_FRAMEWORK, 1 );
       olc->editing = init_eFramework();
-   }
    else
       olc->editing = frame;
 
@@ -490,5 +487,146 @@ void eFramework_addContent( void *passed, char *arg )
    }
    add_frame_to_fixed_contents( frame_to_add, frame );
    text_to_olc( olc, "%s added to %s's fixed contents.\r\n", chase_name( frame_to_add ), chase_name( frame ) );
+   return;
+}
+
+int init_project_editor( INCEPTION *olc, PROJECT *project )
+{
+   int ret = RET_SUCCESS;
+
+   if( !project )
+      olc->editing = init_eFramework();
+   else
+      olc->editing = project;
+
+   olc->editing_state = STATE_PROJECT_EDITOR;
+   text_to_olc( olc, "Opening the Project Editor...\r\n" );
+   olc->editor_commands = AllocList();
+
+   return ret;
+}
+
+int editor_project_prompt( D_SOCKET *dsock )
+{
+   INCEPTION *olc;
+   BUFFER *buf = buffer_new( MAX_BUFFER );
+   PROJECT *project;
+   const char *border = "|";
+   char tempstring[MAX_BUFFER];
+   int space_after_border;
+   int ret = RET_SUCCESS;
+
+   project = (PROJECT *)dsock->account->olc->editing;
+   olc = dsock->account->olc;
+   space_after_border = dsock->account->pagewidth - ( strlen( border ) * 2 );
+
+   if( !strcmp( project->tag->created_by, "null" ) )
+      mud_printf( tempstring, "Potential Project ID: %d", get_potential_id( project->tag->type ) );
+   else
+      mud_printf( tempstring, "Project ID: %d", project->tag->id );
+
+   text_to_olc( olc, "/%s\\\r\n", print_header( tempstring, "-", dsock->account->pagewidth - 2 ) );
+   text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " Name : %s", project->name ), space_after_border ), border );
+   text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " Public : %s", project->Public ? "Yes" : "No" ), space_after_border ), border );
+
+   if( SizeOfList( project->workspaces ) > 0 )
+      text_to_olc( olc, "%s", return_project_workspaces_string( project, border, dsock->account->pagewidth ) );
+
+   text_to_olc( olc, "%s%s%s\r\n", border, print_bar( "-", space_after_border ), border );
+   print_commands( dsock->account->olc, dsock->account->olc->editor_commands, buf, 0, dsock->account->pagewidth );
+   bprintf( buf, "\\%s/\r\n", print_bar( "-", space_after_border ) );
+   text_to_olc( olc, buf->data );
+   buffer_free( buf );
+   return ret;
+}
+
+const char *return_project_workspaces_string( PROJECT *project, const char *border, int width )
+{
+   WORKSPACE *wSpace;
+   ITERATOR Iter;
+   static char buf[MAX_BUFFER];
+   char tempstring[MAX_BUFFER];
+   int space_after_border;
+
+   space_after_border = width - ( strlen( border ) * 2 );
+
+   mud_printf( buf, "%s%s%s\r\n", border, print_header( "Workspaces", "-", space_after_border ), border );
+
+   AttachIterator( &Iter, project->workspaces );
+   while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
+   {
+      mud_printf( tempstring, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " %s %s", wSpace->Public ? "Public :" : "Private:", wSpace->name ), space_after_border ), border );
+      strcat( buf, tempstring );
+   }
+   DetachIterator( &Iter );
+
+   buf[strlen( buf )] = '\0';
+   return buf;
+}
+
+void project_name( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   PROJECT *project = (PROJECT *)olc->editing;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Name it what?\r\n" );
+      return;
+   }
+
+   if( strlen( arg ) > 20 )
+   {
+      text_to_olc( olc, "%s is too long.\r\n", arg );
+      return;
+   }
+
+   FREE( project->name );
+   project->name = strdup( arg );
+   text_to_olc( olc, "Name changed.\r\n" );
+
+   if( strcmp( project->tag->created_by, "null" ) )
+   {
+      quick_query( "UPDATE projects SET name='%s' WHERE projectID=%d;", project->name, project->tag->id );
+      update_tag( project->tag, olc->account->name );
+   }
+   return;
+}
+
+void project_public( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   PROJECT *project = (PROJECT *)olc->editing;
+
+   if( project->Public )
+      project->Public = FALSE;
+   else
+      project->Public = TRUE;
+
+   text_to_olc( olc, "Project changed to %s.\r\n", project->Public ? "public" : "private" );
+
+   if( strcmp( project->tag->created_by, "null" ) )
+   {
+      quick_query( "UPDATE projects SET public=%d WHERE projectID=%d;", (int)project->Public, project->tag->id );
+      update_tag( project->tag, olc->account->name );
+   }
+   return;
+
+}
+
+void project_done( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   PROJECT *project = (PROJECT *)olc->editing;
+
+   if( !strcmp( project->tag->created_by, "null" ) )
+   {
+      new_tag( project->tag, olc->account->name );
+      new_project( project );
+   }
+
+   free_editor( olc );
+   change_socket_state( olc->account->socket, olc->account->socket->prev_state );
+   text_to_olc( olc, "Exiting the Project editor.\r\n" );
    return;
 }

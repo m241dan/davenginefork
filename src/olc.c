@@ -1632,22 +1632,50 @@ void framework_create( void *passed, char *arg )
    return;
 }
 
-void framework_edit( void *passed, char *arg )
+void olc_edit( void *passed, char *arg )
 {
    INCEPTION *olc = (INCEPTION *)passed;
-   ENTITY_FRAMEWORK *to_edit;
+   void *to_edit;
+   int type;
 
-   if( olc->editing && ( arg && arg[0] != '\0' ) )
+   if( !arg || arg[0] == '\0' )
    {
-      text_to_olc( olc, "You alraedy have something loaded in your editor, type editor with no arguments to load it and complete it.\r\n" );
+      text_to_olc( olc, "Edit what?\r\n" );
       return;
    }
 
-   if( ( to_edit = olc_edit_selection( olc, arg ) ) == NULL ) /* handles its own messaging */
+   if( !interpret_entity_selection( arg ) )
+   {
+      text_to_olc( olc, STD_SELECTION_ERRMSG_PTR_USED );
+      olc_short_prompt( olc );
       return;
+   }
+   type = input_selection_typing;
 
-   init_eFramework_editor( olc, to_edit );
-   text_to_olc( olc, "Editing Frame...\r\n" );
+   to_edit = retrieve_entity_selection();
+   switch( type )
+   {
+      case SEL_FRAME:
+         init_eFramework_editor( olc, (ENTITY_FRAMEWORK *)to_edit );
+         olc->editing_state = STATE_EFRAME_EDITOR;
+         break;
+      case SEL_INSTANCE:
+/*         init_instance_editor( olc, (ENTITY_INSTANCE *)to_edit ); */
+         olc->editing_state = STATE_EINSTANCE_EDITOR;
+         break;
+      case SEL_WORKSPACE:
+/*         init_workspace_editor( olc, (WORKSPACE *)to_edit ); */
+         olc->editing_state = STATE_WORKSPACE_EDITOR;
+         break;
+      case SEL_PROJECT:
+         init_project_editor( olc, (PROJECT *)to_edit );
+         olc->editing_state = STATE_PROJECT_EDITOR;
+         break;
+      case SEL_STRING:
+         text_to_olc( olc, (char *)to_edit );
+         return;
+
+   }
    change_socket_state( olc->account->socket, olc->editing_state );
    return;
 }

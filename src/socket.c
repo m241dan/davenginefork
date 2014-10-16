@@ -232,6 +232,10 @@ void GameLoop(int control)
              if( eFrame_editor_handle_command( dsock->account->olc, dsock->next_command ) != RET_SUCCESS )
                 bug( "eFrame_editor_handle_command failed to interpret the input." );
              break;
+          case STATE_PROJECT_EDITOR:
+             if( project_editor_handle_command( dsock->account->olc, dsock->next_command ) != RET_SUCCESS )
+                bug( "project_editor_handle_command failed to inter[ret the input." );
+             break;
           case STATE_BUILDER:
           case STATE_PLAYING:
              if( entity_handle_cmd( dsock->controlling, dsock->next_command ) != RET_SUCCESS )
@@ -919,6 +923,9 @@ bool flush_output(D_SOCKET *dsock)
         case STATE_EFRAME_EDITOR:
            editor_eFramework_prompt( dsock );
            break;
+        case STATE_PROJECT_EDITOR:
+           editor_project_prompt( dsock );
+           break;
         case STATE_BUILDER:
            builder_prompt( dsock );
            break;
@@ -1045,6 +1052,10 @@ int change_socket_state( D_SOCKET *dsock, int state )
       case STATE_EFRAME_EDITOR:
          if( SizeOfList( dsock->account->olc->editor_commands ) < 1 )
            load_commands( dsock->account->olc->editor_commands, create_eFramework_commands, dsock->account->level );
+         break;
+      case STATE_PROJECT_EDITOR:
+         if( SizeOfList( dsock->account->olc->editor_commands ) < 1 )
+            load_commands( dsock->account->olc->editor_commands, create_project_commands, dsock->account->level );
          break;
       case STATE_BUILDER:
          if( SizeOfList( dsock->controlling->commands ) < 1 )

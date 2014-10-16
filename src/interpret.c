@@ -93,7 +93,7 @@ struct typCmd olc_commands[] = {
    { "load", olc_load, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
    { "instance", olc_instantiate, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
    { "iedit", framework_iedit, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
-   { "edit", framework_edit, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
+   { "edit", olc_edit, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
    { "create", framework_create, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
    { "ufilter", olc_ufilter, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
    { "using", olc_using, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
@@ -144,6 +144,13 @@ struct typCmd create_eFramework_commands[] = {
    { "long", eFramework_long, LEVEL_BASIC, NULL, FALSE, NULL, create_eFramework_commands },
    { "short", eFramework_short, LEVEL_BASIC, NULL, FALSE, NULL, create_eFramework_commands },
    { "name", eFramework_name, LEVEL_BASIC, NULL, FALSE, NULL, create_eFramework_commands },
+   { '\0', NULL, 0, NULL, FALSE, NULL }
+};
+
+struct typCmd create_project_commands [] = {
+   { "done", project_done, LEVEL_BASIC, NULL, FALSE, NULL, create_project_commands },
+   { "public", project_public, LEVEL_BASIC, NULL, FALSE, NULL, create_project_commands },
+   { "name", project_name, LEVEL_BASIC, NULL, FALSE, NULL, create_project_commands },
    { '\0', NULL, 0, NULL, FALSE, NULL }
 };
 
@@ -239,6 +246,28 @@ int eFrame_editor_handle_command( INCEPTION *olc, char *arg )
    return ret;
 }
 
+int project_editor_handle_command( INCEPTION *olc, char *arg )
+{
+   COMMAND *com;
+   char command[MAX_BUFFER];
+   int ret = RET_SUCCESS;
+
+   if( !olc )
+   {
+      BAD_POINTER( "olc" );
+      return ret;
+   }
+
+   arg = one_arg( arg, command );
+
+   if( ( com = find_loaded_command( olc->editor_commands, command ) ) == NULL )
+      text_to_olc( olc, "No such command.\r\n" );
+   else
+      execute_command( olc->account, com, olc, arg );
+
+   return ret;
+}
+
 int entity_handle_cmd( ENTITY_INSTANCE *entity, char *arg )
 {
    ENTITY_INSTANCE *exit;
@@ -267,11 +296,14 @@ int entity_handle_cmd( ENTITY_INSTANCE *entity, char *arg )
 
 void execute_command( ACCOUNT_DATA *account, COMMAND *com, void *passed, char *arg )
 {
-      account->executing_command = com;
-      (*com->cmd_funct)( passed, arg );
-      FREE( account->last_command );
-      account->last_command = strdup( account->executing_command->cmd_name );
-      account->executing_command = NULL;
+   char *last_command; /* using this pointer is fixing a crash where the command was being cleared ont he function call and was then NULL when strduped */
+
+   account->executing_command = com;
+   last_command = strdup( account->executing_command->cmd_name );
+   (*com->cmd_funct)( passed, arg );
+   FREE( account->last_command );
+   account->last_command = last_command;
+   account->executing_command = NULL;
 }
 
 
