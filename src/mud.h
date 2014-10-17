@@ -275,6 +275,7 @@ typedef struct  dirent         DIR_FILE;
 typedef struct  grab_params    GRAB_PARAMS;
 typedef struct  workspace_filter WORKSPACE_FILTER;
 typedef struct  d_string       STRING;
+typedef struct  editor_chain   E_CHAIN;
 /* the actual structures */
 struct dSocket
 {

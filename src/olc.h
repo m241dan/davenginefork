@@ -11,6 +11,8 @@ struct inception_olc
    WORKSPACE_FILTER *using_filter;
    void *editing;
    int editing_state;
+   int editor_launch_state;
+   LLIST *chain;
 };
 
 struct workspace
@@ -49,6 +51,12 @@ struct grab_params
    bool no_mobiles;
 };
 
+struct editor_chain
+{
+   void *to_edit;
+   int state;
+};
+
 INCEPTION *init_olc( void );
 int free_olc( INCEPTION *olc );
 int clear_olc( INCEPTION *olc );
@@ -60,6 +68,11 @@ int clear_workspace( WORKSPACE *wSpace );
 WORKSPACE_FILTER *init_wfilter( void );
 int free_wfilter( WORKSPACE_FILTER *filter );
 WORKSPACE_FILTER *reset_wfilter( WORKSPACE_FILTER *filter );
+
+E_CHAIN *make_editor_chain_link( void *editing, int state );
+void free_editor_chain( LLIST *list );
+void free_link( E_CHAIN *link );
+void add_link_to_chain( E_CHAIN *link, LLIST *chain );
 
 WORKSPACE *load_workspace_by_query( const char *query );
 WORKSPACE *get_workspace_by_id( int id );

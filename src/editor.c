@@ -2,6 +2,93 @@
 
 #include "mud.h"
 
+void editor_global_return( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   E_CHAIN *link;
+
+   if( SizeOfList( olc->chain ) <= 0 )
+   {
+      text_to_olc( olc, "You have nothing to return to.\r\n" );
+      return;
+   }
+
+   link = (E_CHAIN *)olc->chain->_pFirstCell;
+   DetachFromList( link, olc->chain );
+
+   free_editor( olc );
+   switch( link->state )
+   {
+      default: break;
+      case STATE_EFRAME_EDITOR:
+         boot_eFramework_editor( olc, (ENTITY_FRAMEWORK *)link->to_edit );
+         break;
+      case STATE_EINSTANCE_EDITOR:
+         boot_instance_editor( olc, (ENTITY_INSTANCE *)link->to_edit );
+         break;
+      case STATE_WORKSPACE_EDITOR:
+         boot_workspace_editor( olc, (WORKSPACE *)link->to_edit );
+         break;
+      case STATE_PROJECT_EDITOR:
+         boot_project_editor( olc, (PROJECT *)link->to_edit );
+         break;
+   }
+   free_link( link );
+   return;
+}
+
+void editor_switch( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   E_CHAIN *link;
+   void *to_edit;
+   int type;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Switch to what?\r\n" );
+      return;
+   }
+
+   if( !interpret_entity_selection( arg ) )
+   {
+      text_to_olc( olc, STD_SELECTION_ERRMSG_PTR_USED );
+      olc_short_prompt( olc );
+      return;
+   }
+
+   type = input_selection_typing;
+   to_edit = retrieve_entity_selection();
+
+   if( type == SEL_STRING )
+   {
+      text_to_olc( olc, (char *)to_edit );
+      return;
+   }
+
+   link = make_editor_chain_link( olc->editing, olc->editing_state );
+   bug( "%s: link state = %d", __FUNCTION__, link->state );
+   add_link_to_chain( link, olc->chain );
+
+   switch( type )
+   {
+      default: return;
+      case SEL_FRAME:
+         boot_eFramework_editor( olc, (ENTITY_FRAMEWORK *)to_edit );
+         return;
+      case SEL_INSTANCE:
+         boot_instance_editor( olc, (ENTITY_INSTANCE *)to_edit );
+         return;
+      case SEL_WORKSPACE:
+         boot_workspace_editor( olc, (WORKSPACE *)to_edit );
+         return;
+      case SEL_PROJECT:
+         boot_project_editor( olc, (PROJECT *)to_edit );
+         return;
+   }
+   return;
+}
+
 int init_eFramework_editor( INCEPTION *olc, ENTITY_FRAMEWORK *frame )
 {
    int ret = RET_SUCCESS;
@@ -29,6 +116,18 @@ int free_editor( INCEPTION *olc )
    olc->editing_state = olc->account->socket->prev_state;
 
    return ret;
+}
+
+void boot_eFramework_editor( INCEPTION *olc, ENTITY_FRAMEWORK *frame )
+{
+   int state = olc->account->socket->state;
+
+   if( state < STATE_EFRAME_EDITOR || state > STATE_PROJECT_EDITOR )
+      olc->editor_launch_state = state;
+   init_eFramework_editor( olc, frame );
+   olc->editing_state = STATE_EFRAME_EDITOR;
+   change_socket_state( olc->account->socket, olc->editing_state );
+   return;
 }
 
 int editor_eFramework_prompt( D_SOCKET *dsock )
@@ -93,7 +192,7 @@ const char *return_framework_strings( ENTITY_FRAMEWORK *frame, const char *borde
 
    mud_printf( tempstring, "%s%s%s\r\n", border,
       fit_string_to_space(
-      quick_format( " Name : %s%s", chase_name( frame ), !strcmp( frame->name, "__inherited__" ) ? " ( inherited )" : "" ),
+      quick_format( " Name : %s%s", chase_name( frame ), !strcmp( frame->name, "_inherited_" ) ? " ( inherited )" : "" ),
       space_after_border ),
       border );
 
@@ -101,7 +200,7 @@ const char *return_framework_strings( ENTITY_FRAMEWORK *frame, const char *borde
 
    mud_printf( tempstring, "%s%s%s\r\n", border,
       fit_string_to_space(
-      quick_format( " Short : %s%s", chase_short_descr( frame ), !strcmp( frame->short_descr, "__inherited__" ) ? " ( inherited )" : "" ),
+      quick_format( " Short : %s%s", chase_short_descr( frame ), !strcmp( frame->short_descr, "_inherited_" ) ? " ( inherited )" : "" ),
       space_after_border ),
       border );
 
@@ -110,7 +209,7 @@ const char *return_framework_strings( ENTITY_FRAMEWORK *frame, const char *borde
 
    mud_printf( tempstring, "%s%s%s\r\n", border,
       fit_string_to_space(
-      quick_format( " Long : %s%s", chase_long_descr( frame ), !strcmp( frame->long_descr, "__inherited__" ) ? " ( inherited )" : "" ),
+      quick_format( " Long : %s%s", chase_long_descr( frame ), !strcmp( frame->long_descr, "_inherited_" ) ? " ( inherited )" : "" ),
       space_after_border ),
       border );
 
@@ -118,7 +217,7 @@ const char *return_framework_strings( ENTITY_FRAMEWORK *frame, const char *borde
 
    mud_printf( tempstring, "%s%s%s\r\n", border,
       fit_string_to_space(
-      quick_format( " Desc : %s%s", chase_description( frame ), !strcmp( frame->description, "__inherited__" ) ? " ( inherited )" : "" ),
+      quick_format( " Desc : %s%s", chase_description( frame ), !strcmp( frame->description, "_inherited_" ) ? " ( inherited )" : "" ),
       space_after_border ),
       border );
 
@@ -437,7 +536,7 @@ void eFramework_done( void *passed, char *arg )
    }
 
    free_editor( olc );
-   change_socket_state( olc->account->socket, olc->account->socket->prev_state );
+   change_socket_state( olc->account->socket, olc->editor_launch_state );
    text_to_olc( olc, "Exiting Entity Framework Editor.\r\n" );
    olc_show_prompt( olc );
    return;
@@ -505,6 +604,19 @@ int init_project_editor( INCEPTION *olc, PROJECT *project )
 
    return ret;
 }
+
+void boot_project_editor( INCEPTION *olc, PROJECT *project )
+{
+   int state = olc->account->socket->state;
+
+   if( state < STATE_EFRAME_EDITOR || state > STATE_PROJECT_EDITOR )
+      olc->editor_launch_state = state;
+   init_project_editor( olc, project );
+   olc->editing_state = STATE_PROJECT_EDITOR;
+   change_socket_state( olc->account->socket, olc->editing_state );
+   return;
+}
+
 
 int editor_project_prompt( D_SOCKET *dsock )
 {
@@ -626,7 +738,7 @@ void project_done( void *passed, char *arg )
    }
 
    free_editor( olc );
-   change_socket_state( olc->account->socket, olc->account->socket->prev_state );
+   change_socket_state( olc->account->socket, olc->editor_launch_state );
    text_to_olc( olc, "Exiting the Project editor.\r\n" );
    return;
 }
@@ -646,6 +758,18 @@ int init_workspace_editor( INCEPTION *olc, WORKSPACE *wSpace )
    olc->editor_commands = AllocList();
 
    return ret;
+}
+
+void boot_workspace_editor( INCEPTION *olc, WORKSPACE *wSpace )
+{
+   int state = olc->account->socket->state;
+
+   if( state < STATE_EFRAME_EDITOR || state > STATE_PROJECT_EDITOR )
+      olc->editor_launch_state = state;
+   init_workspace_editor( olc, wSpace );
+   olc->editing_state = STATE_WORKSPACE_EDITOR;
+   change_socket_state( olc->account->socket, olc->editing_state );
+   return;
 }
 
 int editor_workspace_prompt( D_SOCKET *dsock )
@@ -773,7 +897,7 @@ void workspace_done( void *passed, char *arg )
       new_workspace( wSpace );
    }
    free_editor( olc );
-   change_socket_state( olc->account->socket, olc->account->socket->prev_state );
+   change_socket_state( olc->account->socket, olc->editor_launch_state );
    text_to_olc( olc, "Exiting the Workspace editor.\r\n" );
    return;
 }
@@ -793,6 +917,18 @@ int init_instance_editor( INCEPTION *olc, ENTITY_INSTANCE *instance )
 
    return ret;
 
+}
+
+void boot_instance_editor( INCEPTION *olc, ENTITY_INSTANCE *instance )
+{
+   int state = olc->account->socket->state;
+
+   if( state < STATE_EFRAME_EDITOR || state > STATE_PROJECT_EDITOR )
+      olc->editor_launch_state = state;
+   init_instance_editor( olc, instance );
+   olc->editing_state = STATE_EINSTANCE_EDITOR;
+   change_socket_state( olc->account->socket, olc->editing_state );
+   return;
 }
 
 int editor_instance_prompt( D_SOCKET *dsock )
@@ -1071,7 +1207,7 @@ void instance_done( void *passed, char *arg )
    }
 
    free_editor( olc );
-   change_socket_state( olc->account->socket, olc->account->socket->prev_state );
+   change_socket_state( olc->account->socket, olc->editor_launch_state );
    text_to_olc( olc, "Exiting Entity Instance Editor.\r\n" );
    return;
 }

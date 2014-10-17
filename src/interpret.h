@@ -27,6 +27,8 @@ extern struct typCmd create_workspace_commands[];
 
 extern struct typCmd create_instance_commands[];
 
+const char *editor_return_desc( void *extra );
+
 extern struct typCmd builder_commands[];
 
 int account_handle_cmd( ACCOUNT_DATA *account, char *arg );

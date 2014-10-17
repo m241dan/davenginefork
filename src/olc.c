@@ -10,6 +10,7 @@ INCEPTION *init_olc( void )
    olc->commands = AllocList();
    olc->wSpaces = AllocList();
    olc->using_filter = init_wfilter();
+   olc->chain = AllocList();
    if( clear_olc( olc ) != RET_SUCCESS )
    {
       free_olc( olc );
@@ -42,6 +43,9 @@ int free_olc( INCEPTION *olc )
    while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
       unuse_workspace( wSpace, olc->account );
    DetachIterator( &Iter );
+
+   free_editor_chain( olc->chain );
+   olc->chain = NULL;
 
    CLEARLIST( olc->wSpaces, WORKSPACE );
    FreeList( olc->wSpaces );
@@ -177,6 +181,43 @@ WORKSPACE_FILTER *reset_wfilter( WORKSPACE_FILTER *filter )
    free_wfilter( filter );
    filter = init_wfilter();
    return filter;
+}
+
+E_CHAIN *make_editor_chain_link( void *editing, int state )
+{
+   E_CHAIN *link;
+
+   CREATE( link, E_CHAIN, 1 );
+   link->to_edit = editing;
+   link->state = state;
+   return link;
+}
+
+void free_editor_chain( LLIST *list )
+{
+   E_CHAIN *link;
+   ITERATOR Iter;
+
+   AttachIterator( &Iter, list );
+   while( ( link = (E_CHAIN *)NextInList( &Iter ) ) != NULL )
+   {
+      link->to_edit = NULL;
+      free( link );
+   }
+   FreeList( list );
+   return;
+}
+
+void free_link( E_CHAIN *link )
+{
+   link->to_edit = NULL;
+   FREE( link );
+}
+
+void add_link_to_chain( E_CHAIN *link, LLIST *chain )
+{
+   AttachToList( link, chain );
+   return;
 }
 
 WORKSPACE *load_workspace_by_query( const char *query )
@@ -1657,27 +1698,22 @@ void olc_edit( void *passed, char *arg )
    {
       default: clear_entity_selection(); return;
       case SEL_FRAME:
-         init_eFramework_editor( olc, (ENTITY_FRAMEWORK *)to_edit );
-         olc->editing_state = STATE_EFRAME_EDITOR;
-         break;
+         boot_eFramework_editor( olc, (ENTITY_FRAMEWORK *)to_edit );
+         return;
       case SEL_INSTANCE:
-         init_instance_editor( olc, (ENTITY_INSTANCE *)to_edit );
-         olc->editing_state = STATE_EINSTANCE_EDITOR;
-         break;
+         boot_instance_editor( olc, (ENTITY_INSTANCE *)to_edit );
+         return;
       case SEL_WORKSPACE:
-         init_workspace_editor( olc, (WORKSPACE *)to_edit );
-         olc->editing_state = STATE_WORKSPACE_EDITOR;
-         break;
+         boot_workspace_editor( olc, (WORKSPACE *)to_edit );
+         return;
       case SEL_PROJECT:
-         init_project_editor( olc, (PROJECT *)to_edit );
-         olc->editing_state = STATE_PROJECT_EDITOR;
-         break;
+         boot_project_editor( olc, (PROJECT *)to_edit );
+         return;
       case SEL_STRING:
          text_to_olc( olc, (char *)to_edit );
          return;
 
    }
-   change_socket_state( olc->account->socket, olc->editing_state );
    return;
 }
 
@@ -1702,8 +1738,7 @@ void framework_iedit( void *passed, char *arg )
       return;
    }
 
-   init_eFramework_editor( olc, inherited_to_edit );
-   change_socket_state( olc->account->socket, olc->editing_state );
+   boot_eFramework_editor( olc, inherited_to_edit );
    text_to_olc( olc, "You begin to edit %s.\r\n", chase_name( inherited_to_edit ) );
    return;
 }

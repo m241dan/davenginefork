@@ -138,6 +138,8 @@ struct typCmd frameworks_sub_commands[] = {
 
 struct typCmd create_eFramework_commands[] = {
    { "done", eFramework_done, LEVEL_BASIC, NULL, FALSE, NULL, create_eFramework_commands },
+   { "return", editor_global_return, LEVEL_BASIC, NULL, FALSE, editor_return_desc, create_eFramework_commands },
+   { "switch", editor_switch, LEVEL_BASIC, NULL, FALSE, NULL, create_eFramework_commands },
    { "addcontent", eFramework_addContent, LEVEL_BASIC, NULL, FALSE, NULL, create_eFramework_commands },
    { "addspec", eFramework_addSpec, LEVEL_BASIC, NULL, FALSE, NULL, create_eFramework_commands },
    { "desc", eFramework_description, LEVEL_BASIC, NULL, FALSE, NULL, create_eFramework_commands },
@@ -149,12 +151,16 @@ struct typCmd create_eFramework_commands[] = {
 
 struct typCmd create_project_commands[] = {
    { "done", project_done, LEVEL_BASIC, NULL, FALSE, NULL, create_project_commands },
+   { "return", editor_global_return, LEVEL_BASIC, NULL, FALSE, editor_return_desc, create_project_commands },
+   { "switch", editor_switch, LEVEL_BASIC, NULL, FALSE, NULL, create_project_commands },
    { "public", project_public, LEVEL_BASIC, NULL, FALSE, NULL, create_project_commands },
    { "name", project_name, LEVEL_BASIC, NULL, FALSE, NULL, create_project_commands },
 };
 
 struct typCmd create_workspace_commands[] = {
    { "done", workspace_done, LEVEL_BASIC, NULL, FALSE, NULL, create_workspace_commands },
+   { "return", editor_global_return, LEVEL_BASIC, NULL, FALSE, editor_return_desc, create_workspace_commands },
+   { "switch", editor_switch, LEVEL_BASIC, NULL, FALSE, NULL, create_workspace_commands },
    { "public", workspace_public, LEVEL_BASIC, NULL, FALSE, NULL, create_workspace_commands },
    { "description", workspace_description, LEVEL_BASIC, NULL, FALSE, NULL, create_workspace_commands },
    { "name", workspace_name, LEVEL_BASIC, NULL, FALSE, NULL, create_workspace_commands },
@@ -164,6 +170,8 @@ struct typCmd create_workspace_commands[] = {
 
 struct typCmd create_instance_commands[] = {
    { "done", instance_done, LEVEL_BASIC, NULL, FALSE, NULL, create_instance_commands },
+   { "return", editor_global_return, LEVEL_BASIC, NULL, FALSE, editor_return_desc, create_instance_commands },
+   { "switch", editor_switch, LEVEL_BASIC, NULL, FALSE, NULL, create_instance_commands },
    { "addspec", instance_addspec, LEVEL_BASIC, NULL, FALSE, NULL, create_instance_commands },
    { "addcontent", instance_addcontent, LEVEL_BASIC, NULL, FALSE, NULL, create_instance_commands },
    { "level", instance_level, LEVEL_BASIC, NULL, FALSE, NULL, create_instance_commands },
@@ -171,6 +179,42 @@ struct typCmd create_instance_commands[] = {
    { "load", instance_load, LEVEL_BASIC, NULL, FALSE, NULL, create_instance_commands },
    { '\0', NULL, 0, NULL, FALSE, NULL }
 };
+
+const char *editor_return_desc( void *extra )
+{
+   INCEPTION *olc = (INCEPTION *)extra;
+   static char buf[MAX_BUFFER];
+   E_CHAIN *link;
+
+   if( SizeOfList( olc->chain ) <= 0 )
+      return "";
+
+   mud_printf( buf, " - " );
+
+   link = (E_CHAIN *)olc->chain->_pFirstCell;
+
+   switch( link->state )
+   {
+      default:
+         bug( "%s: state = %d", __FUNCTION__, link->state );
+         break;
+      case STATE_EFRAME_EDITOR:
+         strcat( buf, quick_format( "(%d)Framework: %s", ((ENTITY_FRAMEWORK *)link->to_edit)->tag->id, chase_name( (ENTITY_FRAMEWORK *)link->to_edit ) ) );
+         break;
+      case STATE_EINSTANCE_EDITOR:
+         strcat( buf, quick_format( "(%d)Instance: %s", ((ENTITY_INSTANCE *)link->to_edit)->tag->id, instance_name( (ENTITY_INSTANCE *)link->to_edit ) ) );
+         break;
+      case STATE_PROJECT_EDITOR:
+         strcat( buf, quick_format( "(%d)Project: %s", ((PROJECT *)link->to_edit)->tag->id, ((PROJECT *)link->to_edit)->name ) );
+         break;
+      case STATE_WORKSPACE_EDITOR:
+         strcat( buf, quick_format( "(%d)Workspace: %s", ((WORKSPACE *)link->to_edit)->tag->id, ((WORKSPACE *)link->to_edit)->name ) );
+         break;
+   }
+
+   buf[strlen( buf )] = '\0';
+   return buf;
+}
 
 struct typCmd builder_commands[] = {
    { "grab", entity_grab, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
