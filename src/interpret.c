@@ -162,6 +162,16 @@ struct typCmd create_workspace_commands[] = {
 
 };
 
+struct typCmd create_instance_commands[] = {
+   { "done", instance_done, LEVEL_BASIC, NULL, FALSE, NULL, create_instance_commands },
+   { "addspec", instance_addspec, LEVEL_BASIC, NULL, FALSE, NULL, create_instance_commands },
+   { "addcontent", instance_addcontent, LEVEL_BASIC, NULL, FALSE, NULL, create_instance_commands },
+   { "level", instance_level, LEVEL_BASIC, NULL, FALSE, NULL, create_instance_commands },
+   { "live", instance_live, LEVEL_BASIC, NULL, FALSE, NULL, create_instance_commands },
+   { "load", instance_load, LEVEL_BASIC, NULL, FALSE, NULL, create_instance_commands },
+   { '\0', NULL, 0, NULL, FALSE, NULL }
+};
+
 struct typCmd builder_commands[] = {
    { "grab", entity_grab, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
    { "chat", entity_chat, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
@@ -296,7 +306,28 @@ int workspace_editor_handle_command( INCEPTION *olc, char *arg )
       execute_command( olc->account, com, olc, arg );
 
    return ret;
+}
 
+int instance_editor_handle_command( INCEPTION *olc, char *arg )
+{
+   COMMAND *com;
+   char command[MAX_BUFFER];
+   int ret = RET_SUCCESS;
+
+   if( !olc )
+   {
+      BAD_POINTER( "olc" );
+      return ret;
+   }
+
+   arg = one_arg( arg, command );
+
+   if( ( com = find_loaded_command( olc->editor_commands, command ) ) == NULL )
+      text_to_olc( olc, "No such command.\r\n" );
+   else
+      execute_command( olc->account, com, olc, arg );
+
+   return ret;
 }
 
 int entity_handle_cmd( ENTITY_INSTANCE *entity, char *arg )

@@ -31,7 +31,10 @@ SPECIFICATION *fread_specification( FILE *fp, int *id_table );
 
 SPECIFICATION *spec_list_has_by_type( LLIST *spec_list, int type );
 SPECIFICATION *spec_list_has_by_name( LLIST *spec_list, const char *name );
+SPECIFICATION *has_spec_detailed_by_type( ENTITY_INSTANCE *entity, int type, int *spec_from );
+SPECIFICATION *frame_has_spec_detailed_by_type( ENTITY_FRAMEWORK *frame, int type, int *spec_from );
 SPECIFICATION *has_spec( ENTITY_INSTANCE *entity, const char *spec_name );
 SPECIFICATION *frame_has_spec( ENTITY_FRAMEWORK *frame, const char *spec_name );
+SPECIFICATION *frame_has_spec_by_type( ENTITY_FRAMEWORK *frame, int type );
 int get_spec_value( ENTITY_INSTANCE *entity, const char *spec_name );
 bool inherited_frame_has_any_spec( ENTITY_FRAMEWORK *frame );

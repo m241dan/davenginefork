@@ -679,7 +679,7 @@ void grab_entity( INCEPTION *olc, char *arg, GRAB_PARAMS *params )
 
       switch( input_selection_typing )
       {
-         default: continue;
+         default: clear_entity_selection(); continue;
          case SEL_FRAME:
             frame = (ENTITY_FRAMEWORK *)retrieve_entity_selection();
             if( !should_grab_framework( frame, params ) )
@@ -1655,12 +1655,13 @@ void olc_edit( void *passed, char *arg )
    to_edit = retrieve_entity_selection();
    switch( type )
    {
+      default: clear_entity_selection(); return;
       case SEL_FRAME:
          init_eFramework_editor( olc, (ENTITY_FRAMEWORK *)to_edit );
          olc->editing_state = STATE_EFRAME_EDITOR;
          break;
       case SEL_INSTANCE:
-/*         init_instance_editor( olc, (ENTITY_INSTANCE *)to_edit ); */
+         init_instance_editor( olc, (ENTITY_INSTANCE *)to_edit );
          olc->editing_state = STATE_EINSTANCE_EDITOR;
          break;
       case SEL_WORKSPACE:
@@ -1730,6 +1731,7 @@ void olc_instantiate( void *passed, char *arg )
    switch( input_selection_typing )
    {
       default:
+         clear_entity_selection();
          text_to_olc( olc, "There's been a major problem. Contact your nearest admin.\r\n" );
          olc_short_prompt( olc );
          return;

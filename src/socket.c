@@ -240,6 +240,10 @@ void GameLoop(int control)
              if( workspace_editor_handle_command( dsock->account->olc, dsock->next_command ) != RET_SUCCESS )
                 bug( "workspace_editor_handle_command failed to interpret the input." );
              break;
+          case STATE_EINSTANCE_EDITOR:
+             if( instance_editor_handle_command( dsock->account->olc, dsock->next_command ) != RET_SUCCESS )
+                bug( "instance_editor_handle_command failed to interpret the input." );
+             break;
           case STATE_BUILDER:
           case STATE_PLAYING:
              if( entity_handle_cmd( dsock->controlling, dsock->next_command ) != RET_SUCCESS )
@@ -933,6 +937,9 @@ bool flush_output(D_SOCKET *dsock)
         case STATE_WORKSPACE_EDITOR:
            editor_workspace_prompt( dsock );
            break;
+        case STATE_EINSTANCE_EDITOR:
+           editor_instance_prompt( dsock );
+           break;
         case STATE_BUILDER:
            builder_prompt( dsock );
            break;
@@ -1067,6 +1074,10 @@ int change_socket_state( D_SOCKET *dsock, int state )
       case STATE_WORKSPACE_EDITOR:
          if( SizeOfList( dsock->account->olc->editor_commands ) < 1 )
             load_commands( dsock->account->olc->editor_commands, create_workspace_commands, dsock->account->level );
+         break;
+      case STATE_EINSTANCE_EDITOR:
+         if( SizeOfList( dsock->account->olc->editor_commands ) < 1 )
+            load_commands( dsock->account->olc->editor_commands, create_instance_commands, dsock->account->level );
          break;
       case STATE_BUILDER:
          if( SizeOfList( dsock->controlling->commands ) < 1 )

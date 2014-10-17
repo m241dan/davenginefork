@@ -250,6 +250,28 @@ void set_to_loaded( ENTITY_INSTANCE *instance )
    return;
 }
 
+void instance_toggle_live( ENTITY_INSTANCE *instance )
+{
+   if( instance->live )
+      instance->live = FALSE;
+   else
+      instance->live = TRUE;
+
+   if( !strcmp( instance->tag->created_by, "null" ) )
+      return;
+   quick_query( "UPDATE `entity_instances` SET live=%d WHERE %s=%d;", (int)instance->live, tag_table_whereID[ENTITY_INSTANCE_IDS], instance->tag->id );
+   return;
+}
+
+void set_instance_level( ENTITY_INSTANCE *instance, int level )
+{
+   instance->level = level;
+   if( !strcmp( instance->tag->created_by, "null" ) )
+      return;
+   quick_query( "UPDATE `entity_instances` SET level=%d WHERE %s=%d;", instance->level, tag_table_whereID[ENTITY_INSTANCE_IDS], instance->tag->id );
+   return;
+}
+
 int new_eInstance( ENTITY_INSTANCE *eInstance )
 {
    SPECIFICATION *spec;
@@ -1090,7 +1112,7 @@ void entity_goto( void *passed, char *arg )
       {
          switch( input_selection_typing )
          {
-            default: break;
+            default: clear_entity_selection(); break;
             case SEL_INSTANCE:
                ent_to_goto = (ENTITY_INSTANCE *)retrieve_entity_selection();
                break;
@@ -1131,6 +1153,7 @@ void entity_instance( void *passed, char *arg )
    switch( input_selection_typing )
    {
       default:
+         clear_entity_selection();
          text_to_entity( entity, "There's been a major problem. Contact your nearest admin.\r\n" );
          break;
       case SEL_FRAME:

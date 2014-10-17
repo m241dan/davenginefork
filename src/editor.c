@@ -476,7 +476,7 @@ void eFramework_addContent( void *passed, char *arg )
       }
       switch( input_selection_typing )
       {
-         default: return;
+         default: clear_entity_selection(); return;
          case SEL_FRAME:
             frame_to_add = (ENTITY_FRAMEWORK *)retrieve_entity_selection();
             break;
@@ -794,25 +794,7 @@ int init_instance_editor( INCEPTION *olc, ENTITY_INSTANCE *instance )
    return ret;
 
 }
-/*
-   ID_TAG *tag;
-   bool loaded;
-   bool live;
-   bool builder;
-   sh_int level;
 
-   LLIST *contents;
-   LLIST *contents_sorted[MAX_QUICK_SORT];
-   LLIST *specifications;
-
-   ENTITY_FRAMEWORK *framework;
-
-   ENTITY_INSTANCE *contained_by;
-
-   D_SOCKET *socket;
-   ACCOUNT_DATA *account;
-   LLIST *commands
-*/
 int editor_instance_prompt( D_SOCKET *dsock )
 {
    INCEPTION *olc;
@@ -820,7 +802,7 @@ int editor_instance_prompt( D_SOCKET *dsock )
    BUFFER *buf = buffer_new( MAX_BUFFER );
    const char *border = "|";
    char tempstring[MAX_BUFFER];
-   int space_after_pipes;
+   int space_after_border;
    int ret = RET_SUCCESS;
 
    instance = (ENTITY_INSTANCE *)dsock->account->olc->editing;
@@ -832,15 +814,264 @@ int editor_instance_prompt( D_SOCKET *dsock )
    else
       mud_printf( tempstring, "Instance ID: %d", instance->tag->id );
 
-   strcat( temptsring, quick_format( "| Framework ID: %d", instance->framework->tag->id ) );
+   strcat( tempstring, quick_format( "| Framework ID: %d", instance->framework->tag->id ) );
 
    text_to_olc( olc, "/%s\\\r\n", print_header( tempstring, "-", dsock->account->pagewidth - 2 ) );
    text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " Name(framework)  : %s", instance_name( instance ) ), space_after_border ), border );
-   text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " Short(framework) : %s", instance_short_descr( instance ) ), space_after ), border );
+   text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " Short(framework) : %s", instance_short_descr( instance ) ), space_after_border ), border );
    text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " Long(framework)  : %s", instance_long_descr( instance ) ), space_after_border ), border );
    text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " Desc(framework)  : %s", instance_description( instance ) ), space_after_border ), border );
    text_to_olc( olc, "%s%s%s\r\n", border, print_bar( "-", space_after_border ), border );
    text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " This instance is level %d", instance->level ), space_after_border ), border );
-   text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " This instance is %slive.", instance->live, "" : "not" ), space_after_border ), border );
+   text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " This instance is %slive.", instance->live ? "" : "not" ), space_after_border ), border );
+   text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " This instance's framework's ID %d", instance->framework->tag->id ), space_after_border ), border );
+   text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " This instance is contained by %s.", instance->contained_by ? instance_short_descr( instance->contained_by ) : "The Ether" ), space_after_border ), border );
+   if( SizeOfList( instance->contents ) > 0 )
+      text_to_olc( olc, "%s", return_instance_contents_string( instance, border, dsock->account->pagewidth ) );
+   text_to_olc( olc, "%s", return_instance_spec_and_stats( instance, border, dsock->account->pagewidth ) );
 
+   bprintf( buf, "%s%s%s\r\n", border, print_bar( "-", space_after_border ), border ) ;
+   print_commands( dsock->account->olc, dsock->account->olc->editor_commands, buf, 0, dsock->account->pagewidth );
+   bprintf( buf, "\\%s/\r\n", print_bar( "-", dsock->account->pagewidth - 2 ) );
+
+   text_to_olc( olc, buf->data );
+   buffer_free( buf );
+   return ret;
+}
+
+const char *return_instance_contents_string( ENTITY_INSTANCE *instance, const char *border, int width )
+{
+   ENTITY_INSTANCE *content;
+   ITERATOR Iter;
+   static char buf[MAX_BUFFER];
+   char tempstring[MAX_BUFFER];
+   int space_after_border;
+
+   memset( &buf[0], 0, sizeof( buf ) );
+   space_after_border = width - ( strlen( border ) * 2 );
+
+   mud_printf( tempstring, "%s%s%s\r\n", border, print_header( "Instance Contents", "-", space_after_border ), border );
+   strcat( buf, tempstring );
+
+   AttachIterator( &Iter, instance->contents );
+   while( ( content = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
+   {
+      mud_printf( tempstring, "%s%s%s\r\n", border, fit_string_to_space( quick_format( "(%-7d) %s, %s", content->tag->id, instance_name( content ), instance_short_descr( content ) ), space_after_border ), border );
+      strcat( buf, tempstring );
+   }
+   DetachIterator( &Iter );
+
+   buf[strlen( buf )] = '\0';
+   return buf;
+}
+
+const char *return_instance_spec_and_stats( ENTITY_INSTANCE *instance, const char *border, int width )
+{
+   const char *const spec_from_table[] = {
+      "", "( framework )", "( inherited )"
+   };
+   SPECIFICATION *spec;
+   static char buf[MAX_BUFFER];
+   char tempstring[MAX_BUFFER];
+   int space_after_border;
+   int x, spec_from;
+
+
+   space_after_border = width - ( strlen( border ) * 2 );
+
+   mud_printf( buf, "%s%s%s\r\n", border, print_bar( "-", space_after_border ), border );
+
+   space_after_border = width - ( strlen( border ) * 3 );
+
+   mud_printf( tempstring, "%s%s", border, print_header( "Specifications", " ", space_after_border / 2 ) );
+   strcat( buf, tempstring );
+
+   strcat( buf, border );
+
+   mud_printf( tempstring, " %s%s\r\n", print_header( "Stats", " ", space_after_border / 2 ), border );
+   strcat( buf, tempstring );
+
+   space_after_border = width - ( strlen( border ) * 2 );
+
+   mud_printf( tempstring, "%s%s%s\r\n", border, print_bar( "-", space_after_border ), border );
+   strcat( buf, tempstring );
+
+   /* later when stats are in it will look like ;x < MAX_SPEC || y < MAX_STAT; */
+   for( x = 0, spec_from = 0; x < MAX_SPEC; x++ )
+   {
+      spec = has_spec_detailed_by_type( instance, x, &spec_from );
+      /* grab stat with id 0 */
+      /* later will be if !spec && !state */
+      if( !spec )
+         continue;
+      if( spec )
+         mud_printf( tempstring, "%s%s", border, fit_string_to_space( quick_format( " %s : %d%s", spec_table[spec->type], spec->value, spec_from_table[spec_from] ), ( space_after_border / 2 ) - 1 ) );
+      else
+         mud_printf( tempstring, "%s%s", border, print_header( " ", " ", ( space_after_border / 2 ) - 1 ) );
+      strcat( buf, tempstring );
+
+      strcat( buf, border );
+
+      /* if stat mirror spec */
+      mud_printf( tempstring, " %s%s\r\n", print_header( " ", " ", ( space_after_border / 2 ) - 1 ), border );
+      strcat( buf, tempstring );
+
+   }
+   buf[strlen( buf )] = '\0';
+   return buf;
+
+}
+
+void instance_load( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_INSTANCE *instance = (ENTITY_INSTANCE *)olc->editing;
+
+   text_to_olc( olc, "You load up %s.\r\n", instance_name( instance ) );
+   full_load_instance( instance );
+   return;
+}
+
+void instance_live( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_INSTANCE *instance = (ENTITY_INSTANCE *)olc->editing;
+
+   instance_toggle_live( instance );
+   text_to_olc( olc, "You set the instance to %s.\r\n", instance->live ? "live" : "not live" );
+   return;
+}
+
+void instance_level( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_INSTANCE *instance = (ENTITY_INSTANCE *)olc->editing;
+
+   if( !is_number( arg ) )
+   {
+      text_to_olc( olc, "You need to put in a level to set it to.\r\n" );
+      olc_short_prompt( olc );
+      return;
+   }
+
+   set_instance_level( instance, atoi( arg ) );
+   text_to_olc( olc, "You set the instance to level %d.\r\n", instance->level );
+   return;
+}
+
+void instance_addcontent( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_INSTANCE *instance = (ENTITY_INSTANCE *)olc->editing;
+   ENTITY_INSTANCE *instance_to_add;
+   int value;
+
+   if( check_selection_type( arg ) != SEL_INSTANCE )
+   {
+      if( is_number( arg ) )
+      {
+         value = atoi( arg );
+         if( ( instance_to_add = get_instance_by_id( value ) ) == NULL )
+         {
+            text_to_olc( olc, "There's no instance with the ID of %d.\r\n", value );
+            olc_short_prompt( olc );
+            return;
+         }
+      }
+      else if( ( instance_to_add = get_instance_by_name( arg ) ) == NULL )
+      {
+         text_to_olc( olc, "There's no instance with the name %s.\r\n", arg );
+         return;
+      }
+   }
+   else
+   {
+      if( !interpret_entity_selection( arg ) )
+      {
+         text_to_olc( olc, STD_SELECTION_ERRMSG_PTR_USED );
+         return;
+      }
+      switch( input_selection_typing )
+      {
+         default: clear_entity_selection(); return;
+         case SEL_INSTANCE:
+            instance_to_add = (ENTITY_INSTANCE *)retrieve_entity_selection();
+            break;
+         case SEL_STRING:
+            text_to_olc( olc, (char *)retrieve_entity_selection() );
+            return;
+      }
+   }
+   entity_to_world( instance_to_add, instance );
+   text_to_olc( olc, "%s added to %s's contents.\r\n", instance_name( instance_to_add ), instance_name( instance ) );
+   return;
+}
+
+
+void instance_addspec( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_INSTANCE *instance = (ENTITY_INSTANCE *)olc->editing;
+   SPECIFICATION *spec;
+   char spec_arg[MAX_BUFFER];
+   int spec_type, spec_value;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Valid Specs: %s.\r\n", print_string_table( spec_table ) );
+      olc_short_prompt( olc );
+      return;
+   }
+
+   arg = one_arg( arg, spec_arg );
+
+   if( ( spec_type = match_string_table_no_case( spec_arg, spec_table ) ) == -1 )
+   {
+      text_to_olc( olc, "Invalid Spec Type.\r\n" );
+      olc_short_prompt( olc );
+      return;
+   }
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Spec Value Defaulting to 1.\r\n" );
+      spec_value = 1;
+   }
+   else if( !is_number( arg ) )
+   {
+      text_to_olc( olc, "Spec Value must be a number.\r\n" );
+      return;
+   }
+   else
+      spec_value = atoi( arg );
+
+   if( ( spec = spec_list_has_by_type( instance->specifications, spec_type ) ) != NULL )
+      text_to_olc( olc, "Overriding current %s specification who's value was %d.\r\n", spec_table[spec->type], spec->value );
+   else
+      spec = init_specification();
+
+   spec->type = spec_type;
+   spec->value = spec_value;
+   add_spec_to_instance( spec, instance );
+   text_to_olc( olc, "%s added to %s with the value of %s.\r\n", spec_table[spec_type], instance_name( instance ), itos( spec->value ) );
+   return;
+}
+
+void instance_done( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_INSTANCE *instance = (ENTITY_INSTANCE *)olc->editing;
+
+   if( !strcmp( instance->tag->created_by, "null" ) )
+   {
+      new_tag( instance->tag, olc->account->name );
+      new_eInstance( instance );
+      if( olc->using_workspace )
+         add_instance_to_workspace( instance, olc->using_workspace );
+   }
+
+   free_editor( olc );
+   change_socket_state( olc->account->socket, olc->account->socket->prev_state );
+   text_to_olc( olc, "Exiting Entity Instance Editor.\r\n" );
+   return;
 }

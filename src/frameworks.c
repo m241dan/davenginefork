@@ -632,6 +632,7 @@ ENTITY_FRAMEWORK *olc_edit_selection( INCEPTION *olc, const char *arg )
    switch( input_selection_typing )
    {
       default:
+         clear_entity_selection();
          text_to_olc( olc, "There's been a major problem. Contact your nearest admin.\r\n" );
          olc_short_prompt( olc );
          return NULL;

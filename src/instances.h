@@ -45,6 +45,9 @@ void full_load_project( PROJECT *project );
 void full_load_instance( ENTITY_INSTANCE *instance );
 void set_to_loaded( ENTITY_INSTANCE *instance );
 
+void instance_toggle_live( ENTITY_INSTANCE *instance );
+void set_instance_level( ENTITY_INSTANCE *instance, int level );
+
 int new_eInstance( ENTITY_INSTANCE *eInstance );
 void db_load_eInstance( ENTITY_INSTANCE *eInstance, MYSQL_ROW *row );
 void entity_from_container( ENTITY_INSTANCE *entity );

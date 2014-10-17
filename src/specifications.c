@@ -280,6 +280,30 @@ SPECIFICATION *spec_list_has_by_name( LLIST *spec_list, const char *name )
    return spec_list_has_by_type( spec_list, type );
 }
 
+SPECIFICATION *has_spec_detailed_by_type( ENTITY_INSTANCE *entity, int type, int *spec_from )
+{
+   SPECIFICATION *spec;
+
+   *spec_from = 0;
+   if( ( spec = spec_list_has_by_type( entity->specifications, type ) ) == NULL )
+      spec = frame_has_spec_detailed_by_type( entity->framework, type, spec_from );
+   return spec;
+}
+
+SPECIFICATION *frame_has_spec_detailed_by_type( ENTITY_FRAMEWORK *frame, int type, int *spec_from )
+{
+   SPECIFICATION *spec;
+
+   *spec_from = 1;
+   if( ( spec = spec_list_has_by_type( frame->specifications, type ) ) == NULL && frame->inherits )
+   {
+      *spec_from = 2;
+      spec = frame_has_spec_by_type( frame->inherits, type );
+   }
+   return spec;
+
+}
+
 SPECIFICATION *has_spec( ENTITY_INSTANCE *entity, const char *spec_name )
 {
    SPECIFICATION *spec;
@@ -295,6 +319,15 @@ SPECIFICATION *frame_has_spec( ENTITY_FRAMEWORK *frame, const char *spec_name )
 
    if( ( spec = spec_list_has_by_name( frame->specifications, spec_name ) ) == NULL && frame->inherits )
       spec = frame_has_spec( frame->inherits, spec_name );
+   return spec;
+}
+
+SPECIFICATION *frame_has_spec_by_type( ENTITY_FRAMEWORK *frame, int type )
+{
+   SPECIFICATION *spec;
+
+   if( ( spec = spec_list_has_by_type( frame->specifications, type ) ) == NULL && frame->inherits )
+      spec = frame_has_spec_by_type( frame->inherits, type );
    return spec;
 }
 

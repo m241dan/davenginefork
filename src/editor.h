@@ -39,4 +39,13 @@ void workspace_done( void *passed, char *arg );
 
 int init_instance_editor( INCEPTION *olc, ENTITY_INSTANCE *instance );
 
-int editor_instnace_prompt( D_SOCKET *dsock );
+int editor_instance_prompt( D_SOCKET *dsock );
+const char *return_instance_contents_string( ENTITY_INSTANCE *instance, const char *border, int width );
+const char *return_instance_spec_and_stats( ENTITY_INSTANCE *intance, const char *border, int width );
+
+void instance_load( void *passed, char *arg );
+void instance_live( void *passed, char *arg );
+void instance_level( void *passed, char *arg );
+void instance_addcontent( void *passed, char *arg );
+void instance_addspec( void *passed, char *arg );
+void instance_done( void *passed, char *arg );
