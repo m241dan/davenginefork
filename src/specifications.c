@@ -3,8 +3,13 @@
 #include "mud.h"
 
 const char *const spec_table[] = {
-   "IsRoom", "IsExit", "IsMob", "IsObject", "CanGet", "NoDrop", "CanMove", "MirrorExit", "IsDoor",
-   "Terrain",
+   /* Is Specs */
+   "IsRoom", "IsExit", "IsMob", "IsObject", "IsDoor",
+   /* Can Specs */
+   "CanGet", "CanGive", "CanDrop", "CanPut", "CanMove"
+   /* Misc Specs */
+   "MirrorExit", "Terrain",
+
    '\0' /* gandalf */
 };
 

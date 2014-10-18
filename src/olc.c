@@ -1668,8 +1668,7 @@ void framework_create( void *passed, char *arg )
       change_socket_state( olc->account->socket, olc->editing_state );
       return;
    }
-   init_eFramework_editor( olc, NULL );
-   change_socket_state( olc->account->socket, olc->editing_state );
+   boot_eFramework_editor( olc, NULL );
    return;
 }
 

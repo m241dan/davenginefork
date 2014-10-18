@@ -44,8 +44,6 @@ int number_arg( char *fStr, char *bStr )
 
    memcpy( bStr, fStr, strlen( fStr ) + 1 );
 
-   bug( "%s: buf = %s", __FUNCTION__, buf );
-
    if( !strcasecmp( buf, "all" ) && bStr[0] != '\0' )
       return -2;
    else if( !is_number( buf ) )

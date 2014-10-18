@@ -403,82 +403,175 @@ void entity_from_contents_quick_sort( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *
    return;
 }
 
-void drop_item_specific( ENTITY_INSTANCE *entity, char *item, int number )
+void move_item_specific( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *target, bool (*test_method)( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *to_test ), char *item, int number )
 {
-   ENTITY_INSTANCE *to_drop;
+   ENTITY_INSTANCE *to_move;
    int count = 0;
 
-   while( ( to_drop = instance_list_has_by_name_prefix( entity->contents, item ) ) != NULL )
+   while( ( to_move = instance_list_has_by_name_prefix( entity->contents, item ) ) != NULL )
       if( ++count == number )
          break;
 
+   if( entity == to_move )
+   {
+      text_to_entity( entity, "You cannot move yourself in this manner.\r\n" );
+      return;
+   }
+
+   if( target == to_move )
+   {
+      text_to_entity( entity, "You cannot put %s into itself.\r\n", instance_short_descr( to_move ) );
+      return;
+   }
+
    if( count != number )
    {
-      text_to_entity( entity, "You do not have %s to drop.\r\n", item );
+      move_item_messaging_noitem( entity, target, item );
       return;
    }
 
-   if( !can_drop( entity, to_drop ) )
+   if( !(*test_method)( entity, to_move ) )
       return;
 
-   text_to_entity( entity, "You drop %s.\r\n", instance_short_descr( to_drop ) );
-   entity_to_world( to_drop, entity->contained_by );
+   move_item_messaging( entity, target, to_move );
+   entity_to_world( to_move, target );
    return;
 }
 
-void drop_item_single( ENTITY_INSTANCE *entity, char *item )
+void move_item_single( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *target, bool (*test_method)( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *to_test ), char *item )
 {
-   ENTITY_INSTANCE *to_drop;
+   ENTITY_INSTANCE *to_move;
 
-   if( ( to_drop = instance_list_has_by_name_prefix( entity->contents, item ) ) == NULL )
+   if( ( to_move = instance_list_has_by_name_prefix( entity->contents, item ) ) == NULL || to_move == entity )
    {
-      text_to_entity( entity, "You do not have %s to drop.\r\n", item );
+      move_item_messaging_noitem( entity, target, item );
       return;
    }
-   if( !can_drop( entity, to_drop ) )
+
+   if( entity == to_move )
+   {
+      text_to_entity( entity, "You cannot move yourself in this manner.\r\n" );
       return;
-   text_to_entity( entity, "You drop %s.\r\n", instance_short_descr( to_drop ) );
-   entity_to_world( to_drop, entity->contained_by );
+   }
+
+   if( target == to_move )
+   {
+      text_to_entity( entity, "You cannot put %s into itself.\r\n", instance_short_descr( to_move ) );
+      return;
+   }
+
+   if( !(*test_method)( entity, to_move ) )
+      return;
+
+   move_item_messaging( entity, target, to_move );
+   entity_to_world( to_move, entity->contained_by );
    return;
 }
 
-void drop_item_all( ENTITY_INSTANCE *entity, char *item )
+void move_item_all( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *target, bool (*test_method)( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *to_test ), char *item )
 {
-   ENTITY_INSTANCE *to_drop;
+   ENTITY_INSTANCE *to_move;
 
-   while( ( to_drop = instance_list_has_by_name_prefix( entity->contents, item ) ) != NULL )
-      drop_item_single( entity, item );
+   while( ( to_move = instance_list_has_by_name_prefix( entity->contents, item ) ) != NULL )
+      move_item_single( entity, target, can_drop, item );
    return;
 }
 
-void drop_all( ENTITY_INSTANCE *entity )
+void move_all( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *target, bool (*test_method)( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *to_test ) )
 {
-   ENTITY_INSTANCE *to_drop;
+   ENTITY_INSTANCE *to_move;
    ITERATOR Iter;
 
    if( SizeOfList( entity->contents ) < 1 )
       return;
 
    AttachIterator( &Iter, entity->contents );
-   while( ( to_drop = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
+   while( ( to_move = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
    {
-      if( can_drop( entity, to_drop ) )
+      if( entity == to_move )
+         continue;
+      if( target == to_move )
+         continue;
+      if( (*test_method)( entity, to_move ) )
       {
-         entity_to_world( to_drop, entity->contained_by );
-         text_to_entity( entity, "You drop %s.\r\n", instance_short_descr( to_drop ) );
+         move_item_messaging( entity, target, to_move );
+         entity_to_world( to_move, target );
       }
    }
    DetachIterator( &Iter );
    return;
 }
 
+void move_item_messaging( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *target, ENTITY_INSTANCE *to_move )
+{
+   if( entity->contained_by == target )
+      text_to_entity( entity, "You drop %s.\r\n", instance_short_descr( to_move ) );
+   else if( get_spec_value( target, "IsMob" ) > 0 )
+      text_to_entity( entity, "You give %s to %s.\r\n", instance_short_descr( to_move ), instance_short_descr( target ) );
+   else if( get_spec_value( target, "IsObject" ) > 0 )
+      text_to_entity( entity, "You put %s in %s.\r\n", instance_short_descr( to_move ), instance_short_descr( target ) );
+   else
+      text_to_entity( target, "You get %s.\r\n", instance_short_descr( to_move ) );
+}
+
+void move_item_messaging_noitem( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *target, const char *to_move )
+{
+   if( entity->contained_by == target )
+      text_to_entity( entity, "You have no %s to drop.\r\n", to_move );
+   else if( get_spec_value( target, "IsMob" ) > 0 )
+      text_to_entity( entity, "You have no %s to give.\r\n", to_move );
+   else if( get_spec_value( target, "IsObject" ) > 0 )
+      text_to_entity( entity, "You have no %s to put in %s.\r\n", to_move, instance_short_descr( target ) );
+   else
+      text_to_entity( target, "You don't see %s anywhere.\r\n", to_move );
+}
+
 bool can_drop( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *to_drop )
 {
    if( !entity->builder )
    {
-      if( get_spec_value( to_drop, "NoDrop" ) > 0 )
+      if( get_spec_value( to_drop, "CanDrop" ) == 0 )
       {
          text_to_entity( entity, "You cannot drop %s.\r\n", instance_short_descr( to_drop ) );
+         return FALSE;
+      }
+   }
+   return TRUE;
+}
+
+bool can_give( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *to_give )
+{
+   if( !entity->builder )
+   {
+      if( get_spec_value( to_give, "CanGive" ) == 0 )
+      {
+         text_to_entity( entity, "You cannot give %s.\r\n", instance_short_descr( to_give ) );
+         return FALSE;
+      }
+   }
+   return TRUE;
+}
+
+bool can_put( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *to_put )
+{
+   if( !entity->builder )
+   {
+      if( get_spec_value( to_put, "CanPut" ) ==  0 )
+      {
+         text_to_entity( entity, "You cannot put %s anywhere.\r\n", instance_short_descr( to_put ) );
+         return FALSE;
+      }
+   }
+   return TRUE;
+}
+
+bool can_get( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *to_get )
+{
+   if( !entity->builder )
+   {
+      if( get_spec_value( to_get, "CanGet" ) == 0 )
+      {
+         text_to_entity( entity, "You cannot get %s.\r\n", instance_short_descr( to_get ) );
          return FALSE;
       }
    }
@@ -1312,8 +1405,7 @@ void entity_inventory( void *passed, char *arg )
 void entity_drop( void *passed, char *arg )
 {
    ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
-   char buf[MAX_BUFFER];
-   char item[MAX_BUFFER];
+   char buf[MAX_BUFFER], item[MAX_BUFFER];
    int number;
 
    if( !arg || arg[0] == '\0' )
@@ -1325,27 +1417,24 @@ void entity_drop( void *passed, char *arg )
    while( arg[0] != '\0' )
    {
       arg = one_arg_delim( arg, buf, ',' );
-
       number = number_arg( buf, item );
-
-      bug( "%s: number_arg = %d", __FUNCTION__, number );
 
       if( number == -1 && !strcmp( buf, "all" ) )
       {
-         drop_all( entity );
+         move_all( entity, entity->contained_by, can_drop );
          return;
       }
 
       switch( number )
       {
          default:
-            drop_item_specific( entity, item, number );
+            move_item_specific( entity, entity->contained_by, can_drop, item, number );
             break;
          case -1:
-            drop_item_single( entity, buf );
+            move_item_single( entity, entity->contained_by, can_drop, buf );
             break;
          case -2:
-            drop_item_all( entity, item );
+            move_item_all( entity, entity->contained_by, can_drop, item );
             break;
       }
    }
@@ -1356,7 +1445,8 @@ void entity_get( void *passed, char *arg )
 {
    ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
    ENTITY_INSTANCE *to_get;
-   char buf[MAX_BUFFER];
+   char buf[MAX_BUFFER], item[MAX_BUFFER];
+   int number;
 
    if( !arg || arg[0] == '\0' )
    {
@@ -1364,12 +1454,24 @@ void entity_get( void *passed, char *arg )
       return;
    }
 
+   if( !entity->contained_by )
+   {
+      text_to_entity( entity, "Nothing exists in the Ether, you cannot get anything.\r\n" );
+      return;
+   }
+
    while( arg[0] != '\0' )
    {
-      arg = one_arg( arg, buf );
+      arg = one_arg_delim( arg, buf, ',' );
+      number = number_arg( buf, item );
 
-      if( !entity->contained_by )
-         puts( "it's null" );
+      if( number == -1 && !strcmp( buf, "all" ) )
+      {
+         move_all( entity->contained_by, entity, can_get );
+         return;
+      }
+
+
       if( ( to_get = instance_list_has_by_name( entity->contained_by->contents, buf ) ) == NULL )
       {
          text_to_entity( entity, "You do not see %s to get.\r\n", buf );
