@@ -403,6 +403,88 @@ void entity_from_contents_quick_sort( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *
    return;
 }
 
+void drop_item_specific( ENTITY_INSTANCE *entity, char *item, int number )
+{
+   ENTITY_INSTANCE *to_drop;
+   int count = 0;
+
+   while( ( to_drop = instance_list_has_by_name_prefix( entity->contents, item ) ) != NULL )
+      if( ++count == number )
+         break;
+
+   if( count != number )
+   {
+      text_to_entity( entity, "You do not have %s to drop.\r\n", item );
+      return;
+   }
+
+   if( !can_drop( entity, to_drop ) )
+      return;
+
+   text_to_entity( entity, "You drop %s.\r\n", instance_short_descr( to_drop ) );
+   entity_to_world( to_drop, entity->contained_by );
+   return;
+}
+
+void drop_item_single( ENTITY_INSTANCE *entity, char *item )
+{
+   ENTITY_INSTANCE *to_drop;
+
+   if( ( to_drop = instance_list_has_by_name_prefix( entity->contents, item ) ) == NULL )
+   {
+      text_to_entity( entity, "You do not have %s to drop.\r\n", item );
+      return;
+   }
+   if( !can_drop( entity, to_drop ) )
+      return;
+   text_to_entity( entity, "You drop %s.\r\n", instance_short_descr( to_drop ) );
+   entity_to_world( to_drop, entity->contained_by );
+   return;
+}
+
+void drop_item_all( ENTITY_INSTANCE *entity, char *item )
+{
+   ENTITY_INSTANCE *to_drop;
+
+   while( ( to_drop = instance_list_has_by_name_prefix( entity->contents, item ) ) != NULL )
+      drop_item_single( entity, item );
+   return;
+}
+
+void drop_all( ENTITY_INSTANCE *entity )
+{
+   ENTITY_INSTANCE *to_drop;
+   ITERATOR Iter;
+
+   if( SizeOfList( entity->contents ) < 1 )
+      return;
+
+   AttachIterator( &Iter, entity->contents );
+   while( ( to_drop = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
+   {
+      if( can_drop( entity, to_drop ) )
+      {
+         entity_to_world( to_drop, entity->contained_by );
+         text_to_entity( entity, "You drop %s.\r\n", instance_short_descr( to_drop ) );
+      }
+   }
+   DetachIterator( &Iter );
+   return;
+}
+
+bool can_drop( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *to_drop )
+{
+   if( !entity->builder )
+   {
+      if( get_spec_value( to_drop, "NoDrop" ) > 0 )
+      {
+         text_to_entity( entity, "You cannot drop %s.\r\n", instance_short_descr( to_drop ) );
+         return FALSE;
+      }
+   }
+   return TRUE;
+}
+
 ENTITY_INSTANCE *copy_instance( ENTITY_INSTANCE *instance, bool copy_id, bool copy_contents, bool copy_specs, bool copy_frame )
 {
    ENTITY_INSTANCE *instance_copy;
@@ -614,6 +696,27 @@ ENTITY_INSTANCE *instance_list_has_by_name( LLIST *instance_list, const char *na
    AttachIterator( &Iter, instance_list );
    while( ( eInstance = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
       if( !strcasecmp( name, instance_name( eInstance ) ) )
+         break;
+   DetachIterator( &Iter );
+
+   return eInstance;
+}
+
+ENTITY_INSTANCE *instance_list_has_by_name_prefix( LLIST *instance_list, const char *name )
+{
+   ENTITY_INSTANCE *eInstance;
+   ITERATOR Iter;
+
+   if( !instance_list )
+      return NULL;
+   if( SizeOfList( instance_list ) < 1 )
+      return NULL;
+   if( !name || name[0] == '\0' )
+      return NULL;
+
+   AttachIterator( &Iter, instance_list );
+   while( ( eInstance = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
+      if( is_prefix( name, instance_name( eInstance ) ) )
          break;
    DetachIterator( &Iter );
 
@@ -1209,8 +1312,9 @@ void entity_inventory( void *passed, char *arg )
 void entity_drop( void *passed, char *arg )
 {
    ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
-   ENTITY_INSTANCE *to_drop;
    char buf[MAX_BUFFER];
+   char item[MAX_BUFFER];
+   int number;
 
    if( !arg || arg[0] == '\0' )
    {
@@ -1220,23 +1324,30 @@ void entity_drop( void *passed, char *arg )
 
    while( arg[0] != '\0' )
    {
-      arg = one_arg( arg, buf );
+      arg = one_arg_delim( arg, buf, ',' );
 
-      if( ( to_drop = instance_list_has_by_name( entity->contents, buf ) ) == NULL )
+      number = number_arg( buf, item );
+
+      bug( "%s: number_arg = %d", __FUNCTION__, number );
+
+      if( number == -1 && !strcmp( buf, "all" ) )
       {
-         text_to_entity( entity, "You do not have %s to drop.\r\n", buf );
-         continue;
+         drop_all( entity );
+         return;
       }
-      if( !entity->builder )
+
+      switch( number )
       {
-         if( get_spec_value( to_drop, "NoDrop" ) > 0 )
-         {
-            text_to_entity( entity, "You cannot drop %s.\r\n", instance_short_descr( to_drop ) );
-            continue;
-         }
+         default:
+            drop_item_specific( entity, item, number );
+            break;
+         case -1:
+            drop_item_single( entity, buf );
+            break;
+         case -2:
+            drop_item_all( entity, item );
+            break;
       }
-      text_to_entity( entity, "You drop %s.\r\n", instance_short_descr( to_drop ) );
-      entity_to_world( to_drop, entity->contained_by );
    }
    return;
 }
@@ -1392,9 +1503,7 @@ void entity_edit( void *passed, char *arg )
    if( ( to_edit = entity_edit_selection( entity, arg ) ) == NULL )
       return;
 
-   init_eFramework_editor( olc, to_edit );
-   change_socket_state( entity->socket, olc->editing_state );
-   text_to_entity( entity, "You begin to edit %s.\r\n", chase_name( to_edit ) );
+   boot_eFramework_editor( olc, to_edit );
    return;
 }
 

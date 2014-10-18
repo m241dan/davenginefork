@@ -10,6 +10,7 @@ STRING *new_string( const char *arg );
 void free_string( STRING *string );
 void change_string( STRING *string, char *change );
 
+int    number_arg             ( char *fStr, char *bStr );
 char   *one_arg               ( char *fStr, char *bStr );
 char   *one_arg_delim         ( char *fStr, char *bStr, char delim );
 char   *strdup                ( const char *s );

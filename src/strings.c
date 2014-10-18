@@ -33,6 +33,27 @@ bool is_prefix(const char *aStr, const char *bStr)
   return TRUE;
 }
 
+int number_arg( char *fStr, char *bStr )
+{
+   char buf[MAX_BUFFER];
+
+   if( !string_contains( fStr, "." ) )
+      return -1;
+
+   fStr = one_arg_delim( fStr, buf, '.' );
+
+   memcpy( bStr, fStr, strlen( fStr ) + 1 );
+
+   bug( "%s: buf = %s", __FUNCTION__, buf );
+
+   if( !strcasecmp( buf, "all" ) && bStr[0] != '\0' )
+      return -2;
+   else if( !is_number( buf ) )
+      return -1;
+   else
+      return atoi( buf );
+}
+
 char *one_arg(char *fStr, char *bStr)
 {
    char delim;

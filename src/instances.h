@@ -58,6 +58,11 @@ void detach_entity_from_contents( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *cont
 void entity_to_contents_quick_sort( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container );
 void entity_from_contents_quick_sort( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container );
 
+void drop_item_specific( ENTITY_INSTANCE *entity, char *item, int number );
+void drop_item_single( ENTITY_INSTANCE *entity, char *item );
+void drop_item_all( ENTITY_INSTANCE *entity, char *item );
+bool can_drop( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *to_drop );
+
 ENTITY_INSTANCE *copy_instance( ENTITY_INSTANCE *instance, bool copy_id, bool copy_contents, bool copy_sepcs, bool copy_frame );
 LLIST *copy_instance_list( LLIST *instances, bool copy_id, bool copy_contents, bool copy_specs, bool copy_frame );
 void copy_instances_into_list( LLIST *instance_list, LLIST *copy_into_list, bool copy_id, bool copy_contents, bool copy_specs, bool copy_frame );
@@ -67,6 +72,7 @@ void append_instance_lists_ndi( LLIST *instance_list, LLIST *append_list );
 
 ENTITY_INSTANCE *instance_list_has_by_id( LLIST *instance_list, int id );
 ENTITY_INSTANCE *instance_list_has_by_name( LLIST *instance_list, const char *name );
+ENTITY_INSTANCE *instance_list_has_by_name_prefix( LLIST *instance_list, const char *name );
 ENTITY_INSTANCE *instance_list_has_by_short_prefix( LLIST *instance_list, const char *name );
 
 ENTITY_INSTANCE *eInstantiate( ENTITY_FRAMEWORK *frame );
@@ -100,6 +106,9 @@ void entity_look( void *passed, char *arg );
 void entity_inventory( void *passed, char *arg );
 void entity_drop( void *passed, char *arg );
 void entity_get( void *passed, char *arg );
+void entity_put( void *passed, char *arg  );
+void entity_give( void *passed, char *arg );
+void entity_entier( void *passed, char *arg );
 void entity_quit( void *passed, char *arg );
 void entity_create( void *passed, char *arg );
 void entity_edit( void *passed, char *arg );
