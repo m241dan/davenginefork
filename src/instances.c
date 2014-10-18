@@ -406,11 +406,13 @@ void entity_from_contents_quick_sort( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *
 void move_item_specific( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *target, bool (*test_method)( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *to_test ), char *item, int number )
 {
    ENTITY_INSTANCE *to_move;
-   int count = 0;
 
-   while( ( to_move = instance_list_has_by_name_prefix( entity->contents, item ) ) != NULL )
-      if( ++count == number )
-         break;
+
+   if( ( to_move = instance_list_has_by_name_prefix_specific( entity->contents, item, number ) ) == NULL )
+   {
+      move_item_messaging_noitem( entity, target, item );
+      return;
+   }
 
    if( entity == to_move )
    {
@@ -421,12 +423,6 @@ void move_item_specific( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *target, bool 
    if( target == to_move )
    {
       text_to_entity( entity, "You cannot put %s into itself.\r\n", instance_short_descr( to_move ) );
-      return;
-   }
-
-   if( count != number )
-   {
-      move_item_messaging_noitem( entity, target, item );
       return;
    }
 
@@ -464,7 +460,7 @@ void move_item_single( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *target, bool (*
       return;
 
    move_item_messaging( entity, target, to_move );
-   entity_to_world( to_move, entity->contained_by );
+   entity_to_world( to_move, target );
    return;
 }
 
@@ -797,8 +793,14 @@ ENTITY_INSTANCE *instance_list_has_by_name( LLIST *instance_list, const char *na
 
 ENTITY_INSTANCE *instance_list_has_by_name_prefix( LLIST *instance_list, const char *name )
 {
+   return instance_list_has_by_name_prefix_specific( instance_list, name, 1 );
+}
+
+ENTITY_INSTANCE *instance_list_has_by_name_prefix_specific( LLIST *instance_list, const char *name, int number )
+{
    ENTITY_INSTANCE *eInstance;
    ITERATOR Iter;
+   int count = 0;
 
    if( !instance_list )
       return NULL;
@@ -810,7 +812,8 @@ ENTITY_INSTANCE *instance_list_has_by_name_prefix( LLIST *instance_list, const c
    AttachIterator( &Iter, instance_list );
    while( ( eInstance = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
       if( is_prefix( name, instance_name( eInstance ) ) )
-         break;
+         if( ++count == number )
+            break;
    DetachIterator( &Iter );
 
    return eInstance;
@@ -1444,7 +1447,6 @@ void entity_drop( void *passed, char *arg )
 void entity_get( void *passed, char *arg )
 {
    ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
-   ENTITY_INSTANCE *to_get;
    char buf[MAX_BUFFER], item[MAX_BUFFER];
    int number;
 
@@ -1471,24 +1473,25 @@ void entity_get( void *passed, char *arg )
          return;
       }
 
-
-      if( ( to_get = instance_list_has_by_name( entity->contained_by->contents, buf ) ) == NULL )
+      switch( number )
       {
-         text_to_entity( entity, "You do not see %s to get.\r\n", buf );
-         continue;
+         default:
+            move_item_specific( entity->contained_by, entity, can_get, item, number );
+            break;
+         case -1:
+            move_item_single( entity->contained_by, entity, can_get, buf );
+            break;
+         case -2:
+            move_item_all( entity->contained_by, entity, can_get, item );
+            break;
       }
-      if( !entity->builder )
-      {
-         if( get_spec_value( to_get, "CanGet" ) > 0 )
-         {
-            text_to_entity( entity, "You cannot get %s.\r\n", instance_short_descr( to_get ) );
-            continue;
-         }
-      }
-      text_to_entity( entity, "You get %s.\r\n", instance_short_descr( to_get ) );
-      entity_to_world( to_get, entity );
    }
    return;
+}
+
+void entity_put( void *passed, char *arg )
+{
+   ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
 }
 
 void entity_quit( void *passed, char *arg )
