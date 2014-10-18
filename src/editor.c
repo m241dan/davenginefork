@@ -6,6 +6,7 @@ void editor_global_return( void *passed, char *arg )
 {
    INCEPTION *olc = (INCEPTION *)passed;
    E_CHAIN *link;
+   ITERATOR Iter;
 
    if( SizeOfList( olc->chain ) <= 0 )
    {
@@ -13,9 +14,11 @@ void editor_global_return( void *passed, char *arg )
       return;
    }
 
-   link = (E_CHAIN *)olc->chain->_pFirstCell;
-   DetachFromList( link, olc->chain );
+   AttachIterator( &Iter, olc->chain );
+   link = (E_CHAIN *)NextInList( &Iter );
+   DetachIterator( &Iter );
 
+   DetachFromList( link, olc->chain );
    free_editor( olc );
    switch( link->state )
    {
@@ -67,8 +70,8 @@ void editor_switch( void *passed, char *arg )
    }
 
    link = make_editor_chain_link( olc->editing, olc->editing_state );
-   bug( "%s: link state = %d", __FUNCTION__, link->state );
    add_link_to_chain( link, olc->chain );
+   free_editor( olc );
 
    switch( type )
    {

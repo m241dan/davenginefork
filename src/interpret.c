@@ -183,15 +183,18 @@ struct typCmd create_instance_commands[] = {
 const char *editor_return_desc( void *extra )
 {
    INCEPTION *olc = (INCEPTION *)extra;
-   static char buf[MAX_BUFFER];
    E_CHAIN *link;
+   ITERATOR Iter;
+   static char buf[MAX_BUFFER];
 
    if( SizeOfList( olc->chain ) <= 0 )
       return "";
 
    mud_printf( buf, " - " );
 
-   link = (E_CHAIN *)olc->chain->_pFirstCell;
+   AttachIterator( &Iter, olc->chain );
+   link = (E_CHAIN *)NextInList( &Iter );
+   DetachIterator( &Iter );
 
    switch( link->state )
    {
