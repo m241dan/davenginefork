@@ -63,13 +63,9 @@ int number_arg_single( char *string )
 
    string = one_arg_delim( string, buf, '.' );
 
-   bug( "%s: string after delim %s", __FUNCTION__, string );
-
    while( string && *string != '\0' )
       *orig_string++ = *string++;
    *orig_string = '\0';
-
-   bug( "%s: buf = %s string = %s", __FUNCTION__, buf, orig_string );
 
    if( !strcasecmp( buf, "all" ) && non_inc_orig_string[0] != '\0' )
       return -2;

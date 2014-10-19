@@ -413,25 +413,22 @@ ENTITY_INSTANCE *move_item_specific( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *t
       to_move = instance_list_has_by_name_prefix_specific( entity->contents, item, number );
 
    if( !to_move )
-   {
-      move_item_messaging_noitem( entity, target, item );
-      return;
-   }
+      return NULL;
 
    if( entity == to_move )
    {
       text_to_entity( entity, "You cannot move yourself in this manner.\r\n" );
-      return;
+      return NULL;
    }
 
    if( target == to_move )
    {
       text_to_entity( entity, "You cannot put %s into itself.\r\n", instance_short_descr( to_move ) );
-      return;
+      return NULL;
    }
 
    if( !(*test_method)( entity, to_move ) )
-      return;
+      return NULL;
 
    entity_to_world( to_move, target );
    return to_move;
@@ -447,25 +444,22 @@ ENTITY_INSTANCE *move_item_single( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *tar
       to_move = instance_list_has_by_name_prefix( entity->contents, item );
 
    if( !to_move )
-   {
-      move_item_messaging_noitem( entity, target, item );
-      return;
-   }
+      return NULL;
 
    if( entity == to_move )
    {
       text_to_entity( entity, "You cannot move yourself in this manner.\r\n" );
-      return;
+      return NULL;
    }
 
    if( target == to_move )
    {
       text_to_entity( entity, "You cannot put %s into itself.\r\n", instance_short_descr( to_move ) );
-      return;
+      return NULL;
    }
 
    if( !(*test_method)( entity, to_move ) )
-      return;
+      return NULL;
 
    entity_to_world( to_move, target );
    return to_move;
@@ -481,17 +475,22 @@ LLIST *move_item_all( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *target, bool (*t
       to_move = move_item_single( entity, target, can_drop, item, FALSE );
       AttachToList( to_move, list );
    }
-   return;
+   if( SizeOfList( list ) <= 0 )
+   {
+      FreeList( list );
+      return NULL;
+   }
+   return list;
 }
 
 LLIST *move_all( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *target, bool (*test_method)( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *to_test ) )
 {
    ENTITY_INSTANCE *to_move;
-   LLIST *list;
+   LLIST *list = AllocList();
    ITERATOR Iter;
 
    if( SizeOfList( entity->contents ) < 1 )
-      return;
+      return NULL;
 
    AttachIterator( &Iter, entity->contents );
    while( ( to_move = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
@@ -507,7 +506,13 @@ LLIST *move_all( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *target, bool (*test_m
       }
    }
    DetachIterator( &Iter );
-   return;
+
+   if( SizeOfList( list ) <= 0 )
+   {
+      FreeList( list );
+      return NULL;
+   }
+   return list;
 }
 
 void move_item_messaging( ENTITY_INSTANCE *perspective, ENTITY_INSTANCE *to, void *list_or_obj, const char *orig_string, ENTITY_INSTANCE *from, ITEM_MOVE_COM mode, bool isList )
@@ -515,35 +520,78 @@ void move_item_messaging( ENTITY_INSTANCE *perspective, ENTITY_INSTANCE *to, voi
    ENTITY_INSTANCE *object;
    LLIST *list;
    ITERATOR Iter;
-   char *operative;
-   char *operative_two;
-   char *place;
+   bool spi = FALSE; /* second party involved */
 
    if( !list_or_obj )
    {
-      text_to_entity( entity, "You do not see %s%s.\r\n", orig_string, perspective->contained_by == from ? "" : quick_format( " in %s", instance_short_descr( from ) ) );
+      text_to_entity( perspective, "You do not see %s%s.\r\n", orig_string, perspective->contained_by == from ? "" : quick_format( " in %s", instance_short_descr( from ) ) );
       return;
    }
 
+   if( perspective->contained_by == to )
+      spi = TRUE;
+
    if( isList )
+   {
       list = (LLIST *)list_or_obj;
+      if( SizeOfList( list ) <= 0 )
+      {
+         text_to_entity( perspective, "You do not see %s%s.\r\n", orig_string, perspective->contained_by == from ? "" : quick_format( " in %s", instance_short_descr( from ) ) );
+         return;
+      }
+      AttachIterator( &Iter, list );
+      object = (ENTITY_INSTANCE *)NextInList( &Iter );
+   }
    else
       object = (ENTITY_INSTANCE *)list_or_obj;
 
-   switch( mode )
+   do
    {
-      default: operative = "nil"; break;
-      case COM_DROP: operative = "drop"; operative_two = ""; break;
-      case COM_GET: operative = "get"; operative_two = perspective->contained_by == from ? "." : quick_format( " from %s", instance_short_descr( from ) ); break;
-      case COM_PUT: operative = "put"; operative_two = quick_format( " in %s", instance_short_descr( to ) ); break;
-      case COM_GIVE: operative = "give"; operative_two = quick_format( " to %s", instance_short_descr( to ); break;
+      switch( mode )
+      {
+         case COM_DROP:
+            text_to_entity( perspective, "You drop %s.\r\n", instance_short_descr( object ) );
+            text_around_entity( perspective->contained_by, 1, "%s drops %s.\r\n", perspective, instance_short_descr( perspective ), instance_short_descr( object ) );
+            break;
+         case COM_GET:
+            if( spi )
+            {
+               text_to_entity( perspective, "You get %s from %s.\r\n", instance_short_descr( object ), instance_short_descr( from ) );
+               if( from->socket )
+                  text_to_entity( from, "%s gets %s from you.\r\n", instance_short_descr( perspective ), instance_short_descr( object ) );
+               text_around_entity( perspective->contained_by, 2, "%s gets %s from %s.\r\n", perspective, from,
+                  instance_short_descr( perspective ), instance_short_descr( object ), instance_short_descr( from ) );
+               break;
+            }
+            text_to_entity( perspective, "You get %s.\r\n", instance_short_descr( object ) );
+            text_around_entity( perspective->contained_by, 1, "%s gets %s.\r\n", perspective, instance_short_descr( perspective ), instance_short_descr( object ) );
+            break;
+         case COM_PUT:
+            text_to_entity( perspective, "You put %s in %s.\r\n", instance_short_descr( object ), instance_short_descr( to ) );
+            if( to->socket )
+               text_to_entity( to, "%s puts %s in you.\r\n", instance_short_descr( perspective ), instance_short_descr( object ) );
+            text_around_entity( perspective->contained_by, 2, "%s puts %s in %s.\r\n", perspective, to,
+               instance_short_descr( perspective ), instance_short_descr( object ), instance_short_descr( to ) );
+            break;
+         case COM_GIVE:
+            text_to_entity( perspective, "You give %s to %s.\r\n", instance_short_descr( object ), instance_short_descr( to ) );
+            if( to->socket )
+               text_to_entity( to, "%s gives you %s.\r\n", instance_short_descr( perspective ), instance_short_descr( object ) );
+            text_around_entity( perspective->contained_by, 2, "%s gives %s to %s.\r\n", perspective, to,
+               instance_short_descr( perspective ), instance_short_descr( object ), instance_short_descr( to ) );
+            break;
+      }
+   } while( isList && ( object = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL );
+
+   if( isList )
+   {
+      DetachIterator( &Iter );
+      CLEARLIST( list, ENTITY_INSTANCE );
+      FreeList( list );
    }
 
-   text_to_entity( perspective, "You %s %s%s.\r\n",
-      operative, instance_short_descr( object ), operative_two );
+   return;
 }
-
-void move_item_message( ENTITY_INSTANCE *perspective
 
 bool can_drop( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *to_drop )
 {
@@ -659,7 +707,7 @@ ENTITY_INSTANCE *find_specific_item( ENTITY_INSTANCE *perspective, const char *i
    return found;
 }
 
-bool parse_item_movement_string( ENTITY_INSTANCE *entity, char *arg, char *item, ENTITY_INSTANCE **container  )
+bool parse_item_movement_string( ENTITY_INSTANCE *entity, char *arg, char *item, ENTITY_INSTANCE **container, bool isGive  )
 {
    char *container_ptr;
    char where[MAX_BUFFER], container_name[MAX_BUFFER];
@@ -689,15 +737,31 @@ bool parse_item_movement_string( ENTITY_INSTANCE *entity, char *arg, char *item,
       if( container_number < 0 )
          container_number = 1;
 
-      if( ( *container = find_specific_item( entity, container_ptr, container_number ) ) == NULL )
+      if( isGive )
       {
-         text_to_entity( entity, "You cannot find %s.\r\n", container_ptr );
-         return FALSE;
+         if( ( *container = instance_list_has_by_name_prefix_specific( entity->contained_by->contents, container_ptr, container_number ) ) == NULL )
+         {
+            text_to_entity( entity, "You cannot find %s.\r\n", container_ptr );
+            return FALSE;
+         }
+         if( ( get_spec_value( *container, "IsMob" ) == 0 ) && !entity->builder && ( get_spec_value( *container, "CanGive" ) != 1 ) )
+         {
+            text_to_entity( entity, "You cannot give to that.\r\n", instance_short_descr( *container ) );
+            return FALSE;
+         }
       }
-      if( ( get_spec_value( *container, "IsContainer" ) == 0 ) && !entity->builder )
+      else
       {
-         text_to_entity( entity, "%s is not a container.\r\n", instance_short_descr( *container ) );
-         return FALSE;
+         if( ( *container = find_specific_item( entity, container_ptr, container_number ) ) == NULL )
+         {
+            text_to_entity( entity, "You cannot find %s.\r\n", container_ptr );
+            return FALSE;
+         }
+         if( ( get_spec_value( *container, "IsContainer" ) == 0 ) && !entity->builder )
+         {
+            text_to_entity( entity, "%s is not a container.\r\n", instance_short_descr( *container ) );
+            return FALSE;
+         }
       }
       return TRUE;
    }
@@ -1169,11 +1233,19 @@ const char *instance_description( ENTITY_INSTANCE *instance )
    return instance->framework ? chase_description( instance->framework ) : "null";
 }
 
+
+
 int text_to_entity( ENTITY_INSTANCE *entity, const char *fmt, ... )
 {
    va_list va;
    int res;
    char dest[MAX_BUFFER];
+
+   if( !entity->socket )
+   {
+      bug( "%s: attempting to send msg to a instnace without a socket.", __FUNCTION__ );
+      return 0;
+   }
 
    va_start( va, fmt );
    res = vsnprintf( dest, MAX_BUFFER, fmt, va );
@@ -1187,6 +1259,48 @@ int text_to_entity( ENTITY_INSTANCE *entity, const char *fmt, ... )
 
    text_to_buffer( entity->socket, dest );
    return res;
+}
+
+void text_around_entity( ENTITY_INSTANCE *perspective, int num_around, const char *fmt, ... )
+{
+   ENTITY_INSTANCE *entity;
+   LLIST *dont_show = AllocList();
+   ITERATOR Iter;
+   va_list va;
+   int res, x;
+   char dest[MAX_BUFFER];
+
+   va_start( va, fmt );
+   if( num_around > 0 )
+   {
+      for( x = 0; x < num_around; x++ )
+      {
+         entity = va_arg( va, ENTITY_INSTANCE *);
+         AttachToList( entity, dont_show );
+      }
+   }
+   res = vsnprintf( dest, MAX_BUFFER, fmt, va );
+   va_end( va );
+
+   if( res >= MAX_BUFFER -1 )
+   {
+      dest[0] = '\0';
+      bug( "%s: Overflow when attempting to format string for message.", __FUNCTION__ );
+   }
+
+   AttachIterator( &Iter, perspective->contents );
+   while( ( entity = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
+   {
+      if( !entity->socket )
+         continue;
+      if( instance_list_has_by_id( dont_show, entity->tag->id ) )
+         continue;
+      text_to_buffer( entity->socket, dest );
+   }
+   DetachIterator( &Iter );
+   CLEARLIST( dont_show, ENTITY_INSTANCE );
+   FreeList( dont_show );
+   return;
 }
 
 int builder_prompt( D_SOCKET *dsock )
@@ -1539,8 +1653,10 @@ void entity_inventory( void *passed, char *arg )
 void entity_drop( void *passed, char *arg )
 {
    ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
-   char buf[MAX_BUFFER], item[MAX_BUFFER];
+   void *obj_or_list;
+   char item[MAX_BUFFER];
    int number;
+   bool isList = FALSE;
 
    if( !arg || arg[0] == '\0' )
    {
@@ -1550,27 +1666,31 @@ void entity_drop( void *passed, char *arg )
 
    while( arg[0] != '\0' )
    {
-      arg = one_arg_delim( arg, buf, ',' );
-      number = number_arg( buf, item );
+      arg = one_arg_delim( arg, item, ',' );
+      number = number_arg_single( item );
 
-      if( number == -1 && !strcmp( buf, "all" ) )
+      if( number == -1 && !strcmp( item, "all" ) )
       {
-         move_all( entity, entity->contained_by, can_drop );
-         return;
+         obj_or_list = move_all( entity, entity->contained_by, can_drop );
+         isList = TRUE;
       }
-
-      switch( number )
+      else
       {
-         default:
-            move_item_specific( entity, entity->contained_by, can_drop, item, number, FALSE );
-            break;
-         case -1:
-            move_item_single( entity, entity->contained_by, can_drop, buf, FALSE );
-            break;
-         case -2:
-            move_item_all( entity, entity->contained_by, can_drop, item );
-            break;
+         switch( number )
+         {
+            default:
+               obj_or_list = move_item_specific( entity, entity->contained_by, can_drop, item, number, FALSE );
+               break;
+            case -1:
+               obj_or_list = move_item_single( entity, entity->contained_by, can_drop, item, FALSE );
+               break;
+            case -2:
+              obj_or_list = move_item_all( entity, entity->contained_by, can_drop, item );
+              isList = TRUE;
+              break;
+         }
       }
+      move_item_messaging( entity, entity->contained_by, obj_or_list, item, entity, COM_DROP, isList );
    }
    return;
 }
@@ -1578,9 +1698,11 @@ void entity_drop( void *passed, char *arg )
 void entity_get( void *passed, char *arg )
 {
    ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
-   ENTITY_INSTANCE *container, *object;
+   ENTITY_INSTANCE *container;
+   void *obj_or_list;
    char buf[MAX_BUFFER], item[MAX_BUFFER];
    int number;
+   bool isList = FALSE;
 
    if( !arg || arg[0] == '\0' )
    {
@@ -1598,8 +1720,8 @@ void entity_get( void *passed, char *arg )
    {
       arg = one_arg_delim( arg, buf, ',' );
 
-     if( !parse_item_movement_string( entity, buf, item, &container ) )
-        return;
+      if( !parse_item_movement_string( entity, buf, item, &container, FALSE ) )
+         return;
 
       number = number_arg_single( item );
 
@@ -1608,25 +1730,26 @@ void entity_get( void *passed, char *arg )
 
       if( number == -1 && !strcmp( item, "all" ) )
       {
-         move_all( container, entity, can_get );
-         return;
+         obj_or_list = move_all( container, entity, can_get );
+         isList = TRUE;
       }
-
-      switch( number )
+      else
       {
-         default:
-            if( ( object = move_item_specific( container, entity, can_get, item, number, FALSE ) ) == NULL )
-            {
-               text_to_entity( entity, "
-            }
-            break;
-         case -1:
-            move_item_single( container, entity, can_get, item, FALSE);
-            break;
-         case -2:
-            move_item_all( container, entity, can_get, item );
-            break;
+         switch( number )
+         {
+            default:
+               obj_or_list = move_item_specific( container, entity, can_get, item, number, FALSE );
+               break;
+            case -1:
+               obj_or_list = move_item_single( container, entity, can_get, item, FALSE);
+               break;
+            case -2:
+               obj_or_list = move_item_all( container, entity, can_get, item );
+               isList = TRUE;
+               break;
+         }
       }
+      move_item_messaging( entity, entity, obj_or_list, item, container, COM_GET, isList );
    }
    return;
 }
@@ -1635,8 +1758,10 @@ void entity_put( void *passed, char *arg )
 {
    ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
    ENTITY_INSTANCE *container;
+   void *obj_or_list;
    char buf[MAX_BUFFER], item[MAX_BUFFER];
    int number;
+   bool isList = FALSE;
 
    if( !arg || arg[0] == '\0' )
    {
@@ -1648,12 +1773,10 @@ void entity_put( void *passed, char *arg )
    {
       arg = one_arg_delim( arg, buf, ',' );
 
-     if( !parse_item_movement_string( entity, buf, item, &container ) )
+     if( !parse_item_movement_string( entity, buf, item, &container, FALSE ) )
         return;
 
       number = number_arg_single( item );
-
-      bug( "%s: number = %d and item = %s", __FUNCTION__, number, item );
 
       if( !container )
       {
@@ -1663,28 +1786,85 @@ void entity_put( void *passed, char *arg )
 
       if( number == -1 && !strcmp( item, "all" ) )
       {
-         move_all( entity, container, can_get );
-         return;
+         obj_or_list = move_all( entity, container, can_get );
+         isList = TRUE;
       }
-
-      bug( "%s: the containers name is %s", __FUNCTION__, instance_name( container ) );
-
-      switch( number )
+      else
       {
-         default:
-            move_item_specific( entity, container, can_get, item, number, FALSE );
-            break;
-         case -1:
-            move_item_single( entity, container, can_get, item, FALSE);
-            break;
-         case -2:
-            move_item_all( entity, container, can_get, item );
-            break;
+         switch( number )
+         {
+            default:
+               obj_or_list = move_item_specific( entity, container, can_get, item, number, FALSE );
+               break;
+            case -1:
+               obj_or_list = move_item_single( entity, container, can_get, item, FALSE);
+               break;
+            case -2:
+               obj_or_list = move_item_all( entity, container, can_get, item );
+               isList = TRUE;
+               break;
+         }
       }
+      move_item_messaging( entity, container, obj_or_list, item, entity, COM_PUT, isList );
    }
    return;
 }
 
+void entity_give( void *passed, char *arg )
+{
+   ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
+   ENTITY_INSTANCE *give_to;
+   void *obj_or_list;
+   char buf[MAX_BUFFER], item[MAX_BUFFER];
+   int number;
+   bool isList = FALSE;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_entity( entity, "Give what to whom?\r\n" );
+      return;
+   }
+
+   while( arg[0] != '\0' )
+   {
+      arg = one_arg_delim( arg, buf, ',' );
+
+      if( !parse_item_movement_string( entity, buf, item, &give_to, TRUE ) )
+         return;
+
+      number = number_arg_single( item );
+
+      if( !give_to )
+      {
+         text_to_entity( entity, "Give %s to who?\r\n", item );
+         return;
+      }
+
+      if( number == -1 && !strcmp( item, "all" ) )
+      {
+         obj_or_list = move_all( entity, give_to, can_give );
+         isList = TRUE;
+      }
+      else
+      {
+         switch( number )
+         {
+            default:
+               obj_or_list = move_item_specific( entity, give_to, can_give, item, number, FALSE );
+               break;
+            case -1:
+               obj_or_list = move_item_single( entity, give_to, can_give, item, FALSE );
+               break;
+            case -2:
+               obj_or_list = move_item_all( entity, give_to, can_give, item );
+               isList = TRUE;
+               break;
+         }
+      }
+      move_item_messaging( entity, give_to, obj_or_list, item, entity, COM_GIVE, isList );
+   }
+   return;
+}
 void entity_quit( void *passed, char *arg )
 {
    ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;

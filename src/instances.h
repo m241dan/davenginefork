@@ -1,4 +1,4 @@
-	/* instaces.h the headerfile for allthings instanced written by Davenge */
+/* instaces.h the headerfile for allthings instanced written by Davenge */
 
 struct entity_instance
 {
@@ -62,14 +62,13 @@ ENTITY_INSTANCE *move_item_specific( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *t
 ENTITY_INSTANCE *move_item_single( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *target, bool (*test_method)( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *to_test ), char *item, bool look_beyond_contents );
 LLIST *move_item_all( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *target, bool (*test_method)( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *to_test ), char *item );
 LLIST *move_all( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *target, bool (*test_method)( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *to_test ) );
-void move_item_messaging( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *target, ENTITY_INSTANCE *to_move );
-void move_item_messaging_noitem( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *target, const char *to_move );
+void move_item_messaging( ENTITY_INSTANCE *perspective, ENTITY_INSTANCE *to, void *list_or_obj, const char *orig_string, ENTITY_INSTANCE *from, ITEM_MOVE_COM mode, bool isList );
 bool can_drop( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *to_drop );
 bool can_give( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *to_give );
 bool can_put( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *to_put );
 bool can_get( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *to_get );
 ENTITY_INSTANCE *find_specific_item( ENTITY_INSTANCE *perspective, const char *item, int number );
-bool parse_item_movement_string( ENTITY_INSTANCE *entity, char *arg, char *item, ENTITY_INSTANCE **container );
+bool parse_item_movement_string( ENTITY_INSTANCE *entity, char *arg, char *item, ENTITY_INSTANCE **container, bool isGive );
 
 ENTITY_INSTANCE *copy_instance( ENTITY_INSTANCE *instance, bool copy_id, bool copy_contents, bool copy_sepcs, bool copy_frame );
 LLIST *copy_instance_list( LLIST *instances, bool copy_id, bool copy_contents, bool copy_specs, bool copy_frame );
@@ -99,6 +98,7 @@ const char *instance_long_descr( ENTITY_INSTANCE *instance );
 const char *instance_description( ENTITY_INSTANCE *instance );
 
 int text_to_entity( ENTITY_INSTANCE *entity, const char *fmt, ... );
+void text_around_entity( ENTITY_INSTANCE *perspective, int num_around, const char *fmt, ... );
 int builder_prompt( D_SOCKET *dsock );
 int show_ent_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing );
 int show_ent_contents_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing );
