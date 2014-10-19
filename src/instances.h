@@ -58,8 +58,8 @@ void detach_entity_from_contents( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *cont
 void entity_to_contents_quick_sort( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container );
 void entity_from_contents_quick_sort( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container );
 
-void move_item_specific( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *target, bool (*test_method)( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *to_test ), char *item, int number );
-void move_item_single( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *target, bool (*test_method)( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *to_test ), char *item );
+void move_item_specific( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *target, bool (*test_method)( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *to_test ), char *item, int number, bool look_beyond_contents );
+void move_item_single( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *target, bool (*test_method)( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *to_test ), char *item, bool look_beyond_contents );
 void move_item_all( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *target, bool (*test_method)( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *to_test ), char *item );
 void move_all( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *target, bool (*test_method)( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *to_test ) );
 void move_item_messaging( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *target, ENTITY_INSTANCE *to_move );
@@ -68,6 +68,8 @@ bool can_drop( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *to_drop );
 bool can_give( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *to_give );
 bool can_put( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *to_put );
 bool can_get( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *to_get );
+ENTITY_INSTANCE *find_specific_item( ENTITY_INSTANCE *perspective, const char *item, int number );
+bool parse_item_movement_string( ENTITY_INSTANCE *entity, char *arg, char *item, ENTITY_INSTANCE **container );
 
 ENTITY_INSTANCE *copy_instance( ENTITY_INSTANCE *instance, bool copy_id, bool copy_contents, bool copy_sepcs, bool copy_frame );
 LLIST *copy_instance_list( LLIST *instances, bool copy_id, bool copy_contents, bool copy_specs, bool copy_frame );

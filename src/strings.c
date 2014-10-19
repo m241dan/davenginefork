@@ -52,6 +52,28 @@ int number_arg( char *fStr, char *bStr )
       return atoi( buf );
 }
 
+int number_arg_single( char *string )
+{
+   char buf[MAX_BUFFER];
+   char *orig_string = string;
+
+   if( !string_contains( string, "." ) )
+      return -1;
+
+   string = one_arg_delim( string, buf, '.' );
+
+   while( string && *string != '\0' )
+      *orig_string++ = *string++;
+   *orig_string = '\0';
+
+   if( !strcasecmp( buf, "all" ) && string[0] != '\0' )
+      return -2;
+   else if( !is_number( buf ) )
+      return -1;
+   else
+      return atoi( buf );
+}
+
 char *one_arg(char *fStr, char *bStr)
 {
    char delim;

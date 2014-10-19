@@ -403,12 +403,16 @@ void entity_from_contents_quick_sort( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *
    return;
 }
 
-void move_item_specific( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *target, bool (*test_method)( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *to_test ), char *item, int number )
+void move_item_specific( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *target, bool (*test_method)( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *to_test ), char *item, int number, bool look_beyond_contents )
 {
    ENTITY_INSTANCE *to_move;
 
+   if( look_beyond_contents )
+      to_move = find_specific_item( entity, item, number );
+   else
+      to_move = instance_list_has_by_name_prefix_specific( entity->contents, item, number );
 
-   if( ( to_move = instance_list_has_by_name_prefix_specific( entity->contents, item, number ) ) == NULL )
+   if( !to_move )
    {
       move_item_messaging_noitem( entity, target, item );
       return;
@@ -434,11 +438,16 @@ void move_item_specific( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *target, bool 
    return;
 }
 
-void move_item_single( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *target, bool (*test_method)( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *to_test ), char *item )
+void move_item_single( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *target, bool (*test_method)( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *to_test ), char *item, bool look_beyond_contents )
 {
    ENTITY_INSTANCE *to_move;
 
-   if( ( to_move = instance_list_has_by_name_prefix( entity->contents, item ) ) == NULL || to_move == entity )
+   if( look_beyond_contents )
+      to_move = find_specific_item( entity, item, 1 );
+   else
+      to_move = instance_list_has_by_name_prefix( entity->contents, item );
+
+   if( !to_move )
    {
       move_item_messaging_noitem( entity, target, item );
       return;
@@ -469,7 +478,7 @@ void move_item_all( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *target, bool (*tes
    ENTITY_INSTANCE *to_move;
 
    while( ( to_move = instance_list_has_by_name_prefix( entity->contents, item ) ) != NULL )
-      move_item_single( entity, target, can_drop, item );
+      move_item_single( entity, target, can_drop, item, FALSE );
    return;
 }
 
@@ -526,7 +535,15 @@ bool can_drop( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *to_drop )
 {
    if( !entity->builder )
    {
-      if( get_spec_value( to_drop, "CanDrop" ) == 0 )
+      if( get_spec_value( to_drop, "IsObject" ) == 1 )
+      {
+         if( get_spec_value( to_drop, "NoDrop" ) >= 1 )
+         {
+            text_to_entity( entity, "You cannot drop %s.\r\n", instance_short_descr( to_drop ) );
+            return FALSE;
+         }
+      }
+      else if( get_spec_value( to_drop, "CanDrop" ) == 0 || get_spec_value( to_drop, "NoDrop" ) >= 1 )
       {
          text_to_entity( entity, "You cannot drop %s.\r\n", instance_short_descr( to_drop ) );
          return FALSE;
@@ -539,7 +556,15 @@ bool can_give( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *to_give )
 {
    if( !entity->builder )
    {
-      if( get_spec_value( to_give, "CanGive" ) == 0 )
+      if( get_spec_value( to_give, "IsObject" ) == 1 )
+      {
+         if( get_spec_value( to_give, "NoGive" ) >= 1 )
+         {
+            text_to_entity( entity, "You cannot give %s.\r\n", instance_short_descr( to_give ) );
+            return FALSE;
+         }
+      }
+      else if( get_spec_value( to_give, "CanGive" ) == 0 || get_spec_value( to_give, "NoGive" ) >= 1 )
       {
          text_to_entity( entity, "You cannot give %s.\r\n", instance_short_descr( to_give ) );
          return FALSE;
@@ -552,7 +577,15 @@ bool can_put( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *to_put )
 {
    if( !entity->builder )
    {
-      if( get_spec_value( to_put, "CanPut" ) ==  0 )
+      if( get_spec_value( to_put, "IsObject" ) == 1 )
+      {
+         if( get_spec_value( to_put, "NoPut" ) >= 1 )
+         {
+            text_to_entity( entity, "You cannot put %s anywhere.\r\n", instance_short_descr( to_put ) );
+            return FALSE;
+         }
+      }
+      else if( get_spec_value( to_put, "CanPut" ) ==  0 || get_spec_value( to_put, "NoPut" ) >= 1 )
       {
          text_to_entity( entity, "You cannot put %s anywhere.\r\n", instance_short_descr( to_put ) );
          return FALSE;
@@ -565,12 +598,83 @@ bool can_get( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *to_get )
 {
    if( !entity->builder )
    {
-      if( get_spec_value( to_get, "CanGet" ) == 0 )
+      if( get_spec_value( to_get, "IsObject" ) == 1 )
+      {
+         if( get_spec_value( to_get, "NoGet" ) >= 1 )
+         {
+            text_to_entity( entity, "You cannot get %s.\r\n", instance_short_descr( to_get ) );
+         }
+      }
+      else if( get_spec_value( to_get, "CanGet" ) == 0 || get_spec_value( to_get, "NoGet" ) >= 1 )
       {
          text_to_entity( entity, "You cannot get %s.\r\n", instance_short_descr( to_get ) );
          return FALSE;
       }
    }
+   return TRUE;
+}
+
+ENTITY_INSTANCE *find_specific_item( ENTITY_INSTANCE *perspective, const char *item, int number )
+{
+   ENTITY_INSTANCE *found;
+   ITERATOR Iter;
+   int count = 0;
+
+   /* check the perspectives contents first */
+   AttachIterator( &Iter, perspective->contents );
+   while( ( found = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
+      if( is_prefix( item, instance_name( found ) ) )
+         if( ++count == number )
+            break;
+   DetachIterator( &Iter );
+
+   if( found && count == number )
+      return found;
+
+   if( !perspective->contained_by )
+      return NULL;
+
+   /* then check the perspectives containers contents */
+   AttachIterator( &Iter, perspective->contained_by->contents );
+   while( ( found = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
+      if( is_prefix( item, instance_name( found ) ) )
+         if( ++count == number )
+            break;
+   DetachIterator( &Iter );
+
+   return found;
+}
+
+bool parse_item_movement_string( ENTITY_INSTANCE *entity, char *arg, char *item, ENTITY_INSTANCE **container  )
+{
+   char *container_ptr;
+   char where[MAX_BUFFER], container_name[MAX_BUFFER];
+   int container_number;
+
+   arg = one_arg( arg, item );
+   arg = one_arg( arg, where );
+   arg = one_arg( arg, container_name );
+
+   if( where[0] != '\0' )
+   {
+      if( container_name[0] == '\0' )
+         container_ptr = where;
+      else
+         container_ptr = container_name;
+
+      if( ( container_number = number_arg_single( container_ptr ) ) == -2 )
+      {
+         text_to_entity( entity, "You can't get from all.container.\r\n" );
+         return FALSE;
+      }
+
+      if( ( *container = find_specific_item( entity, item, container_number ) ) == NULL )
+      {
+         text_to_entity( entity, "You cannot find %s.\r\n", container_ptr );
+         return FALSE;
+      }
+   }
+   *container = NULL;
    return TRUE;
 }
 
@@ -1431,10 +1535,10 @@ void entity_drop( void *passed, char *arg )
       switch( number )
       {
          default:
-            move_item_specific( entity, entity->contained_by, can_drop, item, number );
+            move_item_specific( entity, entity->contained_by, can_drop, item, number, FALSE );
             break;
          case -1:
-            move_item_single( entity, entity->contained_by, can_drop, buf );
+            move_item_single( entity, entity->contained_by, can_drop, buf, FALSE );
             break;
          case -2:
             move_item_all( entity, entity->contained_by, can_drop, item );
@@ -1447,6 +1551,7 @@ void entity_drop( void *passed, char *arg )
 void entity_get( void *passed, char *arg )
 {
    ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
+   ENTITY_INSTANCE *container;
    char buf[MAX_BUFFER], item[MAX_BUFFER];
    int number;
 
@@ -1465,24 +1570,31 @@ void entity_get( void *passed, char *arg )
    while( arg[0] != '\0' )
    {
       arg = one_arg_delim( arg, buf, ',' );
-      number = number_arg( buf, item );
 
-      if( number == -1 && !strcmp( buf, "all" ) )
+     if( !parse_item_movement_string( entity, buf, item, &container ) )
+        return;
+
+      number = number_arg_single( item );
+
+      if( number == -1 && !strcmp( item, "all" ) )
       {
          move_all( entity->contained_by, entity, can_get );
          return;
       }
 
+      if( !container )
+         container = entity->contained_by;
+
       switch( number )
       {
          default:
-            move_item_specific( entity->contained_by, entity, can_get, item, number );
+            move_item_specific( container, entity, can_get, item, number, FALSE );
             break;
          case -1:
-            move_item_single( entity->contained_by, entity, can_get, buf );
+            move_item_single( container, entity, can_get, buf, FALSE);
             break;
          case -2:
-            move_item_all( entity->contained_by, entity, can_get, item );
+            move_item_all( container, entity, can_get, item );
             break;
       }
    }
@@ -1491,7 +1603,7 @@ void entity_get( void *passed, char *arg )
 
 void entity_put( void *passed, char *arg )
 {
-   ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
+   return;
 }
 
 void entity_quit( void *passed, char *arg )
