@@ -673,6 +673,11 @@ bool parse_item_movement_string( ENTITY_INSTANCE *entity, char *arg, char *item,
          text_to_entity( entity, "You cannot find %s.\r\n", container_ptr );
          return FALSE;
       }
+      if( ( get_spec_value( *container, "IsContainer" ) == 0 ) && !entity->builder )
+      {
+         text_to_entity( entity, "%s is not a container.\r\n", instance_short_descr( *container ) );
+         return FALSE;
+      }
    }
    *container = NULL;
    return TRUE;
@@ -1603,6 +1608,51 @@ void entity_get( void *passed, char *arg )
 
 void entity_put( void *passed, char *arg )
 {
+   ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
+   ENTITY_INSTANCE *container;
+   char buf[MAX_BUFFER], item[MAX_BUFFER];
+   int number;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_entity( entity, "Put what where\r\n" );
+      return;
+   }
+
+   while( arg[0] != '\0' )
+   {
+      arg = one_arg_delim( arg, buf, ',' );
+
+     if( !parse_item_movement_string( entity, buf, item, &container ) )
+        return;
+
+      number = number_arg_single( item );
+
+      if( !container )
+      {
+         text_to_entity( entity, "Put %s where?\r\n", item );
+         return;
+      }
+
+      if( number == -1 && !strcmp( item, "all" ) )
+      {
+         move_all( entity, container, can_get );
+         return;
+      }
+
+      switch( number )
+      {
+         default:
+            move_item_specific( entity, container, can_get, item, number, FALSE );
+            break;
+         case -1:
+            move_item_single( entity, container, can_get, buf, FALSE);
+            break;
+         case -2:
+            move_item_all( entity, container, can_get, item );
+            break;
+      }
+   }
    return;
 }
 
