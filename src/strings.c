@@ -37,7 +37,7 @@ int number_arg( char *fStr, char *bStr )
 {
    char buf[MAX_BUFFER];
 
-   if( !string_contains( fStr, "." ) )
+   if( !string_contains( fStr, "\\." ) )
       return -1;
 
    fStr = one_arg_delim( fStr, buf, '.' );
@@ -56,17 +56,22 @@ int number_arg_single( char *string )
 {
    char buf[MAX_BUFFER];
    char *orig_string = string;
+   char *non_inc_orig_string = orig_string;
 
-   if( !string_contains( string, "." ) )
+   if( !string_contains( string, "\\." ) )
       return -1;
 
    string = one_arg_delim( string, buf, '.' );
+
+   bug( "%s: string after delim %s", __FUNCTION__, string );
 
    while( string && *string != '\0' )
       *orig_string++ = *string++;
    *orig_string = '\0';
 
-   if( !strcasecmp( buf, "all" ) && string[0] != '\0' )
+   bug( "%s: buf = %s string = %s", __FUNCTION__, buf, orig_string );
+
+   if( !strcasecmp( buf, "all" ) && non_inc_orig_string[0] != '\0' )
       return -2;
    else if( !is_number( buf ) )
       return -1;

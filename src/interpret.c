@@ -220,6 +220,7 @@ const char *editor_return_desc( void *extra )
 }
 
 struct typCmd builder_commands[] = {
+   { "put", entity_put, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
    { "grab", entity_grab, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
    { "chat", entity_chat, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
    { "load", entity_load, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },

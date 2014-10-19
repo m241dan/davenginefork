@@ -141,6 +141,11 @@ typedef enum
    SEL_NULL = -1, SEL_FRAME = 0, SEL_INSTANCE, SEL_WORKSPACE, SEL_PROJECT, SEL_STRING, MAX_SEL
 } SEL_TYPING;
 
+typedef enum
+{
+   COM_DROP, COM_GET, COM_PUT, COM_GIVE
+} ITEM_MOVE_COM;
+
 /*****************
  * NANNY INDEXES *
  *****************/
