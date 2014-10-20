@@ -9,6 +9,8 @@ const char *const spec_table[] = {
    "CanGet", "CanGive", "CanDrop", "CanPut", "CanMove",
    /* No Specs */
    "NoGet", "NoGive", "NoDrop", "NoPut", "NoMove",
+   /* Scripting Specs */
+   "onEnter", "onLeave", "onEntering", "onLeaving",
    /* Misc Specs */
    "MirrorExit", "Terrain",
 
