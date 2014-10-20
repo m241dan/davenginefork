@@ -85,6 +85,36 @@ int main(int argc, char **argv)
 
    log_string( "Connecting to Database" );
 
+/* test if lua is working
+   {
+      lua_pushnil( lua_handle );
+      lua_setglobal( lua_handle, "boot" );
+
+      int ret = luaL_loadfile( lua_handle, "../scripts/boot.lua" );
+      if( ret )
+      {
+         if( ret != LUA_ERRFILE )
+            bug( "%s: boot(): %s\r\n", __FUNCTION__, lua_tostring( lua_handle, - 1 ) );
+         lua_pop( lua_handle, 1 );
+         exit(1);
+      }
+      ret = lua_pcall( lua_handle, 0, 0, 0 );
+      if( ret )
+      {
+         bug( "%s: boot(): %s\n\r", __FUNCTION__, lua_tostring( lua_handle, -1 ) );
+         lua_pop( lua_handle, 1 );
+         exit(1);
+      }
+      lua_getglobal( lua_handle, "boot" );
+      if( lua_isnil( lua_handle, -1 ) )
+      {
+         bug( "%s: boot is nil.", __FUNCTION__ );
+         lua_pop( lua_handle, 1 );
+         exit(1);
+      }
+      lua_pcall( lua_handle, 0, 0, 0 );
+   }
+*/
    if( ( sql_handle = mysql_init(NULL) ) == NULL )
    {
       bug( "Could not initialize mysql connection: %s", mysql_error( sql_handle ) );
