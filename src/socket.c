@@ -33,6 +33,8 @@ LLIST    * active_frameworks = NULL;
 LLIST    * eInstances_list = NULL;
 
 MYSQL    * sql_handle = NULL;
+lua_State *lua_handle  = NULL;
+
 /* mccp support */
 const unsigned char compress_will   [] = { IAC, WILL, TELOPT_COMPRESS,  '\0' };
 const unsigned char compress_will2  [] = { IAC, WILL, TELOPT_COMPRESS2, '\0' };
@@ -68,6 +70,18 @@ int main(int argc, char **argv)
 
   /* note that we are booting up */
   log_string("Program starting.");
+
+
+   log_string( "Connecting to Lua" );
+
+   if( ( lua_handle = luaL_newstate() ) == NULL )
+   {
+      bug( "Could not initialize the Lua handle" );
+      exit(1);
+   }
+
+   log_string( "Loading Lua Libraries" );
+   luaL_openlibs( lua_handle );
 
    log_string( "Connecting to Database" );
 
@@ -133,6 +147,8 @@ int main(int argc, char **argv)
 
   /* close down the socket */
   close(control);
+
+   lua_close( lua_handle );
 
   /* terminated without errors */
   log_string("Program terminated without errors.");
