@@ -230,83 +230,6 @@ const char *return_framework_strings( ENTITY_FRAMEWORK *frame, const char *borde
    return buf;
 }
 
-const char *return_framework_specs_and_stats( ENTITY_FRAMEWORK *frame, const char *border, int width )
-{
-   static char buf[MAX_BUFFER];
-   char tempstring[MAX_BUFFER];
-   int space_after_border;
-
-   memset( &buf[0], 0, sizeof( buf ) );
-   space_after_border = width - ( strlen( border ) * 2 );
-
-   mud_printf( tempstring, "%s%s%s\r\n", border, print_bar( "-", space_after_border ), border );
-   strcat( buf, tempstring );
-
-   space_after_border = width - ( strlen( border ) * 3 );
-
-   mud_printf( tempstring, "%s%s", border, print_header( "Specifications", " ", space_after_border / 2 ) );
-   strcat( buf, tempstring );
-
-   strcat( buf, border );
-
-   mud_printf( tempstring, " %s%s\r\n", print_header( "Stats", " ", space_after_border / 2 ), border );
-   strcat( buf, tempstring );
-
-   space_after_border = width - ( strlen( border ) * 2 );
-
-   mud_printf( tempstring, "%s%s%s\r\n", border, print_bar( "-", space_after_border ), border );
-   strcat( buf, tempstring );
-
-   strcat( buf, return_spec_and_stat_list( frame->specifications, border, width, FALSE ) );
-   while( ( frame = frame->inherits ) != NULL )
-      strcat( buf, return_spec_and_stat_list( frame->specifications, border, width, TRUE ) );
-
-   buf[strlen( buf )] = '\0';
-   return buf;
-}
-
-const char *return_spec_and_stat_list( LLIST *spec_list, const char *border, int width, bool inherited )
-{
-   SPECIFICATION *spec;
-   ITERATOR Iter;
-   static char buf[MAX_BUFFER];
-
-   memset( &buf[0], 0, sizeof( buf ) );
-
-   AttachIterator( &Iter, spec_list );
-   while( ( spec = (SPECIFICATION *)NextInList( &Iter ) ) != NULL )
-      strcat( buf, return_spec_and_stat( spec, border, width, inherited ) );
-   DetachIterator( &Iter );
-
-   buf[strlen( buf )] = '\0';
-   return buf;
-}
-
-const char *return_spec_and_stat( SPECIFICATION *spec, const char *border, int width, bool inherited )
-{
-   static char buf[MAX_BUFFER];
-   char tempstring[MAX_BUFFER];
-   int space_after_border;
-
-   memset( &buf[0], 0, sizeof( buf ) );
-   space_after_border = width - ( strlen( border ) * 2 );
-
-   mud_printf( tempstring, "%s%s", border,
-   fit_string_to_space(
-   quick_format( " %s : %d%s", spec_table[spec->type], spec->value, inherited ? " ( inherited )" : "" ), ( space_after_border / 2 ) - 1 ) );
-   strcat( buf, tempstring );
-
-   strcat( buf, border );
-
-   mud_printf( tempstring, " %s%s\r\n",
-   print_header( " ", " ", ( space_after_border / 2 ) - 1 ),
-   border );
-   strcat( buf, tempstring );
-
-   buf[strlen( buf )] = '\0';
-   return buf;
-}
-
 const char *return_framework_fixed_content( ENTITY_FRAMEWORK *frame, const char *border, int width )
 {
    static char buf[MAX_BUFFER];
@@ -355,6 +278,56 @@ const char *return_fixed_content_list( LLIST *fixed_list, const char *border, in
 
    buf[strlen( buf )] = '\0';
    return buf;
+}
+
+const char *return_framework_specs_and_stats( ENTITY_FRAMEWORK *frame, const char *border, int width )
+{
+   const char *const spec_from_table[] = {
+      "", "", "( inherited )"
+   };
+   SPECIFICATION *spec;
+   static char buf[MAX_BUFFER];
+   char tempstring[MAX_BUFFER];
+   int space_after_border;
+   int x, spec_from;
+
+   space_after_border = width - ( strlen( border ) * 2 );
+
+   mud_printf( buf, "%s%s%s\r\n", border, print_bar( "-", space_after_border ), border );
+   space_after_border = width - ( strlen( border ) * 3 );
+   mud_printf( tempstring, "%s%s", border, print_header( "Specifications", " ", space_after_border / 2 ) );
+   strcat( buf, tempstring );
+   strcat( buf, border );
+   mud_printf( tempstring, " %s%s\r\n", print_header( "Stats", " ", space_after_border / 2 ), border );
+   strcat( buf, tempstring );
+   space_after_border = width - ( strlen( border ) * 2 );
+   mud_printf( tempstring, "%s%s%s\r\n", border, print_bar( "-", space_after_border ), border );
+   strcat( buf, tempstring );
+
+   /* later when stats are in it will look like ;x < MAX_SPEC || y < MAX_STAT; */
+   for( x = 0, spec_from = 0; x < MAX_SPEC; x++ )
+   {
+      spec = frame_has_spec_detailed_by_type( frame, x, &spec_from );
+      /* grab stat with id 0 */
+      /* later will be if !spec && !state */
+      if( !spec )
+         continue;
+      if( spec )
+         mud_printf( tempstring, "%s%s", border, fit_string_to_space( quick_format( " %s : %d%s", spec_table[spec->type], spec->value, spec_from_table[spec_from] ), ( space_after_border / 2 ) - 1 ) );
+      else
+         mud_printf( tempstring, "%s%s", border, print_header( " ", " ", ( space_after_border / 2 ) - 1 ) );
+      strcat( buf, tempstring );
+
+      strcat( buf, border );
+
+      /* if stat mirror spec */
+      mud_printf( tempstring, " %s%s\r\n", print_header( " ", " ", ( space_after_border / 2 ) - 1 ), border );
+      strcat( buf, tempstring );
+
+   }
+   buf[strlen( buf )] = '\0';
+   return buf;
+
 }
 
 void eFramework_name( void *passed, char *arg )
