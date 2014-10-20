@@ -558,7 +558,6 @@ void eFramework_save( void *passed, char *arg )
          add_frame_to_workspace( frame, olc->using_workspace );
    }
    text_to_olc( olc, "Saved.\r\n" );
-   olc_short_prompt( olc );
    return;
 }
 
