@@ -545,6 +545,23 @@ void eFramework_done( void *passed, char *arg )
    return;
 }
 
+void eFramework_save( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_FRAMEWORK *frame = (ENTITY_FRAMEWORK *)olc->editing;
+
+   if( !strcmp( frame->tag->created_by, "null" ) )
+   {
+      new_tag( frame->tag, olc->account->name );
+      new_eFramework( frame );
+      if( olc->using_workspace )
+         add_frame_to_workspace( frame, olc->using_workspace );
+   }
+   text_to_olc( olc, "Saved.\r\n" );
+   olc_short_prompt( olc );
+   return;
+}
+
 void eFramework_addContent( void *passed, char *arg )
 {
    INCEPTION *olc = (INCEPTION *)passed;

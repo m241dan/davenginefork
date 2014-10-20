@@ -138,6 +138,7 @@ struct typCmd frameworks_sub_commands[] = {
 
 struct typCmd create_eFramework_commands[] = {
    { "done", eFramework_done, LEVEL_BASIC, NULL, FALSE, NULL, create_eFramework_commands },
+   { "save", eFramework_save, LEVEL_BASIC, NULL, FALSE, NULL, create_eFramework_commands },
    { "return", editor_global_return, LEVEL_BASIC, NULL, FALSE, editor_return_desc, create_eFramework_commands },
    { "switch", editor_switch, LEVEL_BASIC, NULL, FALSE, NULL, create_eFramework_commands },
    { "addcontent", eFramework_addContent, LEVEL_BASIC, NULL, FALSE, NULL, create_eFramework_commands },
