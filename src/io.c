@@ -321,3 +321,31 @@ int directory_file_count_regex( DIR *directory, const char *regex_string )
    rewinddir( directory );
    return size;
 }
+
+void copy_flat_file( FILE *dest, FILE *src )
+{
+   int c;
+
+   while( ( c = getc( src ) ) != EOF )
+      fprintf( dest, "%c", c );
+
+   return;
+}
+
+const char *fread_file( FILE *fp )
+{
+   static char buf[MAX_BUFFER];
+   int c, count = 0;
+
+   memset( &buf[0], 0, sizeof( buf ) );
+
+   while( ( c = getc( fp ) ) != EOF )
+   {
+      buf[count++] = c;
+      if( count >= ( MAX_BUFFER - 1 ) )
+         break;
+   }
+
+   buf[strlen( buf )] = '\0';
+   return buf;
+}

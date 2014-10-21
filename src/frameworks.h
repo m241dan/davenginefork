@@ -71,3 +71,8 @@ const char *chase_description( ENTITY_FRAMEWORK *frame );
 
 void add_frame_to_fixed_contents( ENTITY_FRAMEWORK *frame_to_add, ENTITY_FRAMEWORK *container );
 void rem_frame_from_fixed_contents( ENTITY_FRAMEWORK *frame_to_rem, ENTITY_FRAMEWORK *container );
+
+FILE *open_script( ENTITY_FRAMEWORK *frame, const char *permissions );
+bool f_script_exists( ENTITY_FRAMEWORK *frame );
+void init_f_script( ENTITY_FRAMEWORK *frame, bool force );
+const char *print_script( ENTITY_FRAMEWORK *frame );

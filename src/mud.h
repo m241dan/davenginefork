@@ -455,6 +455,8 @@ char   *fread_string          ( FILE *fp );                 /* allocated data  *
 char   *fread_word            ( FILE *fp );                 /* pointer         */
 int     fread_number          ( FILE *fp );                 /* just an integer */
 int directory_file_count_regex( DIR *directory, const char *regex_string );
+void    copy_flat_file        ( FILE *dest, FILE *src );
+const char *fread_file        ( FILE *fp );
 
 /*
  * socket.c

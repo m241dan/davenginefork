@@ -581,6 +581,27 @@ void eFramework_addContent( void *passed, char *arg )
    return;
 }
 
+void eFramework_script( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_FRAMEWORK *frame = (ENTITY_FRAMEWORK *)olc->editing;
+
+   if( !strcmp( frame->tag->created_by, "null" ) )
+   {
+      text_to_olc( olc, "This framework must completely exist before you can start scripting it, save or done and reopen.\r\n" );
+      return;
+   }
+
+   if( !f_script_exists( frame ) )
+   {
+      init_f_script( frame, FALSE );
+      text_to_olc( olc, "You generate a script file for %s.\r\n", chase_name( frame ) );
+      return;
+   }
+   text_to_olc( olc, "%s", print_script( frame ) );
+   return;
+}
+
 int init_project_editor( INCEPTION *olc, PROJECT *project )
 {
    int ret = RET_SUCCESS;

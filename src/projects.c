@@ -581,6 +581,26 @@ void fread_framework_import( FILE *fp, int *framework_id_table )
                quick_query( "INSERT INTO live_specs VALUES ( '%s', %d, 'f%d' );", spec_table[type], value, frame->tag->id );
                break;
             }
+            if( !strcmp( word, "Script" ) )
+            {
+               FILE *script;
+
+               if( ( script = open_script( frame, "w" ) ) == NULL )
+               {
+                  bug( "%s: having a problem creating the script for the imported framework.", __FUNCTION__ );
+                  break;
+               }
+
+               fprintf( script, "%s", fread_file( fp ) );
+               quick_query( "INSERT INTO `entity_frameworks` VALUES ( %d, %d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d' );",
+                  frame->tag->id, frame->tag->type, frame->tag->created_by,
+                  frame->tag->created_on, frame->tag->modified_by, frame->tag->modified_on,
+                  frame->name, frame->short_descr, frame->long_descr, frame->description,
+                  inherits == -1 ? inherits : framework_id_table[inherits] );
+               free_eFramework( frame );
+               fclose( script );
+               return;
+            }
             break;
       }
       if( !found )
@@ -876,6 +896,13 @@ void fwrite_framework_export( FILE *fp, ENTITY_FRAMEWORK *frame, int *framework_
    fwrite_specifications( fp, frame->specifications, framework_id_table );
 
    fprintf( fp, "Inherits     %d\n", frame->inherits ? get_id_table_position( framework_id_table, frame->inherits->tag->id ) : -1 );
+
+   if( f_script_exists( frame ) )
+   {
+      fprintf( fp, "Script\n" );
+      fprintf( fp, "%s\n", print_script( frame ) );
+      return;
+   }
    fprintf( fp, "#END\n\n" );
    return;
 }

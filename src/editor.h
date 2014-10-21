@@ -21,6 +21,7 @@ void eFramework_addSpec( void *passed, char *arg );
 void eFramework_done( void *passed, char *arg );
 void eFramework_save( void *passed, char *arg );
 void eFramework_addContent( void *passed, char *arg );
+void eFramework_script( void *passed, char *arg );
 
 int init_project_editor( INCEPTION *olc, PROJECT *project );
 void boot_project_editor( INCEPTION *olc, PROJECT *project );

@@ -724,3 +724,66 @@ void rem_frame_from_fixed_contents( ENTITY_FRAMEWORK *frame_to_rem, ENTITY_FRAME
    quick_query( "DELETE FROM `framework_fixed_possessions` WHERE frameworkID=%d AND content_frameworkID=%d;", container->tag->id, frame_to_rem->tag->id );
    return;
 }
+
+FILE *open_script( ENTITY_FRAMEWORK *frame, const char *permissions )
+{
+   FILE *script;
+   script = fopen( quick_format( "../scripts/frames/%d.lua", frame->tag->id ), permissions );
+   return script;
+}
+
+bool f_script_exists( ENTITY_FRAMEWORK *frame )
+{
+   FILE *script;
+
+   if( !strcmp( frame->tag->created_by, "null" ) )
+      return FALSE;
+
+   if( ( script = fopen( quick_format( "../scripts/frames/%d.lua", frame->tag->id ), "r" ) ) == NULL )
+      return FALSE;
+
+   fclose( script );
+   return TRUE;
+}
+
+void init_f_script( ENTITY_FRAMEWORK *frame, bool force )
+{
+   FILE *temp, *dest;
+
+   if( f_script_exists( frame ) && !force )
+      return;
+
+   if( ( temp = fopen( "../scripts/templates/frame.lua", "r" ) ) == NULL )
+   {
+      bug( "%s: could not open the template.", __FUNCTION__ );
+      return;
+   }
+
+   if( ( dest = fopen( quick_format( "../scripts/frames/%d.lua", frame->tag->id ), "w" ) ) == NULL )
+   {
+      bug( "%s: could not open the script.", __FUNCTION__ );
+      return;
+   }
+
+   copy_flat_file( dest, temp );
+   fclose( dest );
+   fclose( temp );
+   return;
+}
+
+const char *print_script( ENTITY_FRAMEWORK *frame )
+{
+   const char *buf;
+   FILE *fp;
+
+   if( !f_script_exists( frame ) )
+      return "This framework has no script.";
+
+   if( ( fp = open_script( frame, "r" ) ) == NULL )
+      return "There was a pretty big error.";
+
+   buf = fread_file( fp );
+   fclose( fp );
+   return buf;
+}
+
