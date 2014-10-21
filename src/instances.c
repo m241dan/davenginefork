@@ -1516,6 +1516,7 @@ int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *exit )
 {
    int ret = RET_SUCCESS;
    ENTITY_INSTANCE *move_to;
+   SPECIFICATION *script;
 
    if( get_spec_value( entity, "CanMove" ) < 1 && !entity->builder )
    {
@@ -1532,6 +1533,16 @@ int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *exit )
    entity_to_world( entity, move_to );
    text_to_entity( entity, "You move to the %s.\r\n\n", instance_short_descr( exit ) );
    entity_look( entity, "" );
+
+   if( ( script = has_spec( move_to, "onEnter" ) ) != NULL )
+   {
+      if( prep_stack( get_script_path_from_spec( script ), "onEnter" ) )
+      {
+         lua_pcall( 0, 0, 0, 0 );
+         /* currently nothing to pass it, let's jsut see if it calls :P */
+      }
+   }
+
    return ret;
 }
 

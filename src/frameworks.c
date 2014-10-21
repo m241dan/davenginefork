@@ -728,7 +728,7 @@ void rem_frame_from_fixed_contents( ENTITY_FRAMEWORK *frame_to_rem, ENTITY_FRAME
 FILE *open_script( ENTITY_FRAMEWORK *frame, const char *permissions )
 {
    FILE *script;
-   script = fopen( quick_format( "../scripts/frames/%d.lua", frame->tag->id ), permissions );
+   script = fopen( get_frame_script_path( frame ), permissions );
    return script;
 }
 

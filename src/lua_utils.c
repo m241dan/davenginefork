@@ -38,3 +38,27 @@ bool prep_stack( const char *file, const char *function )
    }
    return TRUE;
 }
+
+const char *get_script_path_from_spec( SPECIFICATION *spec )
+{
+   int id;
+
+   if( spec->owner[0] == 'f' )
+   {
+      id = atoi( spec->owner +1 );
+      return get_frame_script_path( get_framework_by_id( id ) );
+   }
+   id = atoi( spec->owner );
+   return get_instance_script_path( get_instance_by_id( id ) );
+}
+
+const char *get_frame_script_path( ENTITY_FRAMEWORK *frame )
+{
+   return quick_format( "../scripts/frames/%d.lua", frame->tag->id );
+}
+
+const char *get_instance_script_path( ENTITY_INSTANCE *instance )
+{
+   return quick_format( "../scripts/instances/%d.lua", instance->tag->id );
+}
+
