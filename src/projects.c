@@ -877,7 +877,6 @@ void save_framework_export( char *pDir, ENTITY_FRAMEWORK *frame, int *framework_
       return;
    }
    fwrite_framework_export( fp, frame, framework_id_table );
-   fprintf( fp, "%s\n", FILE_TERMINATOR );
    fclose( fp );
    return;
 }
