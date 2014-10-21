@@ -362,6 +362,7 @@ typedef struct buffer_type
 #include "editor.h"
 #include "specifications.h"
 #include "projects.h"
+#include "lua_utils.h"
 
 /******************************
  * End of new structures      *
