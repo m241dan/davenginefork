@@ -404,8 +404,8 @@ void load_workspaces_from_directory_into_db_and_project( PROJECT *project, DIR *
             bug( "%s: bad workspace file %s.", __FUNCTION__, file->d_name );
             continue;
          }
+         fclose( fp );
          add_workspace_to_project( wSpace, project );
-         free_workspace( wSpace );
       }
    }
    rewinddir( project_directory );
