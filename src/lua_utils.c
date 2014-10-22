@@ -62,3 +62,36 @@ const char *get_instance_script_path( ENTITY_INSTANCE *instance )
    return quick_format( "../scripts/instances/%d.lua", instance->tag->id );
 }
 
+void push_instance( ENTITY_INSTANCE *instance, lua_State *L )
+{
+   ENTITY_INSTANCE **box;
+
+   if( !instance )
+   {
+       bug( "%s: trying to push a NULL instance.", __FUNCTION__ );
+       lua_pushnil( L );
+       return;
+   }
+
+   if( !strcmp( instance->tag->created_by, "null" ) )
+   {
+      bug( "%s: bad instance trying to be pushed, created_by null", __FUNCTION__ );
+      lua_pushnil( L );
+      return;
+   }
+
+   box = (ENTITY_INSTANCE **)lua_newuserdata( L, sizeof( ENTITY_INSTANCE * ) );
+   luaL_getmetatable( L, "EntityInstance.meta" );
+   if( lua_isnil( L, -1 ) )
+   {
+      bug( "%s: EntityInstance.meta is missing.", __FUNCTION__ );
+      lua_pop( L, -1 ); /* pop meta */
+      lua_pop( L, -1 ); /* pop box */
+      lua_pushnil( L );
+      return;
+   }
+   lua_setmetatable( L, -2 );
+
+   *box = instance;
+   return;
+}

@@ -80,6 +80,8 @@ ENTITY_INSTANCE *init_builder( void )
 
    builder = init_eInstance();
    builder->tag->id = -69;
+   FREE( builder->tag->created_by );
+   builder->tag->created_by = strdup( "God" );
    builder->framework = init_eFramework();
 
    builder->framework->name = strdup( "Builder" );
@@ -716,10 +718,6 @@ bool parse_item_movement_string( ENTITY_INSTANCE *entity, char *arg, char *item,
    arg = one_arg( arg, item );
    arg = one_arg( arg, where );
    arg = one_arg( arg, container_name );
-
-   bug( "%s: item = %s", __FUNCTION__, item );
-   bug( "%s: where = %s", __FUNCTION__, where );
-   bug( "%s:container_name = %s", __FUNCTION__, container_name );
 
    if( where[0] != '\0' )
    {
@@ -1534,11 +1532,13 @@ int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *exit )
    text_to_entity( entity, "You move to the %s.\r\n\n", instance_short_descr( exit ) );
    entity_look( entity, "" );
 
-   if( ( script = has_spec( move_to, "onEnter" ) ) != NULL )
+   if( ( script = has_spec( move_to, "onEntityEnter" ) ) != NULL )
    {
-      if( prep_stack( get_script_path_from_spec( script ), "onEnter" ) )
+      if( prep_stack( get_script_path_from_spec( script ), "onEntityEnter" ) )
       {
-         lua_pcall( lua_handle, 0, 0, 0 );
+         push_instance( move_to, lua_handle );
+         push_instance( entity, lua_handle );
+         lua_pcall( lua_handle, 2, LUA_MULTRET, 0 );
          /* currently nothing to pass it, let's jsut see if it calls :P */
       }
    }

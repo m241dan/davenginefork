@@ -1,7 +1,7 @@
-function onEnter( )
+function onEntityEnter( room, mob )
 end
 
-function onLeaving( )
+function onEntityLeave( )
 end
 
 function onEntering( )

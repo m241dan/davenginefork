@@ -20,7 +20,7 @@
 
 #include "lualib.h"
 #include "lauxlib.h"
-
+#include "../../src/lua_instance.h"
 
 /*
 ** these libs are loaded by lua.c and are readily available to any Lua
