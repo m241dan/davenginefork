@@ -1538,7 +1538,7 @@ int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *exit )
    {
       if( prep_stack( get_script_path_from_spec( script ), "onEnter" ) )
       {
-         lua_pcall( 0, 0, 0, 0 );
+         lua_pcall( lua_handle, 0, 0, 0 );
          /* currently nothing to pass it, let's jsut see if it calls :P */
       }
    }

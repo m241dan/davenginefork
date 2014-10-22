@@ -51,7 +51,7 @@
 #define FILE_TERMINATOR    "EOF"                  /* end of file marker                 */
 #define COPYOVER_FILE      "../txt/copyover.dat"  /* tempfile to store copyover data    */
 #define EXE_FILE           "../src/SocketMud"     /* the name of the mud binary         */
-#define DB_NAME            "muddbtwo"
+#define DB_NAME            "muddb"
 #define DB_ADDR            "localhost"
 #define DB_LOGIN           "m241dan"
 #define DB_PASSWORD        "Grc937!"

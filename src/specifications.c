@@ -10,7 +10,7 @@ const char *const spec_table[] = {
    /* No Specs */
    "NoGet", "NoGive", "NoDrop", "NoPut", "NoMove",
    /* Scripting Specs */
-   "onEnter", "onLeave", "onEntering", "onLeaving",
+   "onEntityEnter", "onEntityLeave", "onEntering", "onLeaving",
    /* Misc Specs */
    "MirrorExit", "Terrain",
 
