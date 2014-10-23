@@ -18,7 +18,7 @@ const struct luaL_Reg EntityInstanceLib_m[] = {
    { "hasItemInInventoryFramework", hasItemInInventoryFramework },
    /* actions */
    { "interp", luaEntityInstanceInterp },
-   { "teleport", luaEntityInstanceTeleport },
+   { "to", luaEntityInstanceTeleport },
    { NULL, NULL } /* gandalf */
 };
 
@@ -208,6 +208,62 @@ int getItemFromInventory( lua_State *L )
 
    push_instance( item, L );
    return 1;
+}
+
+int getSpec( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+   SPECIFICATION *spec;
+   const char *spectype;
+
+   if( ( instance = *(ENTITY_INSTANCE**)luaL_checkudata( L, 1, "EntityInstance.meta" ) ) == NULL )
+   {
+      bug( "%s: passed non-instance argument.", __FUNCTION__ );
+      lua_pushnil( L );
+      return 1;
+   }
+
+   if( ( spectype = luaL_checkstring( L, 2 ) ) == NULL )
+   {
+      bug( "%s: no string passed.", __FUNCTION__ );
+      lua_pushnil( L );
+      return 1;
+   }
+
+   if( ( spec = has_spec( instance, spectype ) ) == NULL )
+   {
+      bug( "%s: no such spec %s.", __FUNCTION__, spectype );
+      lua_pushnil( L );
+      return 1;
+   }
+   push_specification( spec, L );
+   return 1;
+}
+
+int addSpec( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+   SPECIFICATION *spec;
+
+   if( ( instance = *(ENTITY_INSTANCE**)luaL_checkudata( L, 1, "EntityInstance.meta" ) ) == NULL )
+   {
+      bug( "%s: passed non-instance argument.", __FUNCTION__ );
+      return 0;
+   }
+
+   if( ( spec = *(SPECIFICATION **)luaL_checkudata( L, 2, "Specification.meta" ) ) == NULL )
+   {
+      bug( "%s: no spec passed.", __FUNCTION__ );
+      return 0;
+   }
+
+   if( strcmp( spec->owner, "null" ) )
+   {
+      bug( "%s: cannot add a spec that already has an owner.", __FUNCTION__ );
+      return 0;
+   }
+   add_spec_to_instance( spec, instance );
+   return 0;
 }
 
 int isLoaded( lua_State *L )

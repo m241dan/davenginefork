@@ -7,4 +7,4 @@ const char *get_instance_script_path( ENTITY_INSTANCE *instance );
 
 void push_instance( ENTITY_INSTANCE *instance, lua_State *L );
 void push_framework( ENTITY_FRAMEWORK *frame, lua_State *L );
-void push_spec( SPECIFICATION *spec, lua_State *L );
+void push_specification( SPECIFICATION *spec, lua_State *L );

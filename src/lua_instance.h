@@ -17,6 +17,10 @@ int getDesc( lua_State *L );
 int getID( lua_State *L );
 int getLevel( lua_State *L);
 int getItemFromInventory( lua_State *L );
+int getSpec( lua_State *L );
+
+/* setters */
+int addSpec( lua_State *L );
 
 /* bools */
 int isLoaded( lua_State *L );
@@ -30,5 +34,4 @@ int luaEntityInstanceTeleport( lua_State *L );
 
 /* later */
 int getStat( lua_State *L );
-int getSpec( lua_State *L );
 int getFramework( lua_State *L );
