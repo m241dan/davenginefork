@@ -95,3 +95,64 @@ void push_instance( ENTITY_INSTANCE *instance, lua_State *L )
    *box = instance;
    return;
 }
+
+void push_framework( ENTITY_FRAMEWORK *frame, lua_State *L )
+{
+   ENTITY_FRAMEWORK **box;
+
+   if( !frame )
+   {
+      bug( "%s: trying to push a NULL frame.", __FUNCTION__ );
+      lua_pushnil( L );
+      return;
+   }
+
+   if( !strcmp( frame->tag->created_by, "null" ) )
+   {
+      bug( "%s: bad framework trying to be pushed, created_by null", __FUNCTION__ );
+      lua_pushnil( L );
+      return;
+   }
+
+   box = (ENTITY_FRAMEWORK **)lua_newuserdata( L, sizeof( ENTITY_FRAMEWORK * ) );
+   luaL_getmetatable( L, "EntityFramework.meta" );
+   if( lua_isnil( L, -1 ) )
+   {
+      bug( "%s: EntityFramework.meta is missing.", __FUNCTION__ );
+      lua_pop( L, -1 );
+      lua_pop( L, -1 );
+      lua_pushnil( L );
+      return;
+   }
+   lua_setmetatable( L, -2 );
+
+   *box = frame;
+   return;
+}
+
+void push_specification( SPECIFICATION *spec, lua_State *L )
+{
+   SPECIFICATION **box;
+
+   if( !spec )
+   {
+      bug( "%s: trying to push a NULL spec.", __FUNCTION__ );
+      lua_pushnil( L );
+      return;
+   }
+
+   box = (SPECIFICATION **)lua_newuserdata( L, sizeof( SPECIFICATION * ) );
+   luaL_getmetatable( L, "Specification.meta" );
+   if( lua_isnil( L, -1 ) )
+   {
+      bug( "%s: Specification.meta is missing.", __FUNCTION__ );
+      lua_pop( L, -1 );
+      lua_pop( L, -1 );
+      lua_pushnil( L );
+      return;
+   }
+   lua_setmetatable( L, -2 );
+
+   *box = spec;
+   return;
+}

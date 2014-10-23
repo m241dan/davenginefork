@@ -15,14 +15,6 @@ struct entity_framework
 
 };
 
-struct scripting_module
-{
-   bool onEnter;
-   bool onLeave;
-   bool onEntering;
-   bool onLeaving;
-};
-
 /* creation */
 ENTITY_FRAMEWORK *init_eFramework( void );
 int clear_eFramework( ENTITY_FRAMEWORK *frame );

@@ -22,6 +22,7 @@ int getItemFromInventory( lua_State *L );
 int isLoaded( lua_State *L );
 int isLive( lua_State *L );
 int isBuilder( lua_State *L );
+int hasItemInInventoryFramework( lua_State *L );
 
 /* actions */
 int luaEntityInstanceInterp( lua_State *L );

@@ -15,6 +15,7 @@ const struct luaL_Reg EntityInstanceLib_m[] = {
    { "isLoaded", isLoaded },
    { "isLive", isLive },
    { "isBuilder", isBuilder },
+   { "hasItemInInventoryFramework", hasItemInInventoryFramework },
    /* actions */
    { "interp", luaEntityInstanceInterp },
    { "teleport", luaEntityInstanceTeleport },
@@ -45,7 +46,6 @@ int luaopen_EntityInstanceLib( lua_State *L )
 int EntityInstanceGC( lua_State *L )
 {
    ENTITY_INSTANCE **instance;
-   bug( "%s: gc being called", __FUNCTION__ );
    instance = (ENTITY_INSTANCE **)lua_touserdata( L, -1 );
    *instance = NULL;
    return 0;
@@ -166,7 +166,48 @@ int getLevel( lua_State *L )
 
 int getItemFromInventory( lua_State *L )
 {
-   return 0;
+   ENTITY_INSTANCE *instance;
+   ENTITY_INSTANCE *item;
+
+   int top = lua_gettop( L );
+
+   if( top != 2 )
+   {
+      bug( "%s: passed improper amount of arguments.", __FUNCTION__, top );
+      lua_pushnil( L );
+      return 1;
+   }
+   if( ( instance = *(ENTITY_INSTANCE**)luaL_checkudata( L, 1, "EntityInstance.meta" ) ) == NULL )
+   {
+      bug( "%s: passed non-instance argument.", __FUNCTION__ );
+      lua_pushnil( L );
+      return 1;
+   }
+
+   switch( lua_type( L, 2 ) )
+   {
+      default:
+         bug( "%s: bad argument passed", __FUNCTION__ );
+         lua_pushnil( L );
+         return 1;
+      case LUA_TNUMBER:
+         if( ( item = get_instance_by_id( lua_tonumber( L, 2 ) ) ) == NULL )
+         {
+            lua_pushnil( L );
+            return 1;
+         }
+         break;
+      case LUA_TSTRING:
+         if( ( item = get_instance_by_name( lua_tostring( L, 2 ) ) ) == NULL )
+         {
+            lua_pushnil( L );
+            return 1;
+         }
+         break;
+   }
+
+   push_instance( item, L );
+   return 1;
 }
 
 int isLoaded( lua_State *L )
@@ -214,6 +255,80 @@ int isBuilder( lua_State *L )
    return 1;
 }
 
+int hasItemInInventoryFramework( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+   ENTITY_INSTANCE *item;
+   ENTITY_FRAMEWORK *frame;
+   ITERATOR Iter;
+   int top = lua_gettop( L );
+   bool found = FALSE;
+
+   if( top != 2 )
+   {
+      bug( "%s: bad number of arguments passed %d", __FUNCTION__, top );
+      lua_pushboolean( L, 0 );
+      return 1;
+   }
+
+   if( ( instance = *(ENTITY_INSTANCE**)luaL_checkudata( L, 1, "EntityInstance.meta" ) ) == NULL )
+   {
+      bug( "%s: passed non-instance argument.", __FUNCTION__ );
+      lua_pushboolean( L, 0 );
+      return 1;
+   }
+
+   switch( lua_type( L, 2 ) )
+   {
+      default:
+         bug( "%s: passed bad argument.", __FUNCTION__ );
+         lua_pushboolean( L, 0 );
+         return 1;
+      case LUA_TUSERDATA:
+         if( ( frame = *(ENTITY_FRAMEWORK **)luaL_checkudata( L, 2, "EntityFramework.meta" ) ) == NULL )
+         {
+            if( ( instance = *(ENTITY_INSTANCE **)luaL_checkudata( L, 2, "EntityInstance.meta" ) ) == NULL )
+            {
+               bug( "%s: bad userdata passed.", __FUNCTION__ );
+               lua_pushboolean( L, 0 );
+               return 1;
+            }
+            frame = instance->framework;
+         }
+         break;
+      case LUA_TNUMBER:
+         if( ( frame = get_framework_by_id( lua_tonumber( L, 2 ) ) ) == NULL )
+         {
+            lua_pushboolean( L, 0 );
+            return 1;
+         }
+         break;
+      case LUA_TSTRING:
+         if( ( frame = get_framework_by_name( lua_tostring( L, 2 ) ) ) == NULL )
+         {
+            lua_pushboolean( L, 0 );
+            return 1;
+         }
+         break;
+   }
+
+   AttachIterator( &Iter, instance->contents );
+   while( ( item = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
+      if( item->framework == frame )
+      {
+         found = TRUE;
+         break;
+      }
+   DetachIterator( &Iter );
+
+   if( found )
+      lua_pushboolean( L, 1 );
+   else
+      lua_pushboolean( L, 0 );
+
+   return 1; 
+}
+
 /* actions */
 int luaEntityInstanceInterp( lua_State *L )
 {
@@ -243,6 +358,14 @@ int luaEntityInstanceTeleport( lua_State *L )
 {
    ENTITY_INSTANCE *instance;
    ENTITY_INSTANCE *destination;
+   int top = lua_gettop( L );
+
+   if( top != 2 )
+   {
+      bug( "%s: improper amount of arguments passed %d.", __FUNCTION__, top );
+      lua_pushboolean( L, 0 );
+      return 1;
+   }
 
    if( ( instance = *(ENTITY_INSTANCE **)luaL_checkudata( L, 1, "EntityInstance.meta" ) ) == NULL )
    {
