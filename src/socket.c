@@ -86,6 +86,9 @@ int main(int argc, char **argv)
    luaL_requiref( lua_handle, "EntityInstance", luaopen_EntityInstanceLib, 1 );
    lua_pop( lua_handle, -1 );
 
+   luaL_requiref( lua_handle, "EntityFramework", luaopen_EntityFrameworkLib, 1 );
+   lua_pop( lua_handle, -1 );
+
    luaL_requiref( lua_handle, "Specification", luaopen_SpecificationLib, 1 );
    lua_pop( lua_handle, -1 );
 

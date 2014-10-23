@@ -11,6 +11,8 @@ const struct luaL_Reg EntityInstanceLib_m[] = {
    { "getID", getID },
    { "getLevel", getID },
    { "getItemFromInventory", getItemFromInventory },
+   { "getSpec", getSpec },
+   { "addSpec", addSpec },
    /* bools */
    { "isLoaded", isLoaded },
    { "isLive", isLive },
