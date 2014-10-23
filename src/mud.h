@@ -364,6 +364,8 @@ typedef struct buffer_type
 #include "projects.h"
 #include "lua_utils.h"
 #include "lua_instance.h"
+#include "lua_specification.h"
+#include "lua_framework.h"
 
 /******************************
  * End of new structures      *

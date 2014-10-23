@@ -82,7 +82,7 @@ int main(int argc, char **argv)
 
    log_string( "Loading Lua Libraries" );
    luaL_openlibs( lua_handle );
-   luaL_requiref( lua_handle, "EntityInstance.meta", luaopen_EntityInstanceLib, 1 );
+   luaL_requiref( lua_handle, "EntityInstance", luaopen_EntityInstanceLib, 1 );
    lua_pop( lua_handle, -1 );
 
    log_string( "Connecting to Database" );

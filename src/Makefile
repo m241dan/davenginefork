@@ -7,7 +7,7 @@ O_FILES = socket.o io.o strings.o utils.o interpret.o help.o  \
           account.o strings_table.o nanny.o id-handler.o \
           communication.o olc.o frameworks.o editor.o \
           specifications.o instances.o projects.o lua_utils.o \
-          lua_instance.o
+          lua_instance.o lua_framework.o lua_specification.o
 
 all: $(O_FILES)
 	rm -f SocketMud

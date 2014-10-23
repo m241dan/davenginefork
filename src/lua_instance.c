@@ -17,6 +17,7 @@ const struct luaL_Reg EntityInstanceLib_m[] = {
    { "isBuilder", isBuilder },
    /* actions */
    { "interp", luaEntityInstanceInterp },
+   { "teleport", luaEntityInstanceTeleport },
    { NULL, NULL } /* gandalf */
 };
 
@@ -237,3 +238,52 @@ int luaEntityInstanceInterp( lua_State *L )
    FREE( order );
    return 0;
 }
+
+int luaEntityInstanceTeleport( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+   ENTITY_INSTANCE *destination;
+
+   if( ( instance = *(ENTITY_INSTANCE **)luaL_checkudata( L, 1, "EntityInstance.meta" ) ) == NULL )
+   {
+      bug( "%s: passed non-instance argument.", __FUNCTION__ );
+      lua_pushboolean( L, 0 );
+      return 1;
+   }
+
+   switch( lua_type( L, 2 ) )
+   {
+      default:
+         bug( "%s: bad destination passed", __FUNCTION__ );
+         lua_pushboolean( L, 0 );
+         return 1;
+      case LUA_TUSERDATA:
+         if( ( destination = *(ENTITY_INSTANCE **)luaL_checkudata( L, 2, "EntityInstance.meta" ) ) == NULL )
+         {
+            bug( "%s: passed non-entity instance userdata", __FUNCTION__ );
+            lua_pushboolean( L, 0 );
+            return 1;
+         }
+         break;
+      case LUA_TSTRING:
+         if( ( destination = get_instance_by_name( lua_tostring( L, 2 ) ) ) == NULL )
+         {
+            lua_pushboolean( L, 0 );
+            return 1;
+         }
+         break;
+      case LUA_TNUMBER:
+         if( ( destination = get_instance_by_id( lua_tonumber( L, 2 ) ) ) == NULL )
+         {
+            lua_pushboolean( L, 0 );
+            return 1;
+         }
+         break;
+   }
+
+   entity_to_world( instance, destination );
+
+   lua_pushboolean( L, 1 );
+   return 1;
+}
+

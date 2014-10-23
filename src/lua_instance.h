@@ -25,6 +25,7 @@ int isBuilder( lua_State *L );
 
 /* actions */
 int luaEntityInstanceInterp( lua_State *L );
+int luaEntityInstanceTeleport( lua_State *L );
 
 /* later */
 int getStat( lua_State *L );
