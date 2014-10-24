@@ -18,6 +18,7 @@ int getID( lua_State *L );
 int getLevel( lua_State *L);
 int getItemFromInventory( lua_State *L );
 int getSpec( lua_State *L );
+int getInstanceFramework( lua_State *L );
 
 /* setters */
 int addSpec( lua_State *L );
@@ -31,7 +32,9 @@ int hasItemInInventoryFramework( lua_State *L );
 /* actions */
 int luaEntityInstanceInterp( lua_State *L );
 int luaEntityInstanceTeleport( lua_State *L );
+int luaEcho( lua_State *L );
+int luaEchoAt( lua_State *L );
+int luaEchoAround( lua_State *L );
 
 /* later */
 int getStat( lua_State *L );
-int getFramework( lua_State *L );

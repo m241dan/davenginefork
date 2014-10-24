@@ -13,6 +13,7 @@ const struct luaL_Reg EntityInstanceLib_m[] = {
    { "getItemFromInventory", getItemFromInventory },
    { "getSpec", getSpec },
    { "addSpec", addSpec },
+   { "getFramework", getInstanceFramework },
    /* bools */
    { "isLoaded", isLoaded },
    { "isLive", isLive },
@@ -21,6 +22,9 @@ const struct luaL_Reg EntityInstanceLib_m[] = {
    /* actions */
    { "interp", luaEntityInstanceInterp },
    { "to", luaEntityInstanceTeleport },
+   { "echo", luaEcho },
+   { "echoAt", luaEchoAt },
+   { "echoAround", luaEchoAround },
    { NULL, NULL } /* gandalf */
 };
 
@@ -239,6 +243,20 @@ int getSpec( lua_State *L )
       return 1;
    }
    push_specification( spec, L );
+   return 1;
+}
+
+int getInstanceFramework( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+
+   if( ( instance = *(ENTITY_INSTANCE **)luaL_checkudata( L, 1, "EntityInstance.meta" ) ) == NULL )
+   {
+      bug( "%s: bad meta table not EntityInstance.meta", __FUNCTION__ );
+      lua_pushnil( L );
+      return 1;
+   }
+   push_framework( instance->framework, L );
    return 1;
 }
 
@@ -468,3 +486,55 @@ int luaEntityInstanceTeleport( lua_State *L )
    return 1;
 }
 
+int luaEcho( lua_State *L )
+{
+   ENTITY_INSTANCE *room;
+
+   if( lua_gettop( L ) != 2 )
+   {
+      bug( "%s: improper amount of arguments passed %d.", __FUNCTION__, lua_gettop( L ) );
+      return 0;
+   }
+
+   if( ( room = *(ENTITY_INSTANCE **)luaL_checkudata( L, 1, "EntityInstance.meta" ) ) == NULL )
+   {
+      bug( "%s: passed non-instance argument.", __FUNCTION__ );
+      return 0;
+   }
+
+   echo_to_room( room, lua_tostring( L, 2 ) );
+   return 0;
+}
+
+int luaEchoAt( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+
+   if( ( instance = *(ENTITY_INSTANCE **)luaL_checkudata( L, 1, "EntityInstance.meta" ) ) == NULL )
+   {
+      bug( "%s: bad meta table EntityInstance.meta", __FUNCTION__ );
+      return 0;
+   }
+   text_to_entity( instance, lua_tostring( L, 2 ) );
+   return 0;
+}
+
+int luaEchoAround( lua_State *L )
+{
+   ENTITY_INSTANCE *room, *instance;
+   int x, max = lua_gettop( L );
+
+   if( ( room = *(ENTITY_INSTANCE **)luaL_checkudata( L, 1, "EntityInstance.meta" ) ) == NULL )
+   {
+      bug( "%s: bad meta table EntityInstance.meta", __FUNCTION__ );
+      return 0;
+   }
+
+   for( x = 1; x < ( max - 1 ); x++ )
+   {
+      if( ( instance = *(ENTITY_INSTANCE **)luaL_checkudata( L, x, "EntityInstance.meta" ) ) == NULL )
+         continue;
+      text_to_entity( instance, lua_tostring( L, -1 ) );
+   }
+   return 0;
+}

@@ -1,13 +1,13 @@
 function onEntityEnter( room, mob )
 end
 
-function onEntityLeave( )
+function onEntityLeave( room, mob )
 end
 
-function onEntering( )
+function onEntering( room, mob )
 end
 
-function onLeaving( )
+function onLeaving( room, mob )
 end
 
 

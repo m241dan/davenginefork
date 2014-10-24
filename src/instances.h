@@ -99,6 +99,7 @@ const char *instance_description( ENTITY_INSTANCE *instance );
 
 int text_to_entity( ENTITY_INSTANCE *entity, const char *fmt, ... );
 void text_around_entity( ENTITY_INSTANCE *perspective, int num_around, const char *fmt, ... );
+void echo_to_room( ENTITY_INSTANCE *room, const char *msg );
 int builder_prompt( D_SOCKET *dsock );
 int show_ent_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing );
 int show_ent_contents_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing );

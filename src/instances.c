@@ -1301,6 +1301,20 @@ void text_around_entity( ENTITY_INSTANCE *perspective, int num_around, const cha
    return;
 }
 
+void echo_to_room( ENTITY_INSTANCE *room, const char *msg )
+{
+   ENTITY_INSTANCE *content;
+   ITERATOR Iter;
+
+   AttachIterator( &Iter, room->contents );
+   while( ( content = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
+      if( content->socket )
+         text_to_entity( content, msg );
+   DetachIterator( &Iter );
+
+   return;
+}
+
 int builder_prompt( D_SOCKET *dsock )
 {
    INCEPTION *olc;
@@ -1528,6 +1542,26 @@ int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *exit )
       return ret;
    }
 
+   if( ( script = has_spec( entity->contained_by, "onEntityLeave" ) ) != NULL )
+   {
+      if( prep_stack( get_script_path_from_spec( script ), "onEntityLeave" ) )
+      {
+         push_instance( entity->contained_by, lua_handle );
+         push_instance( entity, lua_handle );
+         lua_pcall( lua_handle, 2, LUA_MULTRET, 0 );
+      }
+   }
+
+   if( ( script = has_spec( entity, "onLeaving" ) ) != NULL )
+   {
+      if( prep_stack( get_script_path_from_spec( script ), "OnLeaving" ) )
+      {
+         push_instance( entity->contained_by, lua_handle);
+         push_instance( entity, lua_handle );
+         lua_pcall( lua_handle, 2, LUA_MULTRET, 0 );
+      }
+   }
+
    entity_to_world( entity, move_to );
    text_to_entity( entity, "You move to the %s.\r\n\n", instance_short_descr( exit ) );
    entity_look( entity, "" );
@@ -1539,7 +1573,16 @@ int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *exit )
          push_instance( move_to, lua_handle );
          push_instance( entity, lua_handle );
          lua_pcall( lua_handle, 2, LUA_MULTRET, 0 );
-         /* currently nothing to pass it, let's jsut see if it calls :P */
+      }
+   }
+
+   if( ( script = has_spec( entity, "onEntering" ) ) != NULL )
+   {
+      if( prep_stack( get_script_path_from_spec( script ), "onEntering" ) )
+      {
+         push_instance( entity->contained_by, lua_handle );
+         push_instance( entity, lua_handle );
+         lua_pcall( lua_handle, 2, LUA_MULTRET, 0 );
       }
    }
 

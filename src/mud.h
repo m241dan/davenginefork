@@ -71,13 +71,11 @@ typedef enum
 
 /* player levels */
 #define LEVEL_GUEST            1  /* Dead players and actual guests  */
-#define LEVEL_PLAYER           2  /* Almost everyone is this level   */
-#define LEVEL_ADMIN            3  /* Any admin without shell access  */
 #define LEVEL_GOD              4  /* Any admin with shell access     */
 
 typedef enum
 {
-   LEVEL_BASIC, MAX_ACCOUNT_LEVEL
+   LEVEL_BASIC, LEVEL_PLAYER, LEVEL_ADMIN, LEVEL_DEVELOPER, LEVEL_OWNER, MAX_ACCOUNT_LEVEL
 } account_levels;
 
 typedef enum
