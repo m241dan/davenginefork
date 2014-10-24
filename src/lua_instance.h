@@ -6,6 +6,7 @@ int EntityInstanceGC( lua_State *L );
 /* lib functions */
 
 int getInstance( lua_State *L );
+int luaNewInstance( lua_State *L );
 
 /* meta methods */
 

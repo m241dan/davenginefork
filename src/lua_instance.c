@@ -30,6 +30,7 @@ const struct luaL_Reg EntityInstanceLib_m[] = {
 
 const struct luaL_Reg EntityInstanceLib_f[] = {
    { "getInstance", getInstance },
+   { "new", luaNewInstance },
    { NULL, NULL } /* gandalf */
 };
 
@@ -76,6 +77,24 @@ int getInstance( lua_State *L )
          break;
    }
 
+   push_instance( instance, L );
+   return 1;
+}
+
+int luaNewInstance( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+   ENTITY_FRAMEWORK *frame;
+
+   if( ( frame = *(ENTITY_FRAMEWORK **)luaL_checkudata( L, -1, "EntityFramework.meta" ) ) == NULL )
+   {
+      bug( "%s: bad argument passed, needs to be Framework.", __FUNCTION__ );
+      lua_pushnil( L );
+      return 1;
+   }
+
+   instance = eInstantiate( frame );
+   new_eInstance( instance );
    push_instance( instance, L );
    return 1;
 }
@@ -199,7 +218,6 @@ int getItemFromInventory( lua_State *L )
       case LUA_TNUMBER:
          if( ( item = get_instance_by_id( lua_tonumber( L, 2 ) ) ) == NULL )
          {
-            bug( "%s: pushing nil", __FUNCTION__ );
             lua_pushnil( L );
             return 1;
          }
@@ -213,7 +231,10 @@ int getItemFromInventory( lua_State *L )
          break;
    }
 
-   push_instance( item, L );
+   if( instance_list_has_by_id( instance->contents, item->tag->id ) )
+      push_instance( item, L );
+   else
+      lua_pushnil( L );
    return 1;
 }
 

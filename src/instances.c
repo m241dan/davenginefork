@@ -1540,6 +1540,11 @@ int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *exit )
          text_to_entity( entity, "You cannot move.\r\n" );
          return ret;
       }
+      if( get_spec_value( entity, "NoMove" ) >= 1 )
+      {
+         text_to_entity( entity, "You cannot move.\r\n" );
+         return ret;
+      }
    }
 
    if( ( move_to = get_active_instance_by_id( get_spec_value( exit, "IsExit" ) ) ) == NULL )

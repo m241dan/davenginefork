@@ -2062,7 +2062,7 @@ void olc_list( void *passed, char *arg )
 
    if( !arg || arg[0] == '\0' )
    {
-      text_to_olc( olc, "%s", print_header( "Proper Use", "-", olc->account->pagewidth ) );
+      text_to_olc( olc, "%s\r\n", print_header( "Proper Use", "-", olc->account->pagewidth ) );
       text_to_olc( olc, " To List All Frameworks: list f\r\n" );
       text_to_olc( olc, " To List All Instances:  list i\r\n" );
       text_to_olc( olc, " To List All Workspaces: list w\r\n" );
