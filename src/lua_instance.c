@@ -216,25 +216,21 @@ int getItemFromInventory( lua_State *L )
          lua_pushnil( L );
          return 1;
       case LUA_TNUMBER:
-         if( ( item = get_instance_by_id( lua_tonumber( L, 2 ) ) ) == NULL )
+         if( ( item = instance_list_has_by_id( instance->contents, lua_tonumber( L, 2 ) ) ) == NULL )
          {
             lua_pushnil( L );
             return 1;
          }
          break;
       case LUA_TSTRING:
-         if( ( item = get_instance_by_name( lua_tostring( L, 2 ) ) ) == NULL )
+         if( ( item = instance_list_has_by_name_regex( instance->contents, lua_tostring( L, 2 ) ) ) == NULL )
          {
             lua_pushnil( L );
             return 1;
          }
          break;
    }
-
-   if( instance_list_has_by_id( instance->contents, item->tag->id ) )
-      push_instance( item, L );
-   else
-      lua_pushnil( L );
+   push_instance( item, L );
    return 1;
 }
 
