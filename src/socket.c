@@ -678,6 +678,9 @@ void text_to_buffer(D_SOCKET *dsock, const char *txt)
   int iPtr = 0, last = -1, j, k;
   int length = strlen(txt);
 
+   if( !dsock )
+      return;
+
    if( dsock->account )
       txt = handle_pagewidth( dsock->account->pagewidth, txt );
 
