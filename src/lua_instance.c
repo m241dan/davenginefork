@@ -199,6 +199,7 @@ int getItemFromInventory( lua_State *L )
       case LUA_TNUMBER:
          if( ( item = get_instance_by_id( lua_tonumber( L, 2 ) ) ) == NULL )
          {
+            bug( "%s: pushing nil", __FUNCTION__ );
             lua_pushnil( L );
             return 1;
          }
