@@ -106,6 +106,8 @@ ENTITY_INSTANCE *load_eInstance_by_query( const char *query )
 
    db_load_eInstance( instance, &row );
    load_specifications_to_list( instance->specifications, quick_format( "%d", instance->tag->id ) );
+   if( get_spec_value( instance, "IsPlayer" ) <= 0 )
+      load_commands( instance->commands, mobile_commands, LEVEL_BASIC );
    free( row );
 
    return instance;
@@ -2240,3 +2242,19 @@ void entity_grab( void *passed, char *arg )
    }
    return;
 }
+
+void mobile_look( void *passed, char *arg )
+{
+   return;
+}
+
+void mobile_inventory( void *passed, char *arg )
+{
+   return;
+}
+
+void mobile_say( void *passed, char *arg )
+{
+
+}
+

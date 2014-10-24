@@ -132,3 +132,7 @@ void entity_up( void *passed, char *arg );
 void entity_down( void *passed, char *arg );
 void entity_chat( void *passed, char *arg );
 void entity_grab( void *passed, char *arg );
+
+void mobile_look( void *passed, char *arg );
+void mobile_inventory( void *passed, char *arg );
+void mobile_say( void *passed, char *arg );

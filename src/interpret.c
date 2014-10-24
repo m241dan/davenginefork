@@ -246,6 +246,17 @@ struct typCmd builder_commands[] = {
    { '\0', NULL, 0, NULL, FALSE, NULL }
 };
 
+struct typCmd mobile_commands[] = {
+   { "look", mobile_look, LEVEL_PLAYER, NULL, FALSE, NULL, mobile_commands },
+   { "inventory", mobile_inventory, LEVEL_PLAYER, NULL, FALSE, NULL, mobile_commands },
+   { "get", entity_get, LEVEL_BASIC, NULL, FALSE, NULL, mobile_commands },
+   { "drop", entity_drop, LEVEL_BASIC, NULL, FALSE, NULL, mobile_commands },
+   { "give", entity_give, LEVEL_BASIC, NULL, FALSE, NULL, mobile_commands },
+   { "put", entity_put, LEVEL_BASIC, NULL, FALSE, NULL, mobile_commands },
+   { "say", mobile_say, LEVEL_BASIC, NULL, FALSE, NULL, mobile_commands },
+   { '\0', NULL, 0, NULL, FALSE, NULL }
+};
+
 int account_handle_cmd( ACCOUNT_DATA *account, char *arg )
 {
    COMMAND *com;

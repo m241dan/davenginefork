@@ -31,6 +31,8 @@ const char *editor_return_desc( void *extra );
 
 extern struct typCmd builder_commands[];
 
+extern struct typCmd mobile_commands[];
+
 int account_handle_cmd( ACCOUNT_DATA *account, char *arg );
 int olc_handle_cmd( INCEPTION *olc, char *arg );
 int eFrame_editor_handle_command( INCEPTION *olc, char *arg );

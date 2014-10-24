@@ -17,6 +17,6 @@ CREATE TABLE IF NOT EXISTS `accounts` (
    UNIQUE INDEX `name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-INSERT INTO `accounts` VALUES ( '0', '0', 'Davenge', 'init_script', 'Davenge', 'init_script', 'Davenge', 'DaPxnNCnzgTfs', '4', '80', ' ' );
-INSERT INTO `accounts` VALUES ( '1', '0', 'Davenge', 'init_script', 'Davenge', 'init_script', 'Pain',    'PavIfmXaIsKfQ', '1', '80', ' ' );
+INSERT INTO `accounts` VALUES ( '0', '0', 'Davenge', 'init_script', 'Davenge', 'init_script', 'Davenge', 'DaPxnNCnzgTfs', '5', '80', ' ' );
+INSERT INTO `accounts` VALUES ( '1', '0', 'Davenge', 'init_script', 'Davenge', 'init_script', 'Pain',    'PavIfmXaIsKfQ', '5', '80', ' ' );
 
