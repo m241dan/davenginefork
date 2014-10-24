@@ -57,7 +57,7 @@ int getFramework( lua_State *L )
          lua_pushnil( L );
          return 1;
       case LUA_TUSERDATA:
-         if( ( instance = *(ENTITY_INSTANCE **)luaL_checkudata( L, 1, "EntityInstance.meta" ) ) == NULL )
+         if( ( instance = *(ENTITY_INSTANCE **)luaL_checkudata( L, -1, "EntityInstance.meta" ) ) == NULL )
          {
             bug( "%s: passed non-instance argument.", __FUNCTION__ );
             lua_pushnil( L );
@@ -66,17 +66,17 @@ int getFramework( lua_State *L )
          framework = instance->framework;
          break;
       case LUA_TNUMBER:
-         if( ( framework = get_framework_by_id( lua_tonumber( L, 1 ) ) ) == NULL )
+         if( ( framework = get_framework_by_id( lua_tonumber( L, -1 ) ) ) == NULL )
          {
-            bug( "%s: no frame with the ID %d", __FUNCTION__, lua_tonumber( L, 1 ) );
+            bug( "%s: no frame with the ID %d", __FUNCTION__, lua_tonumber( L, -1 ) );
             lua_pushnil( L );
             return 1;
          }
          break;
       case LUA_TSTRING:
-         if( ( framework = get_framework_by_name( lua_tostring( L, 1 ) ) ) == NULL )
+         if( ( framework = get_framework_by_name( lua_tostring( L, -1 ) ) ) == NULL )
          {
-            bug( "%s: no frame with the name %s", __FUNCTION__, lua_tonumber( L, 1 ) );
+            bug( "%s: no frame with the name %s", __FUNCTION__, lua_tonumber( L, -1 ) );
             lua_pushnil( L );
             return 1;
          }

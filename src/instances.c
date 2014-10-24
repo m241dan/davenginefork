@@ -68,7 +68,10 @@ int clear_ent_contents( ENTITY_INSTANCE *eInstance )
 
    AttachIterator( &Iter, eInstance->contents );
    while( ( to_free = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
+   {
+      DetachFromList( to_free, eInstances_list );
       free_eInstance( to_free );
+   }
    DetachIterator( &Iter );
 
    return RET_SUCCESS;
@@ -414,7 +417,7 @@ ENTITY_INSTANCE *move_item_specific( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *t
    if( look_beyond_contents )
       to_move = find_specific_item( entity, item, number );
    else
-      to_move = instance_list_has_by_name_prefix_specific( entity->contents, item, number );
+      to_move = instance_list_has_by_name_regex_specific( entity->contents, item, number );
 
    if( !to_move )
       return NULL;
@@ -445,7 +448,7 @@ ENTITY_INSTANCE *move_item_single( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *tar
    if( look_beyond_contents )
       to_move = find_specific_item( entity, item, 1 );
    else
-      to_move = instance_list_has_by_name_prefix( entity->contents, item );
+      to_move = instance_list_has_by_name_regex( entity->contents, item );
 
    if( !to_move )
       return NULL;
@@ -474,7 +477,7 @@ LLIST *move_item_all( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *target, bool (*t
    ENTITY_INSTANCE *to_move;
    LLIST *list = AllocList();
 
-   while( ( to_move = instance_list_has_by_name_prefix( entity->contents, item ) ) != NULL )
+   while( ( to_move = instance_list_has_by_name_regex( entity->contents, item ) ) != NULL )
    {
       to_move = move_item_single( entity, target, can_drop, item, FALSE );
       AttachToList( to_move, list );
@@ -739,7 +742,7 @@ bool parse_item_movement_string( ENTITY_INSTANCE *entity, char *arg, char *item,
 
       if( isGive )
       {
-         if( ( *container = instance_list_has_by_name_prefix_specific( entity->contained_by->contents, container_ptr, container_number ) ) == NULL )
+         if( ( *container = instance_list_has_by_name_regex_specific( entity->contained_by->contents, container_ptr, container_number ) ) == NULL )
          {
             text_to_entity( entity, "You cannot find %s.\r\n", container_ptr );
             return FALSE;
@@ -991,6 +994,7 @@ ENTITY_INSTANCE *instance_list_has_by_name_prefix( LLIST *instance_list, const c
    return instance_list_has_by_name_prefix_specific( instance_list, name, 1 );
 }
 
+
 ENTITY_INSTANCE *instance_list_has_by_name_prefix_specific( LLIST *instance_list, const char *name, int number )
 {
    ENTITY_INSTANCE *eInstance;
@@ -1007,6 +1011,34 @@ ENTITY_INSTANCE *instance_list_has_by_name_prefix_specific( LLIST *instance_list
    AttachIterator( &Iter, instance_list );
    while( ( eInstance = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
       if( is_prefix( name, instance_name( eInstance ) ) )
+         if( ++count == number )
+            break;
+   DetachIterator( &Iter );
+
+   return eInstance;
+}
+
+ENTITY_INSTANCE *instance_list_has_by_name_regex( LLIST *instance_list, const char *regex )
+{
+   return instance_list_has_by_name_regex_specific( instance_list, regex, 1 );
+}
+
+ENTITY_INSTANCE *instance_list_has_by_name_regex_specific( LLIST *instance_list, const char *regex, int number )
+{
+   ENTITY_INSTANCE *eInstance;
+   ITERATOR Iter;
+   int count = 0;
+
+   if( !instance_list )
+      return NULL;
+   if( SizeOfList( instance_list ) < 1 )
+      return NULL;
+   if( !regex || regex[0] == '\0' )
+      return NULL;
+
+   AttachIterator( &Iter, instance_list );
+   while( ( eInstance = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
+      if( string_contains( instance_name( eInstance ), regex ) )
          if( ++count == number )
             break;
    DetachIterator( &Iter );

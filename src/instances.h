@@ -81,6 +81,8 @@ ENTITY_INSTANCE *instance_list_has_by_id( LLIST *instance_list, int id );
 ENTITY_INSTANCE *instance_list_has_by_name( LLIST *instance_list, const char *name );
 ENTITY_INSTANCE *instance_list_has_by_name_prefix( LLIST *instance_list, const char *name );
 ENTITY_INSTANCE *instance_list_has_by_name_prefix_specific( LLIST *instance_list, const char *name, int number );
+ENTITY_INSTANCE *instance_list_has_by_name_regex( LLIST *instance_list, const char *regex );
+ENTITY_INSTANCE *instance_list_has_by_name_regex_specific( LLIST *instance, const char *regex, int number );
 ENTITY_INSTANCE *instance_list_has_by_short_prefix( LLIST *instance_list, const char *name );
 ENTITY_INSTANCE *eInstantiate( ENTITY_FRAMEWORK *frame );
 
