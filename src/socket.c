@@ -523,8 +523,11 @@ void close_socket(D_SOCKET *dsock, bool reconnect)
 
    if( !reconnect )
    {
-      dsock->account->socket = NULL;
-      dsock->account = NULL;
+      if( dsock && dsock->account )
+      {
+         dsock->account->socket = NULL;
+         dsock->account = NULL;
+      }
    }
 
    if( !reconnect )

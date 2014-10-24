@@ -589,6 +589,7 @@ void eFramework_script( void *passed, char *arg )
    if( !strcmp( frame->tag->created_by, "null" ) )
    {
       text_to_olc( olc, "This framework must completely exist before you can start scripting it, save or done and reopen.\r\n" );
+      olc_short_prompt( olc );
       return;
    }
 
