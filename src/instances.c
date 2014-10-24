@@ -1529,13 +1529,17 @@ int show_ent_rooms_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing )
 int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *exit )
 {
    int ret = RET_SUCCESS;
-   ENTITY_INSTANCE *move_to;
+   ENTITY_INSTANCE *move_to, *content;
    SPECIFICATION *script;
+   ITERATOR Iter;
 
-   if( get_spec_value( entity, "CanMove" ) < 1 && !entity->builder )
+   if( !entity->builder )
    {
-      text_to_entity( entity, "You cannot move.\r\n" );
-      return ret;
+      if( get_spec_value( entity, "IsMob" ) != 1 && get_spec_value( entity, "CanMove" ) <= 0 )
+      {
+         text_to_entity( entity, "You cannot move.\r\n" );
+         return ret;
+      }
    }
 
    if( ( move_to = get_active_instance_by_id( get_spec_value( exit, "IsExit" ) ) ) == NULL )
@@ -1544,7 +1548,7 @@ int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *exit )
       return ret;
    }
 
-   if( ( script = has_spec( entity->contained_by, "onEntityLeave" ) ) != NULL )
+   if( ( script = has_spec( entity->contained_by, "onEntityLeave" ) ) != NULL && script->value > 0 )
    {
       if( prep_stack( get_script_path_from_spec( script ), "onEntityLeave" ) )
       {
@@ -1554,7 +1558,7 @@ int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *exit )
       }
    }
 
-   if( ( script = has_spec( entity, "onLeaving" ) ) != NULL )
+   if( ( script = has_spec( entity, "onLeaving" ) ) != NULL && script->value > 0 )
    {
       if( prep_stack( get_script_path_from_spec( script ), "OnLeaving" ) )
       {
@@ -1564,11 +1568,26 @@ int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *exit )
       }
    }
 
+   AttachIterator( &Iter, entity->contents );
+   while( ( content = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
+   {
+      if( ( script = has_spec( content, "onFarewellEntity" ) ) != NULL && script->value > 0 )
+      {
+         if( prep_stack( get_script_path_from_spec( script ), "onFarewellEntity" ) )
+         {
+            push_instance( content, lua_handle );
+            push_instance( entity, lua_handle );
+            lua_pcall( lua_handle, 2, LUA_MULTRET, 0 );
+         }
+      }
+   }
+   DetachIterator( &Iter );
+
    entity_to_world( entity, move_to );
    text_to_entity( entity, "You move to the %s.\r\n\n", instance_short_descr( exit ) );
    entity_look( entity, "" );
 
-   if( ( script = has_spec( move_to, "onEntityEnter" ) ) != NULL )
+   if( ( script = has_spec( move_to, "onEntityEnter" ) ) != NULL && script->value > 0 )
    {
       if( prep_stack( get_script_path_from_spec( script ), "onEntityEnter" ) )
       {
@@ -1578,7 +1597,7 @@ int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *exit )
       }
    }
 
-   if( ( script = has_spec( entity, "onEntering" ) ) != NULL )
+   if( ( script = has_spec( entity, "onEntering" ) ) != NULL && script->value > 0 )
    {
       if( prep_stack( get_script_path_from_spec( script ), "onEntering" ) )
       {
@@ -1587,6 +1606,21 @@ int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *exit )
          lua_pcall( lua_handle, 2, LUA_MULTRET, 0 );
       }
    }
+
+   AttachIterator( &Iter, entity->contents );
+   while( ( content = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
+   {
+      if( ( script = has_spec( content, "onGreetEntity" ) ) != NULL && script->value > 0 )
+      {
+         if( prep_stack( get_script_path_from_spec( script ), "onGreetEntity" ) )
+         {
+            push_instance( content, lua_handle );
+            push_instance( entity, lua_handle );
+            lua_pcall( lua_handle, 2, LUA_MULTRET, 0 );
+         }
+      }
+   }
+   DetachIterator( &Iter );
 
    return ret;
 }

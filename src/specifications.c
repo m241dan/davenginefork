@@ -11,6 +11,7 @@ const char *const spec_table[] = {
    "NoGet", "NoGive", "NoDrop", "NoPut", "NoMove",
    /* Scripting Specs */
    "onEntityEnter", "onEntityLeave", "onEntering", "onLeaving",
+   "onGreetEntity", "onFarewellEntity",
    /* Misc Specs */
    "MirrorExit", "Terrain",
 
