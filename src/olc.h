@@ -13,6 +13,7 @@ struct inception_olc
    int editing_state;
    int editor_launch_state;
    LLIST *chain;
+   int builder_location;
 };
 
 struct workspace

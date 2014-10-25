@@ -1995,6 +1995,7 @@ void entity_quit( void *passed, char *arg )
 {
    ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
 
+   entity->account->olc->builder_location = entity->contained_by->tag->id;
    text_to_entity( entity, "You quit builder-mode.\r\n" );
    change_socket_state( entity->socket, STATE_OLC );
    socket_uncontrol_entity( entity );

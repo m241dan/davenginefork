@@ -1911,6 +1911,11 @@ void olc_builder( void *passed, char *arg )
    socket_control_entity( olc->account->socket, builder );
    change_socket_state( olc->account->socket, STATE_BUILDER );
    AttachToList( builder, eInstances_list );
+   if( olc->builder_location != 0 )
+   {
+      entity_to_world( builder, get_instance_by_id( olc->builder_location ) );
+      entity_look( builder, "" );
+   }
    return;
 
 }
