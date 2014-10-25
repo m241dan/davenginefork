@@ -2349,6 +2349,20 @@ void entity_grab( void *passed, char *arg )
    return;
 }
 
+void entity_using( void *passed, char *arg )
+{
+   ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
+   INCEPTION *olc = entity->account->olc;
+
+   if( SizeOfList( olc->wSpaces ) < 1 )
+   {
+      text_to_entity( entity, "You have no workspaces loaded.\r\n" );
+      return;
+   }
+   switch_using( olc, arg );
+   return;
+}
+
 void mobile_look( void *passed, char *arg )
 {
    return;

@@ -719,6 +719,36 @@ int load_workspace_entries( WORKSPACE *wSpace )
    return ret;
 }
 
+void switch_using( INCEPTION *olc, char *arg )
+{
+   WORKSPACE *wSpace;
+   ITERATOR Iter;
+
+   if( !strcasecmp( arg, "none" ) )
+   {
+      text_to_olc( olc, "You are no longer using any workspace.\r\n" );
+      olc->using_workspace = NULL;
+      return;
+   }
+
+   AttachIterator( &Iter, olc->wSpaces );
+   while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
+      if( !strcasecmp( arg, wSpace->name ) )
+         break;
+   DetachIterator( &Iter );
+
+   if( !wSpace )
+   {
+      text_to_olc( olc, "You have no such workspace loaded. Remember, be specific!\r\n" );
+      olc_short_prompt( olc );
+   }
+   else
+   {
+      olc->using_workspace = wSpace;
+      text_to_olc( olc, "You are now using %s.\r\n", wSpace->name );
+   }
+}
+
 void grab_entity( INCEPTION *olc, char *arg, GRAB_PARAMS *params )
 {
    ENTITY_FRAMEWORK *frame;
@@ -1853,38 +1883,13 @@ void olc_instantiate( void *passed, char *arg )
 void olc_using( void *passed, char *arg )
 {
    INCEPTION * olc = (INCEPTION *)passed;
-   WORKSPACE *wSpace;
-   ITERATOR Iter;
 
    if( SizeOfList( olc->wSpaces ) < 1 )
    {
       text_to_olc( olc, "You have no workspaces loaded.\r\n" );
       return;
    }
-
-   if( !strcasecmp( arg, "none" ) )
-   {
-      text_to_olc( olc, "You are no longer using any workspace.\r\n" );
-      olc->using_workspace = NULL;
-      return;
-   }
-
-   AttachIterator( &Iter, olc->wSpaces );
-   while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
-      if( !strcasecmp( arg, wSpace->name ) )
-         break;
-   DetachIterator( &Iter );
-
-   if( !wSpace )
-   {
-      text_to_olc( olc, "You have no such workspace loaded. Remember, be specific!\r\n" );
-      olc_short_prompt( olc );
-   }
-   else
-   {
-      olc->using_workspace = wSpace;
-      text_to_olc( olc, "You are now using %s.\r\n", wSpace->name );
-   }
+   switch_using( olc, arg );
    return;
 }
 

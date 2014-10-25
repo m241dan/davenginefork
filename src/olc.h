@@ -101,6 +101,7 @@ void rem_instance_from_workspace( ENTITY_INSTANCE *instance, WORKSPACE *wSpace )
 int add_workspace_to_olc( WORKSPACE *wSpace, INCEPTION *olc );
 int new_workspace_entry( WORKSPACE *wSpace, ID_TAG *tag );
 int load_workspace_entries( WORKSPACE *wSpace );
+void switch_using( INCEPTION *olc, char *arg );
 
 void grab_entity( INCEPTION *olc, char *arg, GRAB_PARAMS *params );
 void grab_entity_range( INCEPTION *olc, char *arg );
