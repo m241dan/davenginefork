@@ -2080,21 +2080,9 @@ void entity_create( void *passed, char *arg )
 void entity_edit( void *passed, char *arg )
 {
    ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
-   ENTITY_FRAMEWORK *to_edit;
-   INCEPTION *olc;
-
-   if( !entity->socket->account )
-   {
-      text_to_entity( entity, "You somehow have no account, run away now!\r\n" );
-      return;
-   }
-   /* holy-ugly but my brain is not working right atm */
-   if( !entity->socket->account->olc )
-   {
-      entity->socket->account->olc = init_olc();
-      entity->socket->account->olc->account = entity->socket->account;
-   }
-   olc = entity->socket->account->olc;
+   INCEPTION *olc = entity->account->olc;
+   void *to_edit;
+   int type;
 
    if( olc->editing )
    {
@@ -2102,10 +2090,46 @@ void entity_edit( void *passed, char *arg )
       return;
    }
 
-   if( ( to_edit = entity_edit_selection( entity, arg ) ) == NULL )
-      return;
+   if( !arg || arg[0] == '\0' )
+   {
+      if( entity->contained_by )
+      {
+         to_edit = entity->contained_by;
+         boot_instance_editor( olc, (ENTITY_INSTANCE *)to_edit );
+         return;
+      }
+      else
+         text_to_entity( entity, "You cannot edit the Ether.\r\n" );
+   }
 
-   boot_eFramework_editor( olc, to_edit );
+   if( !interpret_entity_selection( arg ) )
+   {
+      text_to_entity( entity, STD_SELECTION_ERRMSG_PTR_USED );
+      olc_short_prompt( olc );
+      return;
+   }
+   type = input_selection_typing;
+   to_edit = retrieve_entity_selection();
+
+   switch( type )
+   {
+      default: text_to_entity( entity, "There's been a serious error.\r\n" ); return;
+      case SEL_FRAME:
+         boot_eFramework_editor( olc, (ENTITY_FRAMEWORK *)to_edit );
+         return;
+      case SEL_INSTANCE:
+         boot_instance_editor( olc, (ENTITY_INSTANCE *)to_edit );
+         return;
+      case SEL_WORKSPACE:
+         boot_workspace_editor( olc, (WORKSPACE *)to_edit );
+         return;
+      case SEL_PROJECT:
+         boot_project_editor( olc, (PROJECT *)to_edit );
+         return;
+      case SEL_STRING:
+         text_to_olc( olc, (char *)to_edit );
+         return;
+   }
    return;
 }
 
