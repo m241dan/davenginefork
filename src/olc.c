@@ -429,7 +429,7 @@ int olc_prompt( D_SOCKET *dsock )
       else
          max_list = olc->using_filter->limit;
 
-      text_to_olc( olc, "|%s|\r\n", print_header( quick_format( "%s Workspace", olc->using_workspace->name ), "-", space_after_pipes ) );
+      text_to_olc( olc, "|%s|\r\n", print_header( quick_format( "Workspace: \"%s\"", olc->using_workspace->name ), "-", space_after_pipes ) );
       text_to_olc( olc, "|%s|", print_header( "Frameworks", " ", ( space_after_pipes -1 ) / 2 ) );
       text_to_olc( olc, "%s |\r\n", print_header( "Instances", " ", ( space_after_pipes - 1 ) / 2 ) );
       text_to_olc( olc, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
