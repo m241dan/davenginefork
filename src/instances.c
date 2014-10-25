@@ -2148,6 +2148,8 @@ void entity_load( void *passed, char *arg )
    ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
    ENTITY_FRAMEWORK *frame;
    ENTITY_INSTANCE *instance;
+   PROJECT *project;
+   WORKSPACE *wSpace;
 
    if( !arg || arg[0] == '\0' )
    {
@@ -2196,6 +2198,17 @@ void entity_load( void *passed, char *arg )
          instance = (ENTITY_INSTANCE *)retrieve_entity_selection();
          full_load_instance( instance );
          break;
+      case SEL_WORKSPACE:
+         wSpace = (WORKSPACE *)retrieve_entity_selection();
+         full_load_workspace( wSpace );
+         text_to_entity( entity, "You load all the instances in %s.\r\n", wSpace->name );
+         return;
+      case SEL_PROJECT:
+         project = (PROJECT *)retrieve_entity_selection();
+         full_load_project( project );
+         text_to_entity( entity, "You load all the instances in %s.\r\n", project->name );
+         free_project( project );
+         return;
       case SEL_STRING:
          text_to_entity( entity, (char *)retrieve_entity_selection(), arg );
          return;
