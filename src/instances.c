@@ -1605,7 +1605,7 @@ int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *exit )
       }
    }
 
-   AttachIterator( &Iter, entity->contents );
+   AttachIterator( &Iter, entity->contained_by->contents );
    while( ( content = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
    {
       if( ( script = has_spec( content, "onFarewellEntity" ) ) != NULL && script->value > 0 )
@@ -1644,9 +1644,11 @@ int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *exit )
       }
    }
 
-   AttachIterator( &Iter, entity->contents );
+   AttachIterator( &Iter, move_to->contents );
    while( ( content = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
    {
+      if( content == entity )
+         continue;
       if( ( script = has_spec( content, "onGreetEntity" ) ) != NULL && script->value > 0 )
       {
          if( prep_stack( get_script_path_from_spec( script ), "onGreetEntity" ) )
