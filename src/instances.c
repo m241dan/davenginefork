@@ -2321,14 +2321,8 @@ void entity_chat( void *passed, char *arg )
 void entity_grab( void *passed, char *arg )
 {
    ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
-   INCEPTION *olc;
+   INCEPTION *olc = entity->account->olc;
 
-   if( !entity->account || !entity->account->olc )
-   {
-      text_to_entity( entity, "You are missing an account or an olc.\r\n" );
-      return;
-   }
-   olc = entity->account->olc;
 
    if( !olc->using_workspace )
    {
@@ -2347,6 +2341,11 @@ void entity_grab( void *passed, char *arg )
       text_to_entity( entity, "You grab %s what is containing you and add it to %s.\r\n", instance_short_descr( entity->contained_by ), olc->using_workspace->name );
       return;
    }
+
+   if( string_contains( arg, "-" ) )
+      grab_entity_range( olc, arg );
+   else
+      grab_entity( olc, arg, NULL );
    return;
 }
 
