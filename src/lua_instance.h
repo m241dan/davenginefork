@@ -20,6 +20,7 @@ int getLevel( lua_State *L);
 int getItemFromInventory( lua_State *L );
 int getSpec( lua_State *L );
 int getInstanceFramework( lua_State *L );
+int getContainer( lua_State *L );
 
 /* setters */
 int addSpec( lua_State *L );
@@ -28,6 +29,7 @@ int addSpec( lua_State *L );
 int isLoaded( lua_State *L );
 int isLive( lua_State *L );
 int isBuilder( lua_State *L );
+int isSameRoom( lua_State  *L );
 int hasItemInInventoryFramework( lua_State *L );
 
 /* actions */

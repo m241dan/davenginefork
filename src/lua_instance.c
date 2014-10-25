@@ -14,11 +14,13 @@ const struct luaL_Reg EntityInstanceLib_m[] = {
    { "getSpec", getSpec },
    { "addSpec", addSpec },
    { "getFramework", getInstanceFramework },
+   { "getContainer", getContainer },
    /* bools */
    { "isLoaded", isLoaded },
    { "isLive", isLive },
    { "isBuilder", isBuilder },
    { "hasItemInInventoryFramework", hasItemInInventoryFramework },
+   { "isSameRoom", isSameRoom },
    /* actions */
    { "interp", luaEntityInstanceInterp },
    { "to", luaEntityInstanceTeleport },
@@ -86,12 +88,7 @@ int luaNewInstance( lua_State *L )
    ENTITY_INSTANCE *instance;
    ENTITY_FRAMEWORK *frame;
 
-   if( ( frame = *(ENTITY_FRAMEWORK **)luaL_checkudata( L, -1, "EntityFramework.meta" ) ) == NULL )
-   {
-      bug( "%s: bad argument passed, needs to be Framework.", __FUNCTION__ );
-      lua_pushnil( L );
-      return 1;
-   }
+   DAVLUACM_FRAME_NIL( frame, L );
 
    instance = eInstantiate( frame );
    new_eInstance( instance );
@@ -103,12 +100,7 @@ int getName( lua_State *L )
 {
    ENTITY_INSTANCE *instance;
 
-   if( ( instance = *(ENTITY_INSTANCE**)luaL_checkudata( L, 1, "EntityInstance.meta" ) ) == NULL )
-   {
-      bug( "%s: passed non-instance argument.", __FUNCTION__ );
-      lua_pushnil( L );
-      return 1;
-   }
+   DAVLUACM_INSTANCE_NIL( instance, L );
 
    lua_pushstring( L, instance_name( instance ) );
    return 1;
@@ -118,13 +110,7 @@ int getShort( lua_State *L )
 {
    ENTITY_INSTANCE *instance;
 
-   if( ( instance = *(ENTITY_INSTANCE**)luaL_checkudata( L, 1, "EntityInstance.meta" ) ) == NULL )
-   {
-      bug( "%s: passed non-instance argument.", __FUNCTION__ );
-      lua_pushnil( L );
-      return 1;
-   }
-
+   DAVLUACM_INSTANCE_NIL( instance, L );
    lua_pushstring( L, instance_short_descr( instance ) );
    return 1;
 }
@@ -133,13 +119,7 @@ int getLong( lua_State *L )
 {
    ENTITY_INSTANCE *instance;
 
-   if( ( instance = *(ENTITY_INSTANCE**)luaL_checkudata( L, 1, "EntityInstance.meta" ) ) == NULL )
-   {
-      bug( "%s: passed non-instance argument.", __FUNCTION__ );
-      lua_pushnil( L );
-      return 1;
-   }
-
+   DAVLUACM_INSTANCE_NIL( instance, L );
    lua_pushstring( L, instance_long_descr( instance ) );
    return 1;
 }
@@ -148,13 +128,7 @@ int getDesc( lua_State *L )
 {
    ENTITY_INSTANCE *instance;
 
-   if( ( instance = *(ENTITY_INSTANCE**)luaL_checkudata( L, 1, "EntityInstance.meta" ) ) == NULL )
-   {
-      bug( "%s: passed non-instance argument.", __FUNCTION__ );
-      lua_pushnil( L );
-      return 1;
-   }
-
+   DAVLUACM_INSTANCE_NIL( instance, L );
    lua_pushstring( L, instance_description( instance ) );
    return 1;
 }
@@ -163,13 +137,7 @@ int getID( lua_State *L )
 {
    ENTITY_INSTANCE *instance;
 
-   if( ( instance = *(ENTITY_INSTANCE**)luaL_checkudata( L, -1, "EntityInstance.meta" ) ) == NULL )
-   {
-      bug( "%s: passed non-instance argument.", __FUNCTION__ );
-      lua_pushnil( L );
-      return 1;
-   }
-
+   DAVLUACM_INSTANCE_NIL( instance, L );
    lua_pushnumber( L, instance->tag->id );
    return 1;
 }
@@ -178,13 +146,7 @@ int getLevel( lua_State *L )
 {
    ENTITY_INSTANCE *instance;
 
-   if( ( instance = *(ENTITY_INSTANCE**)luaL_checkudata( L, 1, "EntityInstance.meta" ) ) == NULL )
-   {
-      bug( "%s: passed non-instance argument.", __FUNCTION__ );
-      lua_pushnil( L );
-      return 1;
-   }
-
+   DAVLUACM_INSTANCE_NIL( instance, L );
    lua_pushnumber( L, instance->level );
    return 1;
 }
@@ -202,12 +164,8 @@ int getItemFromInventory( lua_State *L )
       lua_pushnil( L );
       return 1;
    }
-   if( ( instance = *(ENTITY_INSTANCE**)luaL_checkudata( L, 1, "EntityInstance.meta" ) ) == NULL )
-   {
-      bug( "%s: passed non-instance argument.", __FUNCTION__ );
-      lua_pushnil( L );
-      return 1;
-   }
+
+   DAVLUACM_INSTANCE_NIL( instance, L );
 
    switch( lua_type( L, 2 ) )
    {
@@ -240,12 +198,7 @@ int getSpec( lua_State *L )
    SPECIFICATION *spec;
    const char *spectype;
 
-   if( ( instance = *(ENTITY_INSTANCE**)luaL_checkudata( L, 1, "EntityInstance.meta" ) ) == NULL )
-   {
-      bug( "%s: passed non-instance argument.", __FUNCTION__ );
-      lua_pushnil( L );
-      return 1;
-   }
+   DAVLUACM_INSTANCE_NIL( instance, L );
 
    if( ( spectype = luaL_checkstring( L, 2 ) ) == NULL )
    {
@@ -268,13 +221,20 @@ int getInstanceFramework( lua_State *L )
 {
    ENTITY_INSTANCE *instance;
 
-   if( ( instance = *(ENTITY_INSTANCE **)luaL_checkudata( L, 1, "EntityInstance.meta" ) ) == NULL )
-   {
-      bug( "%s: bad meta table not EntityInstance.meta", __FUNCTION__ );
-      lua_pushnil( L );
-      return 1;
-   }
+   DAVLUACM_INSTANCE_NIL( instance, L );
    push_framework( instance->framework, L );
+   return 1;
+}
+
+int getContainer( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+
+   DAVLUACM_INSTANCE_NIL( instance, L );
+   if( instance->contained_by )
+      push_instance( instance->contained_by, L );
+   else
+      lua_pushnil( L );
    return 1;
 }
 
@@ -283,11 +243,7 @@ int addSpec( lua_State *L )
    ENTITY_INSTANCE *instance;
    SPECIFICATION *spec;
 
-   if( ( instance = *(ENTITY_INSTANCE**)luaL_checkudata( L, 1, "EntityInstance.meta" ) ) == NULL )
-   {
-      bug( "%s: passed non-instance argument.", __FUNCTION__ );
-      return 0;
-   }
+   DAVLUACM_INSTANCE_NONE( instance, L );
 
    if( ( spec = *(SPECIFICATION **)luaL_checkudata( L, 2, "Specification.meta" ) ) == NULL )
    {
@@ -308,13 +264,7 @@ int isLoaded( lua_State *L )
 {
    ENTITY_INSTANCE *instance;
 
-   if( ( instance = *(ENTITY_INSTANCE**)luaL_checkudata( L, 1, "EntityInstance.meta" ) ) == NULL )
-   {
-      bug( "%s: passed non-instance argument.", __FUNCTION__ );
-      lua_pushnil( L );
-      return 1;
-   }
-
+   DAVLUACM_INSTANCE_BOOL( instance, L );
    lua_pushboolean( L, (int)instance->loaded );
    return 1;
 }
@@ -323,13 +273,7 @@ int isLive( lua_State *L )
 {
    ENTITY_INSTANCE *instance;
 
-   if( ( instance = *(ENTITY_INSTANCE**)luaL_checkudata( L, 1, "EntityInstance.meta" ) ) == NULL )
-   {
-      bug( "%s: passed non-instance argument.", __FUNCTION__ );
-      lua_pushnil( L );
-      return 1;
-   }
-
+   DAVLUACM_INSTANCE_BOOL( instance, L );
    lua_pushboolean( L, (int)instance->live );
    return 1;
 }
@@ -338,14 +282,28 @@ int isBuilder( lua_State *L )
 {
    ENTITY_INSTANCE *instance;
 
-   if( ( instance = *(ENTITY_INSTANCE**)luaL_checkudata( L, 1, "EntityInstance.meta" ) ) == NULL )
+   DAVLUACM_INSTANCE_BOOL( instance, L );
+   lua_pushboolean( L, (int)instance->builder );
+   return 1;
+}
+
+int isSameRoom( lua_State *L )
+{
+   ENTITY_INSTANCE *instance, *oth_instance;
+
+   DAVLUACM_INSTANCE_BOOL( instance, L );
+
+   if( ( oth_instance = *(ENTITY_INSTANCE **)luaL_checkudata( L, 2, "EntityInstance.meta" ) ) == NULL )
    {
-      bug( "%s: passed non-instance argument.", __FUNCTION__ );
-      lua_pushnil( L );
+      bug( "%s: argument passed is not of EntityInstance.meta", __FUNCTION__ );
+      lua_pushboolean( L, 0 );
       return 1;
    }
 
-   lua_pushboolean( L, (int)instance->builder );
+   if( instance->contained_by == oth_instance->contained_by )
+      lua_pushboolean( L, 1 );
+   else
+      lua_pushboolean( L, 0 );
    return 1;
 }
 
@@ -365,12 +323,7 @@ int hasItemInInventoryFramework( lua_State *L )
       return 1;
    }
 
-   if( ( instance = *(ENTITY_INSTANCE**)luaL_checkudata( L, 1, "EntityInstance.meta" ) ) == NULL )
-   {
-      bug( "%s: passed non-instance argument.", __FUNCTION__ );
-      lua_pushboolean( L, 0 );
-      return 1;
-   }
+   DAVLUACM_INSTANCE_BOOL( instance, L );
 
    switch( lua_type( L, 2 ) )
    {
@@ -429,11 +382,7 @@ int luaEntityInstanceInterp( lua_State *L )
    ENTITY_INSTANCE *instance;
    char  *order;
 
-   if( ( instance = *(ENTITY_INSTANCE**)luaL_checkudata( L, 1, "EntityInstance.meta" ) ) == NULL )
-   {
-      bug( "%s: passed non-instance argument.", __FUNCTION__ );
-      return 0;
-   }
+   DAVLUACM_INSTANCE_NONE( instance, L );
 
    if( lua_type( L, 2 ) != LUA_TSTRING )
    {
@@ -461,12 +410,7 @@ int luaEntityInstanceTeleport( lua_State *L )
       return 1;
    }
 
-   if( ( instance = *(ENTITY_INSTANCE **)luaL_checkudata( L, 1, "EntityInstance.meta" ) ) == NULL )
-   {
-      bug( "%s: passed non-instance argument.", __FUNCTION__ );
-      lua_pushboolean( L, 0 );
-      return 1;
-   }
+   DAVLUACM_INSTANCE_BOOL( instance, L );
 
    switch( lua_type( L, 2 ) )
    {
@@ -508,18 +452,7 @@ int luaEcho( lua_State *L )
 {
    ENTITY_INSTANCE *room;
 
-   if( lua_gettop( L ) != 2 )
-   {
-      bug( "%s: improper amount of arguments passed %d.", __FUNCTION__, lua_gettop( L ) );
-      return 0;
-   }
-
-   if( ( room = *(ENTITY_INSTANCE **)luaL_checkudata( L, 1, "EntityInstance.meta" ) ) == NULL )
-   {
-      bug( "%s: passed non-instance argument.", __FUNCTION__ );
-      return 0;
-   }
-
+   DAVLUACM_INSTANCE_NONE( room, L );
    echo_to_room( room, lua_tostring( L, 2 ) );
    return 0;
 }
@@ -528,11 +461,7 @@ int luaEchoAt( lua_State *L )
 {
    ENTITY_INSTANCE *instance;
 
-   if( ( instance = *(ENTITY_INSTANCE **)luaL_checkudata( L, 1, "EntityInstance.meta" ) ) == NULL )
-   {
-      bug( "%s: bad meta table EntityInstance.meta", __FUNCTION__ );
-      return 0;
-   }
+   DAVLUACM_INSTANCE_NONE( instance, L );
    text_to_entity( instance, lua_tostring( L, 2 ) );
    return 0;
 }
@@ -542,12 +471,7 @@ int luaEchoAround( lua_State *L )
    ENTITY_INSTANCE *room, *instance;
    int x, max = lua_gettop( L );
 
-   if( ( room = *(ENTITY_INSTANCE **)luaL_checkudata( L, 1, "EntityInstance.meta" ) ) == NULL )
-   {
-      bug( "%s: bad meta table EntityInstance.meta", __FUNCTION__ );
-      return 0;
-   }
-
+   DAVLUACM_INSTANCE_NONE( room, L );
    for( x = 1; x < ( max - 1 ); x++ )
    {
       if( ( instance = *(ENTITY_INSTANCE **)luaL_checkudata( L, x, "EntityInstance.meta" ) ) == NULL )

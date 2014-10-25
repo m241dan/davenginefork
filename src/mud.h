@@ -176,7 +176,7 @@ extern const unsigned char dont_echo       [];
 #define BAD_POINTER( pointer )						\
 do									\
 {									\
-   bug( "%s: BAD POINTER %s.", __FUNCTION__, (pointer) );		\
+   bug( "%s: BAD POINTER %s." , __FUNCTION__, (pointer) );		\
    ret = RET_FAILED_NULL_POINTER;					\
 } while(0)
 
@@ -236,6 +236,71 @@ do									\
       DetachFromList( cell, list );					\
    DetachIterator( &clearlist_iter );					\
 } while (0)								\
+
+#define DAVLUACM_INSTANCE_NIL( instance, L )				\
+do									\
+{									\
+   if( ( (instance) = *(ENTITY_INSTANCE **)luaL_checkudata( (L), 1, "EntityInstance.meta" ) ) == NULL ) \
+   {									\
+      bug( "%s: bad meta table.", __FUNCTION__ );			\
+      lua_pushnil( (L) );						\
+      return 1;								\
+   }									\
+} while(0)
+
+#define DAVLUACM_INSTANCE_BOOL( instance, L )				\
+do									\
+{									\
+   if( ( (instance) = *(ENTITY_INSTANCE **)luaL_checkudata( (L), 1, "EntityInstance.meta" ) ) == NULL ) \
+   {									\
+      bug( "%s: bad meta table.", __FUNCTION__ );			\
+      lua_pushboolean( (L), 0 );					\
+      return 1;								\
+   }									\
+} while(0)
+
+#define DAVLUACM_INSTANCE_NONE( instance, L )				\
+do                                                                      \
+{                                                                       \
+   if( ( (instance) = *(ENTITY_INSTANCE **)luaL_checkudata( (L), 1, "EntityInstance.meta" ) ) == NULL ) \
+   {                                                                    \
+      bug( "%s: bad meta table.", __FUNCTION__ );                       \
+      return 0;                                                         \
+   }                                                                    \
+} while(0)
+
+#define DAVLUACM_FRAME_NIL( frame, L )					\
+do									\
+{									\
+   if( ( (frame) = *(ENTITY_FRAMEWORK **)luaL_checkudata( (L), 1, "EntityFramework.meta" ) ) == NULL ) \
+   {									\
+      bug( "%s: bad meta table.", __FUNCTION__ );			\
+      lua_pushnil( (L) );						\
+      return 1;								\
+   }									\
+} while(0)
+
+#define DAVLUACM_FRAME_BOOL( frame, L )                                 \
+do                                                                      \
+{                                                                       \
+   if( ( (frame) = *(ENTITY_FRAMEWORK **)luaL_checkudata( (L), 1, "EntityFramework.meta" ) ) == NULL ) \
+   {                                                                    \
+      bug( "%s: bad meta table.", __FUNCTION__ );                       \
+      lua_pushboolean( (L), 0 );                                        \
+      return 1;                                                         \
+   }                                                                    \
+} while(0)
+
+#define DAVLUACM_FRAME_NONE( frame, L )                                 \
+do                                                                      \
+{                                                                       \
+   if( ( (frame) = *(ENTITY_FRAMEWORK **)luaL_checkudata( (L), 1, "EntityFramework.meta" ) ) == NULL ) \
+   {                                                                    \
+      bug( "%s: bad meta table.", __FUNCTION__ );                       \
+      return 0;                                                         \
+   }                                                                    \
+} while(0)
+
 
 #define UMIN(a, b)		((a) < (b) ? (a) : (b))
 #define UMAX(a, b)              ((a) < (b) ? (b) : (a))

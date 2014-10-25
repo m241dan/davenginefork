@@ -91,12 +91,7 @@ int getFrameID( lua_State *L )
 {
    ENTITY_FRAMEWORK *frame;
 
-   if( ( frame = *(ENTITY_FRAMEWORK **)luaL_checkudata( L, 1, "EntityFramework.meta" ) ) == NULL )
-   {
-      bug( "%s: EntityFramework.meta metatable is broken.", __FUNCTION__ );
-      lua_pushnil( L );
-      return 1;
-   }
+   DAVLUACM_FRAME_NIL( frame, L );
    lua_pushnumber( L, frame->tag->id );
    return 1;
 }
@@ -105,12 +100,7 @@ int getFrameName( lua_State *L )
 {
    ENTITY_FRAMEWORK *frame;
 
-   if( ( frame = *(ENTITY_FRAMEWORK **)luaL_checkudata( L, 1, "EntityFramework.meta" ) ) == NULL )
-   {
-      bug( "%s: EntityFramework.meta metatable is broken.", __FUNCTION__ );
-      lua_pushnil( L );
-      return 1;
-   }
+   DAVLUACM_FRAME_NIL( frame, L );
    lua_pushstring( L, chase_name( frame ) );
    return 1;
 }
@@ -119,12 +109,7 @@ int getFrameShort( lua_State *L )
 {
    ENTITY_FRAMEWORK *frame;
 
-   if( ( frame = *(ENTITY_FRAMEWORK **)luaL_checkudata( L, 1, "EntityFramework.meta" ) ) == NULL )
-   {
-      bug( "%s: EntityFramework.meta metatable is broken.", __FUNCTION__ );
-      lua_pushnil( L );
-      return 1;
-   }
+   DAVLUACM_FRAME_NIL( frame, L );
    lua_pushstring( L, chase_short_descr( frame ) );
    return 1;
 }
@@ -133,12 +118,7 @@ int getFrameLong( lua_State *L )
 {
    ENTITY_FRAMEWORK *frame;
 
-   if( ( frame = *(ENTITY_FRAMEWORK **)luaL_checkudata( L, 1, "EntityFramework.meta" ) ) == NULL )
-   {
-      bug( "%s: EntityFramework.meta metatable is broken.", __FUNCTION__ );
-      lua_pushnil( L );
-      return 1;
-   }
+   DAVLUACM_FRAME_NIL( frame, L );
    lua_pushstring( L, chase_long_descr( frame ) );
    return 1;
 }
@@ -147,12 +127,7 @@ int getFrameDesc( lua_State *L )
 {
    ENTITY_FRAMEWORK *frame;
 
-   if( ( frame = *(ENTITY_FRAMEWORK **)luaL_checkudata( L, 1, "EntityFramework.meta" ) ) == NULL )
-   {
-      bug( "%s: EntityFramework.meta metatable is broken.", __FUNCTION__ );
-      lua_pushnil( L );
-      return 1;
-   }
+   DAVLUACM_FRAME_NIL( frame, L );
    lua_pushstring( L, chase_description( frame ) );
    return 1;
 }
@@ -163,13 +138,7 @@ int getFrameSpec( lua_State *L )
    SPECIFICATION *spec;
    const char *spectype;
 
-   if( ( frame = *(ENTITY_FRAMEWORK **)luaL_checkudata( L, 1, "EntityFramework.meta" ) ) == NULL )
-   {
-      bug( "%s: EntityFramework.meta metatable is broken.", __FUNCTION__ );
-      lua_pushnil( L );
-      return 1;
-   }
-
+   DAVLUACM_FRAME_NIL( frame, L );
    if( ( spectype = luaL_checkstring( L, 2 ) ) == NULL )
    {
       bug( "%s: no string passed.", __FUNCTION__ );
@@ -191,12 +160,7 @@ int getFrameInheritance( lua_State *L )
 {
    ENTITY_FRAMEWORK *frame;
 
-   if( ( frame = *(ENTITY_FRAMEWORK **)luaL_checkudata( L, 1, "EntityFramework.meta" ) ) == NULL )
-   {
-      bug( "%s: EntityFramework.meta metatable is broken.", __FUNCTION__ );
-      lua_pushnil( L );
-      return 1;
-   }
+   DAVLUACM_FRAME_NIL( frame, L );
    push_framework( frame->inherits, L );
    return 1;
 }
