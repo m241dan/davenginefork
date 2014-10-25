@@ -40,7 +40,7 @@ int free_eInstance( ENTITY_INSTANCE *eInstance )
 
    for( x = 0; x < MAX_QUICK_SORT; x++ )
    {
-      CLEARLIST( eInstance->contents_sorted[x], ENTITY_INSTANCE );
+      clearlist( eInstance->contents_sorted[x] );
       FreeList( eInstance->contents_sorted[x] );
       eInstance->contents_sorted[x] = NULL;
    }
@@ -593,7 +593,7 @@ void move_item_messaging( ENTITY_INSTANCE *perspective, ENTITY_INSTANCE *to, voi
    if( isList )
    {
       DetachIterator( &Iter );
-      CLEARLIST( list, ENTITY_INSTANCE );
+      clearlist( list );
       FreeList( list );
    }
 
@@ -1274,10 +1274,7 @@ int text_to_entity( ENTITY_INSTANCE *entity, const char *fmt, ... )
    char dest[MAX_BUFFER];
 
    if( !entity->socket )
-   {
-      bug( "%s: attempting to send msg to a instnace without a socket.", __FUNCTION__ );
       return 0;
-   }
 
    va_start( va, fmt );
    res = vsnprintf( dest, MAX_BUFFER, fmt, va );
@@ -1330,7 +1327,7 @@ void text_around_entity( ENTITY_INSTANCE *perspective, int num_around, const cha
       text_to_buffer( entity->socket, dest );
    }
    DetachIterator( &Iter );
-   CLEARLIST( dont_show, ENTITY_INSTANCE );
+   clearlist( dont_show );
    FreeList( dont_show );
    return;
 }
@@ -2338,7 +2335,7 @@ void mobile_say( void *passed, char *arg )
       return;
    }
 
-   if( get_spec_value( mob, "IsSilenced" ) <= 0 )
+   if( get_spec_value( mob, "IsSilenced" ) > 0 )
    {
       text_to_entity( mob, "You cannot speak, you are silenced.\r\n" );
       return;
@@ -2346,14 +2343,14 @@ void mobile_say( void *passed, char *arg )
 
    text_to_entity( mob, "You say, \"%s\"\r\n", arg );
 
-   AttachIterator( &Iter, mob->contents );
+   AttachIterator( &Iter, mob->contained_by->contents );
    while( ( person = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
    {
       if( mob == person )
          continue;
-      if( get_spec_value( person, "IsDeafened" ) <= 0 )
+      if( get_spec_value( person, "IsDeafened" ) > 0 )
          continue;
-      text_to_entity( person, "%s says, \"%s\"\r\n", arg );
+      text_to_entity( person, "%s says, \"%s\"\r\n", instance_short_descr( mob ), arg );
    }
    DetachIterator( &Iter );
    return;

@@ -21,7 +21,7 @@ int free_project( PROJECT *project )
    if( project->tag )
       free_tag( project->tag );
 
-   CLEARLIST( project->workspaces, WORKSPACE );
+   clearlist( project->workspaces );
    FreeList( project->workspaces );
    project->workspaces = NULL;
 
@@ -297,9 +297,9 @@ void export_project( PROJECT *project )
    save_framework_list_export( framework_list, directory, framework_id_table );
 
    /* free memory */
-   CLEARLIST( framework_list, ENTITY_FRAMEWORK );
+   clearlist( framework_list );
    FreeList( framework_list );
-   CLEARLIST( instance_list, ENTITY_INSTANCE );
+   clearlist( instance_list );
    FreeList( instance_list );
    FREE( workspace_id_table );
    FREE( framework_id_table );

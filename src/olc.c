@@ -47,7 +47,7 @@ int free_olc( INCEPTION *olc )
    free_editor_chain( olc->chain );
    olc->chain = NULL;
 
-   CLEARLIST( olc->wSpaces, WORKSPACE );
+   clearlist( olc->wSpaces );
    FreeList( olc->wSpaces );
    olc->wSpaces = NULL;
 
@@ -112,13 +112,15 @@ int free_workspace( WORKSPACE *wSpace )
    if( wSpace->tag )
       free_tag( wSpace->tag );
 
-   CLEARLIST( wSpace->frameworks, ENTITY_FRAMEWORK );
+   clearlist( wSpace->frameworks );
    FreeList( wSpace->frameworks );
    wSpace->frameworks = NULL;
-   CLEARLIST( wSpace->instances, ENTITY_INSTANCE );
+
+   clearlist( wSpace->instances );
    FreeList( wSpace->instances );
    wSpace->instances = NULL;
-   CLEARLIST( wSpace->who_using, ACCOUNT_DATA );
+
+   clearlist( wSpace->who_using );
    FreeList( wSpace->who_using );
    wSpace->who_using = NULL;
 

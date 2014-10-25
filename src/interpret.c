@@ -408,12 +408,16 @@ int entity_handle_cmd( ENTITY_INSTANCE *entity, char *arg )
    arg = one_arg( arg, command );
 
    if( ( com = find_loaded_command( entity->commands, command ) ) != NULL )
-      execute_command( entity->socket->account, com, entity, arg );
+   {
+      if( entity->socket )
+         execute_command( entity->socket->account, com, entity, arg );
+      else
+         (*com->cmd_funct)( entity, arg );
+   }
    else if( entity->contained_by && ( exit = instance_list_has_by_short_prefix( entity->contained_by->contents_sorted[SPEC_ISEXIT], command ) ) != NULL )
       move_entity( entity, exit );
    else
       text_to_entity( entity, "No such command or exit.\r\n" );
-
 
    return ret;
 }

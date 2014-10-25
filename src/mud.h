@@ -228,14 +228,14 @@ do                                          \
    }                                        \
 } while(0)
 
-#define CLEARLIST( list, type )						\
+#define clearlist( list )						\
 do									\
 {									\
-   type  *cell; 							\
+   void *list_cell;							\
    ITERATOR clearlist_iter;						\
    AttachIterator( &clearlist_iter, (list) );				\
-   while( ( cell = (type *)NextInList( &clearlist_iter ) ) != NULL )	\
-      DetachFromList( cell, list );					\
+   while( ( list_cell = NextInList( &clearlist_iter ) ) != NULL )	\
+      DetachFromList( list_cell, list );					\
    DetachIterator( &clearlist_iter );					\
 } while (0)								\
 

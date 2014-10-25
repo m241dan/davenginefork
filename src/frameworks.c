@@ -61,7 +61,7 @@ int free_eFramework( ENTITY_FRAMEWORK *frame )
    if( frame->tag )
       free_tag( frame->tag );
 
-   CLEARLIST( frame->fixed_contents, ENTITY_FRAMEWORK );
+   clearlist( frame->fixed_contents );
    FreeList( frame->fixed_contents );
    frame->fixed_contents = NULL;
 

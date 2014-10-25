@@ -57,7 +57,7 @@ int free_account( ACCOUNT_DATA *account )
       free_olc( account->olc );
    account->olc = NULL;
 
-   CLEARLIST( account->characters, char );
+   clearlist( account->characters );
    FreeList( account->characters );
    account->characters = NULL;
 
