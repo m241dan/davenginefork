@@ -151,7 +151,7 @@ char *capitalize(char *txt)
    return buf;
 }
 
-char *downcase( char *txt )
+char *downcase( const char *txt )
 {
    static char buf[MAX_BUFFER];
    int size, x;

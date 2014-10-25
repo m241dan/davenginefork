@@ -88,7 +88,7 @@ WORKSPACE *workspace_list_has_by_name( LLIST *workspace_list, const char *name )
 WORKSPACE *workspace_list_has_by_id( LLIST *workspace_list, int id );
 
 void inception_open( void *passed, char *arg );
-int olc_prompt( D_SOCKET *dsock );
+int olc_prompt( D_SOCKET *dsock, bool commands );
 int text_to_olc( INCEPTION *olc, const char *fmt, ... );
 void olc_no_prompt( INCEPTION *olc );
 void olc_short_prompt( INCEPTION *olc );

@@ -18,7 +18,7 @@ char   *strdup                ( const char *s );
 int     strcasecmp            ( const char *s1, const char *s2 );
 bool    is_prefix             ( const char *aStr, const char *bStr );
 char   *capitalize            ( char *txt );
-char   *downcase              ( char *txt );
+char   *downcase              ( const char *txt );
 BUFFER *__buffer_new          ( int size );
 void    __buffer_strcat       ( BUFFER *buffer, const char *text );
 void    buffer_free           ( BUFFER *buffer );

@@ -987,7 +987,7 @@ bool flush_output(D_SOCKET *dsock)
            account_prompt( dsock );
            break;
         case STATE_OLC:
-           olc_prompt( dsock );
+           olc_prompt( dsock, TRUE );
            break;
         case STATE_EFRAME_EDITOR:
            editor_eFramework_prompt( dsock );

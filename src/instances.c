@@ -1038,7 +1038,7 @@ ENTITY_INSTANCE *instance_list_has_by_name_regex_specific( LLIST *instance_list,
 
    AttachIterator( &Iter, instance_list );
    while( ( eInstance = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
-      if( string_contains( instance_name( eInstance ), regex ) )
+      if( string_contains( downcase( instance_name( eInstance ) ), regex ) )
          if( ++count == number )
             break;
    DetachIterator( &Iter );
@@ -2360,6 +2360,18 @@ void entity_using( void *passed, char *arg )
       return;
    }
    switch_using( olc, arg );
+   return;
+}
+
+void entity_olc( void *passed, char *arg )
+{
+   ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
+   INCEPTION *olc = entity->account->olc;
+
+   if( !olc )
+      return;
+
+   olc_prompt( entity->socket, FALSE );
    return;
 }
 

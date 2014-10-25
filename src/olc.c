@@ -368,7 +368,7 @@ void inception_open( void *passed, char *arg )
    return;
 }
 
-int olc_prompt( D_SOCKET *dsock )
+int olc_prompt( D_SOCKET *dsock, bool commands )
 {
    ENTITY_FRAMEWORK *frame;
    ENTITY_INSTANCE *instance;
@@ -521,6 +521,8 @@ int olc_prompt( D_SOCKET *dsock )
    }
 */
    text_to_olc( olc, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
+   if( !commands )
+      return ret;
    print_commands( dsock->account->olc, dsock->account->olc->commands, buf, 0, account->pagewidth );
    text_to_olc( olc, buf->data );
    buffer_free( buf );
