@@ -96,6 +96,8 @@ void olc_show_prompt( INCEPTION *olc );
 int new_workspace( WORKSPACE *wSpace );
 int add_frame_to_workspace( ENTITY_FRAMEWORK *frame, WORKSPACE *wSpace );
 int add_instance_to_workspace( ENTITY_INSTANCE *instance, WORKSPACE *wSpace );
+void rem_frame_from_workspace( ENTITY_FRAMEWORK *frame, WORKSPACE *wSpace );
+void rem_instance_from_workspace( ENTITY_INSTANCE *instance, WORKSPACE *wSpace );
 int add_workspace_to_olc( WORKSPACE *wSpace, INCEPTION *olc );
 int new_workspace_entry( WORKSPACE *wSpace, ID_TAG *tag );
 int load_workspace_entries( WORKSPACE *wSpace );

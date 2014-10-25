@@ -600,6 +600,19 @@ int add_instance_to_workspace( ENTITY_INSTANCE *instance, WORKSPACE *wSpace )
    return ret;
 }
 
+void rem_frame_from_workspace( ENTITY_FRAMEWORK *frame, WORKSPACE *wSpace )
+{
+   DetachFromList( frame, wSpace->frameworks );
+   quick_query( "DELTE FROM `workspace_entries` WHERE entry='f%d' AND workspaceID=%d;", frame->tag->id, wSpace->tag->id );
+   return;
+}
+
+void rem_instance_from_workspace( ENTITY_INSTANCE *instance, WORKSPACE *wSpace )
+{
+   DetachFromList( instance, wSpace->instances );
+   quick_query( "DELETE FROM `workspace_entries` WHERE entry='i%d' AND workspaceID=%d;", instance->tag->id, wSpace->tag->id );
+}
+
 int add_workspace_to_olc( WORKSPACE *wSpace, INCEPTION *olc )
 {
    ACCOUNT_DATA *account;
@@ -1622,6 +1635,9 @@ void workspace_grab( void *passed, char *arg )
 void workspace_ungrab( void *passed, char *arg )
 {
    INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_FRAMEWORK *frame;
+   ENTITY_INSTANCE *instance;
+   char buf[MAX_BUFFER];
 
    if( !arg || arg[0] == '\0' )
    {
@@ -1633,7 +1649,43 @@ void workspace_ungrab( void *passed, char *arg )
       text_to_olc( olc, "You can't ungrab anything from a workspace you aren't using.\r\n" );
       return;
    }
-   text_to_olc( olc, "I(the ungrab command) don't work yet...\r\n" );
+
+   while( arg && arg[0] != '\0' )
+   {
+      arg = one_arg_delim( arg, buf, ',' );
+
+      if( !interpret_entity_selection( buf ) )
+         continue;
+
+      switch( input_selection_typing )
+      {
+         default: clear_entity_selection(); continue;
+         case SEL_FRAME:
+            frame = (ENTITY_FRAMEWORK *)retrieve_entity_selection();
+            if( framework_list_has_by_id( olc->using_workspace->frameworks, frame->tag->id ) )
+            {
+               text_to_olc( olc, "You remove %d frame from %s.\r\n", frame->tag->id, olc->using_workspace->name );
+               rem_frame_from_workspace( frame, olc->using_workspace );
+               break;
+            }
+            text_to_olc( olc, "%s workspace does not have frame %d.\r\n", olc->using_workspace->name, frame->tag->id );
+            break;
+         case SEL_INSTANCE:
+            instance = (ENTITY_INSTANCE *)retrieve_entity_selection();
+            if( instance_list_has_by_id( olc->using_workspace->instances, instance->tag->id ) )
+            {
+               text_to_olc( olc, "You remove %d instance from %s.\r\n", instance->tag->id, olc->using_workspace->name );
+               rem_instance_from_workspace( instance, olc->using_workspace );
+               break;
+            }
+            text_to_olc( olc, "%s workspace does not have instance %d.\r\n", olc->using_workspace->name, instance->tag->id );
+            break;
+         case SEL_STRING:
+            text_to_olc( olc, (char *)retrieve_entity_selection(), buf );
+            olc_short_prompt( olc );
+            break;
+      }
+   }
    return;
 }
 
