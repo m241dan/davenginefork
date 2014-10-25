@@ -112,6 +112,8 @@ int free_editor( INCEPTION *olc )
 {
    int ret = RET_SUCCESS;
 
+   if( SizeOfList( olc->chain ) > 0 )
+      clearlist( olc->chain );
    olc->editing = NULL;
    free_command_list( olc->editor_commands );
    FreeList( olc->editor_commands );
