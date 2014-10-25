@@ -112,8 +112,6 @@ int free_editor( INCEPTION *olc )
 {
    int ret = RET_SUCCESS;
 
-   if( SizeOfList( olc->chain ) > 0 )
-      clearlist( olc->chain );
    olc->editing = NULL;
    free_command_list( olc->editor_commands );
    FreeList( olc->editor_commands );
@@ -512,7 +510,8 @@ void eFramework_done( void *passed, char *arg )
       if( olc->using_workspace )
          add_frame_to_workspace( frame, olc->using_workspace );
    }
-
+   if( SizeOfList( olc->chain ) > 0 )
+      clearlist( olc->chain );
    free_editor( olc );
    change_socket_state( olc->account->socket, olc->editor_launch_state );
    text_to_olc( olc, "Exiting Entity Framework Editor.\r\n" );
@@ -752,7 +751,8 @@ void project_done( void *passed, char *arg )
       new_tag( project->tag, olc->account->name );
       new_project( project );
    }
-
+   if( SizeOfList( olc->chain ) > 0 )
+      clearlist( olc->chain );
    free_editor( olc );
    change_socket_state( olc->account->socket, olc->editor_launch_state );
    text_to_olc( olc, "Exiting the Project editor.\r\n" );
@@ -912,6 +912,8 @@ void workspace_done( void *passed, char *arg )
       new_tag( wSpace->tag, olc->account->name );
       new_workspace( wSpace );
    }
+   if( SizeOfList( olc->chain ) > 0 )
+      clearlist( olc->chain );
    free_editor( olc );
    change_socket_state( olc->account->socket, olc->editor_launch_state );
    text_to_olc( olc, "Exiting the Workspace editor.\r\n" );
@@ -1221,7 +1223,8 @@ void instance_done( void *passed, char *arg )
       if( olc->using_workspace )
          add_instance_to_workspace( instance, olc->using_workspace );
    }
-
+   if( SizeOfList( olc->chain ) > 0 )
+      clearlist( olc->chain );
    free_editor( olc );
    change_socket_state( olc->account->socket, olc->editor_launch_state );
    text_to_olc( olc, "Exiting Entity Instance Editor.\r\n" );
