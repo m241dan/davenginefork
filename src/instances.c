@@ -2326,6 +2326,34 @@ void mobile_inventory( void *passed, char *arg )
 
 void mobile_say( void *passed, char *arg )
 {
+   ENTITY_INSTANCE *mob = (ENTITY_INSTANCE*)passed;
+   ENTITY_INSTANCE *person;
+   ITERATOR Iter;
 
+   if( !mob->contained_by )
+   {
+      text_to_entity( mob, "Your voice is lost in the Ether.\r\n" );
+      return;
+   }
+
+   if( get_spec_value( mob, "IsSilenced" ) <= 0 )
+   {
+      text_to_entity( mob, "You cannot speak, you are silenced.\r\n" );
+      return;
+   }
+
+   text_to_entity( mob, "You say, \"%s\"\r\n", arg );
+
+   AttachIterator( &Iter, mob->contents );
+   while( ( person = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
+   {
+      if( mob == person )
+         continue;
+      if( get_spec_value( person, "IsDeafened" ) <= 0 )
+         continue;
+      text_to_entity( person, "%s says, \"%s\"\r\n", arg );
+   }
+   DetachIterator( &Iter );
+   return;
 }
 

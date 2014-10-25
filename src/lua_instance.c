@@ -88,7 +88,12 @@ int luaNewInstance( lua_State *L )
    ENTITY_INSTANCE *instance;
    ENTITY_FRAMEWORK *frame;
 
-   DAVLUACM_FRAME_NIL( frame, L );
+   if( ( frame = *(ENTITY_FRAMEWORK **)luaL_checkudata( L, -1, "EntityFramework.meta" ) ) == NULL )
+   {
+      bug( "%s: bad meta table.", __FUNCTION__ );
+      lua_pushnil( L );
+      return 1;
+   }
 
    instance = eInstantiate( frame );
    new_eInstance( instance );
