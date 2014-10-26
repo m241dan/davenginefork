@@ -2534,6 +2534,28 @@ void entity_target( void *passed, char *arg )
    }
 }
 
+void entity_show( void *passed, char *arg )
+{
+   ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
+   INCEPTION *olc = entity->account->olc;
+
+   switch( entity->target->type )
+   {
+      default: text_to_entity( entity, "You aren't targetting anything.\r\n" ); return;
+      case TARGET_INSTANCE:
+         olc->editing = entity->target->target;
+         editor_instance_prompt( entity->socket, FALSE );
+         olc->editing = NULL;
+         return;
+      case TARGET_FRAMEWORK:
+         olc->editing = entity->target->target;
+         editor_eFramework_prompt( entity->socket, FALSE );
+         olc->editing = NULL;
+         return;
+   }
+   return;
+}
+
 void mobile_look( void *passed, char *arg )
 {
    return;

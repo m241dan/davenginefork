@@ -133,7 +133,7 @@ void boot_eFramework_editor( INCEPTION *olc, ENTITY_FRAMEWORK *frame )
    return;
 }
 
-int editor_eFramework_prompt( D_SOCKET *dsock )
+int editor_eFramework_prompt( D_SOCKET *dsock, bool commands )
 {
    ENTITY_FRAMEWORK *frame;
    BUFFER *buf = buffer_new( MAX_BUFFER );
@@ -175,8 +175,11 @@ int editor_eFramework_prompt( D_SOCKET *dsock )
 
    bprintf( buf, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
 
-   print_commands( dsock->account->olc, dsock->account->olc->editor_commands, buf, 0, dsock->account->pagewidth );
-   bprintf( buf, "\\%s/\r\n", print_bar( "-", space_after_pipes ) );
+   if( commands )
+   {
+      print_commands( dsock->account->olc, dsock->account->olc->editor_commands, buf, 0, dsock->account->pagewidth );
+      bprintf( buf, "\\%s/\r\n", print_bar( "-", space_after_pipes ) );
+   }
 
    text_to_buffer( dsock, buf->data );
    buffer_free( buf );
@@ -633,7 +636,7 @@ void boot_project_editor( INCEPTION *olc, PROJECT *project )
 }
 
 
-int editor_project_prompt( D_SOCKET *dsock )
+int editor_project_prompt( D_SOCKET *dsock, bool commands )
 {
    INCEPTION *olc;
    BUFFER *buf = buffer_new( MAX_BUFFER );
@@ -660,8 +663,11 @@ int editor_project_prompt( D_SOCKET *dsock )
       text_to_olc( olc, "%s", return_project_workspaces_string( project, border, dsock->account->pagewidth ) );
 
    text_to_olc( olc, "%s%s%s\r\n", border, print_bar( "-", space_after_border ), border );
-   print_commands( dsock->account->olc, dsock->account->olc->editor_commands, buf, 0, dsock->account->pagewidth );
-   bprintf( buf, "\\%s/\r\n", print_bar( "-", space_after_border ) );
+   if( commands )
+   {
+      print_commands( dsock->account->olc, dsock->account->olc->editor_commands, buf, 0, dsock->account->pagewidth );
+      bprintf( buf, "\\%s/\r\n", print_bar( "-", space_after_border ) );
+   }
    text_to_olc( olc, buf->data );
    buffer_free( buf );
    return ret;
@@ -788,7 +794,7 @@ void boot_workspace_editor( INCEPTION *olc, WORKSPACE *wSpace )
    return;
 }
 
-int editor_workspace_prompt( D_SOCKET *dsock )
+int editor_workspace_prompt( D_SOCKET *dsock, bool commands )
 {
    INCEPTION *olc;
    BUFFER *buf = buffer_new( MAX_BUFFER );
@@ -815,8 +821,11 @@ int editor_workspace_prompt( D_SOCKET *dsock )
    text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " Instances : %d", SizeOfList( wSpace->instances ) ), space_after_border ), border );
 
    text_to_olc( olc, "%s%s%s\r\n", border, print_bar( "-", space_after_border ), border );
-   print_commands( dsock->account->olc, dsock->account->olc->editor_commands, buf, 0, dsock->account->pagewidth );
-   bprintf( buf, "\\%s/\r\n", print_bar( "-", dsock->account->pagewidth - 2 ) );
+   if( commands )
+   {
+      print_commands( dsock->account->olc, dsock->account->olc->editor_commands, buf, 0, dsock->account->pagewidth );
+      bprintf( buf, "\\%s/\r\n", print_bar( "-", dsock->account->pagewidth - 2 ) );
+   }
    text_to_olc( olc, buf->data );
 
    buffer_free( buf );
@@ -949,7 +958,7 @@ void boot_instance_editor( INCEPTION *olc, ENTITY_INSTANCE *instance )
    return;
 }
 
-int editor_instance_prompt( D_SOCKET *dsock )
+int editor_instance_prompt( D_SOCKET *dsock, bool commands )
 {
    INCEPTION *olc;
    ENTITY_INSTANCE *instance;
@@ -985,8 +994,11 @@ int editor_instance_prompt( D_SOCKET *dsock )
    text_to_olc( olc, "%s", return_instance_spec_and_stats( instance, border, dsock->account->pagewidth ) );
 
    bprintf( buf, "%s%s%s\r\n", border, print_bar( "-", space_after_border ), border ) ;
-   print_commands( dsock->account->olc, dsock->account->olc->editor_commands, buf, 0, dsock->account->pagewidth );
-   bprintf( buf, "\\%s/\r\n", print_bar( "-", dsock->account->pagewidth - 2 ) );
+   if( commands )
+   {
+      print_commands( dsock->account->olc, dsock->account->olc->editor_commands, buf, 0, dsock->account->pagewidth );
+      bprintf( buf, "\\%s/\r\n", print_bar( "-", dsock->account->pagewidth - 2 ) );
+   }
 
    text_to_olc( olc, buf->data );
    buffer_free( buf );

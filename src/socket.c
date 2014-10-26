@@ -990,16 +990,16 @@ bool flush_output(D_SOCKET *dsock)
            olc_prompt( dsock, TRUE );
            break;
         case STATE_EFRAME_EDITOR:
-           editor_eFramework_prompt( dsock );
+           editor_eFramework_prompt( dsock, TRUE );
            break;
         case STATE_PROJECT_EDITOR:
-           editor_project_prompt( dsock );
+           editor_project_prompt( dsock, TRUE );
            break;
         case STATE_WORKSPACE_EDITOR:
-           editor_workspace_prompt( dsock );
+           editor_workspace_prompt( dsock, TRUE );
            break;
         case STATE_EINSTANCE_EDITOR:
-           editor_instance_prompt( dsock );
+           editor_instance_prompt( dsock, TRUE );
            break;
         case STATE_BUILDER:
            builder_prompt( dsock );
