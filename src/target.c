@@ -18,6 +18,12 @@ void free_target( TARGET_DATA *target )
    FREE( target );
 }
 
+inline void set_target_none( TARGET_DATA *target )
+{
+   target->target = NULL;
+   target->type = -1;
+}
+
 inline void set_target_f( TARGET_DATA *target, ENTITY_FRAMEWORK *frame )
 {
    target->target = frame;

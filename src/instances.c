@@ -2128,7 +2128,7 @@ void entity_edit( void *passed, char *arg )
          boot_project_editor( olc, (PROJECT *)to_edit );
          return;
       case SEL_STRING:
-         text_to_olc( olc, (char *)to_edit );
+         text_to_olc( olc, (char *)to_edit, arg );
          return;
    }
    return;
@@ -2380,6 +2380,8 @@ void entity_target( void *passed, char *arg )
 {
    ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
    INCEPTION *olc = entity->account->olc;
+   void *to_target;
+   int type;
 
    if( !arg || arg[0] == '\0' )
    {
@@ -2403,6 +2405,45 @@ void entity_target( void *passed, char *arg )
       set_target_none( entity->target );
       text_to_entity( entity, "Your target is set to none.\r\n" );
       return;
+   }
+
+   if( !input_format_is_selection_type( arg ) )
+   {
+      if( entity->contained_by )
+         to_target = instance_list_has_by_name_regex( entity->contained_by->contents, arg );
+      if( !to_target && ( to_target = instance_list_has_by_name_regex( entity->contents, arg ) ) == NULL )
+      {
+         text_to_entity( entity, "You see no %s.\r\n", arg );
+         return;
+      }
+      set_target_i( entity->target, (ENTITY_INSTANCE *)to_target );
+      text_to_entity( entity, "You target %s.\r\n", instance_short_descr( (ENTITY_INSTANCE *)to_target ) );
+      return;
+   }
+
+   if( !interpret_entity_selection( arg ) )
+   {
+      text_to_entity( entity, STD_SELECTION_ERRMSG_PTR_USED );
+      olc_short_prompt( olc );
+      return;
+   }
+   type = input_selection_typing;
+   to_target = retrieve_entity_selection();
+
+   switch( type )
+   {
+      default: text_to_entity( entity, "There's been a serious error.\r\n" ); return;
+      case SEL_FRAME:
+         set_target_f( entity->target, (ENTITY_FRAMEWORK *)to_target );
+         text_to_entity( entity, "You target %s.\r\n", chase_short_descr( (ENTITY_FRAMEWORK *)to_target ) );
+         return;
+      case SEL_INSTANCE:
+         set_target_i( entity->target, (ENTITY_INSTANCE *)to_target );
+         text_to_entity( entity, "You target %s.\r\n", instance_short_descr( (ENTITY_INSTANCE *)to_target ) );
+         return;
+      case SEL_STRING:
+         text_to_entity( entity, (char *)to_target, arg );
+         return;
    }
 }
 

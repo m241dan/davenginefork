@@ -213,7 +213,7 @@ int number_range( int min, int max )
    return ( ( rand() % ( max - min + 1 ) ) + min );
 }
 
-inline void clearlist( LLIST *list )
+void inline clearlist( LLIST *list )
 {
    void *cell;
    ITERATOR Iter;

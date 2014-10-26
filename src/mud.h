@@ -55,7 +55,7 @@
 #define DB_ADDR            "localhost"
 #define DB_LOGIN           "m241dan"
 #define DB_PASSWORD        "Grc937!"
-#define STD_SELECTION_ERRMSG "Improper format: %s. Please use a type char 'f' or 'i' followed by _<name> for a lookup by name or <id> for lookup by id.\r\n - Example: f_aframework, f845, i_anInstance, i1000.\r\n"
+#define STD_SELECTION_ERRMSG "Improper format: %s. \r\nPlease use a type char 'f' or 'i' followed by _<name> for a lookup by name or <id> for lookup by id.\r\n - Example: f_aframework, f845, i_anInstance, i1000.\r\n"
 #define STD_SELECTION_ERRMSG_PTR_USED "There is a problem with the input selection pointer, please contact the nearest Admin or try again in a few seconds.\r\n"
 /* Connection states */
 typedef enum
@@ -564,3 +564,4 @@ bool  compressEnd             ( D_S *dsock, unsigned char teleopt, bool forced )
  *******************************/
 
 #endif  /* MUD_H */
+

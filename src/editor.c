@@ -573,7 +573,7 @@ void eFramework_addContent( void *passed, char *arg )
             frame_to_add = (ENTITY_FRAMEWORK *)retrieve_entity_selection();
             break;
          case SEL_STRING:
-            text_to_olc( olc, (char *)retrieve_entity_selection() );
+            text_to_olc( olc, (char *)retrieve_entity_selection(), arg );
             return;
       }
    }
@@ -1152,7 +1152,7 @@ void instance_addcontent( void *passed, char *arg )
             instance_to_add = (ENTITY_INSTANCE *)retrieve_entity_selection();
             break;
          case SEL_STRING:
-            text_to_olc( olc, (char *)retrieve_entity_selection() );
+            text_to_olc( olc, (char *)retrieve_entity_selection(), arg );
             return;
       }
    }

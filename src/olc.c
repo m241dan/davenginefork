@@ -1795,7 +1795,7 @@ void olc_edit( void *passed, char *arg )
          boot_project_editor( olc, (PROJECT *)to_edit );
          return;
       case SEL_STRING:
-         text_to_olc( olc, (char *)to_edit );
+         text_to_olc( olc, (char *)to_edit, arg );
          return;
 
    }

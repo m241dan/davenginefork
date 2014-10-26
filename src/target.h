@@ -14,3 +14,4 @@ void free_target( TARGET_DATA *target );
 extern inline void set_target_none( TARGET_DATA *target );
 extern inline void set_target_f( TARGET_DATA *target, ENTITY_FRAMEWORK *frame );
 extern inline void set_target_i( TARGET_DATA *target, ENTITY_INSTANCE *instance );
+
