@@ -1380,7 +1380,7 @@ int builder_prompt( D_SOCKET *dsock )
    olc = dsock->controlling->account->olc;
 
    if( !NO_TARGET( dsock->controlling ) )
-      bprintf( buf, "Target: (%d) %s\r\n", get_target_id( dsock->controlling->target ), get_target_string( dsock->controlling->target ) );
+      bprintf( buf, "Target(%s): [%d] %s\r\n", target_types[dsock->controlling->target->type], get_target_id( dsock->controlling->target ), get_target_string( dsock->controlling->target ) );
 
    if( olc->using_workspace )
       bprintf( buf, "UW: \"%s\" :\r\n", olc->using_workspace->name );
@@ -1738,6 +1738,26 @@ void entity_instance( void *passed, char *arg )
    ENTITY_INSTANCE *new_ent;
    char buf[MAX_BUFFER];
 
+   if( !arg || arg[0] == '\0' )
+   {
+      if( NO_TARGET( entity ) )
+      {
+         text_to_entity( entity, "Instance what?\r\n" );
+         return;
+      }
+      switch( entity->target->type )
+      {
+         default: text_to_entity( entity, "Invalid target type.\r\n" ); return;
+         case TARGET_INSTANCE:
+            ent_to_instance = (ENTITY_INSTANCE *)entity->target->target;
+            frame_to_instance = ent_to_instance->framework;
+            goto thecreation;
+         case TARGET_FRAMEWORK:
+            frame_to_instance = (ENTITY_FRAMEWORK *)entity->target->target;
+            goto thecreation;
+      }
+   }
+
    arg = one_arg( arg, buf );
 
    if( !interpret_entity_selection( buf ) )
@@ -1763,6 +1783,8 @@ void entity_instance( void *passed, char *arg )
          text_to_entity( entity, (char *)retrieve_entity_selection(), buf );
          return;
    }
+
+   thecreation:
 
    if( ( new_ent = eInstantiate( frame_to_instance ) ) == NULL )
    {
@@ -2033,7 +2055,11 @@ void entity_quit( void *passed, char *arg )
 {
    ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
 
-   entity->account->olc->builder_location = entity->contained_by->tag->id;
+   if( entity->contained_by )
+      entity->account->olc->builder_location = entity->contained_by->tag->id;
+   else
+      entity->account->olc->builder_location = -1;
+
    text_to_entity( entity, "You quit builder-mode.\r\n" );
    change_socket_state( entity->socket, STATE_OLC );
    socket_uncontrol_entity( entity );
@@ -2131,6 +2157,19 @@ void entity_edit( void *passed, char *arg )
 
    if( !arg || arg[0] == '\0' )
    {
+      if( !NO_TARGET( entity ) )
+      {
+         switch( entity->target->type )
+         {
+            default: break;
+            case TARGET_INSTANCE:
+               boot_instance_editor( olc, (ENTITY_INSTANCE *)entity->target->target );
+               return;
+            case TARGET_FRAMEWORK:
+               boot_eFramework_editor( olc, (ENTITY_FRAMEWORK *)entity->target->target );
+               return;
+         }
+      }
       if( entity->contained_by )
       {
          to_edit = entity->contained_by;
@@ -2371,6 +2410,16 @@ void entity_grab( void *passed, char *arg )
 
    if( !arg || arg[0] == '\0' )
    {
+      if( !NO_TARGET( entity ) && ( entity->target->type == TARGET_INSTANCE || entity->target->type == TARGET_FRAMEWORK ) )
+      {
+         char buf[MAX_BUFFER];
+         strcpy( buf, quick_format( "%c%d", entity->target->type == TARGET_INSTANCE ? 'i' : 'f',
+            entity->target->type == TARGET_INSTANCE ? ((ENTITY_INSTANCE *)entity->target->target)->tag->id :
+            ((ENTITY_FRAMEWORK *)entity->target->target)->tag->id ) );
+
+         grab_entity( olc, buf, NULL );
+         return;
+      }
       if( !entity->contained_by )
       {
          text_to_entity( entity, "You are not being contained by anything, you can't grab.\r\n" );
