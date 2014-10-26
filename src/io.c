@@ -163,6 +163,28 @@ char *fread_line(FILE *fp)
   return line;
 }
 
+char *fread_line_string( FILE *fp )
+{
+   char buf[4 * MAX_BUFFER];
+   int c, count = 0;
+
+   c = getc( fp );
+
+   while( c != EOF && ( c != '\n' || c != '\r' ) )
+   {
+      buf[count] = c;
+      if( ++count > 4 * MAX_BUFFER - 2 )
+      {
+         bug( "%s: Line too long.", __FUNCTION__ );
+         buf[count] = '\n';
+         break;
+      }
+   }
+
+   buf[strlen( buf )] = '\0';
+   return strdup( buf );
+}
+
 /*
  * Reads one number from a file, returning
  * the value as an integer, a leading '-' will

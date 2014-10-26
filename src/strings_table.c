@@ -30,6 +30,11 @@ const char *const selection_table[MAX_SEL+1] = {
    '\0'
 };
 
+const char *const target_types[MAX_TARGET+1] = {
+   "framework", "instance",
+   '\0'
+};
+
 /* match from from given table */
 int match_string_table( const char *string, const char *const string_table[] )
 {

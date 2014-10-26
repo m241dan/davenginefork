@@ -75,6 +75,11 @@ typedef enum
 
 typedef enum
 {
+   TARGET_FRAMEWORK, TARGET_INSTANCE, MAX_TARGET
+} TARGET_TYPE;
+
+typedef enum
+{
    LEVEL_BASIC, LEVEL_PLAYER, LEVEL_ADMIN, LEVEL_DEVELOPER, LEVEL_OWNER, MAX_ACCOUNT_LEVEL
 } account_levels;
 
@@ -228,17 +233,6 @@ do                                          \
    }                                        \
 } while(0)
 
-#define clearlist( list )						\
-do									\
-{									\
-   void *list_cell;							\
-   ITERATOR clearlist_iter;						\
-   AttachIterator( &clearlist_iter, (list) );				\
-   while( ( list_cell = NextInList( &clearlist_iter ) ) != NULL )	\
-      DetachFromList( list_cell, list );					\
-   DetachIterator( &clearlist_iter );					\
-} while (0)								\
-
 #define DAVLUACM_INSTANCE_NIL( instance, L )				\
 do									\
 {									\
@@ -358,6 +352,8 @@ typedef struct  grab_params    GRAB_PARAMS;
 typedef struct  workspace_filter WORKSPACE_FILTER;
 typedef struct  d_string       STRING;
 typedef struct  editor_chain   E_CHAIN;
+typedef struct  target_data    TARGET_DATA;
+
 /* the actual structures */
 struct dSocket
 {
@@ -431,6 +427,7 @@ typedef struct buffer_type
 #include "lua_instance.h"
 #include "lua_specification.h"
 #include "lua_framework.h"
+#include "target.h"
 
 /******************************
  * End of new structures      *
@@ -520,6 +517,7 @@ void    bug                   ( const char *txt, ... );
 time_t  last_modified         ( char *helpfile );
 char   *read_help_entry       ( const char *helpfile );     /* pointer         */
 char   *fread_line            ( FILE *fp );                 /* pointer         */
+char   *fread_line_string     ( FILE *fp );                 /* return pointer, not static memory */
 char   *fread_string          ( FILE *fp );                 /* allocated data  */
 char   *fread_word            ( FILE *fp );                 /* pointer         */
 int     fread_number          ( FILE *fp );                 /* just an integer */
@@ -553,6 +551,8 @@ void debug_row_list( LLIST *list );
 void copy_row( MYSQL_ROW *row_dest, MYSQL_ROW *row_src, int size );
 int number_percent();
 int number_range( int min, int max );
+extern inline void clearlist( LLIST *list );
+
 /*
  * mccp.c
  */

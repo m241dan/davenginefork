@@ -37,5 +37,4 @@ void  DetachFromList     ( void *pContent, LLIST *pList );
 void  DetachIterator     ( ITERATOR *pIter );
 void  FreeList           ( LLIST *pList );
 int   SizeOfList         ( LLIST *pList );
-
 #endif

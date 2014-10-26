@@ -2376,6 +2376,36 @@ void entity_olc( void *passed, char *arg )
    return;
 }
 
+void entity_target( void *passed, char *arg )
+{
+   ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
+   INCEPTION *olc = entity->account->olc;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      if( NO_TARGET( entity ) )
+      {
+         text_to_entity( entity, "Target what?\r\n" );
+         return;
+      }
+      set_target_none( entity->target );
+      text_to_entity( entity, "Your target is set to none.\r\n" );
+      return;
+   }
+
+   if( !strcasecmp( arg, "none" ) )
+   {
+      if( NO_TARGET( entity ) )
+      {
+         text_to_entity( entity, "You weren't targeting anything anyway.\r\n" );
+         return;
+      }
+      set_target_none( entity->target );
+      text_to_entity( entity, "Your target is set to none.\r\n" );
+      return;
+   }
+}
+
 void mobile_look( void *passed, char *arg )
 {
    return;

@@ -212,3 +212,15 @@ int number_range( int min, int max )
 
    return ( ( rand() % ( max - min + 1 ) ) + min );
 }
+
+inline void clearlist( LLIST *list )
+{
+   void *cell;
+   ITERATOR Iter;
+
+   AttachIterator( &Iter, list );
+   while( ( cell = NextInList( &Iter ) ) != NULL )
+      DetachFromList( cell, list );
+   DetachIterator( &Iter );
+}
+

@@ -15,6 +15,7 @@ struct entity_instance
    ENTITY_FRAMEWORK *framework;
 
    ENTITY_INSTANCE *contained_by;
+   TARGET_DATA *target;
 
    D_SOCKET *socket;
    ACCOUNT_DATA *account;
