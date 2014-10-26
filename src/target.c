@@ -35,3 +35,27 @@ inline void set_target_i( TARGET_DATA *target, ENTITY_INSTANCE *instance )
    target->target = instance;
    target->type = TARGET_INSTANCE;
 }
+
+inline int get_target_id( TARGET_DATA *target )
+{
+   switch( target->type )
+   {
+      default: return -1;
+      case TARGET_INSTANCE:
+         return ((ENTITY_INSTANCE *)target->target)->tag->id;
+      case TARGET_FRAMEWORK:
+         return ((ENTITY_FRAMEWORK *)target->target)->tag->id;
+   }
+}
+
+inline const char *get_target_string( TARGET_DATA *target )
+{
+   switch( target->type )
+   {
+      default: return NULL;
+      case TARGET_INSTANCE:
+         return instance_short_descr( (ENTITY_INSTANCE *)target->target );
+      case TARGET_FRAMEWORK:
+         return chase_name( (ENTITY_FRAMEWORK *)target->target );
+   }
+}

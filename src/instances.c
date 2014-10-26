@@ -15,6 +15,7 @@ ENTITY_INSTANCE *init_eInstance( void )
    eInstance->specifications = AllocList();
    eInstance->tag = init_tag();
    eInstance->tag->type = ENTITY_INSTANCE_IDS;
+   eInstance->target = init_target();
    if( clear_eInstance( eInstance ) != RET_SUCCESS )
    {
       free_eInstance( eInstance );
@@ -52,6 +53,9 @@ int free_eInstance( ENTITY_INSTANCE *eInstance )
    specification_clear_list( eInstance->specifications );
    FreeList( eInstance->specifications );
    eInstance->specifications = NULL;
+
+   free_target( eInstance->target );
+   eInstance->target = NULL;
 
    eInstance->socket = NULL;
    eInstance->contained_by = NULL;
@@ -1356,6 +1360,10 @@ int builder_prompt( D_SOCKET *dsock )
       bug( "%s: socket is controlling nothing...", __FUNCTION__ );
 
    olc = dsock->controlling->account->olc;
+
+   if( !NO_TARGET( dsock->controlling ) )
+      bprintf( buf, "Target: (%d) %s\r\n", get_target_id( dsock->controlling->target ), get_target_string( dsock->controlling->target ) );
+
    if( olc->using_workspace )
       bprintf( buf, "UW: \"%s\" :\r\n", olc->using_workspace->name );
 
