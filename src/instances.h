@@ -59,6 +59,7 @@ void detach_entity_from_contents( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *cont
 void entity_to_contents_quick_sort( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container );
 void entity_from_contents_quick_sort( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container );
 
+bool move_item( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *item, ENTITY_INSTANCE *move_to, bool (*test_method)( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *to_test ) );
 ENTITY_INSTANCE *move_item_specific( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *target, bool (*test_method)( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *to_test ), char *item, int number, bool look_beyond_contents );
 ENTITY_INSTANCE *move_item_single( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *target, bool (*test_method)( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *to_test ), char *item, bool look_beyond_contents );
 LLIST *move_item_all( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *target, bool (*test_method)( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *to_test ), char *item );

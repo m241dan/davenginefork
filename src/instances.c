@@ -414,6 +414,24 @@ void entity_from_contents_quick_sort( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *
    return;
 }
 
+bool move_item( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *item, ENTITY_INSTANCE *move_to, bool (*test_method)( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *to_test ) )
+{
+   if( entity == item )
+   {
+      text_to_entity( entity, "You cannot move yourself in this manner.\r\n" );
+      return FALSE;
+   }
+   if( move_to == item )
+   {
+      text_to_entity( entity, "You cannot put %s into itself.\r\n", instance_short_descr( item ) );
+      return FALSE;
+   }
+   if( !(*test_method)( entity, item ) )
+      return FALSE;
+   entity_to_world( item, move_to );
+   return TRUE;
+}
+
 ENTITY_INSTANCE *move_item_specific( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *target, bool (*test_method)( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *to_test ), char *item, int number, bool look_beyond_contents )
 {
    ENTITY_INSTANCE *to_move;
@@ -1794,7 +1812,13 @@ void entity_drop( void *passed, char *arg )
 
    if( !arg || arg[0] == '\0' )
    {
-      text_to_entity( entity, "Drop what?\r\n" );
+      if( NO_TARGET( entity ) || entity->target->type != TARGET_INSTANCE )
+      {
+         text_to_entity( entity, "Drop what?\r\n" );
+         return;
+      }
+      if( move_item( entity, (ENTITY_INSTANCE *)entity->target->target, entity->contained_by, can_drop ) )
+         move_item_messaging( entity, entity->contained_by, entity->target->target, instance_short_descr( ((ENTITY_INSTANCE *)entity->target->target) ), entity, COM_DROP, FALSE );
       return;
    }
 
@@ -1840,7 +1864,13 @@ void entity_get( void *passed, char *arg )
 
    if( !arg || arg[0] == '\0' )
    {
-      text_to_entity( entity, "Get what?\r\n" );
+      if( NO_TARGET( entity ) || entity->target->type != TARGET_INSTANCE )
+      {
+         text_to_entity( entity, "Get what?\r\n" );
+         return;
+      }
+      if( move_item( entity, (ENTITY_INSTANCE *)entity->target->target, entity, can_get ) )
+         move_item_messaging( entity, entity, entity->target->target, instance_short_descr( ((ENTITY_INSTANCE *)entity->target->target) ), ((ENTITY_INSTANCE *)entity->target->target)->contained_by, COM_GET, FALSE );
       return;
    }
 
