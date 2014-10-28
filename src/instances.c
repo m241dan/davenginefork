@@ -2086,8 +2086,7 @@ void entity_create( void *passed, char *arg )
          return;
       }
 
-      init_eFramework_editor( olc, NULL );
-      change_socket_state( entity->socket, olc->editing_state );
+      boot_eFramework_editor( olc, NULL );
       return;
    }
    arg = one_arg( arg, buf );
@@ -2099,8 +2098,7 @@ void entity_create( void *passed, char *arg )
       else
          frame = create_room_framework( NULL );
 
-      init_eFramework_editor( olc, frame );
-      change_socket_state( entity->socket, olc->editing_state );
+      boot_eFramework_editor( olc, frame );
       return;
    }
    if( !strcasecmp( buf, "mob" ) || !strcasecmp( buf, "mobile" ) )
@@ -2110,8 +2108,7 @@ void entity_create( void *passed, char *arg )
       else
          frame = create_mobile_framework( NULL );
 
-      init_eFramework_editor( olc, frame );
-      change_socket_state( entity->socket, olc->editing_state );
+      boot_eFramework_editor( olc, frame );
       return;
    }
    if( !strcasecmp( buf, "exit" ) )
@@ -2119,16 +2116,14 @@ void entity_create( void *passed, char *arg )
       if( arg[0] == '\0' )
       {
          frame = create_exit_framework( NULL, 0 );
-         init_eFramework_editor( olc, frame );
-         change_socket_state( entity->socket, olc->editing_state );
+         boot_eFramework_editor( olc, frame );
          return;
       }
       arg = one_arg( arg, buf );
       if( arg[0] == '\0' || !is_number( arg ) )
       {
          frame = create_exit_framework( quick_format( "%s%s", buf, arg ), 0 );
-         init_eFramework_editor( olc, frame );
-         change_socket_state( entity->socket, olc->editing_state );
+         boot_eFramework_editor( olc, frame );
          return;
       }
 
@@ -2239,7 +2234,7 @@ void entity_iedit( void *passed, char *arg ) /* inheritance edit, not instance e
       return;
    }
 
-   init_eFramework_editor( olc, inherited_to_edit );
+   boot_eFramework_editor( olc, inherited_to_edit );
    change_socket_state( entity->socket, olc->editing_state );
    text_to_entity( entity, "You begin to edit %s.\r\n", chase_name( inherited_to_edit ) );
    return;
