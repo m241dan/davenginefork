@@ -12,9 +12,13 @@ const struct luaL_Reg EntityInstanceLib_m[] = {
    { "getLevel", getID },
    { "getItemFromInventory", getItemFromInventory },
    { "getSpec", getSpec },
-   { "addSpec", addSpec },
    { "getFramework", getInstanceFramework },
    { "getContainer", getContainer },
+   { "getVar", getVar },
+
+   /* setters */
+   { "setVar", setVar },
+   { "addSpec", addSpec },
    /* bools */
    { "isLoaded", isLoaded },
    { "isLive", isLive },
@@ -241,6 +245,86 @@ int getContainer( lua_State *L )
    else
       lua_pushnil( L );
    return 1;
+}
+
+int getVar( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+   EVAR *var;
+   const char *var_name;
+
+   DAVLUACM_INSTANCE_NIL( instance, L );
+
+   if( ( var_name = luaL_checkstring( L, -1 ) ) == NULL )
+   {
+      bug( "%s: no string passed.", __FUNCTION__ );
+      lua_pushnil( L );
+      return 1;
+   }
+
+   if( ( var = get_entity_var( instance, var_name ) ) == NULL )
+   {
+      bug( "%s: entity %s has no var %s.", __FUNCTION__, instance_short_descr( instance ), var_name );
+      lua_pushnil( L );
+      return 1;
+   }
+
+   switch( var->type )
+   {
+      default: lua_pushnil( L ); return 1;
+      case VAR_INT:
+         lua_pushnumber( L, atoi( var->value ) );
+         return 1;
+      case VAR_STR:
+         lua_pushstring( L, var->value );
+         return 1;
+   }
+   return 0;
+}
+
+int setVar( lua_State *L )
+{
+   EVAR *var;
+   ENTITY_INSTANCE *instance;
+   const char *var_name;
+
+   DAVLUACM_INSTANCE_NIL( instance, L );
+
+   if( ( var_name = luaL_checkstring( L, -2 ) ) == NULL )
+   {
+      bug( "%s: no variable name passed.", __FUNCTION__ );
+      return 0;
+   }
+
+   var = get_entity_var( instance, var_name );
+
+   switch( lua_type( L, -1 ) )
+   {
+      default: bug( "%s: bad value passed.", __FUNCTION__ ); return 0;
+      case LUA_TNUMBER:
+         if( !var )
+         {
+            var = new_int_var( var_name, lua_tonumber( L, -1 ) );
+            new_entity_var( instance, var );
+            return 0;
+         }
+         if( var->type != VAR_INT )
+            update_var_type( var, VAR_INT );
+         update_var_value( var, itos( lua_tonumber( L, -1 ) ) );
+         return 0;
+      case LUA_TSTRING:
+         if( !var )
+         {
+            var = new_str_var( var_name, lua_tostring( L, -1 ) );
+            new_global_var( var );
+            return 0;
+         }
+         if( var->type != VAR_STR )
+            update_var_type( var, VAR_STR );
+         update_var_value( var, lua_tostring( L, -2 ) );
+         return 0;
+   }
+   return 0;
 }
 
 int addSpec( lua_State *L )

@@ -21,8 +21,9 @@ int getItemFromInventory( lua_State *L );
 int getSpec( lua_State *L );
 int getInstanceFramework( lua_State *L );
 int getContainer( lua_State *L );
-
+int getVar( lua_State *L );
 /* setters */
+int setVar( lua_State *L );
 int addSpec( lua_State *L );
 
 /* bools */
