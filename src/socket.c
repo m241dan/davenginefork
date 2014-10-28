@@ -31,6 +31,8 @@ LLIST    * active_wSpaces = NULL;
 LLIST    * active_OLCs = NULL;
 LLIST    * active_frameworks = NULL;
 LLIST    * eInstances_list = NULL;
+LLIST    * global_variables = NULL;
+
 
 MYSQL    * sql_handle = NULL;
 lua_State *lua_handle  = NULL;
@@ -67,6 +69,7 @@ int main(int argc, char **argv)
    active_OLCs = AllocList();
    active_frameworks = AllocList();
    eInstances_list = AllocList();
+   global_variables = AllocList();
 
   /* note that we are booting up */
   log_string("Program starting.");
@@ -90,6 +93,9 @@ int main(int argc, char **argv)
    lua_pop( lua_handle, -1 );
 
    luaL_requiref( lua_handle, "Specification", luaopen_SpecificationLib, 1 );
+   lua_pop( lua_handle, -1 );
+
+   luaL_requiref( lua_handle, "mud", luaopen_mud, 1 );
    lua_pop( lua_handle, -1 );
 
    log_string( "Connecting to Database" );

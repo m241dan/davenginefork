@@ -2,6 +2,18 @@
 
 #include "mud.h"
 
+const struct luaL_Reg EntityVariablesLib_f[] = {
+  { "getGlobal", lua_getGlobalVar },
+  { "setGlobal", lua_setGlobalVar },
+  { NULL, NULL }
+};
+
+int luaopen_mud( lua_State *L )
+{
+   luaL_newlib( L, EntityVariablesLib_f );
+   return 1;
+}
+
 bool prep_stack( const char *file, const char *function )
 {
    int ret;
@@ -155,4 +167,77 @@ void push_specification( SPECIFICATION *spec, lua_State *L )
 
    *box = spec;
    return;
+}
+
+int lua_getGlobalVar( lua_State *L )
+{
+   EVAR *var;
+   const char *var_name;
+
+   if( ( var_name = luaL_checkstring( L, -1 ) ) == NULL )
+   {
+      bug( "%s: no string passed.", __FUNCTION__ );
+      lua_pushnil( L );
+      return 1;
+   }
+
+   if( ( var = get_global_var( var_name ) ) == NULL )
+   {
+      bug( "%s: no global var named %s.", __FUNCTION__, var_name );
+      lua_pushnil( L );
+      return 1;
+   }
+   switch( var->type )
+   {
+      default: lua_pushnil( L ); return 1;
+      case VAR_INT:
+         lua_pushnumber( L, atoi( var->value ) );
+         return 1;
+      case VAR_STR:
+         lua_pushstring( L, var->value );
+         return 1;
+   }
+   return 0;
+}
+
+int lua_setGlobalVar( lua_State *L )
+{
+   EVAR *var;
+   const char *var_name;
+
+   if( ( var_name = luaL_checkstring( L, -2 ) ) == NULL )
+   {
+      bug( "%s: no variable name passed.", __FUNCTION__ );
+      return 0;
+   }
+
+   var = get_global_var( var_name );
+
+   switch( lua_type( L, -1 ) )
+   {
+      default: bug( "%s: bad value passed.", __FUNCTION__ ); return 0;
+      case LUA_TNUMBER:
+         if( !var )
+         {
+            var = new_int_var( var_name, lua_tonumber( L, -1 ) );
+            new_global_var( var );
+            return 0;
+         }
+         if( var->type != VAR_INT )
+            update_var_type( var, VAR_INT );
+         update_var_value( var, itos( lua_tonumber( L, -1 ) ) );
+         return 0;
+      case LUA_TSTRING:
+         if( !var )
+         {
+            var = new_str_var( var_name, lua_tostring( L, -1 ) );
+            new_global_var( var );
+            return 0;
+         }
+         if( var->type != VAR_STR )
+            update_var_type( var, VAR_STR );
+         update_var_value( var, lua_tostring( L, -1 ) );
+         return 0;
+   }
+   return 0;
 }

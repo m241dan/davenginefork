@@ -41,6 +41,9 @@
 #define eTHIN   0
 #define eBOLD   1
 
+#define VAR_INT 0
+#define VAR_STR 1
+
 /* A few globals */
 #define PULSES_PER_SECOND     4                   /* must divide 1000 : 4, 5 or 8 works */
 #define MAX_FRAMEWORK_NSL   255                   /* max for non-text string sql entrees */
@@ -353,6 +356,7 @@ typedef struct  workspace_filter WORKSPACE_FILTER;
 typedef struct  d_string       STRING;
 typedef struct  editor_chain   E_CHAIN;
 typedef struct  target_data    TARGET_DATA;
+typedef struct  entity_variable EVAR;
 
 /* the actual structures */
 struct dSocket
@@ -428,7 +432,7 @@ typedef struct buffer_type
 #include "lua_specification.h"
 #include "lua_framework.h"
 #include "target.h"
-
+#include "entity_variables.h"
 /******************************
  * End of new structures      *
  ******************************/

@@ -10,6 +10,7 @@ ENTITY_INSTANCE *init_eInstance( void )
    CREATE( eInstance, ENTITY_INSTANCE, 1 );
    eInstance->commands = AllocList();
    eInstance->contents = AllocList();
+   eInstance->evars = AllocList();
    for( x = 0; x < MAX_QUICK_SORT; x++ )
      eInstance->contents_sorted[x] = AllocList();
    eInstance->specifications = AllocList();
@@ -56,6 +57,9 @@ int free_eInstance( ENTITY_INSTANCE *eInstance )
 
    free_target( eInstance->target );
    eInstance->target = NULL;
+
+   clear_evar_list( eInstance->evars );
+   eInstance->evars = NULL;
 
    eInstance->socket = NULL;
    eInstance->contained_by = NULL;
@@ -1378,7 +1382,16 @@ int builder_prompt( D_SOCKET *dsock )
    int ret = RET_SUCCESS;
 
    if( !dsock->controlling )
+   {
       bug( "%s: socket is controlling nothing...", __FUNCTION__ );
+      return 0;
+   }
+
+   if( !dsock->controlling->account )
+   {
+      bug( "%s: this is weird!", __FUNCTION__ );
+      return 0;
+   }
 
    olc = dsock->controlling->account->olc;
 
