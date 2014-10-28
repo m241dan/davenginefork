@@ -98,8 +98,6 @@ int main(int argc, char **argv)
    luaL_requiref( lua_handle, "mud", luaopen_mud, 1 );
    lua_pop( lua_handle, -1 );
 
-   log_string( "Loading Global Lua Variables" );
-   load_global_vars();
 
    log_string( "Connecting to Database" );
 
@@ -145,6 +143,9 @@ int main(int argc, char **argv)
       mysql_close( sql_handle );
       exit(1);
    }
+
+   log_string( "Loading Global Lua Variables" );
+   load_global_vars();
 
    log_string( "Loading ID Handlers" );
 
