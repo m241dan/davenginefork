@@ -255,6 +255,13 @@ int getVar( lua_State *L )
 
    DAVLUACM_INSTANCE_NIL( instance, L );
 
+   if( instance->tag->id == -69 )
+   {
+      bug( "%s: builders have no vars", __FUNCTION__ );
+      lua_pushnil( L );
+      return 1;
+   }
+
    if( ( var_name = luaL_checkstring( L, -1 ) ) == NULL )
    {
       bug( "%s: no string passed.", __FUNCTION__ );
@@ -289,6 +296,12 @@ int setVar( lua_State *L )
    const char *var_name;
 
    DAVLUACM_INSTANCE_NIL( instance, L );
+
+   if( instance->tag->id == -69 )
+   {
+      bug( "%s: builders have no vars", __FUNCTION__ );
+      return 0;
+   }
 
    if( ( var_name = luaL_checkstring( L, -2 ) ) == NULL )
    {
@@ -333,6 +346,12 @@ int addSpec( lua_State *L )
    SPECIFICATION *spec;
 
    DAVLUACM_INSTANCE_NONE( instance, L );
+
+   if( instance->tag->id == -69 )
+   {
+      bug( "%s: don't spec builders plz", __FUNCTION__ );
+      return 0;
+   }
 
    if( ( spec = *(SPECIFICATION **)luaL_checkudata( L, 2, "Specification.meta" ) ) == NULL )
    {
