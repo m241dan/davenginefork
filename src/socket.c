@@ -98,6 +98,9 @@ int main(int argc, char **argv)
    luaL_requiref( lua_handle, "mud", luaopen_mud, 1 );
    lua_pop( lua_handle, -1 );
 
+   log_string( "Loading Global Lua Variables" );
+   load_global_vars();
+
    log_string( "Connecting to Database" );
 
 /* test if lua is working
