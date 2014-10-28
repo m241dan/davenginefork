@@ -1321,6 +1321,9 @@ void text_around_entity( ENTITY_INSTANCE *perspective, int num_around, const cha
    int res, x;
    char dest[MAX_BUFFER];
 
+   if( !perspective )
+      return;
+
    va_start( va, fmt );
    if( num_around > 0 )
    {
