@@ -433,6 +433,7 @@ typedef struct buffer_type
 #include "lua_framework.h"
 #include "target.h"
 #include "entity_variables.h"
+#include "entity_stats.h"
 /******************************
  * End of new structures      *
  ******************************/
