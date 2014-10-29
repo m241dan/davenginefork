@@ -32,7 +32,7 @@ LLIST    * active_OLCs = NULL;
 LLIST    * active_frameworks = NULL;
 LLIST    * eInstances_list = NULL;
 LLIST    * global_variables = NULL;
-
+LLIST    * stat_frameworks = NULL;
 
 MYSQL    * sql_handle = NULL;
 lua_State *lua_handle  = NULL;
@@ -70,6 +70,7 @@ int main(int argc, char **argv)
    active_frameworks = AllocList();
    eInstances_list = AllocList();
    global_variables = AllocList();
+   stat_frameworks = AllocList();
 
   /* note that we are booting up */
   log_string("Program starting.");

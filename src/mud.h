@@ -357,6 +357,8 @@ typedef struct  d_string       STRING;
 typedef struct  editor_chain   E_CHAIN;
 typedef struct  target_data    TARGET_DATA;
 typedef struct  entity_variable EVAR;
+typedef struct  stat_framework  STAT_FRAMEWORK;
+typedef struct  stat_instance   STAT_INSTANCE;
 
 /* the actual structures */
 struct dSocket
