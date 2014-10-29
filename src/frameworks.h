@@ -10,6 +10,7 @@ struct entity_framework
 
    LLIST *fixed_contents; /* frameworks structs */
    LLIST *specifications;
+   LLIST *stats;
 
    ENTITY_FRAMEWORK *inherits;
 

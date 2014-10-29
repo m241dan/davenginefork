@@ -6,27 +6,27 @@ const char *const data_types[MAX_MEMORY_TYPE+1] = {
 };
 
 const char *const tag_table_strings[MAX_ID_HANDLER+1] = {
-   "accounts", "workspaces", "entity_frameworks", "entity_instances", "projects",
+   "accounts", "workspaces", "entity_frameworks", "entity_instances", "projects", "stat_frameworks",
    '\0'
 };
 
 const char *const tag_table_whereID[MAX_ID_HANDLER+1] = {
-   "accountID", "workspaceID", "entityFrameworkID", "entityInstanceID", "projectID",
+   "accountID", "workspaceID", "entityFrameworkID", "entityInstanceID", "projectID", "statFrameworkID",
    '\0'
 };
 
 const char *const tag_table_extensions[MAX_ID_HANDLER+1] = {
-   ".account", ".workspace", ".framework", ".instance", ".project",
+   ".account", ".workspace", ".framework", ".instance", ".project", ".stat",
    '\0'
 };
 
 const char const tag_table_characters[MAX_ID_HANDLER+1] = {
-   'a', 'w', 'f', 'i', 'p',
+   'a', 'w', 'f', 'i', 'p', 's',
    '\0'
 };
 
 const char *const selection_table[MAX_SEL+1] = {
-   "entity framework", "entity instance", "workspace", "project", "string",
+   "entity framework", "entity instance", "workspace", "project", "string", "stat framework",
    '\0'
 };
 

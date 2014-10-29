@@ -11,6 +11,7 @@ ENTITY_FRAMEWORK *init_eFramework( void )
    frame->tag->type = ENTITY_FRAMEWORK_IDS;
    frame->fixed_contents = AllocList();
    frame->specifications = AllocList();
+   frame->stats = AllocList();
    if( clear_eFramework( frame ) != RET_SUCCESS )
    {
       bug( "could not clear memory allocated by %s", __FUNCTION__ );
@@ -69,6 +70,10 @@ int free_eFramework( ENTITY_FRAMEWORK *frame )
    FreeList( frame->specifications );
    frame->specifications = NULL;
 
+   clearlist( frame->stats );
+   FreeList( frame->stats );
+   frame->stats = NULL;
+
    frame->inherits = NULL;
 
    FREE( frame->name );
@@ -94,6 +99,7 @@ ENTITY_FRAMEWORK *load_eFramework_by_query( const char *query )
    db_load_eFramework( frame, &row );
    load_specifications_to_list( frame->specifications, quick_format( "f%d", frame->tag->id ) );
    load_fixed_possessions_to_list( frame->fixed_contents, frame->tag->id );
+   load_framework_stats( frame );
    free( row );
    return frame;
 }
@@ -143,6 +149,7 @@ ENTITY_FRAMEWORK *load_eFramework_by_name( const char *name )
 int new_eFramework( ENTITY_FRAMEWORK *frame )
 {
    SPECIFICATION *spec;
+   STAT_FRAMEWORK *fstat;
    ITERATOR Iter;
    int ret = RET_SUCCESS;
 
@@ -174,6 +181,11 @@ int new_eFramework( ENTITY_FRAMEWORK *frame )
       mud_printf( spec->owner, "f%d", frame->tag->id );
       new_specification( spec );
    }
+   DetachIterator( &Iter );
+
+   AttachIterator( &Iter, frame->stats );
+   while( ( fstat = (STAT_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
+      new_stat_on_frame( fstat, frame );
    DetachIterator( &Iter );
 
    AttachToList( frame, active_frameworks );

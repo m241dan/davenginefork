@@ -13,18 +13,53 @@ struct stat_framework
 
 };
 
-struct state_instance
+struct stat_instance
 {
    ENTITY_INSTANCE *owner;
    STAT_FRAMEWORK *framework;
    int perm_stat;
    int mod_stat;
-}
+};
 
 STAT_FRAMEWORK *init_stat_framework( void );
-void *free_stat_framework( STAT_FRAMEWORK *fstat );
+void free_stat_framework( STAT_FRAMEWORK *fstat );
+void new_stat_framework( STAT_FRAMEWORK *fstat );
+extern inline void new_stat_on_frame( STAT_FRAMEWORK *fstat, ENTITY_FRAMEWORK *frame );
+extern inline void add_stat_to_frame( STAT_FRAMEWORK *fstat, ENTITY_FRAMEWORK *frame );
+void db_load_stat_framework( STAT_FRAMEWORK *fstat, MYSQL_ROW *row );
+void load_framework_stats( ENTITY_FRAMEWORK *frame );
 
 STAT_INSTANCE *init_stat( void );
-void *free_stat( STAT_INSTANCE *stat );
+void free_stat( STAT_INSTANCE *stat );
+void new_stat_instance( STAT_INSTANCE *stat );
+void db_load_stat_instance( STAT_INSTANCE *stat, MYSQL_ROW *row );
+void free_stat_list( LLIST *list );
+void stat_instantiate( ENTITY_INSTANCE *owner, STAT_FRAMEWORK *fstat );
+void load_entity_stats( ENTITY_INSTANCE *entity );
+void instantiate_entity_stats_from_framework( ENTITY_INSTANCE *entity );
+void clear_stat_list( LLIST *list );
 
+STAT_FRAMEWORK *get_stat_framework_by_query( const char *query );
 
+extern inline STAT_FRAMEWORK *get_stat_framework_by_id( int id );
+STAT_FRAMEWORK *get_active_stat_framework_by_id( int id );
+extern inline STAT_FRAMEWORK *load_stat_framework_by_id( int id );
+
+extern inline STAT_FRAMEWORK *get_stat_framework_by_name( const char *name );
+STAT_FRAMEWORK *get_active_stat_framework_by_name( const char *name );
+extern inline STAT_FRAMEWORK *load_stat_framework_by_name( const char *name );
+
+STAT_FRAMEWORK *get_stat_from_framework_by_id( ENTITY_FRAMEWORK *frame, int id, int *spec_from );
+STAT_FRAMEWORK *get_stat_from_framework_by_name( ENTITY_FRAMEWORK *frame, const char *name, int *spec_from );
+STAT_INSTANCE  *get_stat_from_instance_by_id( ENTITY_INSTANCE *entity, int id );
+STAT_INSTANCE  *get_stat_from_instance_by_name( ENTITY_INSTANCE *entity, const char *name );
+
+extern inline void set_softcap( STAT_FRAMEWORK *fstat, int value );
+extern inline void set_hardcap( STAT_FRAMEWORK *fstat, int value );
+extern inline void set_softfloor( STAT_FRAMEWORK *fstat, int value );
+extern inline void set_hardfloor( STAT_FRAMEWORK *fstat, int value );
+extern inline void set_name( STAT_FRAMEWORK *fstat, const char *name );
+
+extern inline void set_perm_stat( STAT_INSTANCE *stat, int value );
+extern inline void set_mod_stat( STAT_INSTANCE *stat, int value );
+extern inline void set_stat_owner( STAT_INSTANCE *stat, ENTITY_INSTANCE *owner );

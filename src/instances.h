@@ -11,6 +11,7 @@ struct entity_instance
    LLIST *contents;
    LLIST *contents_sorted[MAX_QUICK_SORT];
    LLIST *specifications;
+   LLIST *stats;
    LLIST *evars;
 
    ENTITY_FRAMEWORK *framework;

@@ -16,3 +16,4 @@ INSERT INTO `id-handlers` VALUES ( '1', 'Workspace Handler', '0', '1' );
 INSERT INTO `id-handlers` VALUES ( '2', 'Entity_Framework Handler', '6', '1' );
 INSERT INTO `id-handlers` VALUES ( '3', 'Entity_Instance Handler', '1', '1' );
 INSERT INTO `id-handlers` VALUES ( '4', 'Project Handler', '0', '0' );
+INSERT INTO `id-handlers` VALUES ( '5', 'Stat_Framework Handler', '0', '1' );

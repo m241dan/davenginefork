@@ -10,6 +10,7 @@ ENTITY_INSTANCE *init_eInstance( void )
    CREATE( eInstance, ENTITY_INSTANCE, 1 );
    eInstance->commands = AllocList();
    eInstance->contents = AllocList();
+   eInstance->stats = AllocList();
    eInstance->evars = AllocList();
    for( x = 0; x < MAX_QUICK_SORT; x++ )
      eInstance->contents_sorted[x] = AllocList();
@@ -58,8 +59,16 @@ int free_eInstance( ENTITY_INSTANCE *eInstance )
    free_target( eInstance->target );
    eInstance->target = NULL;
 
+   clear_stat_list( eInstance->stats );
+   FreeList( eInstance->stats );
+   eInstance->stats = NULL;
+
    clear_evar_list( eInstance->evars );
+   FreeList( eInstance->evars );
    eInstance->evars = NULL;
+
+   free_tag( eInstance->tag );
+   eInstance->tag = NULL;
 
    eInstance->socket = NULL;
    eInstance->contained_by = NULL;
@@ -290,6 +299,7 @@ void set_instance_level( ENTITY_INSTANCE *instance, int level )
 
 int new_eInstance( ENTITY_INSTANCE *eInstance )
 {
+   STAT_INSTANCE *stat;
    SPECIFICATION *spec;
    ITERATOR Iter;
    int ret = RET_SUCCESS;
@@ -322,6 +332,11 @@ int new_eInstance( ENTITY_INSTANCE *eInstance )
       mud_printf( spec->owner, "%d", eInstance->tag->id );
       new_specification( spec );
    }
+   DetachIterator( &Iter );
+
+   AttachIterator( &Iter, eInstance->stats );
+   while( ( stat = (STAT_INSTANCE *)NextInList( &Iter ) ) != NULL )
+      new_stat_instance( stat );
    DetachIterator( &Iter );
 
    AttachToList( eInstance, eInstances_list );
@@ -1103,6 +1118,7 @@ ENTITY_INSTANCE *eInstantiate( ENTITY_FRAMEWORK *frame )
 
    eInstance = init_eInstance();
    eInstance->framework = frame;
+   instantiate_entity_stats_from_framework( eInstance );
    return eInstance;
 }
 
