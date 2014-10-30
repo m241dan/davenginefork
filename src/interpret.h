@@ -29,6 +29,8 @@ extern struct typCmd create_instance_commands[];
 
 const char *editor_return_desc( void *extra );
 
+extern struct typCmd create_sFramework_commands[];
+
 extern struct typCmd builder_commands[];
 
 extern struct typCmd mobile_commands[];
@@ -39,6 +41,7 @@ int eFrame_editor_handle_command( INCEPTION *olc, char *arg );
 int project_editor_handle_command( INCEPTION *olc, char *arg );
 int workspace_editor_handle_command( INCEPTION *olc, char *arg );
 int instance_editor_handle_command( INCEPTION *olc, char *arg );
+int sFrame_editor_handle_command( INCEPTION *olc, char *arg );
 int entity_handle_cmd( ENTITY_INSTANCE *instance, char *arg );
 
 

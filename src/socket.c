@@ -1015,6 +1015,9 @@ bool flush_output(D_SOCKET *dsock)
         case STATE_BUILDER:
            builder_prompt( dsock );
            break;
+        case STATE_SFRAME_EDITOR:
+           editor_sFramework_prompt( dsock, TRUE );
+           break;
         case STATE_NANNY:
            break;
      }
@@ -1154,6 +1157,10 @@ int change_socket_state( D_SOCKET *dsock, int state )
       case STATE_BUILDER:
          if( SizeOfList( dsock->controlling->commands ) < 1 )
             load_commands( dsock->controlling->commands, builder_commands, dsock->controlling->level );
+         break;
+      case STATE_SFRAME_EDITOR:
+         if( SizeOfList( dsock->account->olc->editor_commands ) < 1 )
+            load_commands( dsock->account->olc->editor_commands, create_sFramework_commands, dsock->account->level );
          break;
       case STATE_PLAYING:
          break;

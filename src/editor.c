@@ -92,6 +92,19 @@ void editor_switch( void *passed, char *arg )
    return;
 }
 
+int free_editor( INCEPTION *olc )
+{
+   int ret = RET_SUCCESS;
+
+   olc->editing = NULL;
+   free_command_list( olc->editor_commands );
+   FreeList( olc->editor_commands );
+   olc->editor_commands = NULL;
+   olc->editing_state = olc->account->socket->prev_state;
+
+   return ret;
+}
+
 int init_eFramework_editor( INCEPTION *olc, ENTITY_FRAMEWORK *frame )
 {
    int ret = RET_SUCCESS;
@@ -104,19 +117,6 @@ int init_eFramework_editor( INCEPTION *olc, ENTITY_FRAMEWORK *frame )
    olc->editing_state = STATE_EFRAME_EDITOR;
    text_to_olc( olc, "Opening the Framework Editor...\r\n" );
    olc->editor_commands = AllocList();
-
-   return ret;
-}
-
-int free_editor( INCEPTION *olc )
-{
-   int ret = RET_SUCCESS;
-
-   olc->editing = NULL;
-   free_command_list( olc->editor_commands );
-   FreeList( olc->editor_commands );
-   olc->editor_commands = NULL;
-   olc->editing_state = olc->account->socket->prev_state;
 
    return ret;
 }
@@ -1240,5 +1240,33 @@ void instance_done( void *passed, char *arg )
    free_editor( olc );
    change_socket_state( olc->account->socket, olc->editor_launch_state );
    text_to_olc( olc, "Exiting Entity Instance Editor.\r\n" );
+   return;
+}
+
+int init_sFramework_editor( INCEPTION *olc, STAT_FRAMEWORK *fstat )
+{
+   int ret = RET_SUCCESS;
+
+   if( !fstat )
+      olc->editing = init_stat_framework();
+   else
+      olc->editing = fstat;
+
+   olc->editing_state = STATE_SFRAME_EDITOR;
+   text_to_olc( olc, "Opening the Stat Framework Editor...\r\n" );
+   olc->editor_commands = AllocList();
+
+   return ret;
+}
+
+void boot_sFramework_editor( INCEPTION *olc, STAT_FRAMEWORK *fstat )
+{
+   int state = olc->account->socket->state;
+
+   if( state < STATE_EFRAME_EDITOR || state > STATE_PROJECT_EDITOR )
+      olc->editor_launch_state = state;
+   init_sFramework_editor( olc, fstat );
+   olc->editing_state = STATE_SFRAME_EDITOR;
+   change_socket_state( olc->account->socket, olc->editing_state );
    return;
 }
