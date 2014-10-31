@@ -60,3 +60,12 @@ void instance_done( void *passed, char *arg );
 int init_sFramework_editor( INCEPTION *olc, STAT_FRAMEWORK *fstat );
 void boot_sFramework_editor( INCEPTION *olc, STAT_FRAMEWORK *fstat );
 void editor_sFramework_prompt( D_SOCKET *dsock, bool commands );
+
+void sFramework_name( void *passed, char *arg );
+void sFramework_softcap( void *passed, char *arg );
+void sFramework_hardcap( void *passed, char *arg );
+void sFramework_softfloor( void *passed, char *arg );
+void sFramework_hardfloor( void *passed, char *arg );
+void sFramework_script( void *passed, char *arg );
+void sFramework_save( void *passed, char *arg );
+void sFramework_done( void *passed, char *arg );

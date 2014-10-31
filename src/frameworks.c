@@ -710,7 +710,7 @@ const char *chase_description( ENTITY_FRAMEWORK *frame )
 }
 
 void add_frame_to_fixed_contents( ENTITY_FRAMEWORK *frame_to_add, ENTITY_FRAMEWORK *container )
-{
+	{
    if( !frame_to_add || !container )
       return;
 
@@ -737,7 +737,7 @@ void rem_frame_from_fixed_contents( ENTITY_FRAMEWORK *frame_to_rem, ENTITY_FRAME
    return;
 }
 
-FILE *open_script( ENTITY_FRAMEWORK *frame, const char *permissions )
+FILE *open_f_script( ENTITY_FRAMEWORK *frame, const char *permissions )
 {
    FILE *script;
    script = fopen( get_frame_script_path( frame ), permissions );
@@ -783,7 +783,7 @@ void init_f_script( ENTITY_FRAMEWORK *frame, bool force )
    return;
 }
 
-const char *print_script( ENTITY_FRAMEWORK *frame )
+const char *print_f_script( ENTITY_FRAMEWORK *frame )
 {
    const char *buf;
    FILE *fp;
@@ -791,7 +791,7 @@ const char *print_script( ENTITY_FRAMEWORK *frame )
    if( !f_script_exists( frame ) )
       return "This framework has no script.";
 
-   if( ( fp = open_script( frame, "r" ) ) == NULL )
+   if( ( fp = open_f_script( frame, "r" ) ) == NULL )
       return "There was a pretty big error.";
 
    buf = fread_file( fp );

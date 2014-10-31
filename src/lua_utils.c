@@ -64,14 +64,24 @@ const char *get_script_path_from_spec( SPECIFICATION *spec )
    return get_instance_script_path( get_instance_by_id( id ) );
 }
 
-const char *get_frame_script_path( ENTITY_FRAMEWORK *frame )
+inline const char *get_frame_script_path( ENTITY_FRAMEWORK *frame )
 {
    return quick_format( "../scripts/frames/%d.lua", frame->tag->id );
 }
 
-const char *get_instance_script_path( ENTITY_INSTANCE *instance )
+inline const char *get_instance_script_path( ENTITY_INSTANCE *instance )
 {
    return quick_format( "../scripts/instances/%d.lua", instance->tag->id );
+}
+
+inline const char *get_stat_framework_script_path( STAT_FRAMEWORK *fstat )
+{
+   return quick_format( "../scripts/stats/%d.lua", fstat->tag->id );
+}
+
+inline const char *get_stat_instance_script_path( STAT_INSTANCE *stat )
+{
+   return quick_format( "../scripts/stats/%d.lua", stat->framework->tag->id );
 }
 
 void push_instance( ENTITY_INSTANCE *instance, lua_State *L )

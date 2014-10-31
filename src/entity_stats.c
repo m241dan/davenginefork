@@ -375,6 +375,7 @@ STAT_INSTANCE  *get_stat_from_instance_by_name( ENTITY_INSTANCE *entity, const c
 inline void set_softcap( STAT_FRAMEWORK *fstat, int value )
 {
    fstat->softcap = value;
+   if( !strcmp( fstat->tag->created_by, "null" ) ) return;
    if( !quick_query( "UPDATE `stat_frameworks` SET softcap=%d WHERE statFrameworkID=%d;", value, fstat->tag->id ) )
       bug( "%s: could not update database with new value.", __FUNCTION__ );
 }
@@ -382,6 +383,7 @@ inline void set_softcap( STAT_FRAMEWORK *fstat, int value )
 inline void set_hardcap( STAT_FRAMEWORK *fstat, int value )
 {
    fstat->hardcap = value;
+   if( !strcmp( fstat->tag->created_by, "null" ) ) return;
    if( !quick_query( "UPDATE `stat_frameworks` SET hardcap=%d WHERE statFrameworkID=%d;", value, fstat->tag->id ) )
       bug( "%s: could not update database with new value.", __FUNCTION__ );
 }
@@ -389,6 +391,7 @@ inline void set_hardcap( STAT_FRAMEWORK *fstat, int value )
 inline void set_softfloor( STAT_FRAMEWORK *fstat, int value )
 {
    fstat->softfloor = value;
+   if( !strcmp( fstat->tag->created_by, "null" ) ) return;
    if( !quick_query( "UPDATE `stat_frameworks` SET softfloor=%d WHERE statFrameworkID=%d;", value, fstat->tag->id ) )
       bug( "%s: could not update database with new value.", __FUNCTION__ );
 }
@@ -396,6 +399,7 @@ inline void set_softfloor( STAT_FRAMEWORK *fstat, int value )
 inline void set_hardfloor( STAT_FRAMEWORK *fstat, int value )
 {
    fstat->hardfloor = value;
+   if( !strcmp( fstat->tag->created_by, "null" ) ) return;
    if( !quick_query( "UPDATE `stat_frameworks` SET hardfloor=%d WHERE statFrameworkID=%d;", value, fstat->tag->id ) )
       bug( "%s: could not update database with new value.", __FUNCTION__ );
 }
@@ -403,6 +407,7 @@ inline void set_name( STAT_FRAMEWORK *fstat, const char *name )
 {
    FREE( fstat->name );
    fstat->name = strdup( name );
+   if( !strcmp( fstat->tag->created_by, "null" ) ) return;
    if( !quick_query( "UPDATE `stat_frameworks` SET name='%s' WHERE statFrameworkID=%d;", name, fstat->tag->id ) )
       bug( "%s: could not update database with new name.", __FUNCTION__ );
 }
@@ -426,4 +431,70 @@ inline void set_stat_owner( STAT_INSTANCE *stat, ENTITY_INSTANCE *owner )
       bug( "%s: could not update databse with new owner.", __FUNCTION__ );
    stat->owner = owner;
 }
+
+FILE *open_s_script( STAT_FRAMEWORK *fstat, const char *permissions )
+{
+   FILE *script;
+   script = fopen( get_stat_framework_script_path( fstat ), permissions );
+   return script;
+}
+
+bool s_script_exists( STAT_FRAMEWORK *fstat )
+{
+   FILE *script;
+
+   if( !strcmp( frame->tag->created_by, "null" ) )
+      return FALSE;
+
+   if( ( script = fopen( quick_format( "../scripts/stats/%d.lua", fstat->tag->id ), "r" ) ) == NULL 0
+      return FALSE;
+
+   fclose( script );
+   return TRUE;
+
+}
+
+void init_s_script( STAT_FRAMEWORK *fstat, bool force )
+{
+   FILE *temp, *dest;
+
+   if( s_script_exists( fstat ) && !force )
+      return;
+
+   if( ( temp = fopen( ../scripts/templates/stat.lua", "r" ) ) == NULL )
+   {
+      bug( "%s: could not open the template.", __FUNCTION__ );
+      return;
+   }
+
+   if( ( dest = fopen( quick_format( "../scripts/stats/%d.lua", fstat->tag->id ), "w" ) ) == NULL )
+   {
+      bug( "5s: could not open the script.", __FUNCTION__ );
+      return;
+   }
+   copy_flat_file( dest, temp );
+   fclose( dest );
+   fclose( temp );
+   return;
+}
+
+const char *print_s_script( STAT_FRAMEWORK *fstat )
+{
+   const char *buf;
+   FILE *fp;
+
+   if( !s_script_exists( fstat ) )
+      return "This framework has no script.";
+
+   if( ( fp = open_s_script( fstat, "r" ) ) == NULL )
+      return "There was a pretty bug error.";
+
+   buf = fread_file( fp );
+   fclose( fp );
+   return buf;
+}
+
+
+
+
 

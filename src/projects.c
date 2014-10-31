@@ -585,7 +585,7 @@ void fread_framework_import( FILE *fp, int *framework_id_table )
             {
                FILE *script;
 
-               if( ( script = open_script( frame, "w" ) ) == NULL )
+               if( ( script = open_f_script( frame, "w" ) ) == NULL )
                {
                   bug( "%s: having a problem creating the script for the imported framework.", __FUNCTION__ );
                   break;
@@ -899,7 +899,7 @@ void fwrite_framework_export( FILE *fp, ENTITY_FRAMEWORK *frame, int *framework_
    if( f_script_exists( frame ) )
    {
       fprintf( fp, "Script\n" );
-      fprintf( fp, "%s\n", print_script( frame ) );
+      fprintf( fp, "%s\n", print_f_script( frame ) );
       return;
    }
    fprintf( fp, "#END\n\n" );

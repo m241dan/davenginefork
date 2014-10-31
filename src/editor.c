@@ -603,7 +603,7 @@ void eFramework_script( void *passed, char *arg )
       text_to_olc( olc, "You generate a script file for %s.\r\n", chase_name( frame ) );
       return;
    }
-   text_to_olc( olc, "%s", print_script( frame ) );
+   text_to_olc( olc, "%s", print_f_script( frame ) );
    return;
 }
 
@@ -1269,4 +1269,176 @@ void boot_sFramework_editor( INCEPTION *olc, STAT_FRAMEWORK *fstat )
    olc->editing_state = STATE_SFRAME_EDITOR;
    change_socket_state( olc->account->socket, olc->editing_state );
    return;
+}
+
+void editor_sFramework_prompt( D_SOCKET *dsock, bool commands )
+{
+   INCEPTION *olc;
+   STAT_FRAMEWORK *fstat;
+   BUFFER *buf = buffer_new( MAX_BUFFER );
+   const char *border = "|";
+   char tempstring[MAX_BUFFER];
+   int space_after_border;
+
+   fstat = (STAT_FRAMEWORK *)dsock->account->olc->editing;
+   olc = dsock->account->olc;
+
+   space_after_pipes = dsock->account->pagewidth - ( strlen( border ) * 2 )
+
+   if( !strcmp( fstat->tag->created_by, "null" ) )
+      mud_printf( tempstring, "Potential Stat ID: %d", get_potential_id( fstat->tag->type ) );
+   else
+      mud_printf( tempstring, "Stat ID: %d", fstat->tag->id );
+
+   text_to_olc( olc, "/%s\\\r\n", print_header( tempstring, "-", dsock->account->pagewidth - 2 );
+   text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " Name      : %s", fstat->name ), space_after_border ), border );
+   text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " SoftCap   : %d", fstat->softcap ), space_after_border ), border );
+   text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " HardCap   : %d", fstat->hardcap ), space_after_border ), border );
+   text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " SoftFloor : %d", fstat->softfloor ), space_after_border ), border );
+   text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " HardFloor : %d", fstat->hardfloor ), space_after_border ), border );
+
+   text_to_olc( olc, "%s%s%s\r\n", border, print_bar( "-", space_after_border ), border );
+   if( commands )
+   {
+      print_commands( dsock->account->olc, dsock->account->olc->editor_commands, buf, 0, dsock->account->pagewidth );
+      bprintf( buf, "\\%s/\r\n", print_bar( "-", dsock->account->pagewidth - 2 ) );
+   }
+   text_to_olc( olc, buf->data );
+   buffer_free( buf );
+   return;
+}
+
+void sFramework_name( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   STAT_FRAMEWORK *fstat = (STAT_FRAMEWORK *)olc->editing;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Name this stat what?\r\n" );
+      olc_short_prompt( olc );
+      return;
+   }
+
+   set_name( fstat, arg );
+   text_to_olc( olc, "You set the name to %s.\r\n", arg );
+   return;
+}
+
+void sFramework_softcap( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   STAT_FRAMEWORK *fstat = (STAT_FRAMEWORK *)olc->editing;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Set the softcap to what?\r\n" );
+      olc_short_prompt( olc );
+      return;
+   }
+
+   if( !is_number( arg ) )
+   {
+      text_to_olc( olc, "You must input a number.\r\n" );
+      olc_short_prompt( olc );
+      return;
+   }
+   set_softcap( fstat, atoi( arg ) );
+   text_to_olc( olc, "You set the softcap to %d.\r\n"m fstat->softcap );
+   return;
+}
+
+void sFramework_hardcap( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   STAT_FRAMEWORK *fstat = (STAT_FRAMEWORK *)olc->editing;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Set the hardcap to what?\r\n" );
+      olc_short_prompt( olc );
+      return;
+   }
+
+   if( !is_number( arg ) )
+   {
+      text_to_olc( olc, "You must input a number.\r\n" );
+      olc_short_prompt( olc );
+      return;
+   }
+
+   set_hardcap( fstat, atoi( arg ) );
+   text_to_olc( olc, "You set the hardcap to ds.\r\n", fstat->hardcap );
+   return;
+
+}
+
+void sFramework_softfloor( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   STAT_FRAMEWORK *fstat = (STAT_FRAMEWORK *)olc->editing;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Set the softfloor to what?\r\n" );
+      olc_short_prompt( olc );
+      return;
+   }
+
+   if( !is_number( arg ) )
+   {
+      text_to_olc( olc, "You must input a number.\r\n" );
+      olc_short_prompt( olc );
+      return;
+   }
+   set_softfloor( fstat, atoi( arg ) );
+   text_to_olc( olc, "You set the softfloor to %d.\r\n", fstat->softfloor );
+   return;
+}
+
+void sFramework_hardfloor( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   STAT_FRAMEWORK *fstat = (STAT_FRAMEWORK *)olc->editing;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Set the hardfloor to what?\r\n" );
+      olc_short_prompt( olc );
+      return;
+   }
+
+   if( !is_number( arg ) )
+   {
+      text_to_olc( olc, "You must input a number.\r\n" );
+      olc_short_prompt( olc );
+      return;
+   }
+
+   set_hardfloor( fstat, atoi( arg ) );
+   text_to_olc( olc, "You set the hardfloor to %d.\r\n", fstat->hardfloor );
+   return;
+}
+
+void sFramework_script( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   STAT_FRAMEWORK *fstat = (STAT_FRAMEWORK *)olc->editing;
+
+   if( !strcmp( fstat->tag->created_by, "null" ) )
+   {
+      text_to_olc( olc, "This stat framework must completely exist before you can start script it, save or done and reopen.\r\n" );
+      olc_short_prompt( olc );
+      return;
+   }
+}
+
+void sFramework_save( void *passed, char *arg )
+{
+
+}
+
+void sFramework_done( void *passed, char *arg )
+{
+
 }
