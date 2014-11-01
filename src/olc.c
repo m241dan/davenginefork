@@ -235,6 +235,7 @@ WORKSPACE *load_workspace_by_query( const char *query )
       return NULL;
 
    db_load_workspace( wSpace, &row );
+   AttachToList( wSpace, active_wSpaces );
    load_workspace_entries( wSpace );
    free( row );
    return wSpace;
@@ -245,8 +246,7 @@ WORKSPACE *get_workspace_by_id( int id )
    WORKSPACE *wSpace;
 
    if( ( wSpace = get_active_workspace_by_id( id ) ) == NULL )
-      if( ( wSpace = load_workspace_by_id( id ) ) != NULL )
-         AttachToList( wSpace, active_wSpaces );
+      wSpace = load_workspace_by_id( id );
 
    return wSpace;
 }
@@ -266,8 +266,7 @@ WORKSPACE *get_workspace_by_name( const char *name )
    WORKSPACE *wSpace;
 
    if( ( wSpace = get_active_workspace_by_name( name ) ) == NULL )
-      if( ( wSpace = load_workspace_by_name( name ) ) != NULL )
-         AttachToList( wSpace, active_wSpaces );
+      wSpace = load_workspace_by_name( name );
 
    return wSpace;
 }

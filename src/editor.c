@@ -1219,8 +1219,6 @@ void instance_setStat( void *passed, char *arg )
 
    set_perm_stat( stat, value );
    text_to_olc( olc, "Stat set.\r\n" );
-   /* lua script for this stat gaining or losing */
-   /* here */
    return;
 }
 

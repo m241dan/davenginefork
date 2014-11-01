@@ -246,14 +246,14 @@ STAT_FRAMEWORK *get_stat_framework_by_query( const char *query )
    CREATE( fstat, STAT_FRAMEWORK, 1 );
    CREATE( fstat->tag, ID_TAG, 1 );
    db_load_stat_framework( fstat, &row );
+   AttachToList( fstat, stat_frameworks );
    return fstat;
 }
 inline STAT_FRAMEWORK *get_stat_framework_by_id( int id )
 {
    STAT_FRAMEWORK *fstat;
    if( ( fstat = get_active_stat_framework_by_id( id ) ) == NULL )
-      if( ( fstat = load_stat_framework_by_id( id ) ) != NULL )
-         AttachToList( fstat, stat_frameworks );
+      fstat = load_stat_framework_by_id( id );
    return fstat;
 }
 
@@ -278,8 +278,7 @@ inline STAT_FRAMEWORK *get_stat_framework_by_name( const char *name )
 {
    STAT_FRAMEWORK *fstat;
    if( ( fstat = get_active_stat_framework_by_name( name ) ) == NULL )
-      if( ( fstat = load_stat_framework_by_name( name ) ) != NULL )
-         AttachToList( fstat, stat_frameworks );
+      fstat = load_stat_framework_by_name( name );
    return fstat;
 }
 
@@ -414,6 +413,7 @@ inline void set_name( STAT_FRAMEWORK *fstat, const char *name )
 
 inline void set_perm_stat( STAT_INSTANCE *stat, int value )
 {
+   /* lua component */
    stat->perm_stat = value;
    if( !quick_query( "UPDATE `entity_stats` SET perm_stat=%d WHERE statFrameworkID=%d AND owner=%d;", value, stat->framework->tag->id, stat->owner->tag->id ) )
       bug( "%s: could not update database with new value.", __FUNCTION__ );

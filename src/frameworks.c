@@ -97,6 +97,7 @@ ENTITY_FRAMEWORK *load_eFramework_by_query( const char *query )
       return NULL;
 
    db_load_eFramework( frame, &row );
+   AttachToList( frame, active_frameworks );
    load_specifications_to_list( frame->specifications, quick_format( "f%d", frame->tag->id ) );
    load_fixed_possessions_to_list( frame->fixed_contents, frame->tag->id );
    load_framework_stats( frame );
@@ -109,8 +110,7 @@ ENTITY_FRAMEWORK *get_framework_by_id( int id )
    ENTITY_FRAMEWORK *frame;
 
    if( ( frame = get_active_framework_by_id( id ) ) == NULL )
-      if( ( frame = load_eFramework_by_id( id ) ) != NULL )
-         AttachToList( frame, active_frameworks );
+      frame = load_eFramework_by_id( id );
 
    return frame;
 }
@@ -130,8 +130,7 @@ ENTITY_FRAMEWORK *get_framework_by_name( const char *name )
    ENTITY_FRAMEWORK *frame;
 
    if( ( frame = get_active_framework_by_name( name ) ) == NULL )
-      if( ( frame = load_eFramework_by_name( name ) ) != NULL )
-         AttachToList( frame, active_frameworks );
+      frame = load_eFramework_by_name( name );
 
    return frame;
 }

@@ -125,6 +125,7 @@ ENTITY_INSTANCE *load_eInstance_by_query( const char *query )
       return NULL;
 
    db_load_eInstance( instance, &row );
+   AttachToList( instance, eInstances_list );
    load_specifications_to_list( instance->specifications, quick_format( "%d", instance->tag->id ) );
    load_entity_vars( instance );
    load_entity_stats( instance );
@@ -140,8 +141,7 @@ ENTITY_INSTANCE *get_instance_by_id( int id )
    ENTITY_INSTANCE *eInstance;
 
    if( ( eInstance = get_active_instance_by_id( id ) ) == NULL )
-      if( ( eInstance = load_eInstance_by_id( id ) ) != NULL )
-         AttachToList( eInstance, eInstances_list );
+      eInstance = load_eInstance_by_id( id );
 
    return eInstance;
 }
@@ -161,8 +161,7 @@ ENTITY_INSTANCE *get_instance_by_name( const char *name )
    ENTITY_INSTANCE *eInstance;
 
    if( ( eInstance = get_active_instance_by_name( name ) ) == NULL )
-      if( ( eInstance = load_eInstance_by_name( name ) ) != NULL )
-         AttachToList( eInstance, eInstances_list );
+      eInstance = load_eInstance_by_name( name );
 
    return eInstance;
 }
