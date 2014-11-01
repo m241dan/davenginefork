@@ -36,8 +36,8 @@ void new_stat_framework( STAT_FRAMEWORK *fstat )
       }
    }
 
-   if( !quick_query( "INSERT INTO `stat_frameworks` VALUES ( '%d', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%d', '%d' );",
-      fstat->tag->id, fstat->tag->created_by, fstat->tag->created_on, fstat->tag->modified_by, fstat->tag->modified_on,
+   if( !quick_query( "INSERT INTO `stat_frameworks` VALUES ( '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%d', '%d' );",
+      fstat->tag->id, fstat->tag->type, fstat->tag->created_by, fstat->tag->created_on, fstat->tag->modified_by, fstat->tag->modified_on,
       fstat->name, fstat->softcap, fstat->hardcap, fstat->softfloor, fstat->hardfloor ) )
       bug( "%s: could not add to database %s.", __FUNCTION__, fstat->name );
 
@@ -443,10 +443,10 @@ bool s_script_exists( STAT_FRAMEWORK *fstat )
 {
    FILE *script;
 
-   if( !strcmp( frame->tag->created_by, "null" ) )
+   if( !strcmp( fstat->tag->created_by, "null" ) )
       return FALSE;
 
-   if( ( script = fopen( quick_format( "../scripts/stats/%d.lua", fstat->tag->id ), "r" ) ) == NULL 0
+   if( ( script = fopen( quick_format( "../scripts/stats/%d.lua", fstat->tag->id ), "r" ) ) == NULL )
       return FALSE;
 
    fclose( script );
@@ -461,7 +461,7 @@ void init_s_script( STAT_FRAMEWORK *fstat, bool force )
    if( s_script_exists( fstat ) && !force )
       return;
 
-   if( ( temp = fopen( ../scripts/templates/stat.lua", "r" ) ) == NULL )
+   if( ( temp = fopen( "../scripts/templates/stat.lua", "r" ) ) == NULL )
    {
       bug( "%s: could not open the template.", __FUNCTION__ );
       return;

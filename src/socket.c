@@ -310,6 +310,10 @@ void GameLoop(int control)
              if( instance_editor_handle_command( dsock->account->olc, dsock->next_command ) != RET_SUCCESS )
                 bug( "instance_editor_handle_command failed to interpret the input." );
              break;
+          case STATE_SFRAME_EDITOR:
+             if( sFrame_editor_handle_command( dsock->account->olc, dsock->next_command ) != RET_SUCCESS )
+                bug( "sframe_editor_handle_command failed to interpret the input." );
+             break;
           case STATE_BUILDER:
           case STATE_PLAYING:
              if( entity_handle_cmd( dsock->controlling, dsock->next_command ) != RET_SUCCESS )

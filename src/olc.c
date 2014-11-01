@@ -1758,6 +1758,19 @@ void framework_create( void *passed, char *arg )
    return;
 }
 
+void olc_screate( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   if( olc->editing )
+   {
+      text_to_olc( olc, "There's already something loaded in your editor, finish that first.\r\n" );
+      change_socket_state( olc->account->socket, olc->editing_state );
+      return;
+   }
+   boot_sFramework_editor( olc, NULL );
+   return;
+}
+
 void olc_edit( void *passed, char *arg )
 {
    INCEPTION *olc = (INCEPTION *)passed;
@@ -1793,6 +1806,9 @@ void olc_edit( void *passed, char *arg )
          return;
       case SEL_PROJECT:
          boot_project_editor( olc, (PROJECT *)to_edit );
+         return;
+      case SEL_STAT_FRAMEWORK:
+         boot_sFramework_editor( olc, (STAT_FRAMEWORK *)to_edit );
          return;
       case SEL_STRING:
          text_to_olc( olc, (char *)to_edit, arg );

@@ -94,6 +94,7 @@ struct typCmd olc_commands[] = {
    { "instance", olc_instantiate, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
    { "iedit", framework_iedit, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
    { "edit", olc_edit, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
+   { "screate", olc_screate, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
    { "create", framework_create, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
    { "ufilter", olc_ufilter, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
    { "using", olc_using, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
@@ -222,6 +223,16 @@ const char *editor_return_desc( void *extra )
 }
 
 struct typCmd create_sFramework_commands[] = {
+   { "done", sFramework_done, LEVEL_BASIC, NULL, FALSE, NULL, create_sFramework_commands },
+   { "return", editor_global_return, LEVEL_BASIC, NULL, FALSE, editor_return_desc, create_instance_commands },
+   { "switch", editor_switch, LEVEL_BASIC, NULL, FALSE, NULL, create_instance_commands },
+   { "save", sFramework_save, LEVEL_BASIC, NULL, FALSE, NULL, create_sFramework_commands },
+   { "script", sFramework_script, LEVEL_BASIC, NULL, FALSE, NULL, create_sFramework_commands },
+   { "hardfloor", sFramework_hardfloor, LEVEL_BASIC, NULL, FALSE, NULL, create_sFramework_commands },
+   { "softfloor", sFramework_softfloor, LEVEL_BASIC, NULL, FALSE, NULL, create_sFramework_commands },
+   { "hardcap", sFramework_hardcap, LEVEL_BASIC, NULL, FALSE, NULL, create_sFramework_commands },
+   { "softcap", sFramework_softcap, LEVEL_BASIC, NULL, FALSE, NULL, create_sFramework_commands },
+   { "name", sFramework_name, LEVEL_BASIC, NULL, FALSE, NULL, create_sFramework_commands },
    { '\0', NULL, 0, NULL, FALSE, NULL }
 };
 
@@ -612,6 +623,10 @@ bool interpret_entity_selection( const char *input )
             if( ( input_selection_ptr = load_project_by_name( input+2 ) ) != NULL )
                input_selection_typing = SEL_PROJECT;
             break;
+         case 's':
+            if( ( input_selection_ptr = get_stat_framework_by_name( input + 2 ) ) != NULL )
+               input_selection_typing = SEL_STAT_FRAMEWORK;
+            break;
       }
    }
    else if( input[1] != '_' && is_number( input+1 ) )
@@ -635,6 +650,10 @@ bool interpret_entity_selection( const char *input )
          case 'p':
             if( ( input_selection_ptr = load_project_by_id( id ) ) != NULL )
                input_selection_typing = SEL_PROJECT;
+            break;
+         case 's':
+            if( ( input_selection_ptr = get_stat_framework_by_id( id ) ) != NULL )
+               input_selection_typing = SEL_STAT_FRAMEWORK;
             break;
       }
    }
@@ -668,6 +687,7 @@ SEL_TYPING check_selection_type( const char *input )
       case 'i': return SEL_INSTANCE;
       case 'w': return SEL_WORKSPACE;
       case 'p': return SEL_PROJECT;
+      case 's': return SEL_STAT_FRAMEWORK;
    }
    return SEL_NULL;
 }
@@ -682,6 +702,7 @@ const char *check_selection_type_string( const char *input )
       case 'i': return "instance";
       case 'w': return "workspace";
       case 'p': return "project";
+      case 's': return "stat frame";
    }
    return "null";
 }

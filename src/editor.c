@@ -1283,14 +1283,14 @@ void editor_sFramework_prompt( D_SOCKET *dsock, bool commands )
    fstat = (STAT_FRAMEWORK *)dsock->account->olc->editing;
    olc = dsock->account->olc;
 
-   space_after_pipes = dsock->account->pagewidth - ( strlen( border ) * 2 )
+   space_after_border = dsock->account->pagewidth - ( strlen( border ) * 2 );
 
    if( !strcmp( fstat->tag->created_by, "null" ) )
       mud_printf( tempstring, "Potential Stat ID: %d", get_potential_id( fstat->tag->type ) );
    else
       mud_printf( tempstring, "Stat ID: %d", fstat->tag->id );
 
-   text_to_olc( olc, "/%s\\\r\n", print_header( tempstring, "-", dsock->account->pagewidth - 2 );
+   text_to_olc( olc, "/%s\\\r\n", print_header( tempstring, "-", dsock->account->pagewidth - 2 ) );
    text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " Name      : %s", fstat->name ), space_after_border ), border );
    text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " SoftCap   : %d", fstat->softcap ), space_after_border ), border );
    text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " HardCap   : %d", fstat->hardcap ), space_after_border ), border );
@@ -1337,14 +1337,14 @@ void sFramework_softcap( void *passed, char *arg )
       return;
    }
 
-   if( !is_number( arg ) )
+   if( !is_number( arg ) && ( arg[0] == '-' && !is_number( arg + 1 ) ) )
    {
       text_to_olc( olc, "You must input a number.\r\n" );
       olc_short_prompt( olc );
       return;
    }
    set_softcap( fstat, atoi( arg ) );
-   text_to_olc( olc, "You set the softcap to %d.\r\n"m fstat->softcap );
+   text_to_olc( olc, "You set the softcap to %d.\r\n", fstat->softcap );
    return;
 }
 
@@ -1360,7 +1360,7 @@ void sFramework_hardcap( void *passed, char *arg )
       return;
    }
 
-   if( !is_number( arg ) )
+   if( !is_number( arg ) && ( arg[0] == '-' && !is_number( arg + 1 ) ) )
    {
       text_to_olc( olc, "You must input a number.\r\n" );
       olc_short_prompt( olc );
@@ -1385,7 +1385,7 @@ void sFramework_softfloor( void *passed, char *arg )
       return;
    }
 
-   if( !is_number( arg ) )
+   if( !is_number( arg ) && ( arg[0] == '-' && !is_number( arg + 1 ) ) )
    {
       text_to_olc( olc, "You must input a number.\r\n" );
       olc_short_prompt( olc );
@@ -1408,7 +1408,7 @@ void sFramework_hardfloor( void *passed, char *arg )
       return;
    }
 
-   if( !is_number( arg ) )
+   if( !is_number( arg ) && ( arg[0] == '-' && !is_number( arg + 1 ) ) )
    {
       text_to_olc( olc, "You must input a number.\r\n" );
       olc_short_prompt( olc );
@@ -1431,14 +1431,46 @@ void sFramework_script( void *passed, char *arg )
       olc_short_prompt( olc );
       return;
    }
+
+   if( !s_script_exists( fstat ) )
+   {
+      init_s_script( fstat, FALSE );
+      text_to_olc( olc, "You generate a script file for %s.\r\n", fstat->name );
+      return;
+   }
+   text_to_olc( olc, "%s", print_s_script( fstat ) );
+   return;
 }
 
 void sFramework_save( void *passed, char *arg )
 {
+   INCEPTION *olc = (INCEPTION *)passed;
+   STAT_FRAMEWORK *fstat = (STAT_FRAMEWORK *)olc->editing;
 
+   if( !strcmp( fstat->tag->created_by, "null" ) )
+   {
+      new_tag( fstat->tag, olc->account->name );
+      new_stat_framework( fstat );
+   }
+   text_to_olc( olc, "Saved.\r\n" );
+   return;
 }
 
 void sFramework_done( void *passed, char *arg )
 {
+   INCEPTION *olc = (INCEPTION *)passed;
+   STAT_FRAMEWORK *fstat = (STAT_FRAMEWORK *)olc->editing;
 
+   if( !strcmp( fstat->tag->created_by, "null" ) )
+   {
+      new_tag( fstat->tag, olc->account->name );
+      new_stat_framework( fstat );
+   }
+   if( SizeOfList( olc->chain ) > 0 )
+      clearlist( olc->chain );
+   free_editor( olc );
+   change_socket_state( olc->account->socket, olc->editor_launch_state );
+   text_to_olc( olc, "Exiting State Framework Editor.\r\n" );
+   olc_show_prompt( olc );
+   return;
 }

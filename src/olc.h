@@ -148,6 +148,7 @@ void workspace_grab( void *passed, char *arg );
 void workspace_ungrab( void *passed, char *arg );
 void olc_frameworks( void *passed, char *arg );
 void framework_create( void *passed, char *arg );
+void olc_screate( void *passed, char *arg );
 void olc_edit( void *passed, char *arg );
 void framework_iedit( void *passed, char *arg );
 void olc_instantiate( void *passed, char *arg );

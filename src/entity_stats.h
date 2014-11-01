@@ -63,3 +63,8 @@ extern inline void set_name( STAT_FRAMEWORK *fstat, const char *name );
 extern inline void set_perm_stat( STAT_INSTANCE *stat, int value );
 extern inline void set_mod_stat( STAT_INSTANCE *stat, int value );
 extern inline void set_stat_owner( STAT_INSTANCE *stat, ENTITY_INSTANCE *owner );
+
+FILE *open_s_script( STAT_FRAMEWORK *fstat, const char *permissions );
+bool s_script_exists( STAT_FRAMEWORK *fstat );
+void init_s_script( STAT_FRAMEWORK *fstat, bool force );
+const char *print_s_script( STAT_FRAMEWORK *fstat );
