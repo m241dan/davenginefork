@@ -330,7 +330,7 @@ STAT_FRAMEWORK *get_stat_from_framework_by_name( ENTITY_FRAMEWORK *frame, const 
 
    AttachIterator( &Iter, frame->stats );
    while( ( fstat = (STAT_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
-      if( !strcmp( fstat->name, name ) )
+      if( !strcasecmp( fstat->name, name ) )
          break;
    DetachIterator( &Iter );
 
@@ -365,7 +365,7 @@ STAT_INSTANCE  *get_stat_from_instance_by_name( ENTITY_INSTANCE *entity, const c
 
    AttachIterator( &Iter, entity->stats );
    while( ( stat = (STAT_INSTANCE *)NextInList( &Iter ) ) != NULL )
-      if( !strcmp( stat->framework->name, name ) )
+      if( !strcasecmp( stat->framework->name, name ) )
          break;
    DetachIterator( &Iter );
 

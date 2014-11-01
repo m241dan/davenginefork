@@ -1089,11 +1089,11 @@ const char *return_instance_spec_and_stats( ENTITY_INSTANCE *instance, const cha
       "", "( framework )", "( inherited )"
    };
    SPECIFICATION *spec;
+   STAT_INSTANCE *stat;
    static char buf[MAX_BUFFER];
    char tempstring[MAX_BUFFER];
    int space_after_border;
-   int x, spec_from;
-
+   int x, y, spec_from, MAX_STAT;
 
    space_after_border = width - ( strlen( border ) * 2 );
 
@@ -1114,14 +1114,21 @@ const char *return_instance_spec_and_stats( ENTITY_INSTANCE *instance, const cha
    mud_printf( tempstring, "%s%s%s\r\n", border, print_bar( "-", space_after_border ), border );
    strcat( buf, tempstring );
 
+   MAX_STAT = get_potential_id( ENTITY_STAT_FRAMEWORK_IDS );
+
    /* later when stats are in it will look like ;x < MAX_SPEC || y < MAX_STAT; */
-   for( x = 0, spec_from = 0; x < MAX_SPEC; x++ )
+   for( x = 0, y = 0, spec_from = 0; x < MAX_SPEC || y < MAX_STAT; )
    {
-      spec = has_spec_detailed_by_type( instance, x, &spec_from );
-      /* grab stat with id 0 */
-      /* later will be if !spec && !state */
-      if( !spec )
-         continue;
+      spec = NULL;
+      stat = NULL;
+      if( x < MAX_SPEC )
+         while( ( spec = has_spec_detailed_by_type( instance, x++, &spec_from ) ) == NULL && x < MAX_SPEC );
+      if( y < MAX_STAT )
+         while( ( stat = get_stat_from_instance_by_id( instance, y++ ) ) == NULL && y < MAX_SPEC );
+
+      if( !spec && !stat )
+         break;
+
       if( spec )
          mud_printf( tempstring, "%s%s", border, fit_string_to_space( quick_format( " %s : %d%s", spec_table[spec->type], spec->value, spec_from_table[spec_from] ), ( space_after_border / 2 ) - 1 ) );
       else
@@ -1130,8 +1137,10 @@ const char *return_instance_spec_and_stats( ENTITY_INSTANCE *instance, const cha
 
       strcat( buf, border );
 
-      /* if stat mirror spec */
-      mud_printf( tempstring, " %s%s\r\n", print_header( " ", " ", ( space_after_border / 2 ) - 1 ), border );
+      if( stat )
+         mud_printf( tempstring, " %s%s\r\n", fit_string_to_space( quick_format( "%s : P: %d M: %d T: %d", stat->framework->name, stat->perm_stat, stat->mod_stat, ( stat->perm_stat + stat->mod_stat ) ), ( space_after_border / 2 ) - 1) , border );
+      else
+         mud_printf( tempstring, " %s%s\r\n", print_header( " ", " ", ( space_after_border / 2 ) - 1 ), border );
       strcat( buf, tempstring );
 
    }
@@ -1146,6 +1155,7 @@ void instance_load( void *passed, char *arg )
    ENTITY_INSTANCE *instance = (ENTITY_INSTANCE *)olc->editing;
 
    text_to_olc( olc, "You load up %s.\r\n", instance_name( instance ) );
+   update_tag( instance->tag, olc->account->name );
    full_load_instance( instance );
    return;
 }
@@ -1156,6 +1166,7 @@ void instance_live( void *passed, char *arg )
    ENTITY_INSTANCE *instance = (ENTITY_INSTANCE *)olc->editing;
 
    instance_toggle_live( instance );
+   update_tag( instance->tag, olc->account->name );
    text_to_olc( olc, "You set the instance to %s.\r\n", instance->live ? "live" : "not live" );
    return;
 }
@@ -1173,7 +1184,43 @@ void instance_level( void *passed, char *arg )
    }
 
    set_instance_level( instance, atoi( arg ) );
+   update_tag( instance->tag, olc->account->name );
    text_to_olc( olc, "You set the instance to level %d.\r\n", instance->level );
+   return;
+}
+
+void instance_setStat( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_INSTANCE *instance = (ENTITY_INSTANCE *)olc->editing;
+   STAT_INSTANCE *stat;
+   char buf[MAX_BUFFER];
+   int value;
+
+   arg = one_arg( arg, buf );
+
+   if( is_number( buf ) )
+      stat = get_stat_from_instance_by_id( instance, atoi( buf ) );
+   else
+      stat = get_stat_from_instance_by_name( instance, buf );
+
+   if( !stat )
+   {
+      text_to_olc( olc, "No such Stat.\r\n" );
+      return;
+   }
+
+   if( !is_number( arg ) && ( arg[0] == '-' && !is_number( arg + 1 ) ) )
+   {
+      text_to_olc( olc, "You must input a number to set the stat to.\r\n" );
+      return;
+   }
+   value = atoi( arg );
+
+   set_perm_stat( stat, value );
+   text_to_olc( olc, "Stat set.\r\n" );
+   /* lua script for this stat gaining or losing */
+   /* here */
    return;
 }
 
@@ -1221,6 +1268,7 @@ void instance_addcontent( void *passed, char *arg )
       }
    }
    entity_to_world( instance_to_add, instance );
+   update_tag( instance->tag, olc->account->name );
    text_to_olc( olc, "%s added to %s's contents.\r\n", instance_name( instance_to_add ), instance_name( instance ) );
    return;
 }
@@ -1271,6 +1319,7 @@ void instance_addspec( void *passed, char *arg )
    spec->type = spec_type;
    spec->value = spec_value;
    add_spec_to_instance( spec, instance );
+   update_tag( instance->tag, olc->account->name );
    text_to_olc( olc, "%s added to %s with the value of %s.\r\n", spec_table[spec_type], instance_name( instance ), itos( spec->value ) );
    return;
 }

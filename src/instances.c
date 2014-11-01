@@ -127,6 +127,7 @@ ENTITY_INSTANCE *load_eInstance_by_query( const char *query )
    db_load_eInstance( instance, &row );
    load_specifications_to_list( instance->specifications, quick_format( "%d", instance->tag->id ) );
    load_entity_vars( instance );
+   load_entity_stats( instance );
    if( get_spec_value( instance, "IsPlayer" ) <= 0 )
       load_commands( instance->commands, mobile_commands, LEVEL_BASIC );
    free( row );
@@ -221,10 +222,18 @@ void full_load_instance( ENTITY_INSTANCE *instance )
 {
    ENTITY_FRAMEWORK *frame;
    ENTITY_INSTANCE *instance_to_contain;
+   STAT_FRAMEWORK *fstat;
    MYSQL_ROW row;
    LLIST *list;
    ITERATOR Iter;
    int id_to_load;
+
+   /* check for any new stats */
+   AttachIterator( &Iter, instance->framework->stats );
+   while( ( fstat = (STAT_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
+      if( !get_stat_from_instance_by_id( instance, fstat->tag->id ) )
+         stat_instantiate( instance, fstat );
+   DetachIterator( &Iter );
 
    if( !instance->loaded )
    {
