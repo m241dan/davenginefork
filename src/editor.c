@@ -288,11 +288,15 @@ const char *return_framework_specs_and_stats( ENTITY_FRAMEWORK *frame, const cha
    const char *const spec_from_table[] = {
       "", "", "( inherited )"
    };
+   const char *const stat_from_table[] = {
+      "", "( inherited )"
+   };
    SPECIFICATION *spec;
+   STAT_FRAMEWORK *fstat;
    static char buf[MAX_BUFFER];
    char tempstring[MAX_BUFFER];
    int space_after_border;
-   int x, spec_from;
+   int x, y, spec_from, MAX_STAT, stat_from;
 
    space_after_border = width - ( strlen( border ) * 2 );
 
@@ -308,13 +312,19 @@ const char *return_framework_specs_and_stats( ENTITY_FRAMEWORK *frame, const cha
    strcat( buf, tempstring );
 
    /* later when stats are in it will look like ;x < MAX_SPEC || y < MAX_STAT; */
-   for( x = 0, spec_from = 0; x < MAX_SPEC; x++ )
+   MAX_STAT = get_potential_id( ENTITY_STAT_FRAMEWORK_IDS );
+
+   for( x = 0, y = 0, spec_from = 0, stat_from = 0; x < MAX_SPEC || y < MAX_STAT; )
    {
-      spec = frame_has_spec_detailed_by_type( frame, x, &spec_from );
-      /* grab stat with id 0 */
-      /* later will be if !spec && !state */
-      if( !spec )
-         continue;
+      spec = NULL;
+      fstat = NULL;
+      if( x < MAX_SPEC )
+        while( ( spec = frame_has_spec_detailed_by_type( frame, x++, &spec_from ) ) == NULL && x < MAX_SPEC );
+      if( y < MAX_STAT )
+         while( ( fstat = get_stat_from_framework_by_id( frame, y++, &stat_from ) ) == NULL && y < MAX_STAT );
+
+      if( !spec && !fstat )
+         break;
       if( spec )
          mud_printf( tempstring, "%s%s", border, fit_string_to_space( quick_format( " %s : %d%s", spec_table[spec->type], spec->value, spec_from_table[spec_from] ), ( space_after_border / 2 ) - 1 ) );
       else
@@ -323,8 +333,11 @@ const char *return_framework_specs_and_stats( ENTITY_FRAMEWORK *frame, const cha
 
       strcat( buf, border );
 
-      /* if stat mirror spec */
-      mud_printf( tempstring, " %s%s\r\n", print_header( " ", " ", ( space_after_border / 2 ) - 1 ), border );
+      if( fstat )
+         mud_printf( tempstring, " %s%s\r\n", print_header( quick_format( " %s %s", fstat->name, stat_from_table[stat_from] ), " ", ( space_after_border / 2 ) - 1 ), border );
+      else
+         mud_printf( tempstring, " %s%s\r\n", print_header( " ", " ", ( space_after_border / 2 ) - 1 ), border );
+
       strcat( buf, tempstring );
 
    }
@@ -453,6 +466,42 @@ void eFramework_description( void *passed, char *arg )
    return;
 }
 
+void eFramework_addStat( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_FRAMEWORK *frame = (ENTITY_FRAMEWORK *)olc->editing;
+   STAT_FRAMEWORK *fstat;
+   int spec_from;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Add what stat?\r\n" );
+      return;
+   }
+
+   if( is_number( arg ) )
+      fstat = get_stat_framework_by_id( atoi( arg ) );
+   else
+      fstat = get_stat_framework_by_name( arg );
+
+   if( !fstat )
+   {
+      text_to_olc( olc, "No such stat.\r\n" );
+      return;
+   }
+
+   if( fstat == get_stat_from_framework_by_id( frame, fstat->tag->id, &spec_from ) )
+   {
+      text_to_olc( olc, "Frame already has stat %s on %s.\r\n", fstat->name, spec_from == 0 ? "it" : "its inheritance" );
+      return;
+   }
+
+   add_stat_to_frame( fstat, frame );
+   update_tag( frame->tag, olc->account->name );
+   text_to_olc( olc, "Stat added.\r\n" );
+   return;
+}
+
 void eFramework_addSpec( void *passed, char *arg )
 {
    INCEPTION *olc = (INCEPTION *)passed;
@@ -496,6 +545,7 @@ void eFramework_addSpec( void *passed, char *arg )
    spec->type = spec_type;
    spec->value = spec_value;
    add_spec_to_framework( spec, frame );
+   update_tag( frame->tag, olc->account->name );
    text_to_olc( olc, "%s added to %s with the value of %s.\r\n", spec_table[spec_type], frame->name, itos( spec->value ) );
    return;
 
@@ -581,6 +631,7 @@ void eFramework_addContent( void *passed, char *arg )
       }
    }
    add_frame_to_fixed_contents( frame_to_add, frame );
+   update_tag( frame->tag, olc->account->name );
    text_to_olc( olc, "%s added to %s's fixed contents.\r\n", chase_name( frame_to_add ), chase_name( frame ) );
    return;
 }
@@ -600,6 +651,7 @@ void eFramework_script( void *passed, char *arg )
    if( !f_script_exists( frame ) )
    {
       init_f_script( frame, FALSE );
+      update_tag( frame->tag, olc->account->name );
       text_to_olc( olc, "You generate a script file for %s.\r\n", chase_name( frame ) );
       return;
    }

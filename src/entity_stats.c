@@ -290,7 +290,7 @@ STAT_FRAMEWORK *get_active_stat_framework_by_name( const char *name )
 
    AttachIterator( &Iter, stat_frameworks );
    while( ( fstat = (STAT_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
-      if( !strcmp( fstat->name, name ) )
+      if( !strcasecmp( fstat->name, name ) )
          break;
    DetachIterator( &Iter );
    return fstat;
@@ -298,7 +298,7 @@ STAT_FRAMEWORK *get_active_stat_framework_by_name( const char *name )
 
 inline STAT_FRAMEWORK *load_stat_framework_by_name( const char *name )
 {
-   return get_stat_framework_by_query( quick_format( "SELECT * FROM `stat_frameworks` WHERE name=%s;", name ) );
+   return get_stat_framework_by_query( quick_format( "SELECT * FROM `stat_frameworks` WHERE name='%s';", name ) );
 }
 
 STAT_FRAMEWORK *get_stat_from_framework_by_id( ENTITY_FRAMEWORK *frame, int id, int *spec_from )

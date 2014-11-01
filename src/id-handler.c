@@ -185,6 +185,8 @@ int update_tag( ID_TAG *tag, const char *effector, ... )
 
    return ret;
 }
+
+
 int load_id_handlers( void )
 {
    MYSQL_RES *result;

@@ -33,6 +33,7 @@ int new_tag( ID_TAG *tag, const char *creator );
 int db_load_tag( ID_TAG *tag, MYSQL_ROW *row );
 int update_tag( ID_TAG *tag, const char *effector, ... );
 
+int get_top_id( int type );
 int load_id_handlers( void );
 int load_recycled_ids( void );
 int get_new_id( int type );
