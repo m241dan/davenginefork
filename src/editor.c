@@ -1321,6 +1321,7 @@ void sFramework_name( void *passed, char *arg )
    }
 
    set_name( fstat, arg );
+   update_tag( fstat->tag, olc->account->name );
    text_to_olc( olc, "You set the name to %s.\r\n", arg );
    return;
 }
@@ -1344,6 +1345,7 @@ void sFramework_softcap( void *passed, char *arg )
       return;
    }
    set_softcap( fstat, atoi( arg ) );
+   update_tag( fstat->tag, olc->account->name );
    text_to_olc( olc, "You set the softcap to %d.\r\n", fstat->softcap );
    return;
 }
@@ -1368,6 +1370,7 @@ void sFramework_hardcap( void *passed, char *arg )
    }
 
    set_hardcap( fstat, atoi( arg ) );
+   update_tag( fstat->tag, olc->account->name );
    text_to_olc( olc, "You set the hardcap to ds.\r\n", fstat->hardcap );
    return;
 
@@ -1392,6 +1395,7 @@ void sFramework_softfloor( void *passed, char *arg )
       return;
    }
    set_softfloor( fstat, atoi( arg ) );
+   update_tag( fstat->tag, olc->account->name );
    text_to_olc( olc, "You set the softfloor to %d.\r\n", fstat->softfloor );
    return;
 }
@@ -1416,6 +1420,7 @@ void sFramework_hardfloor( void *passed, char *arg )
    }
 
    set_hardfloor( fstat, atoi( arg ) );
+   update_tag( fstat->tag, olc->account->name );
    text_to_olc( olc, "You set the hardfloor to %d.\r\n", fstat->hardfloor );
    return;
 }
@@ -1435,6 +1440,7 @@ void sFramework_script( void *passed, char *arg )
    if( !s_script_exists( fstat ) )
    {
       init_s_script( fstat, FALSE );
+      update_tag( fstat->tag, olc->account->name );
       text_to_olc( olc, "You generate a script file for %s.\r\n", fstat->name );
       return;
    }
