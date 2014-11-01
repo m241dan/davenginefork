@@ -15,8 +15,14 @@ const struct luaL_Reg EntityInstanceLib_m[] = {
    { "getFramework", getInstanceFramework },
    { "getContainer", getContainer },
    { "getVar", getVar },
-
+   { "getStatMod", getStatMod },
+   { "getStatPerm", getStatPerm },
+   { "getStat", getStat },
    /* setters */
+   { "setStatMod", setStatMod },
+   { "setStatPerm", setStatPerm },
+   { "addStatMod", addStatMod },
+   { "addStatPerm", addStatPerm },
    { "setVar", setVar },
    { "addSpec", addSpec },
    /* bools */
@@ -271,7 +277,6 @@ int getVar( lua_State *L )
 
    if( ( var = get_entity_var( instance, var_name ) ) == NULL )
    {
-      bug( "%s: entity %s has no var %s.", __FUNCTION__, instance_short_descr( instance ), var_name );
       lua_pushnil( L );
       return 1;
    }
@@ -287,6 +292,244 @@ int getVar( lua_State *L )
          return 1;
    }
    return 0;
+}
+
+int getStatMod( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+   STAT_INSTANCE *stat;
+   const char *stat_name;
+
+   DAVLUACM_INSTANCE_NIL( instance, L );
+   if( instance->tag->id == -69 )
+   {
+      bug( "%s: builders have no stats", __FUNCTION__ );
+      lua_pushnil( L );
+      return 1;
+   }
+
+   if( ( stat_name = luaL_checkstring( L, -1 ) ) == NULL )
+   {
+      bug( "%s: no string passed.", __FUNCTION__ );
+      lua_pushnil( L );
+      return 1;
+   }
+
+   if( ( stat = get_stat_from_instance_by_name( instance, stat_name ) ) == NULL )
+   {
+      lua_pushnil( L );
+      return 1;
+   }
+   lua_pushnumber( L, stat->mod_stat );
+   return 1;
+}
+
+int getStatPerm( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+   STAT_INSTANCE *stat;
+   const char *stat_name;
+
+   DAVLUACM_INSTANCE_NIL( instance, L );
+   if( instance->tag->id == -69 )
+   {
+      bug( "%s: builders have no stats", __FUNCTION__ );
+      lua_pushnil( L );
+      return 1;
+   }
+
+   if( ( stat_name = luaL_checkstring( L, -1 ) ) == NULL )
+   {
+      bug( "%s: no string passed.", __FUNCTION__ );
+      lua_pushnil( L );
+      return 1;
+   }
+
+   if( ( stat = get_stat_from_instance_by_name( instance, stat_name ) ) == NULL )
+   {
+      lua_pushnil( L );
+      return 1;
+   }
+   lua_pushnumber( L, stat->perm_stat );
+   return 1;
+}
+
+int getStat( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+   STAT_INSTANCE *stat;
+   const char *stat_name;
+
+   DAVLUACM_INSTANCE_NIL( instance, L );
+   if( instance->tag->id == -69 )
+   {
+      bug( "%s: builders have no stats", __FUNCTION__ );
+      lua_pushnil( L );
+      return 1;
+   }
+
+   if( ( stat_name = luaL_checkstring( L, -1 ) ) == NULL )
+   {
+      bug( "%s: no string passed.", __FUNCTION__ );
+      lua_pushnil( L );
+      return 1;
+   }
+
+   if( ( stat = get_stat_from_instance_by_name( instance, stat_name ) ) == NULL )
+   {
+      lua_pushnil( L );
+      return 1;
+   }
+   lua_pushnumber( L, stat->mod_stat + stat->perm_stat );
+   return 1;
+}
+
+int setStatMod( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+   STAT_INSTANCE *stat;
+   const char *stat_name;
+   int value;
+
+   DAVLUACM_INSTANCE_NONE( instance, L );
+   if( instance->tag->id == -69 )
+   {
+      bug( "%s: builders have no stats", __FUNCTION__ );
+      return 0;
+   }
+
+   if( ( stat_name = luaL_checkstring( L, -2 ) ) == NULL )
+   {
+      bug( "%s: no string passed.", __FUNCTION__ );
+      return 0;
+   }
+
+   if( lua_type( L, -1 ) != LUA_TNUMBER )
+   {
+      bug( "%s: no number passed.", __FUNCTION__ );
+      return 0;
+   }
+   value = lua_tonumber( L, -1 );
+
+   if( ( stat = get_stat_from_instance_by_name( instance, stat_name ) ) == NULL )
+   {
+      bug( "%s: instance %s stat attempted %s", __FUNCTION__, instance_name( instance ), stat_name );
+      return 0;
+   }
+
+   set_mod_stat( stat, value );
+   return 1;
+}
+
+int setStatPerm( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+   STAT_INSTANCE *stat;
+   const char *stat_name;
+   int value;
+
+   DAVLUACM_INSTANCE_NONE( instance, L );
+   if( instance->tag->id == -69 )
+   {
+      bug( "%s: builders have no stats", __FUNCTION__ );
+      return 0;
+   }
+
+   if( ( stat_name = luaL_checkstring( L, -2 ) ) == NULL )
+   {
+      bug( "%s: no string passed.", __FUNCTION__ );
+      return 0;
+   }
+
+   if( lua_type( L, -1 ) != LUA_TNUMBER )
+   {
+      bug( "%s: no number passed.", __FUNCTION__ );
+      return 0;
+   }
+   value = lua_tonumber( L, -1 );
+
+   if( ( stat = get_stat_from_instance_by_name( instance, stat_name ) ) == NULL )
+   {
+      bug( "%s: instance %s stat attempted %s", __FUNCTION__, instance_name( instance ), stat_name );
+      return 0;
+   }
+
+   set_perm_stat( stat, value );
+   return 1;
+}
+
+int addStatMod( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+   STAT_INSTANCE *stat;
+   const char *stat_name;
+   int value;
+
+   DAVLUACM_INSTANCE_NONE( instance, L );
+   if( instance->tag->id == -69 )
+   {
+      bug( "%s: builders have no stats", __FUNCTION__ );
+      return 0;
+   }
+
+   if( ( stat_name = luaL_checkstring( L, -2 ) ) == NULL )
+   {
+      bug( "%s: no string passed.", __FUNCTION__ );
+      return 0;
+   }
+
+   if( lua_type( L, -1 ) != LUA_TNUMBER )
+   {
+      bug( "%s: no number passed.", __FUNCTION__ );
+      return 0;
+   }
+   value = lua_tonumber( L, -1 );
+
+   if( ( stat = get_stat_from_instance_by_name( instance, stat_name ) ) == NULL )
+   {
+      bug( "%s: instance %s stat attempted %s", __FUNCTION__, instance_name( instance ), stat_name );
+      return 0;
+   }
+
+   add_mod_stat( stat, value );
+   return 1;
+}
+
+int addStatPerm( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+   STAT_INSTANCE *stat;
+   const char *stat_name;
+   int value;
+
+   DAVLUACM_INSTANCE_NONE( instance, L );
+   if( instance->tag->id == -69 )
+   {
+      bug( "%s: builders have no stats", __FUNCTION__ );
+      return 0;
+   }
+
+   if( ( stat_name = luaL_checkstring( L, -2 ) ) == NULL )
+   {
+      bug( "%s: no string passed.", __FUNCTION__ );
+      return 0;
+   }
+
+   if( lua_type( L, -1 ) != LUA_TNUMBER )
+   {
+      bug( "%s: no number passed.", __FUNCTION__ );
+      return 0;
+   }
+   value = lua_tonumber( L, -1 );
+
+   if( ( stat = get_stat_from_instance_by_name( instance, stat_name ) ) == NULL )
+   {
+      bug( "%s: instance %s stat attempted %s", __FUNCTION__, instance_name( instance ), stat_name );
+      return 0;
+   }
+
+   add_perm_stat( stat, value );
+   return 1;
 }
 
 int setVar( lua_State *L )

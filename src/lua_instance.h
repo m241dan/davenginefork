@@ -22,7 +22,14 @@ int getSpec( lua_State *L );
 int getInstanceFramework( lua_State *L );
 int getContainer( lua_State *L );
 int getVar( lua_State *L );
+int getStatMod( lua_State *L );
+int getStatPerm( lua_State *L );
+int getStat( lua_State *L );
 /* setters */
+int setStatMod( lua_State *L );
+int setStatPerm( lua_State *L );
+int addStatMod( lua_State *L );
+int addStatPerm( lua_State *L );
 int setVar( lua_State *L );
 int addSpec( lua_State *L );
 

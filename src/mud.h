@@ -561,6 +561,7 @@ void copy_row( MYSQL_ROW *row_dest, MYSQL_ROW *row_src, int size );
 int number_percent();
 int number_range( int min, int max );
 extern inline void clearlist( LLIST *list );
+extern inline int urange( int mincheck, int check, int maxcheck );
 
 /*
  * mccp.c

@@ -411,18 +411,58 @@ inline void set_name( STAT_FRAMEWORK *fstat, const char *name )
       bug( "%s: could not update database with new name.", __FUNCTION__ );
 }
 
+inline int  get_stat_total( STAT_INSTANCE *stat )
+{
+   return ( stat->perm_stat + stat->mod_stat );
+}
+
+inline int  get_stat_effective_perm( STAT_INSTANCE *stat )
+{
+   return urange( stat->framework->softfloor, stat->perm_stat, stat->framework->softcap );
+}
+
+inline int  get_stat_effective_mod( STAT_INSTANCE *stat )
+{
+   return urange( ( stat->framework->hardfloor - stat->framework->softfloor ), stat->mod_stat, ( stat->framework->hardcap - stat->framework->softcap ) );
+}
+
+inline int  get_stat_value( STAT_INSTANCE *stat )
+{
+   int perm = urange( stat->framework->softfloor, stat->perm_stat, stat->framework->softcap );
+   return urange( stat->framework->hardfloor, ( perm + stat->mod_stat ), stat->framework->hardcap );
+}
+
 inline void set_perm_stat( STAT_INSTANCE *stat, int value )
 {
-   /* lua component */
+   lua_stat_set( stat, urange( stat->framework->softfloor, value, stat->framework->softcap ) );
    stat->perm_stat = value;
    if( !quick_query( "UPDATE `entity_stats` SET perm_stat=%d WHERE statFrameworkID=%d AND owner=%d;", value, stat->framework->tag->id, stat->owner->tag->id ) )
       bug( "%s: could not update database with new value.", __FUNCTION__ );
 }
+
+inline void add_perm_stat( STAT_INSTANCE *stat, int value )
+{
+   lua_stat_set( stat, urange( stat->framework->softfloor, stat->perm_stat + value, stat->framework->softcap ) );
+   stat->perm_stat += value;
+   if( !quick_query( "UPDATE `entity_stats` SET perm_stat=%d WHERE statFrameworkID=%d AND owner=%d;", value, stat->framework->tag->id, stat->owner->tag->id ) )
+      bug( "%s: could not update database with new value.", __FUNCTION__ );
+}
+
 inline void set_mod_stat( STAT_INSTANCE *stat, int value )
 {
+   lua_stat_set( stat, urange( ( stat->framework->hardfloor - stat->framework->softfloor ), value, ( stat->framework->hardcap - stat->framework->softcap ) ) );
    stat->mod_stat = value;
    if( !quick_query( "UPDATE `entity_stats` SET mod_stat=%d WHERE statFrameworkID=%d AND owner=%d;", value, stat->framework->tag->id, stat->owner->tag->id ) )
       bug( "%s: could not update databaes with new value.", __FUNCTION__ );
+}
+
+inline void add_mod_stat( STAT_INSTANCE *stat, int value )
+{
+   lua_stat_set( stat, urange( stat->framework->hardfloor, ( stat->perm_stat + stat->mod_stat + value ) , stat->framework->hardcap ) );
+   stat->mod_stat += value;
+   if( !quick_query( "UPDATE `entity_stats` SET mod_stat=%d WHERE statFrameworkID=%d AND owner=%d;", value, stat->framework->tag->id, stat->owner->tag->id ) )
+      bug( "%s: could not update databaes with new value.", __FUNCTION__ );
+
 }
 inline void set_stat_owner( STAT_INSTANCE *stat, ENTITY_INSTANCE *owner )
 {
@@ -430,6 +470,61 @@ inline void set_stat_owner( STAT_INSTANCE *stat, ENTITY_INSTANCE *owner )
    if( !quick_query( "UPDATE `entity_stats` SET owner=%d WHERE statFrameworkID=%d and owner=%d;", owner->tag->id, stat->framework->tag->id, stat->owner->tag->id ) )
       bug( "%s: could not update databse with new owner.", __FUNCTION__ );
    stat->owner = owner;
+}
+
+void lua_stat_change( STAT_INSTANCE *stat, int change )
+{
+   int top = lua_gettop( lua_handle );
+
+   if( !s_script_exists( stat->framework ) )
+      return;
+
+   if( change > 0 )
+   {
+      prep_stack( get_stat_instance_script_path( stat ), "onStatGain" );
+      push_instance( stat->owner, lua_handle );
+      lua_pushnumber( lua_handle, change );
+      lua_pcall( lua_handle, 2, LUA_MULTRET, 0 );
+   }
+   else if( change < 0 )
+   {
+      prep_stack( get_stat_instance_script_path( stat ), "onStatLose" );
+      push_instance( stat->owner, lua_handle );
+      lua_pushnumber( lua_handle, change );
+      lua_pcall( lua_handle, 2, LUA_MULTRET, 0 );
+   }
+   lua_settop( lua_handle, top );
+   return;
+}
+
+void lua_stat_set( STAT_INSTANCE *stat, int change )
+{
+   int top = lua_gettop( lua_handle );
+   int current = get_stat_total( stat );
+   int difference;
+
+   if( !s_script_exists( stat->framework ) )
+      return;
+
+   if( ( difference = current - change ) == 0 )
+      return;
+
+   if( difference > 0 )
+   {
+      prep_stack( get_stat_instance_script_path( stat ), "onStatLose" );
+      push_instance( stat->owner, lua_handle );
+      lua_pushnumber( lua_handle, difference );
+      lua_pcall( lua_handle, 2, LUA_MULTRET, 0 );
+   }
+   else if( difference < 0 )
+   {
+      prep_stack( get_stat_instance_script_path( stat ), "onStatGain" );
+      push_instance( stat->owner, lua_handle );
+      lua_pushnumber( lua_handle, abs( difference ) );
+      lua_pcall( lua_handle, 2, LUA_MULTRET, 0 );
+   }
+   lua_settop( lua_handle, top );
+   return;
 }
 
 FILE *open_s_script( STAT_FRAMEWORK *fstat, const char *permissions )

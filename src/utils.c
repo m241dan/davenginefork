@@ -224,3 +224,12 @@ void inline clearlist( LLIST *list )
    DetachIterator( &Iter );
 }
 
+inline int urange( int mincheck, int check, int maxcheck )
+{
+   if( check < mincheck )
+      return mincheck;
+   if( check > maxcheck )
+      return maxcheck;
+   return check;
+}
+
