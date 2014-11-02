@@ -35,6 +35,9 @@ void editor_global_return( void *passed, char *arg )
       case STATE_PROJECT_EDITOR:
          boot_project_editor( olc, (PROJECT *)link->to_edit );
          break;
+      case STATE_SFRAME_EDITOR:
+         boot_sFramework_editor( olc, (STAT_FRAMEWORK *)link->to_edit );
+         break;
    }
    free_link( link );
    return;
@@ -87,6 +90,9 @@ void editor_switch( void *passed, char *arg )
          return;
       case SEL_PROJECT:
          boot_project_editor( olc, (PROJECT *)to_edit );
+         return;
+      case SEL_STAT_FRAMEWORK:
+         boot_sFramework_editor( olc, (STAT_FRAMEWORK *)to_edit );
          return;
    }
    return;

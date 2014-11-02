@@ -3,6 +3,7 @@
 #include "mud.h"
 
 const struct luaL_Reg EntityVariablesLib_f[] = {
+  { "bug",       lua_bug },
   { "getGlobal", lua_getGlobalVar },
   { "setGlobal", lua_setGlobalVar },
   { NULL, NULL }
@@ -177,6 +178,20 @@ void push_specification( SPECIFICATION *spec, lua_State *L )
 
    *box = spec;
    return;
+}
+
+int lua_bug( lua_State *L )
+{
+   switch( lua_type( L, -1 ) )
+   {
+      case LUA_TNUMBER:
+         bug( "%s: Number Error %d.", __FUNCTION__, lua_tonumber( L, -1 ) );
+         break;
+      case LUA_TSTRING:
+         bug( "%s: %s.", __FUNCTION__, lua_tostring( L, -1 ) );
+         break;
+   }
+   return 0;
 }
 
 int lua_getGlobalVar( lua_State *L )
