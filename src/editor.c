@@ -1435,6 +1435,7 @@ void sFramework_softcap( void *passed, char *arg )
 {
    INCEPTION *olc = (INCEPTION *)passed;
    STAT_FRAMEWORK *fstat = (STAT_FRAMEWORK *)olc->editing;
+   int value;
 
    if( !arg || arg[0] == '\0' )
    {
@@ -1449,7 +1450,15 @@ void sFramework_softcap( void *passed, char *arg )
       olc_short_prompt( olc );
       return;
    }
-   set_softcap( fstat, atoi( arg ) );
+   value = atoi( arg );
+
+   if( value < fstat->softfloor )
+   {
+      text_to_olc( olc, "The value of softcap cannot be less than the softfloor.\r\n" );
+      return;
+   }
+
+   set_softcap( fstat, value );
    update_tag( fstat->tag, olc->account->name );
    text_to_olc( olc, "You set the softcap to %d.\r\n", fstat->softcap );
    return;
@@ -1459,6 +1468,7 @@ void sFramework_hardcap( void *passed, char *arg )
 {
    INCEPTION *olc = (INCEPTION *)passed;
    STAT_FRAMEWORK *fstat = (STAT_FRAMEWORK *)olc->editing;
+   int value;
 
    if( !arg || arg[0] == '\0' )
    {
@@ -1473,8 +1483,15 @@ void sFramework_hardcap( void *passed, char *arg )
       olc_short_prompt( olc );
       return;
    }
+   value = atoi( arg );
 
-   set_hardcap( fstat, atoi( arg ) );
+   if( value < fstat->softcap )
+   {
+      text_to_olc( olc, "The value of hardcap cannot be less than the softcap.\r\n" );
+      return;
+   }
+
+   set_hardcap( fstat, value );
    update_tag( fstat->tag, olc->account->name );
    text_to_olc( olc, "You set the hardcap to ds.\r\n", fstat->hardcap );
    return;
@@ -1485,6 +1502,7 @@ void sFramework_softfloor( void *passed, char *arg )
 {
    INCEPTION *olc = (INCEPTION *)passed;
    STAT_FRAMEWORK *fstat = (STAT_FRAMEWORK *)olc->editing;
+   int value;
 
    if( !arg || arg[0] == '\0' )
    {
@@ -1499,7 +1517,15 @@ void sFramework_softfloor( void *passed, char *arg )
       olc_short_prompt( olc );
       return;
    }
-   set_softfloor( fstat, atoi( arg ) );
+   value = atoi( arg );
+
+   if( value > fstat->softcap )
+   {
+      text_to_olc( olc, "The value of the softfloor cannot be greater than the softcap.\r\n" );
+      return;
+   }
+
+   set_softfloor( fstat, value );
    update_tag( fstat->tag, olc->account->name );
    text_to_olc( olc, "You set the softfloor to %d.\r\n", fstat->softfloor );
    return;
@@ -1509,6 +1535,7 @@ void sFramework_hardfloor( void *passed, char *arg )
 {
    INCEPTION *olc = (INCEPTION *)passed;
    STAT_FRAMEWORK *fstat = (STAT_FRAMEWORK *)olc->editing;
+   int value;
 
    if( !arg || arg[0] == '\0' )
    {
@@ -1523,8 +1550,15 @@ void sFramework_hardfloor( void *passed, char *arg )
       olc_short_prompt( olc );
       return;
    }
+   value = atoi( arg );
 
-   set_hardfloor( fstat, atoi( arg ) );
+   if( value > fstat->softfloor )
+   {
+      text_to_olc( olc, "The value of the hardfloor cannot be greater than the softfloor.\r\n" );
+      return;
+   }
+
+   set_hardfloor( fstat, value );
    update_tag( fstat->tag, olc->account->name );
    text_to_olc( olc, "You set the hardfloor to %d.\r\n", fstat->hardfloor );
    return;

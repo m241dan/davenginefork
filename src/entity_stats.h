@@ -70,8 +70,7 @@ extern inline void set_mod_stat( STAT_INSTANCE *stat, int value );
 extern inline void add_mod_stat( STAT_INSTANCE *stat, int value );
 extern inline void set_stat_owner( STAT_INSTANCE *stat, ENTITY_INSTANCE *owner );
 
-void lua_stat_change( STAT_INSTANCE  *stat, int change );
-void lua_stat_set( STAT_INSTANCE *stat, int change );
+void lua_set_stat( STAT_INSTANCE *stat, int change, int effective );
 FILE *open_s_script( STAT_FRAMEWORK *fstat, const char *permissions );
 bool s_script_exists( STAT_FRAMEWORK *fstat );
 void init_s_script( STAT_FRAMEWORK *fstat, bool force );
