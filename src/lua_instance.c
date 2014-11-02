@@ -18,6 +18,7 @@ const struct luaL_Reg EntityInstanceLib_m[] = {
    { "getStatMod", getStatMod },
    { "getStatPerm", getStatPerm },
    { "getStat", getStat },
+   { "getStatEffectiveValue", getStatEffectiveValue },
    /* setters */
    { "setStatMod", setStatMod },
    { "setStatPerm", setStatPerm },
@@ -384,6 +385,36 @@ int getStat( lua_State *L )
    return 1;
 }
 
+int getStatEffectiveValue( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+   STAT_INSTANCE *stat;
+   const char *stat_name;
+
+   DAVLUACM_INSTANCE_NIL( instance, L );
+   if( instance->tag->id == -69 )
+   {
+      bug( "%s: builders have no stats", __FUNCTION__ );
+      lua_pushnil( L );
+      return 1;
+   }
+
+   if( ( stat_name = luaL_checkstring( L, -1 ) ) == NULL )
+   {
+      bug( "%s: no string passed.", __FUNCTION__ );
+      lua_pushnil( L );
+      return 1;
+   }
+
+   if( ( stat = get_stat_from_instance_by_name( instance, stat_name ) ) == NULL )
+   {
+      lua_pushnil( L );
+      return 1;
+   }
+   lua_pushnumber( L, get_stat_value( stat ) );
+   return 1;
+}
+
 int setStatMod( lua_State *L )
 {
    ENTITY_INSTANCE *instance;
@@ -413,12 +444,19 @@ int setStatMod( lua_State *L )
 
    if( ( stat = get_stat_from_instance_by_name( instance, stat_name ) ) == NULL )
    {
-      bug( "%s: instance %s stat attempted %s", __FUNCTION__, instance_name( instance ), stat_name );
-      return 0;
+      STAT_FRAMEWORK *fstat;
+      if( ( fstat = get_stat_framework_by_name( stat_name ) ) == NULL )
+      {
+         bug( "%s: no such stat %s exists.", __FUNCTION__, stat_name );
+         return 0;
+      }
+      add_stat_to_frame( fstat, instance->framework );
+      stat_instantiate( instance, fstat );
+      stat = get_stat_from_instance_by_name( instance, stat_name );
    }
 
    set_mod_stat( stat, value );
-   return 1;
+   return 0;
 }
 
 int setStatPerm( lua_State *L )
@@ -450,12 +488,19 @@ int setStatPerm( lua_State *L )
 
    if( ( stat = get_stat_from_instance_by_name( instance, stat_name ) ) == NULL )
    {
-      bug( "%s: instance %s stat attempted %s", __FUNCTION__, instance_name( instance ), stat_name );
-      return 0;
+      STAT_FRAMEWORK *fstat;
+      if( ( fstat = get_stat_framework_by_name( stat_name ) ) == NULL )
+      {
+         bug( "%s: no such stat %s exists.", __FUNCTION__, stat_name );
+         return 0;
+      }
+      add_stat_to_frame( fstat, instance->framework );
+      stat_instantiate( instance, fstat );
+      stat = get_stat_from_instance_by_name( instance, stat_name );
    }
 
    set_perm_stat( stat, value );
-   return 1;
+   return 0;
 }
 
 int addStatMod( lua_State *L )
@@ -487,12 +532,19 @@ int addStatMod( lua_State *L )
 
    if( ( stat = get_stat_from_instance_by_name( instance, stat_name ) ) == NULL )
    {
-      bug( "%s: instance %s stat attempted %s", __FUNCTION__, instance_name( instance ), stat_name );
-      return 0;
+      STAT_FRAMEWORK *fstat;
+      if( ( fstat = get_stat_framework_by_name( stat_name ) ) == NULL )
+      {
+         bug( "%s: no such stat %s exists.", __FUNCTION__, stat_name );
+         return 0;
+      }
+      add_stat_to_frame( fstat, instance->framework );
+      stat_instantiate( instance, fstat );
+      stat = get_stat_from_instance_by_name( instance, stat_name );
    }
 
    add_mod_stat( stat, value );
-   return 1;
+   return 0;
 }
 
 int addStatPerm( lua_State *L )
@@ -524,12 +576,19 @@ int addStatPerm( lua_State *L )
 
    if( ( stat = get_stat_from_instance_by_name( instance, stat_name ) ) == NULL )
    {
-      bug( "%s: instance %s stat attempted %s", __FUNCTION__, instance_name( instance ), stat_name );
-      return 0;
+      STAT_FRAMEWORK *fstat;
+      if( ( fstat = get_stat_framework_by_name( stat_name ) ) == NULL )
+      {
+         bug( "%s: no such stat %s exists.", __FUNCTION__, stat_name );
+         return 0;
+      }
+      add_stat_to_frame( fstat, instance->framework );
+      stat_instantiate( instance, fstat );
+      stat = get_stat_from_instance_by_name( instance, stat_name );
    }
 
    add_perm_stat( stat, value );
-   return 1;
+   return 0;
 }
 
 int setVar( lua_State *L )

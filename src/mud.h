@@ -44,6 +44,9 @@
 #define VAR_INT 0
 #define VAR_STR 1
 
+#define MAX_INT 2114125302
+#define MIN_INT -2114125302
+
 /* A few globals */
 #define PULSES_PER_SECOND     4                   /* must divide 1000 : 4, 5 or 8 works */
 #define MAX_FRAMEWORK_NSL   255                   /* max for non-text string sql entrees */

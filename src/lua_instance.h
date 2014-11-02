@@ -25,6 +25,7 @@ int getVar( lua_State *L );
 int getStatMod( lua_State *L );
 int getStatPerm( lua_State *L );
 int getStat( lua_State *L );
+int getStatEffectiveValue( lua_State *L );
 /* setters */
 int setStatMod( lua_State *L );
 int setStatPerm( lua_State *L );

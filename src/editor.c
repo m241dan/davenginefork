@@ -1144,7 +1144,7 @@ const char *return_instance_spec_and_stats( ENTITY_INSTANCE *instance, const cha
       strcat( buf, border );
 
       if( stat )
-         mud_printf( tempstring, " %s%s\r\n", fit_string_to_space( quick_format( "%s : P: %d M: %d T: %d", stat->framework->name, stat->perm_stat, stat->mod_stat, ( stat->perm_stat + stat->mod_stat ) ), ( space_after_border / 2 ) - 1) , border );
+         mud_printf( tempstring, " %s%s\r\n", fit_string_to_space( quick_format( "%s:  P: %d M: %d T: %d", stat->framework->name, stat->perm_stat, stat->mod_stat, ( stat->perm_stat + stat->mod_stat ) ), ( space_after_border / 2 ) - 1) , border );
       else
          mud_printf( tempstring, " %s%s\r\n", print_header( " ", " ", ( space_after_border / 2 ) - 1 ), border );
       strcat( buf, tempstring );
@@ -1397,10 +1397,10 @@ void editor_sFramework_prompt( D_SOCKET *dsock, bool commands )
 
    text_to_olc( olc, "/%s\\\r\n", print_header( tempstring, "-", dsock->account->pagewidth - 2 ) );
    text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " Name      : %s", fstat->name ), space_after_border ), border );
-   text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " SoftCap   : %d", fstat->softcap ), space_after_border ), border );
-   text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " HardCap   : %d", fstat->hardcap ), space_after_border ), border );
-   text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " SoftFloor : %d", fstat->softfloor ), space_after_border ), border );
-   text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " HardFloor : %d", fstat->hardfloor ), space_after_border ), border );
+   text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " SoftCap   : %s", fstat->softcap == MAX_INT ? "Max" : itos( fstat->softcap ) ), space_after_border ), border );
+   text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " HardCap   : %s", fstat->hardcap == MAX_INT ? "Max" : itos( fstat->hardcap ) ), space_after_border ), border );
+   text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " SoftFloor : %s", fstat->softfloor == MIN_INT ? "Min" : itos( fstat->softfloor ) ), space_after_border ), border );
+   text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " HardFloor : %s", fstat->hardfloor == MIN_INT ? "Min" : itos( fstat->hardfloor ) ), space_after_border ), border );
 
    text_to_olc( olc, "%s%s%s\r\n", border, print_bar( "-", space_after_border ), border );
    if( commands )
@@ -1444,17 +1444,28 @@ void sFramework_softcap( void *passed, char *arg )
       return;
    }
 
-   if( !is_number( arg ) && ( arg[0] == '-' && !is_number( arg + 1 ) ) )
+   if( !strcasecmp( arg, "max" ) )
+      value = MAX_INT;
+   else
    {
-      text_to_olc( olc, "You must input a number.\r\n" );
-      olc_short_prompt( olc );
-      return;
+      if( !is_number( arg ) && ( arg[0] == '-' && !is_number( arg + 1 ) ) )
+      {
+         text_to_olc( olc, "You must input a number.\r\n" );
+         olc_short_prompt( olc );
+         return;
+      }
+      value = atoi( arg );
    }
-   value = atoi( arg );
 
    if( value < fstat->softfloor )
    {
       text_to_olc( olc, "The value of softcap cannot be less than the softfloor.\r\n" );
+      return;
+   }
+
+   if( value > fstat->hardcap )
+   {
+      text_to_olc( olc, "The value of the softcap cannot be greater than the hardcap.\r\n" );
       return;
    }
 
@@ -1477,13 +1488,18 @@ void sFramework_hardcap( void *passed, char *arg )
       return;
    }
 
-   if( !is_number( arg ) && ( arg[0] == '-' && !is_number( arg + 1 ) ) )
+   if( !strcasecmp( arg, "max" ) )
+      value = MAX_INT;
+   else
    {
-      text_to_olc( olc, "You must input a number.\r\n" );
-      olc_short_prompt( olc );
-      return;
+      if( !is_number( arg ) && ( arg[0] == '-' && !is_number( arg + 1 ) ) )
+      {
+         text_to_olc( olc, "You must input a number.\r\n" );
+         olc_short_prompt( olc );
+         return;
+      }
+      value = atoi( arg );
    }
-   value = atoi( arg );
 
    if( value < fstat->softcap )
    {
@@ -1511,17 +1527,28 @@ void sFramework_softfloor( void *passed, char *arg )
       return;
    }
 
-   if( !is_number( arg ) && ( arg[0] == '-' && !is_number( arg + 1 ) ) )
+   if( !strcasecmp( arg, "min" ) )
+      value = MIN_INT;
+   else
    {
-      text_to_olc( olc, "You must input a number.\r\n" );
-      olc_short_prompt( olc );
-      return;
+      if( !is_number( arg ) && ( arg[0] == '-' && !is_number( arg + 1 ) ) )
+      {
+         text_to_olc( olc, "You must input a number.\r\n" );
+         olc_short_prompt( olc );
+         return;
+      }
+      value = atoi( arg );
    }
-   value = atoi( arg );
 
    if( value > fstat->softcap )
    {
       text_to_olc( olc, "The value of the softfloor cannot be greater than the softcap.\r\n" );
+      return;
+   }
+
+   if( value < fstat->hardfloor )
+   {
+      text_to_olc( olc, "The value of the softfloor cannot be lower than the hardfloor.\r\n" );
       return;
    }
 
@@ -1544,13 +1571,18 @@ void sFramework_hardfloor( void *passed, char *arg )
       return;
    }
 
-   if( !is_number( arg ) && ( arg[0] == '-' && !is_number( arg + 1 ) ) )
+   if( !strcasecmp( arg, "min" ) )
+      value = MIN_INT;
+   else
    {
-      text_to_olc( olc, "You must input a number.\r\n" );
-      olc_short_prompt( olc );
-      return;
+      if( !is_number( arg ) && ( arg[0] == '-' && !is_number( arg + 1 ) ) )
+      {
+         text_to_olc( olc, "You must input a number.\r\n" );
+         olc_short_prompt( olc );
+         return;
+      }
+      value = atoi( arg );
    }
-   value = atoi( arg );
 
    if( value > fstat->softfloor )
    {
