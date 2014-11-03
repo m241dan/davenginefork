@@ -1,4 +1,8 @@
+function onInstanceInit( frame, instance )
+end
+
 function onEntityEnter( room, entity )
+   --- comment test
 end
 
 function onEntityLeave( room, entity )

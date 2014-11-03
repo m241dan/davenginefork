@@ -56,7 +56,8 @@ int free_eInstance( ENTITY_INSTANCE *eInstance )
    FreeList( eInstance->specifications );
    eInstance->specifications = NULL;
 
-   free_target( eInstance->target );
+   if( eInstance->target )
+      free_target( eInstance->target );
    eInstance->target = NULL;
 
    clear_stat_list( eInstance->stats );
