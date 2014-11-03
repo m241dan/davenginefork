@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <ctype.h>
 #include <pthread.h>
+#include <regex.h>
 
 #define MAX_BUFFER 16384
 #ifndef FALSE
@@ -39,17 +40,19 @@ void *update_frameworks( void *arg );
 void *update_instances( void *arg );
 void *update_stats( void *arg );
 bool is_prefix(const char *aStr, const char *bStr);
+bool string_contains( const char *string, const char *regex_string );
 int count_lua_functions( char *str );
 LUA_FUNCTION_ARRAY get_functions( char *str );
 LUA_FUNCTION *get_lua_func( char **str );
 void free_func( LUA_FUNCTION *func );
 void free_func_array( LUA_FUNCTION_ARRAY );
+void print_two_strings_no_copy_by_line( FILE *script_fp, char *script_body, char *template_body );
 
 pthread_t tid[3];
 
 int main( void )
 {
-
+/*
    pthread_create( &(tid[0] ), NULL, &update_frameworks, NULL );
    pthread_create( &(tid[1] ), NULL, &update_instances, NULL );
    pthread_create( &(tid[2] ), NULL, &update_stats, NULL );
@@ -57,6 +60,10 @@ int main( void )
    pthread_join( tid[0], NULL );
    pthread_join( tid[1], NULL );
    pthread_join( tid[2], NULL );
+*/
+   update_frameworks( NULL );
+   update_instances( NULL );
+   update_stats( NULL );
    return 0;
 }
 
@@ -84,12 +91,6 @@ void *update_frameworks( void *arg )
       return NULL;
    }
 
-   {
-      int z;
-      for( z = 0; template_funcs[z] != NULL; z++ )
-         printf( "%s: template header = %s\n", __FUNCTION__, template_funcs[z]->header );
-   }
-
    directory = opendir( "frames/" );
    for( entry = readdir( directory ); entry; entry = readdir( directory ) )
    {
@@ -110,13 +111,6 @@ void *update_frameworks( void *arg )
          continue;
       }
 
-   {
-      int z;
-      for( z = 0; script_funcs[z] != NULL; z++ )
-         printf( "%s: script header = %s\n", __FUNCTION__, script_funcs[z]->header );
-   }
-
-
       if( ( script_fp = fopen( buf, "w" ) ) == NULL )
          continue;
 
@@ -129,17 +123,20 @@ void *update_frameworks( void *arg )
                break;
             }
 
-         if( template_funcs[x]->noise[0] != '\0' )
-            fprintf( script_fp, "%s", template_funcs[x]->noise );
          if( script_funcs[y] )
-            if( script_funcs[y]->noise[0] != '\0' )
-               fprintf( script_fp, "%s", script_funcs[y]->noise );
-         fprintf( script_fp, "%s", template_funcs[x]->header );
-         if( template_funcs[x]->body[0] != '\0' )
-            fprintf( script_fp, "%s", template_funcs[x]->body );
-         if( script_funcs[y] )
-            if( script_funcs[y]->body[0] != '\0' )
-               fprintf( script_fp, "%s", script_funcs[y]->body );
+         {
+             print_two_strings_no_copy_by_line( script_fp, script_funcs[y]->noise, template_funcs[x]->noise );
+             fprintf( script_fp, "%s", template_funcs[x]->header );
+             print_two_strings_no_copy_by_line( script_fp, script_funcs[y]->body, template_funcs[x]->body );
+         }
+         else
+         {
+            if( template_funcs[x]->noise[0] != '\0' )
+               fprintf( script_fp, "%s", template_funcs[x]->noise );
+            fprintf( script_fp, "%s", template_funcs[x]->header );
+            if( template_funcs[x]->body[0] != '\0' )
+               fprintf( script_fp, "%s", template_funcs[x]->body );
+         }
          fprintf( script_fp, "%s\n\n", "end" );
       }
 
@@ -164,11 +161,185 @@ void *update_frameworks( void *arg )
 
 void *update_instances( void *arg )
 {
+   DIR *directory;
+   struct dirent *entry;
+   FILE *template_fp;
+   FILE *script_fp;
+   char template_buf[MAX_BUFFER];
+   char script_buf[MAX_BUFFER];
+   WRITE write;
+   LUA_FUNCTION_ARRAY script_funcs, template_funcs;
+   int x, y;
+
+   if( ( template_fp = fopen( "templates/instance.lua", "r" ) ) == NULL )
+      return NULL;
+   memset( &template_buf[0], 0, sizeof( template_buf ) );
+   strcat( template_buf, fread_file( template_fp ) );
+   fclose( template_fp );
+
+   if( ( template_funcs = get_functions( template_buf ) ) == NULL )
+   {
+      printf( "%s: could not get the functions from the template.", __FUNCTION__ );
+      return NULL;
+   }
+
+   directory = opendir( "instances/" );
+   for( entry = readdir( directory ); entry; entry = readdir( directory ) )
+   {
+      char buf[255], line_one[510], line_two[510];
+      if( !strcmp( entry->d_name, "." ) || !strcmp( entry->d_name, ".." ) || !strcmp( entry->d_name, ".placeholder" ) )
+         continue;
+      snprintf( buf, 255, "instances/%s", entry->d_name );
+      if( ( script_fp = fopen( buf, "r" ) ) == NULL )
+         continue;
+
+      memset( &script_buf[0], 0, sizeof( script_buf ) );
+      strcat( script_buf, fread_file( script_fp ) );
+      fclose( script_fp );
+
+      if( ( script_funcs = get_functions( script_buf ) ) == NULL )
+      {
+         printf( "%s: could not get the functions from script %s.", __FUNCTION__, entry->d_name );
+         continue;
+      }
+
+      if( ( script_fp = fopen( buf, "w" ) ) == NULL )
+         continue;
+
+      for( x = 0; template_funcs[x] != NULL; x++ )
+      {
+         for( y = 0; script_funcs[y] != NULL; y++ )
+            if( is_prefix( template_funcs[x]->header, script_funcs[y]->header ) )
+            {
+               script_funcs[y]->wrote = TRUE;
+               break;
+            }
+
+         if( script_funcs[y] )
+         {
+             print_two_strings_no_copy_by_line( script_fp, script_funcs[y]->noise, template_funcs[x]->noise );
+             fprintf( script_fp, "%s", template_funcs[x]->header );
+             print_two_strings_no_copy_by_line( script_fp, script_funcs[y]->body, template_funcs[x]->body );
+         }
+         else
+         {
+            if( template_funcs[x]->noise[0] != '\0' )
+               fprintf( script_fp, "%s", template_funcs[x]->noise );
+            fprintf( script_fp, "%s", template_funcs[x]->header );
+            if( template_funcs[x]->body[0] != '\0' )
+               fprintf( script_fp, "%s", template_funcs[x]->body );
+         }
+         fprintf( script_fp, "%s\n\n", "end" );
+      }
+      for( y = 0; script_funcs[y] != NULL; y++ )
+      {
+         if( script_funcs[y]->wrote )
+            continue;
+         if( script_funcs[y]->noise[0] != '\0' )
+            fprintf( script_fp, "%s", script_funcs[y]->noise );
+         fprintf( script_fp, "%s", script_funcs[y]->header );
+         if( script_funcs[y]->body[0] != '\0' )
+            fprintf( script_fp, "%s", script_funcs[y]->body );
+         fprintf( script_fp, "%s\n\n", "end" );
+      }
+      free_func_array( script_funcs );
+      fclose( script_fp );
+   }
+   free_func_array( template_funcs );
+   closedir( directory );
+
    return NULL;
 }
 
 void *update_stats( void *arg )
 {
+   DIR *directory;
+   struct dirent *entry;
+   FILE *template_fp;
+   FILE *script_fp;
+   char template_buf[MAX_BUFFER];
+   char script_buf[MAX_BUFFER];
+   WRITE write;
+   LUA_FUNCTION_ARRAY script_funcs, template_funcs;
+   int x, y;
+
+   if( ( template_fp = fopen( "templates/stat.lua", "r" ) ) == NULL )
+      return NULL;
+   memset( &template_buf[0], 0, sizeof( template_buf ) );
+   strcat( template_buf, fread_file( template_fp ) );
+   fclose( template_fp );
+
+   if( ( template_funcs = get_functions( template_buf ) ) == NULL )
+   {
+      printf( "%s: could not get the functions from the template.", __FUNCTION__ );
+      return NULL;
+   }
+
+   directory = opendir( "stats/" );
+   for( entry = readdir( directory ); entry; entry = readdir( directory ) )
+   {
+      char buf[255], line_one[510], line_two[510];
+      if( !strcmp( entry->d_name, "." ) || !strcmp( entry->d_name, ".." ) || !strcmp( entry->d_name, ".placeholder" ) )
+         continue;
+      snprintf( buf, 255, "stats/%s", entry->d_name );
+      if( ( script_fp = fopen( buf, "r" ) ) == NULL )
+         continue;
+
+      memset( &script_buf[0], 0, sizeof( script_buf ) );
+      strcat( script_buf, fread_file( script_fp ) );
+      fclose( script_fp );
+
+      if( ( script_funcs = get_functions( script_buf ) ) == NULL )
+      {
+         printf( "%s: could not get the functions from script %s.", __FUNCTION__, entry->d_name );
+         continue;
+      }
+
+      if( ( script_fp = fopen( buf, "w" ) ) == NULL )
+         continue;
+
+      for( x = 0; template_funcs[x] != NULL; x++ )
+      {
+         for( y = 0; script_funcs[y] != NULL; y++ )
+            if( is_prefix( template_funcs[x]->header, script_funcs[y]->header ) )
+            {
+               script_funcs[y]->wrote = TRUE;
+               break;
+            }
+
+         if( script_funcs[y] )
+         {
+             print_two_strings_no_copy_by_line( script_fp, script_funcs[y]->noise, template_funcs[x]->noise );
+             fprintf( script_fp, "%s", template_funcs[x]->header );
+             print_two_strings_no_copy_by_line( script_fp, script_funcs[y]->body, template_funcs[x]->body );
+         }
+         else
+         {
+            if( template_funcs[x]->noise[0] != '\0' )
+               fprintf( script_fp, "%s", template_funcs[x]->noise );
+            fprintf( script_fp, "%s", template_funcs[x]->header );
+            if( template_funcs[x]->body[0] != '\0' )
+               fprintf( script_fp, "%s", template_funcs[x]->body );
+         }
+         fprintf( script_fp, "%s\n\n", "end" );
+      }
+      for( y = 0; script_funcs[y] != NULL; y++ )
+      {
+         if( script_funcs[y]->wrote )
+            continue;
+         if( script_funcs[y]->noise[0] != '\0' )
+            fprintf( script_fp, "%s", script_funcs[y]->noise );
+         fprintf( script_fp, "%s", script_funcs[y]->header );
+         if( script_funcs[y]->body[0] != '\0' )
+            fprintf( script_fp, "%s", script_funcs[y]->body );
+         fprintf( script_fp, "%s\n\n", "end" );
+      }
+      free_func_array( script_funcs );
+      fclose( script_fp );
+   }
+   free_func_array( template_funcs );
+   closedir( directory );
+
    return NULL;
 }
 
@@ -246,6 +417,31 @@ bool is_prefix(const char *aStr, const char *bStr)
 
   /* success */
   return TRUE;
+}
+
+bool string_contains( const char *string, const char *regex_string )
+{
+   /* Using Regular Expression */
+   regex_t regex;
+   int reti;
+
+   reti = regcomp(&regex, regex_string, 0 );
+   if( reti )
+   {
+      printf( "%s: bad regex '%s'", __FUNCTION__, regex_string );
+      return FALSE;
+   }
+
+   if( !(reti = regexec( &regex, string, 0, NULL, 0 ) ) )
+      return TRUE;
+   else if( reti == REG_NOMATCH )
+      return FALSE;
+   else
+   {
+      printf( "didn't know what to do with: %s", regex_string);
+      return FALSE;
+   }
+   return FALSE;
 }
 
 int count_lua_functions( char *str )
@@ -365,4 +561,20 @@ void free_func_array( LUA_FUNCTION_ARRAY func_array )
    for( x = 0; func_array[x] != NULL; x++ )
       free_func( func_array[x] );
    free( func_array );
+}
+
+void print_two_strings_no_copy_by_line( FILE *script_fp, char *script_body, char *template_body )
+{
+   char template_line[MAX_BUFFER];
+
+   while( template_body && template_body[0] != '\0' )
+   {
+      template_body = one_arg_delim( template_body, template_line, '\n' );
+      if( string_contains( script_body, template_line ) )
+         continue;
+      fprintf( script_fp, "%s\n", template_line );
+   }
+   if( script_body && script_body[0] != '\0' )
+      fprintf( script_fp, "%s", script_body );
+   return;
 }
