@@ -1,5 +1,8 @@
 /* the headerfile for lua_utils.c written by Davenge */
 
+#define AUTOWRITE_INIT "   --- autowrite init ---"
+#define ENDAUTOWRITE_INIT "   --- end autowrite init ---"
+
 typedef struct lua_function
 {
    char *noise;
@@ -33,4 +36,4 @@ void push_specification( SPECIFICATION *spec, lua_State *L );
 int lua_bug( lua_State *L );
 int lua_getGlobalVar( lua_State *L );
 int lua_setGlobalVar( lua_State *L );
-void autowrite_init( ENTITY_INSTANCE *instance );
+bool autowrite_init( ENTITY_INSTANCE *instance );

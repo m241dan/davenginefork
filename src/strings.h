@@ -14,6 +14,7 @@ int    number_arg             ( char *fStr, char *bStr );
 int    number_arg_single      ( char *string );
 char   *one_arg               ( char *fStr, char *bStr );
 char   *one_arg_delim         ( char *fStr, char *bStr, char delim );
+char   *one_arg_delim_literal ( char *fStr, char *bStr, char delim );
 char   *strdup                ( const char *s );
 int     strcasecmp            ( const char *s1, const char *s2 );
 bool    is_prefix             ( const char *aStr, const char *bStr );

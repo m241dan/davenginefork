@@ -1,6 +1,6 @@
 function onInstanceInit( frame, instance )
-   --- autowrite ---
-   --- endautowrite ---
+   --- autowrite init ---
+   --- end autowrite init ---
 end
 
 function onEntityEnter( room, entity )

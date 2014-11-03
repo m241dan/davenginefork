@@ -27,7 +27,6 @@ int count_lua_functions( char *str )
 LUA_FUNCTION_ARRAY get_functions( char *str )
 {
    LUA_FUNCTION_ARRAY func_array;
-   char buf[510];
    int size, x;
 
    size = count_lua_functions( str );
@@ -400,22 +399,72 @@ int lua_setGlobalVar( lua_State *L )
    return 0;
 }
 
-void autowrite_init( ENTITY_INSTANCE *instance )
+bool autowrite_init( ENTITY_INSTANCE *instance )
 {
+   typedef enum
+   {
+      FIND_INIT, FIND_END, FINISH
+   } MODE;
    ENTITY_FRAMEWORK *frame = instance->framework;
+   STAT_INSTANCE *stat;
    FILE *fp;
-   char script_buf[MAX_BUFFER * 4];
-   const char *script;
+   char *script;
+   ITERATOR Iter;
+   char script_buf[MAX_BUFFER * 4], line[MAX_BUFFER];
+   MODE mode;
+
 
    if( ( fp = open_f_script( frame, "r" ) ) == NULL )
    {
       bug( "%s: could not open the frameworks script.\r\n", __FUNCTION__ );
-      return;
+      return FALSE;
    }
 
    script = script_buf;
-   snprintf( script_buf, MAX_BUFFER * 4, "%s", fread_file( fp ) );
+   snprintf( script_buf, ( MAX_BUFFER * 4 ), "%s", fread_file( fp ) );
+   fclose( fp );
 
-   
+   if( ( fp = open_f_script( frame, "w" ) ) == NULL )
+   {
+      bug( "%s: could not open the framework's script to write.\r\n", __FUNCTION__ );
+      return FALSE;
+   }
 
+   mode = FIND_INIT;
+   while( script && script[0] != '\0' )
+   {
+      script = one_arg_delim_literal( script, line, '\n' );
+      if( mode == FIND_INIT  )
+      {
+         fprintf( fp, "%s\n", line );
+         if( !strcmp( line, AUTOWRITE_INIT ) )
+         {
+            AttachIterator( &Iter, instance->stats );
+            while( ( stat = (STAT_INSTANCE *)NextInList( &Iter ) ) != NULL )
+               fprintf( fp, "   instance:setStatPerm( \"%s\", %d )\n", stat->framework->name, stat->perm_stat );
+            DetachIterator( &Iter );
+            mode = FIND_END;
+         }
+         continue;
+      }
+      else if( mode == FIND_END )
+      {
+         if( !strcmp( line, ENDAUTOWRITE_INIT ) )
+         {
+            fprintf( fp, "%s\n", line );
+            mode = FINISH;
+            continue;
+         }
+         else
+            continue;
+      }
+      else if( mode == FINISH )
+      {
+         fprintf( fp, "%s\n", line );
+         fprintf( fp, "%s\n", script );
+         break;
+      }
+   }
+   fclose( fp );
+   return TRUE;
 }

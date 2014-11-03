@@ -55,6 +55,7 @@ void instance_load( void *passed, char *arg );
 void instance_live( void *passed, char *arg );
 void instance_level( void *passed, char *arg );
 void instance_setStat( void *passed, char *arg );
+void instance_autowrite( void *passed, char *arg );
 void instance_addcontent( void *passed, char *arg );
 void instance_addspec( void *passed, char *arg );
 void instance_done( void *passed, char *arg );

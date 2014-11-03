@@ -1228,6 +1228,29 @@ void instance_setStat( void *passed, char *arg )
    return;
 }
 
+void instance_autowrite( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_INSTANCE *instance = (ENTITY_INSTANCE *)olc->editing;
+
+   if( !f_script_exists( instance->framework ) )
+   {
+      text_to_olc( olc, "This instance's framework has no script generated.\r\n" );
+      return;
+   }
+
+   if( autowrite_init( instance ) )
+   {
+      text_to_olc( olc, "You write the init script for this instance's framework.\r\n" ) ;
+      return;
+   }
+   else
+   {
+      text_to_olc( olc, "Failed to write the init script for this instance's framework.\r\n" );
+      return;
+   }
+}
+
 void instance_addcontent( void *passed, char *arg )
 {
    INCEPTION *olc = (INCEPTION *)passed;

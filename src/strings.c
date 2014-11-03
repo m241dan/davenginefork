@@ -116,7 +116,7 @@ char *one_arg_delim( char *fStr, char *bStr, char delim )
 {
   /* skip leading spaces */
   while (isspace(*fStr))
-    fStr++; 
+    fStr++;
 
   /* copy the beginning of the string */
   while (*fStr != '\0')
@@ -141,6 +141,32 @@ char *one_arg_delim( char *fStr, char *bStr, char delim )
 
   /* return the leftovers */
   return fStr;
+}
+
+
+/* doens't skip leading spaces */
+char *one_arg_delim_literal( char *fStr, char *bStr, char delim )
+{
+  /* copy the beginning of the string */
+  while (*fStr != '\0')
+  {
+    /* have we reached the end of the first word ? */
+    if (*fStr == delim)
+    {
+      fStr++;
+      break;
+    }
+
+    /* copy one char */
+    *bStr++ = *fStr++;
+  }
+
+  /* terminate string */
+  *bStr = '\0';
+
+  /* return the leftovers */
+  return fStr;
+
 }
 
 char *capitalize(char *txt)
