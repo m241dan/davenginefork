@@ -461,7 +461,6 @@ int count_lua_functions( char *str )
 LUA_FUNCTION_ARRAY get_functions( char *str )
 {
    LUA_FUNCTION_ARRAY func_array;
-   LUA_FUNCTION *func;
    char buf[510];
    int size, x;
 

@@ -9,6 +9,139 @@ const struct luaL_Reg EntityVariablesLib_f[] = {
   { NULL, NULL }
 };
 
+int count_lua_functions( char *str )
+{
+   char buf[510];
+   int count = 0;
+
+   while( str && str[0] != '\0' )
+   {
+      str = one_arg_delim( str, buf, '\n' );
+      if( is_prefix( buf, "function" ) )
+         count++;
+   }
+   return count;
+}
+
+
+LUA_FUNCTION_ARRAY get_functions( char *str )
+{
+   LUA_FUNCTION_ARRAY func_array;
+   char buf[510];
+   int size, x;
+
+   size = count_lua_functions( str );
+   if( size == 0 )
+   {
+      printf( "%s: no lua functions in str:\n%s\n\n", __FUNCTION__, str );
+      return NULL;
+   }
+
+   func_array = (LUA_FUNCTION_ARRAY)calloc( size + 1, sizeof( LUA_FUNCTION * ) );
+   func_array[size] = NULL;
+
+   for( x = 0; x < size; x++ )
+      func_array[x] = get_lua_func( &str );
+
+   return func_array;
+}
+
+LUA_FUNCTION *get_lua_func( char **str )
+{
+   typedef enum
+   {
+      NOISE, HEADER, BODY
+   } MODE;
+
+   LUA_FUNCTION *func;
+   char *box = *str;
+   char line[510], noise[MAX_BUFFER], header[MAX_BUFFER], body[MAX_BUFFER];
+   MODE mode = NOISE;
+
+   func = (LUA_FUNCTION *)malloc( sizeof( LUA_FUNCTION ) );
+   func->noise = NULL;
+   func->header = NULL;
+   func->body = NULL;
+   func->wrote = FALSE;
+
+   memset( &noise[0], 0, sizeof( noise ) );
+   memset( &header[0], 0, sizeof( header ) );
+   memset( &body[0], 0, sizeof( body ) );
+
+   while( box && box[0] != '\0' )
+   {
+      box = one_arg_delim( box, line, '\n' );
+      if( line[0] == '\0' )
+         continue;
+      switch( mode )
+      {
+         case NOISE:
+            if( !until_function( line ) )
+            {
+               strcat( noise, line );
+               strcat( noise, "\n" );
+               break;
+            }
+            mode = HEADER;
+         case HEADER:
+            strcat( header, line );
+            strcat( header, "\n" );
+            mode = BODY;
+            break;
+         case BODY:
+            if( until_end( line ) )
+            {
+               box = one_arg_delim( box, line, '\n' );
+               goto exit;
+            }
+            strcat( body, line );
+            strcat( body, "\n" );
+            break;
+      }
+   }
+   exit:
+   noise[strlen( noise )] = '\0';
+   header[strlen( header )] = '\0';
+   body[strlen( body )] = '\0';
+   func->noise = strdup( noise );
+   func->header = strdup( header );
+   func->body = strdup( body );
+   *str = box;
+   return func;
+
+}
+
+void free_lua_func( LUA_FUNCTION *func )
+{
+   free( func->noise );
+   free( func->header );
+   free( func->body );
+   free( func );
+}
+
+void free_lua_func_array( LUA_FUNCTION_ARRAY func_array )
+{
+   int x;
+
+   for( x = 0; func_array[x] != NULL; x++ )
+      free_lua_func( func_array[x] );
+   free( func_array );
+}
+
+bool until_function( char *str )
+{
+   if( is_prefix( str, "function" ) || str[0] == '\0' )
+      return TRUE;
+   return FALSE;
+}
+
+bool until_end( char *str )
+{
+   if( is_prefix( str, "end" ) || str[0] == '\0' )
+      return TRUE;
+   return FALSE;
+}
+
 int luaopen_mud( lua_State *L )
 {
    luaL_newlib( L, EntityVariablesLib_f );
@@ -265,4 +398,24 @@ int lua_setGlobalVar( lua_State *L )
          return 0;
    }
    return 0;
+}
+
+void autowrite_init( ENTITY_INSTANCE *instance )
+{
+   ENTITY_FRAMEWORK *frame = instance->framework;
+   FILE *fp;
+   char script_buf[MAX_BUFFER * 4];
+   const char *script;
+
+   if( ( fp = open_f_script( frame, "r" ) ) == NULL )
+   {
+      bug( "%s: could not open the frameworks script.\r\n", __FUNCTION__ );
+      return;
+   }
+
+   script = script_buf;
+   snprintf( script_buf, MAX_BUFFER * 4, "%s", fread_file( fp ) );
+
+   
+
 }

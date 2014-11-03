@@ -1,5 +1,23 @@
 /* the headerfile for lua_utils.c written by Davenge */
 
+typedef struct lua_function
+{
+   char *noise;
+   char *header;
+   char *body;
+   bool wrote;
+} LUA_FUNCTION;
+
+typedef struct lua_function ** LUA_FUNCTION_ARRAY;
+
+int count_lua_functions( char *str );
+LUA_FUNCTION_ARRAY get_functions( char *str );
+LUA_FUNCTION *get_lua_func( char **str );
+void free_lua_func( LUA_FUNCTION *func );
+void free_lua_func_array( LUA_FUNCTION_ARRAY );
+bool until_function( char *str );
+bool until_end( char *str );
+
 int luaopen_mud( lua_State *L );
 bool prep_stack( const char *file, const char *function );
 const char *get_script_path_from_spec( SPECIFICATION *spec );
@@ -15,3 +33,4 @@ void push_specification( SPECIFICATION *spec, lua_State *L );
 int lua_bug( lua_State *L );
 int lua_getGlobalVar( lua_State *L );
 int lua_setGlobalVar( lua_State *L );
+void autowrite_init( ENTITY_INSTANCE *instance );

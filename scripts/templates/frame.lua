@@ -1,8 +1,9 @@
 function onInstanceInit( frame, instance )
+   --- autowrite ---
+   --- endautowrite ---
 end
 
 function onEntityEnter( room, entity )
-   --- comment test
 end
 
 function onEntityLeave( room, entity )
