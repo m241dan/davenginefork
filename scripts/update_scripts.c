@@ -23,11 +23,13 @@ typedef enum
 
 typedef struct lua_function
 {
+   char *noise;
    char *header;
    char *body;
+   bool wrote;
 } LUA_FUNCTION;
 
-typedef struct lua_function * LUA_FUNCTION_ARRAY;
+typedef struct lua_function ** LUA_FUNCTION_ARRAY;
 
 char *fread_file( FILE *fp );
 char *one_arg_delim( char *fStr, char *bStr, char delim );
@@ -39,9 +41,11 @@ void *update_stats( void *arg );
 bool is_prefix(const char *aStr, const char *bStr);
 int count_lua_functions( char *str );
 LUA_FUNCTION_ARRAY get_functions( char *str );
+LUA_FUNCTION *get_lua_func( char **str );
+void free_func( LUA_FUNCTION *func );
+void free_func_array( LUA_FUNCTION_ARRAY );
+
 pthread_t tid[3];
-
-
 
 int main( void )
 {
@@ -64,9 +68,9 @@ void *update_frameworks( void *arg )
    FILE *script_fp;
    char template_buf[MAX_BUFFER];
    char script_buf[MAX_BUFFER];
-   char *Template;
-   char *script;
    WRITE write;
+   LUA_FUNCTION_ARRAY script_funcs, template_funcs;
+   int x, y;
 
    if( ( template_fp = fopen( "templates/frame.lua", "r" ) ) == NULL )
       return NULL;
@@ -74,87 +78,86 @@ void *update_frameworks( void *arg )
    strcat( template_buf, fread_file( template_fp ) );
    fclose( template_fp );
 
+   if( ( template_funcs = get_functions( template_buf ) ) == NULL )
+   {
+      printf( "%s: could not get the functions from the template.", __FUNCTION__ );
+      return NULL;
+   }
+
+   {
+      int z;
+      for( z = 0; template_funcs[z] != NULL; z++ )
+         printf( "%s: template header = %s\n", __FUNCTION__, template_funcs[z]->header );
+   }
+
    directory = opendir( "frames/" );
    for( entry = readdir( directory ); entry; entry = readdir( directory ) )
    {
-      Template = template_buf;
       char buf[255], line_one[510], line_two[510];
-      if( !strcmp( entry->d_name, "." ) || !strcmp( entry->d_name, ".." ) )
+      if( !strcmp( entry->d_name, "." ) || !strcmp( entry->d_name, ".." ) || !strcmp( entry->d_name, ".placeholder" ) )
          continue;
       snprintf( buf, 255, "frames/%s", entry->d_name );
       if( ( script_fp = fopen( buf, "r" ) ) == NULL )
          continue;
 
       memset( &script_buf[0], 0, sizeof( script_buf ) );
-      script = script_buf;
       strcat( script_buf, fread_file( script_fp ) );
       fclose( script_fp );
+
+      if( ( script_funcs = get_functions( script_buf ) ) == NULL )
+      {
+         printf( "%s: could not get the functions from script %s.", __FUNCTION__, entry->d_name );
+         continue;
+      }
+
+   {
+      int z;
+      for( z = 0; script_funcs[z] != NULL; z++ )
+         printf( "%s: script header = %s\n", __FUNCTION__, script_funcs[z]->header );
+   }
+
 
       if( ( script_fp = fopen( buf, "w" ) ) == NULL )
          continue;
 
-      write = TEMP_FUNC;
-      while( 1 )
+      for( x = 0; template_funcs[x] != NULL; x++ )
       {
-         if( !script || script[0] == '\0' )
-         {
-            fprintf( script_fp, "%s\n", Template );
-            break;
-         }
-         if( !Template || Template[0] == '\0' )
-         {
-            fprintf( script_fp, "%s\n", script );
-            break;
-         }
-         switch( write )
-         {
-            case TEMP_FUNC:
-               Template = one_arg_delim( Template, line_two, '\n' );
-               while( !until_function( line_two ) )
-               {
-                  fprintf( script_fp, "%s\n", line_two );
-                  Template = one_arg_delim( Template, line_two, '\n' );
-               }
-               write = SCRIPT_FUNC;
-               continue;
-            case SCRIPT_FUNC:
-               script = one_arg_delim( script, line_one, '\n' );
-               while( !until_function( line_one ) )
-               {
-                  fprintf( script_fp, "%s\n", line_one );
-                  script = one_arg_delim( script, line_one, '\n' );
-               }
-               write = PREFIX_TEST;
-               continue;
-            case PREFIX_TEST:
-               printf( "running prefix test\nline_two = %s | line_one = %s\n", line_two, line_one );
-               if( is_prefix( line_two, line_one ) )
-               {
-                  while( !until_end( line_two ) )
-                  {
-                     fprintf( script_fp, "%s\n", line_two );
-                     Template = one_arg_delim( Template, line_two, '\n' );
-                  }
-                  while( !until_end( line_one ) )
-                  {
-                     script = one_arg_delim( script, line_one, '\n' );
-                     fprintf( script_fp, "%s\n", line_one );
-                  }
-                  write = TEMP_FUNC;
-                  continue;
-               }
-               else
-               {
-                  do
-                  {
-                     fprintf( script_fp, "%s\n", line_two );
-                     script = one_arg_delim( script, line_two, '\n' );
-                  } while( !until_function( line_two ) );
-               }
-         }
+         for( y = 0; script_funcs[y] != NULL; y++ )
+            if( is_prefix( template_funcs[x]->header, script_funcs[y]->header ) )
+            {
+               script_funcs[y]->wrote = TRUE;
+               break;
+            }
+
+         if( template_funcs[x]->noise[0] != '\0' )
+            fprintf( script_fp, "%s", template_funcs[x]->noise );
+         if( script_funcs[y] )
+            if( script_funcs[y]->noise[0] != '\0' )
+               fprintf( script_fp, "%s", script_funcs[y]->noise );
+         fprintf( script_fp, "%s", template_funcs[x]->header );
+         if( template_funcs[x]->body[0] != '\0' )
+            fprintf( script_fp, "%s", template_funcs[x]->body );
+         if( script_funcs[y] )
+            if( script_funcs[y]->body[0] != '\0' )
+               fprintf( script_fp, "%s", script_funcs[y]->body );
+         fprintf( script_fp, "%s\n\n", "end" );
       }
+
+      for( y = 0; script_funcs[y] != NULL; y++ )
+      {
+         if( script_funcs[y]->wrote )
+            continue;
+         if( script_funcs[y]->noise[0] != '\0' )
+            fprintf( script_fp, "%s", script_funcs[y]->noise );
+         fprintf( script_fp, "%s", script_funcs[y]->header );
+         if( script_funcs[y]->body[0] != '\0' )
+            fprintf( script_fp, "%s", script_funcs[y]->body );
+         fprintf( script_fp, "%s\n\n", "end" );
+      }
+      free_func_array( script_funcs );
       fclose( script_fp );
    }
+   free_func_array( template_funcs );
    closedir( directory );
    return NULL;
 }
@@ -243,4 +246,123 @@ bool is_prefix(const char *aStr, const char *bStr)
 
   /* success */
   return TRUE;
+}
+
+int count_lua_functions( char *str )
+{
+   char buf[510];
+   int count = 0;
+
+   while( str && str[0] != '\0' )
+   {
+      str = one_arg_delim( str, buf, '\n' );
+      if( is_prefix( buf, "function" ) )
+         count++;
+   }
+   return count;
+}
+
+LUA_FUNCTION_ARRAY get_functions( char *str )
+{
+   LUA_FUNCTION_ARRAY func_array;
+   LUA_FUNCTION *func;
+   char buf[510];
+   int size, x;
+
+   size = count_lua_functions( str );
+   if( size == 0 )
+   {
+      printf( "%s: no lua functions in str:\n%s\n\n", __FUNCTION__, str );
+      return NULL;
+   }
+
+   func_array = (LUA_FUNCTION_ARRAY)calloc( size + 1, sizeof( LUA_FUNCTION * ) );
+   func_array[size] = NULL;
+
+   for( x = 0; x < size; x++ )
+      func_array[x] = get_lua_func( &str );
+
+   return func_array;
+}
+
+LUA_FUNCTION *get_lua_func( char **str )
+{
+   typedef enum
+   {
+      NOISE, HEADER, BODY
+   } MODE;
+
+   LUA_FUNCTION *func;
+   char *box = *str;
+   char line[510], noise[MAX_BUFFER], header[MAX_BUFFER], body[MAX_BUFFER];
+   MODE mode = NOISE;
+
+   func = (LUA_FUNCTION *)malloc( sizeof( LUA_FUNCTION ) );
+   func->noise = NULL;
+   func->header = NULL;
+   func->body = NULL;
+   func->wrote = FALSE;
+
+   memset( &noise[0], 0, sizeof( noise ) );
+   memset( &header[0], 0, sizeof( header ) );
+   memset( &body[0], 0, sizeof( body ) );
+
+   while( box && box[0] != '\0' )
+   {
+      box = one_arg_delim( box, line, '\n' );
+      if( line[0] == '\0' )
+         continue;
+      switch( mode )
+      {
+         case NOISE:
+            if( !until_function( line ) )
+            {
+               strcat( noise, line );
+               strcat( noise, "\n" );
+               break;
+            }
+            mode = HEADER;
+         case HEADER:
+            strcat( header, line );
+            strcat( header, "\n" );
+            mode = BODY;
+            break;
+         case BODY:
+            if( until_end( line ) )
+            {
+               box = one_arg_delim( box, line, '\n' );
+               goto exit;
+            }
+            strcat( body, line );
+            strcat( body, "\n" );
+            break;
+      }
+   }
+   exit:
+   noise[strlen( noise )] = '\0';
+   header[strlen( header )] = '\0';
+   body[strlen( body )] = '\0';
+   func->noise = strdup( noise );
+   func->header = strdup( header );
+   func->body = strdup( body );
+   *str = box;
+   return func;
+
+}
+
+void free_func( LUA_FUNCTION *func )
+{
+   free( func->noise );
+   free( func->header );
+   free( func->body );
+   free( func );
+}
+
+void free_func_array( LUA_FUNCTION_ARRAY func_array )
+{
+   int x;
+
+   for( x = 0; func_array[x] != NULL; x++ )
+      free_func( func_array[x] );
+   free( func_array );
 }
