@@ -146,6 +146,11 @@ typedef enum
    MAX_TERRAIN
 } TERRAIN_IDS;
 
+typedef enum
+{
+   PAK_STAT, PAK_SPEC
+} PAK_ENTRY_TYPES;
+
 #define MAX_QUICK_SORT (SPEC_ISOBJECT+1)
 
 typedef enum
@@ -441,6 +446,7 @@ typedef struct buffer_type
 #include "target.h"
 #include "entity_variables.h"
 #include "entity_stats.h"
+#include "pak.h"
 /******************************
  * End of new structures      *
  ******************************/

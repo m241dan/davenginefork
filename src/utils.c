@@ -106,13 +106,16 @@ MYSQL_ROW db_query_single_row( const char *query  )
    MYSQL_ROW to_return;
    int size;
    if( !quick_query( query ) )
-      return FALSE;
-   if( ( result = mysql_store_result( sql_handle ) ) == NULL )
-      return FALSE;
-   if( mysql_num_rows( result ) == 0 )
-      return FALSE;
-   if( ( size = mysql_num_fields( result ) ) == 0 )
       return NULL;
+   if( ( result = mysql_store_result( sql_handle ) ) == NULL )
+      return NULL;
+   if( mysql_num_rows( result ) == 0 )
+      return NULL;
+   if( ( size = mysql_num_fields( result ) ) == 0 )
+   {
+      mysql_free_result( result );
+      return NULL;
+   }
 
    to_return = malloc( sizeof( MYSQL_ROW ) * size );
    sql_row = mysql_fetch_row( result );
