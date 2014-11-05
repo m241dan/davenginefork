@@ -852,14 +852,16 @@ int luaCallBack( lua_State *L )
             AttachToList( arg_int, event->lua_args );
             break;
          case 'i':
+            CREATE( arg_int, int, 1 );
             if( ( arg_instance = *(ENTITY_INSTANCE **)luaL_checkudata( L, ( 4 + x ), "EntityInstance.meta" ) ) == NULL )
             {
                bug( "%s: bad/cypher passed value, not an entity instance at position %d.", __FUNCTION__, x );
-               arg_instance = init_eInstance();
-               AttachToList( instance, event->lua_args );
+               *arg_int = 0;
+               AttachToList( arg_int, event->lua_args );
                continue;
             }
-            AttachToList( arg_instance, event->lua_args );
+            *arg_int = arg_instance->tag->id;
+            AttachToList( arg_int, event->lua_args );
             break;
       }
    }

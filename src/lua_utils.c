@@ -141,11 +141,10 @@ bool until_end( char *str )
    return FALSE;
 }
 
-void free_lua_args( LLIST *list, char *cypher )
+void free_lua_args( LLIST *list  )
 {
    void *content;
    ITERATOR Iter;
-   int counter = 0;
 
    if( SizeOfList( list ) == 0 )
       return;
@@ -154,15 +153,7 @@ void free_lua_args( LLIST *list, char *cypher )
    while( ( content = NextInList( &Iter ) ) != NULL )
    {
       DetachFromList( content, list );
-      switch( tolower( cypher[counter++] ) )
-      {
-         case 's':
-         case 'n':
-            FREE( content );
-            break;
-         case 'i':
-            break;
-      }
+      FREE( content );
    }
    DetachIterator( &Iter );
    return;

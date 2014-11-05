@@ -119,7 +119,7 @@ void free_event( EVENT_DATA *event )
    event->fun = NULL;
    FREE( event->argument );
    event->owner = NULL;
-   free_lua_args( event->lua_args, event->lua_cypher );
+   free_lua_args( event->lua_args );
    FreeList( event->lua_args );
    event->lua_args = NULL;
    FREE( event->lua_cypher );

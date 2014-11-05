@@ -83,6 +83,7 @@ bool event_socket_idle(EVENT_DATA *event)
 bool event_instance_lua_callback( EVENT_DATA *event )
 {
    ENTITY_INSTANCE *instance = (ENTITY_INSTANCE *)event->owner;
+   ENTITY_INSTANCE *arg_entity;
    void *content;
    ITERATOR Iter;
    int counter = 0;
@@ -102,7 +103,13 @@ bool event_instance_lua_callback( EVENT_DATA *event )
                lua_pushnumber( lua_handle, *((int *)content) );
                break;
             case 'i':
-               push_instance( (ENTITY_INSTANCE *)content, lua_handle );
+               if( ( arg_entity = get_active_instance_by_id( *((int *)content ) ) ) == NULL )
+               {
+                  bug( "%s: instance with ID:%d is no longer active.", __FUNCTION__, *((int *)content ) );
+                  lua_pushnil( lua_handle );
+                  break;
+               }
+               push_instance( arg_entity, lua_handle );
                break;
          }
       }

@@ -21,7 +21,7 @@ void free_lua_func_array( LUA_FUNCTION_ARRAY );
 bool until_function( char *str );
 bool until_end( char *str );
 
-void free_lua_args( LLIST *list, char *cypher );
+void free_lua_args( LLIST *list );
 
 int luaopen_mud( lua_State *L );
 bool prep_stack( const char *file, const char *function );
