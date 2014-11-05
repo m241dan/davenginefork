@@ -99,6 +99,7 @@ int new_specification( SPECIFICATION *spec )
 
 int add_spec_to_framework( SPECIFICATION *spec, ENTITY_FRAMEWORK *frame )
 {
+   if( spec_list_has_by_type( frame->specifications, spec->type ) ) return RET_SUCCESS;
    AttachToList( spec, frame->specifications );
    if( !strcmp( frame->tag->created_by, "null" ) )
       return RET_SUCCESS;
@@ -110,6 +111,7 @@ int add_spec_to_framework( SPECIFICATION *spec, ENTITY_FRAMEWORK *frame )
 
 int add_spec_to_instance( SPECIFICATION *spec, ENTITY_INSTANCE *instance )
 {
+   if( spec_list_has_by_type( instance->specifications, spec->type ) ) return RET_SUCCESS;
    AttachToList( spec, instance->specifications );
    if( !strcmp( instance->tag->created_by, "null" ) )
       return RET_SUCCESS;
