@@ -2244,7 +2244,7 @@ void olc_pak( void *passed, char *arg )
          if( add_pak_stat( name, buf ) )
             text_to_olc( olc, "Stat %s added to Pak %s.\r\n", name, buf );
          else
-            text_to_olc( olc, "That Pak likely already had that Stat.\r\n" );
+            text_to_olc( olc, "That Pak likely already has that Stat.\r\n" );
          return;
       }
       else
@@ -2262,9 +2262,9 @@ void olc_pak( void *passed, char *arg )
          }
          value = atoi( arg );
          if( add_pak_spec( name, buf, value ) )
-            text_to_olc( olc, "Spec %s add to Pak %s with the value of %d.\r\n", buf, name, value );
+            text_to_olc( olc, "Spec %s added/updated to Pak %s with the value of %d.\r\n", buf, name, value );
          else
-            text_to_olc( olc, "That Pak likely already had that Spec.\r\n" );
+            text_to_olc( olc, "There is something wrong with the database.\r\n" );
          return;
       }
    }

@@ -251,6 +251,7 @@ STAT_FRAMEWORK *get_stat_framework_by_query( const char *query )
    CREATE( fstat->tag, ID_TAG, 1 );
    db_load_stat_framework( fstat, &row );
    AttachToList( fstat, stat_frameworks );
+   FREE( row );
    return fstat;
 }
 inline STAT_FRAMEWORK *get_stat_framework_by_id( int id )
