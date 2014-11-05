@@ -1746,6 +1746,7 @@ void olc_frameworks( void *passed, char *arg )
 void framework_create( void *passed, char *arg )
 {
    INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_FRAMEWORK *frame;
 
    if( olc->editing )
    {
@@ -1753,7 +1754,14 @@ void framework_create( void *passed, char *arg )
       change_socket_state( olc->account->socket, olc->editing_state );
       return;
    }
-   boot_eFramework_editor( olc, NULL );
+   if( !arg || arg[0] == '\0' )
+      boot_eFramework_editor( olc, NULL );
+   else
+   {
+      frame = init_eFramework();
+      load_pak_on_framework( arg, frame );
+      boot_eFramework_editor( olc, frame );
+   }
    return;
 }
 
@@ -2214,6 +2222,7 @@ void olc_pak( void *passed, char *arg )
       text_to_olc( olc, " - for stats add <stat_name>\r\n" );
       text_to_olc( olc, " - for specs add <space_name> <value>\r\n" );
       text_to_olc( olc, " Notes: for specs, you must pass a value even if its zero or it will assume its a stat and likely say no such stat exists.\r\n" );
+      olc_short_prompt( olc );
       return;
    }
 
@@ -2221,6 +2230,7 @@ void olc_pak( void *passed, char *arg )
    if( !arg || arg[0] == '\0' )
    {
       text_to_olc( olc, "On what pak?\r\n" );
+      olc_short_prompt( olc );
       return;
    }
    arg = one_arg( arg, name );
@@ -2228,6 +2238,7 @@ void olc_pak( void *passed, char *arg )
    if( !strcasecmp( buf, "show"  ) )
    {
       text_to_olc( olc, return_pak_contents( arg ) );
+      olc_short_prompt( olc );
       return;
    }
 
@@ -2239,12 +2250,14 @@ void olc_pak( void *passed, char *arg )
          if( !get_stat_framework_by_name( buf ) )
          {
             text_to_olc( olc, "No such stat exists: %s\r\n", buf );
+            olc_short_prompt( olc );
             return;
          }
          if( add_pak_stat( name, buf ) )
             text_to_olc( olc, "Stat %s added to Pak %s.\r\n", name, buf );
          else
             text_to_olc( olc, "That Pak likely already has that Stat.\r\n" );
+         olc_short_prompt( olc );
          return;
       }
       else
@@ -2253,11 +2266,13 @@ void olc_pak( void *passed, char *arg )
          if( !is_number( arg ) )
          {
             text_to_olc( olc, "Specs take number values only.\r\n" );
+            olc_short_prompt( olc );
             return;
          }
          if( match_string_table( buf, spec_table ) == -1 )
          {
             text_to_olc( olc, "No such spec exists: %s\r\n", buf );
+            olc_short_prompt( olc );
             return;
          }
          value = atoi( arg );
@@ -2265,6 +2280,7 @@ void olc_pak( void *passed, char *arg )
             text_to_olc( olc, "Spec %s added/updated to Pak %s with the value of %d.\r\n", buf, name, value );
          else
             text_to_olc( olc, "There is something wrong with the database.\r\n" );
+         olc_short_prompt( olc );
          return;
       }
    }
@@ -2274,12 +2290,14 @@ void olc_pak( void *passed, char *arg )
       if( !arg || arg[0] )
       {
          text_to_olc( olc, "Remove which stat or spec?\r\n" );
+         olc_short_prompt( olc );
          return;
       }
       if( rem_pak_entry( name, arg ) )
          text_to_olc( olc, "Pak Entry removed.\r\n" );
       else
          text_to_olc( olc, "There was an issue with the database.\r\n" );
+      olc_short_prompt( olc );
       return;
    }
    return;

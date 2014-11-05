@@ -55,6 +55,8 @@ inline void new_stat_on_frame( STAT_FRAMEWORK *fstat, ENTITY_FRAMEWORK *frame )
 
 inline void add_stat_to_frame( STAT_FRAMEWORK *fstat, ENTITY_FRAMEWORK *frame )
 {
+   int nober;
+   if( get_stat_from_framework_by_id( frame, fstat->tag->id, &nober ) ) return;
    AttachToList( fstat, frame->stats );
    if( !strcmp( frame->tag->created_by, "null" ) )
       return;
@@ -175,6 +177,8 @@ void stat_instantiate( ENTITY_INSTANCE *owner, STAT_FRAMEWORK *fstat )
 {
    STAT_INSTANCE *stat;
 
+   if( get_stat_from_instance_by_id( owner, fstat->tag->id ) )
+      return;
    stat = init_stat();
    stat->framework = fstat;
    stat->owner = owner;

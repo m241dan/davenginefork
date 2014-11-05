@@ -2114,67 +2114,23 @@ void entity_quit( void *passed, char *arg )
 void entity_create( void *passed, char *arg )
 {
    ENTITY_FRAMEWORK *frame;
-   ENTITY_INSTANCE *instance;
    ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
    INCEPTION *olc = (INCEPTION *)entity->account->olc;
-   char buf[MAX_BUFFER];
-   int value;
+
+   if( olc->editing )
+   {
+      text_to_olc( olc, "There's already something loaded in your editor, finish that first.\r\n" );
+      change_socket_state( olc->account->socket, olc->editing_state );
+      return;
+   }
 
    if( !arg || arg[0] == '\0' )
-   {
-      if( olc->editing)
-      {
-         text_to_entity( entity, "There's already something loaded in your editor, resume work on that first.\r\n" );
-         return;
-      }
-
       boot_eFramework_editor( olc, NULL );
-      return;
-   }
-   arg = one_arg( arg, buf );
-
-   if( !strcasecmp( buf, "room" ) )
+   else
    {
-      if( arg[0] != '\0' )
-         frame = create_room_framework( arg );
-      else
-         frame = create_room_framework( NULL );
-
+      frame = init_eFramework();
+      load_pak_on_framework( arg, frame );
       boot_eFramework_editor( olc, frame );
-      return;
-   }
-   if( !strcasecmp( buf, "mob" ) || !strcasecmp( buf, "mobile" ) )
-   {
-      if( arg[0] != '\0' )
-         frame = create_mobile_framework( arg );
-      else
-         frame = create_mobile_framework( NULL );
-
-      boot_eFramework_editor( olc, frame );
-      return;
-   }
-   if( !strcasecmp( buf, "exit" ) )
-   {
-      if( arg[0] == '\0' )
-      {
-         frame = create_exit_framework( NULL, 0 );
-         boot_eFramework_editor( olc, frame );
-         return;
-      }
-      arg = one_arg( arg, buf );
-      if( arg[0] == '\0' || !is_number( arg ) )
-      {
-         frame = create_exit_framework( quick_format( "%s%s", buf, arg ), 0 );
-         boot_eFramework_editor( olc, frame );
-         return;
-      }
-
-      value = atoi( arg );
-      instance = create_exit_instance( buf, value );
-      entity_to_world( instance, entity->contained_by );
-      text_to_entity( entity, "You create a new exit: %s.\r\n", instance_name( instance ) );
-      entity_look( entity, "" );
-      return;
    }
    return;
 }
