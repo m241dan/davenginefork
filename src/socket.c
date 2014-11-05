@@ -72,6 +72,8 @@ int main(int argc, char **argv)
    global_variables = AllocList();
    stat_frameworks = AllocList();
 
+   builder_count = 0;
+
   /* note that we are booting up */
   log_string("Program starting.");
 

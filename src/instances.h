@@ -1,5 +1,7 @@
 /* instaces.h the headerfile for allthings instanced written by Davenge */
 
+extern int builder_count;
+
 struct entity_instance
 {
    ID_TAG *tag;

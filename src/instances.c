@@ -2,6 +2,8 @@
 
 #include "mud.h"
 
+int builder_count;
+
 ENTITY_INSTANCE *init_eInstance( void )
 {
    ENTITY_INSTANCE *eInstance;
@@ -106,7 +108,7 @@ ENTITY_INSTANCE *init_builder( void )
    ENTITY_INSTANCE *builder;
 
    builder = init_eInstance();
-   builder->tag->id = -69;
+   builder->tag->id = -69 + builder_count++;
    FREE( builder->tag->created_by );
    builder->tag->created_by = strdup( "God" );
    builder->framework = init_eFramework();

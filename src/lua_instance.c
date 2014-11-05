@@ -263,7 +263,7 @@ int getVar( lua_State *L )
 
    DAVLUACM_INSTANCE_NIL( instance, L );
 
-   if( instance->tag->id == -69 )
+   if( instance->tag->id <= -69 )
    {
       bug( "%s: builders have no vars", __FUNCTION__ );
       lua_pushnil( L );
@@ -303,7 +303,7 @@ int getStatMod( lua_State *L )
    const char *stat_name;
 
    DAVLUACM_INSTANCE_NIL( instance, L );
-   if( instance->tag->id == -69 )
+   if( instance->tag->id <= -69 )
    {
       bug( "%s: builders have no stats", __FUNCTION__ );
       lua_pushnil( L );
@@ -333,7 +333,7 @@ int getStatPerm( lua_State *L )
    const char *stat_name;
 
    DAVLUACM_INSTANCE_NIL( instance, L );
-   if( instance->tag->id == -69 )
+   if( instance->tag->id <= -69 )
    {
       bug( "%s: builders have no stats", __FUNCTION__ );
       lua_pushnil( L );
@@ -363,7 +363,7 @@ int getStat( lua_State *L )
    const char *stat_name;
 
    DAVLUACM_INSTANCE_NIL( instance, L );
-   if( instance->tag->id == -69 )
+   if( instance->tag->id <= -69 )
    {
       bug( "%s: builders have no stats", __FUNCTION__ );
       lua_pushnil( L );
@@ -393,7 +393,7 @@ int getStatEffectiveValue( lua_State *L )
    const char *stat_name;
 
    DAVLUACM_INSTANCE_NIL( instance, L );
-   if( instance->tag->id == -69 )
+   if( instance->tag->id <= -69 )
    {
       bug( "%s: builders have no stats", __FUNCTION__ );
       lua_pushnil( L );
@@ -424,7 +424,7 @@ int setStatMod( lua_State *L )
    int value;
 
    DAVLUACM_INSTANCE_NONE( instance, L );
-   if( instance->tag->id == -69 )
+   if( instance->tag->id <= -69 )
    {
       bug( "%s: builders have no stats", __FUNCTION__ );
       return 0;
@@ -468,7 +468,7 @@ int setStatPerm( lua_State *L )
    int value;
 
    DAVLUACM_INSTANCE_NONE( instance, L );
-   if( instance->tag->id == -69 )
+   if( instance->tag->id <= -69 )
    {
       bug( "%s: builders have no stats", __FUNCTION__ );
       return 0;
@@ -512,7 +512,7 @@ int addStatMod( lua_State *L )
    int value;
 
    DAVLUACM_INSTANCE_NONE( instance, L );
-   if( instance->tag->id == -69 )
+   if( instance->tag->id <= -69 )
    {
       bug( "%s: builders have no stats", __FUNCTION__ );
       return 0;
@@ -556,7 +556,7 @@ int addStatPerm( lua_State *L )
    int value;
 
    DAVLUACM_INSTANCE_NONE( instance, L );
-   if( instance->tag->id == -69 )
+   if( instance->tag->id <= -69 )
    {
       bug( "%s: builders have no stats", __FUNCTION__ );
       return 0;
@@ -600,7 +600,7 @@ int setVar( lua_State *L )
 
    DAVLUACM_INSTANCE_NIL( instance, L );
 
-   if( instance->tag->id == -69 )
+   if( instance->tag->id <= -69 )
    {
       bug( "%s: builders have no vars", __FUNCTION__ );
       return 0;
@@ -650,7 +650,7 @@ int addSpec( lua_State *L )
 
    DAVLUACM_INSTANCE_NONE( instance, L );
 
-   if( instance->tag->id == -69 )
+   if( instance->tag->id <= -69 )
    {
       bug( "%s: don't spec builders plz", __FUNCTION__ );
       return 0;
