@@ -135,28 +135,38 @@ const char *return_pak_contents( const char *pak_name )
       FreeList( list );
       strcat( buf, " - None\r\n" );
    }
-
-   AttachIterator( &Iter, list );
-   while( ( row = (MYSQL_ROW)NextInList( &Iter ) ) != NULL )
+   else
    {
-      const char *label = row[0];
-      strcat( buf, quick_format( " - %s\r\n", label ) );
+      AttachIterator( &Iter, list );
+      while( ( row = (MYSQL_ROW)NextInList( &Iter ) ) != NULL )
+      {
+         const char *label = row[0];
+         strcat( buf, quick_format( " - %s\r\n", label ) );
+      }
+      DetachIterator( &Iter );
+      FreeList( list );
    }
-   DetachIterator( &Iter );
-   FreeList( list );
 
    strcat( buf, quick_format( "Pak %s Specs:\r\n", pak_name ) );
 
    list = AllocList();
    if( !db_query_list_row( list, quick_format( "SELECT label, value FROM `paks` WHERE name'%s' AND type'%d';", pak_name, PAK_SPEC ) ) )
    {
-      const char *label = row[0];
-      int value = atoi(row[1] );
-      strcat( buf, quick_format( " - %s : %d\r\n", label, value ) );
+      FreeList( list );
+      strcat( buf, " - None\r\n" );
    }
-   DetachIterator( &Iter );
-   FreeList( list );
-
+   else
+   {
+      AttachIterator( &Iter, list );
+      while( ( row = (MYSQL_ROW)NextInList( &Iter ) ) != NULL )
+      {
+         const char *label = row[0];
+         int value = atoi(row[1] );
+         strcat( buf, quick_format( " - %s : %d\r\n", label, value ) );
+      }
+      DetachIterator( &Iter );
+      FreeList( list );
+   }
    buf[strlen( buf )] = '\0';
    return buf;
 }

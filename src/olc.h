@@ -160,3 +160,4 @@ void olc_load( void *passed, char *arg );
 void olc_chat( void *passed, char *arg );
 void olc_ufilter( void *passed, char *arg );
 void olc_list( void *passed, char *arg );
+void olc_pak( void *passed, char *arg );

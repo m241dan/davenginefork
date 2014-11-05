@@ -2202,3 +2202,85 @@ void olc_list( void *passed, char *arg )
    return;
 }
 
+void olc_pak( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   char buf[MAX_BUFFER], name[MAX_BUFFER];
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Usage pak <operator> <pak_name> ...\r\n" );
+      text_to_olc( olc, " - operators: add, rem, show\r\n" );
+      text_to_olc( olc, " - for stats add <stat_name>\r\n" );
+      text_to_olc( olc, " - for specs add <space_name> <value>\r\n" );
+      text_to_olc( olc, " Notes: for specs, you must pass a value even if its zero or it will assume its a stat and likely say no such stat exists.\r\n" );
+      return;
+   }
+
+   arg = one_arg( arg, buf );
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "On what pak?\r\n" );
+      return;
+   }
+   arg = one_arg( arg, name );
+
+   if( !strcasecmp( buf, "show"  ) )
+   {
+      text_to_olc( olc, return_pak_contents( arg ) );
+      return;
+   }
+
+   if( !strcasecmp( buf, "add" ) )
+   {
+      arg = one_arg( arg, buf );
+      if( !arg || arg[0] == '\0' )
+      {
+         if( !get_stat_framework_by_name( buf ) )
+         {
+            text_to_olc( olc, "No such stat exists: %s\r\n", buf );
+            return;
+         }
+         if( add_pak_stat( name, buf ) )
+            text_to_olc( olc, "Stat %s added to Pak %s.\r\n", name, buf );
+         else
+            text_to_olc( olc, "That Pak likely already had that Stat.\r\n" );
+         return;
+      }
+      else
+      {
+         int value;
+         if( !is_number( arg ) )
+         {
+            text_to_olc( olc, "Specs take number values only.\r\n" );
+            return;
+         }
+         if( match_string_table( buf, spec_table ) == -1 )
+         {
+            text_to_olc( olc, "No such spec exists: %s\r\n", buf );
+            return;
+         }
+         value = atoi( arg );
+         if( add_pak_spec( name, buf, value ) )
+            text_to_olc( olc, "Spec %s add to Pak %s with the value of %d.\r\n", buf, name, value );
+         else
+            text_to_olc( olc, "That Pak likely already had that Spec.\r\n" );
+         return;
+      }
+   }
+
+   if( !strcasecmp( buf, "rem" ) )
+   {
+      if( !arg || arg[0] )
+      {
+         text_to_olc( olc, "Remove which stat or spec?\r\n" );
+         return;
+      }
+      if( rem_pak_entry( name, arg ) )
+         text_to_olc( olc, "Pak Entry removed.\r\n" );
+      else
+         text_to_olc( olc, "There was an issue with the database.\r\n" );
+      return;
+   }
+   return;
+}
