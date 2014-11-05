@@ -23,6 +23,7 @@ void eFramework_done( void *passed, char *arg );
 void eFramework_save( void *passed, char *arg );
 void eFramework_addContent( void *passed, char *arg );
 void eFramework_script( void *passed, char *arg );
+void eFramework_addPak( void *passed, char *arg );
 
 int init_project_editor( INCEPTION *olc, PROJECT *project );
 void boot_project_editor( INCEPTION *olc, PROJECT *project );
@@ -59,6 +60,7 @@ void instance_autowrite( void *passed, char *arg );
 void instance_addcontent( void *passed, char *arg );
 void instance_addspec( void *passed, char *arg );
 void instance_done( void *passed, char *arg );
+void instance_addPak( void *passed, char *arg );
 
 int init_sFramework_editor( INCEPTION *olc, STAT_FRAMEWORK *fstat );
 void boot_sFramework_editor( INCEPTION *olc, STAT_FRAMEWORK *fstat );

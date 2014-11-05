@@ -665,6 +665,22 @@ void eFramework_script( void *passed, char *arg )
    return;
 }
 
+void eFramework_addPak( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_FRAMEWORK *frame = (ENTITY_FRAMEWORK *)olc->editing;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Add what Pak?\r\n" );
+      olc_short_prompt( olc );
+      return;
+   }
+   load_pak_on_framework( arg, frame );
+   text_to_olc( olc, "You load the Pak.\r\n" );
+   return;
+}
+
 int init_project_editor( INCEPTION *olc, PROJECT *project )
 {
    int ret = RET_SUCCESS;
@@ -1369,6 +1385,23 @@ void instance_done( void *passed, char *arg )
    change_socket_state( olc->account->socket, olc->editor_launch_state );
    text_to_olc( olc, "Exiting Entity Instance Editor.\r\n" );
    return;
+}
+
+void instance_addPak( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_INSTANCE *instance = (ENTITY_INSTANCE *)olc->editing;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Add what Pak?\r\n" );
+      olc_short_prompt( olc );
+      return;
+   }
+   load_pak_on_instance( arg, instance );
+   text_to_olc( olc, "You load the Pak.\r\n" );
+   return;
+
 }
 
 int init_sFramework_editor( INCEPTION *olc, STAT_FRAMEWORK *fstat )
