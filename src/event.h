@@ -11,8 +11,9 @@
 #define EVENT_UNOWNED           0
 #define EVENT_OWNER_NONE        1
 #define EVENT_OWNER_DSOCKET     2
-#define EVENT_OWNER_DMOB        3
+#define EVENT_OWNER_INSTANCE    3
 #define EVENT_OWNER_GAME        4
+#define EVENT_OWNER_LUA         5
 
 /* the NULL event type */
 #define EVENT_NONE              0
@@ -41,22 +42,19 @@ typedef bool EVENT_FUN ( EVENT_DATA *event );
 /* the event structure */
 struct event_data
 {
-  EVENT_FUN        * fun;              /* the function being called           */
-  char             * argument;         /* the text argument given (if any)    */
-  sh_int             passes;           /* how long before this event executes */
-  sh_int             type;             /* event type EVENT_XXX_YYY            */
-  sh_int             ownertype;        /* type of owner (unlinking req)       */
-  sh_int             bucket;           /* which bucket is this event in       */
+   EVENT_FUN        * fun;              /* the function being called           */
+   char             * argument;         /* the text argument given (if any)    */
+   sh_int             passes;           /* how long before this event executes */
+   sh_int             type;             /* event type EVENT_XXX_YYY            */
+   sh_int             bucket;           /* which bucket is this event in       */
+   void             * owner;
+   sh_int             ownertype;        /* type of owner (unlinking req)       */
 
-  union 
-  {
-    void           * dMob;             /* use a union to make sure any of the */
-    D_SOCKET       * dSock;            /* types can be used for an event.     */
-  } owner;
 };
 
 /* functions which can be accessed outside event-handler.c */
 EVENT_DATA *alloc_event          ( void );
+void free_event                  ( EVENT_DATA *event );
 EVENT_DATA *event_isset_socket   ( D_SOCKET *dSock, int type );
 void dequeue_event               ( EVENT_DATA *event );
 void init_event_queue            ( int section );

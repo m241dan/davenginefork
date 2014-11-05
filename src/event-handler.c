@@ -63,31 +63,28 @@ bool enqueue_event(EVENT_DATA *event, int game_pulses)
  */
 void dequeue_event(EVENT_DATA *event)
 {
-  /* dequeue from the bucket */
-  DetachFromList(event, eventqueue[event->bucket]);
+   /* dequeue from the bucket */
+   DetachFromList(event, eventqueue[event->bucket]);
 
-  /* dequeue from owners local list */
-  switch(event->ownertype)
-  {
-    default:
-      bug("dequeue_event: event type %d has no owner.", event->type);
-      break;
-    case EVENT_OWNER_GAME:
-      DetachFromList(event, global_events);
-      break;
-    case EVENT_OWNER_DMOB:
-/*      DetachFromList(event, event->owner.dMob->events); */
-      break;
-    case EVENT_OWNER_DSOCKET:
-      DetachFromList(event, event->owner.dSock->events);
-      break;
-  }
+   /* dequeue from owners local list */
+   switch(event->ownertype)
+   {
+      default:
+         bug("dequeue_event: event type %d has no owner.", event->type);
+         break;
+      case EVENT_OWNER_GAME:
+         DetachFromList(event, global_events);
+         break;
+      case EVENT_OWNER_INSTANCE:
+         DetachFromList(event, ((ENTITY_INSTANCE*)event->owner)->events );
+         break;
+      case EVENT_OWNER_DSOCKET:
+         DetachFromList(event, ((D_SOCKET *)event->owner)->events );
+         break;
+   }
 
-  /* free argument */
-  FREE(event->argument);
-
-  /* attach to free stack */
-  PushStack(event, event_free);
+   free_event( event );
+   return;
 }
 
 /* function   :: alloc_event()
@@ -98,24 +95,29 @@ void dequeue_event(EVENT_DATA *event)
  */
 EVENT_DATA *alloc_event()
 {
-  EVENT_DATA *event;
+   EVENT_DATA *event;
 
-  if (StackSize(event_free) <= 0)
-    event = malloc(sizeof(*event));
-  else
-    event = (EVENT_DATA *) PopStack(event_free);
+   CREATE( event, EVENT_DATA, 1 );
 
-  /* clear the event */
-  event->fun        = NULL;
-  event->argument   = NULL;
-  event->owner.dMob = NULL;  /* only need to NULL one of the union members */
-  event->passes     = 0;
-  event->bucket     = 0;
-  event->ownertype  = EVENT_UNOWNED;
-  event->type       = EVENT_NONE;
+   /* clear the event */
+   event->fun        = NULL;
+   event->argument   = NULL;
+   event->owner      = NULL;  /* only need to NULL one of the union members */
+   event->passes     = 0;
+   event->bucket     = 0;
+   event->ownertype  = EVENT_UNOWNED;
+   event->type       = EVENT_NONE;
 
-  /* return the allocated and cleared event */
-  return event;
+   /* return the allocated and cleared event */
+   return event;
+}
+
+void free_event( EVENT_DATA *event )
+{
+   event->fun = NULL;
+   FREE( event->argument );
+   event->owner = NULL;
+   FREE( event );
 }
 
 /* function   :: init_event_queue()
@@ -146,6 +148,7 @@ void init_event_queue(int section)
   {
     event = alloc_event();
     event->type = EVENT_GAME_TICK;
+    event->fun = &event_game_tick;
     add_event_game(event, 10 * 60 * PULSES_PER_SECOND);
   }
 }
@@ -196,35 +199,29 @@ void heartbeat()
  * all the correct values, and makes sure it is enqueued
  * into the event queue.
  */
-/*
-void add_event_mobile(EVENT_DATA *event, D_MOBILE *dMob, int delay)
+void add_event_instance(EVENT_DATA *event, ENTITY_INSTANCE *instance, int delay)
 {
-  * check to see if the event has a type *
   if (event->type == EVENT_NONE)
   {
     bug("add_event_mobile: no type.");
     return;
   }
 
-  * check to see of the event has a callback function *
   if (event->fun == NULL)
   {
     bug("add_event_mobile: event type %d has no callback function.", event->type);
     return;
   }
 
-  * set the correct variables for this event *
-  event->ownertype  = EVENT_OWNER_DMOB;
-  event->owner.dMob = dMob;
+  event->ownertype  = EVENT_OWNER_INSTANCE;
+  event->owner      = instance;
 
-  * attach the event to the mobiles local list *
-  AttachToList(event, dMob->events);
+  AttachToList(event, instance->events);
 
-  * attempt to enqueue the event *
   if (enqueue_event(event, delay) == FALSE)
     bug("add_event_mobile: event type %d failed to be enqueued.", event->type);
 }
-*/
+
 /* function   :: add_event_socket()
  * arguments  :: the event, the owner and the delay
  * ======================================================
@@ -250,7 +247,7 @@ void add_event_socket(EVENT_DATA *event, D_SOCKET *dSock, int delay)
 
   /* set the correct variables for this event */
   event->ownertype   = EVENT_OWNER_DSOCKET;
-  event->owner.dSock = dSock;
+  event->owner       = dSock;
 
   /* attach the event to the sockets local list */
   AttachToList(event, dSock->events);
@@ -324,13 +321,13 @@ EVENT_DATA *event_isset_socket(D_SOCKET *dSock, int type)
  * is enqueued/attached to a given mobile, and if it is,
  * it will return a pointer to this event.
  */
-/*
-EVENT_DATA *event_isset_mobile(D_MOBILE *dMob, int type)
+
+EVENT_DATA *event_isset_instance(ENTITY_INSTANCE *instance, int type)
 {
   EVENT_DATA *event;
   ITERATOR Iter;
 
-  AttachIterator(&Iter, dMob->events);
+  AttachIterator(&Iter, instance->events);
   while ((event = (EVENT_DATA *) NextInList(&Iter)) != NULL)
   {
     if (event->type == type)
@@ -340,7 +337,7 @@ EVENT_DATA *event_isset_mobile(D_MOBILE *dMob, int type)
 
   return event;
 }
-*/
+
 /* function   :: strip_event_socket()
  * arguments  :: the socket and the type of event
  * ======================================================
@@ -367,13 +364,13 @@ void strip_event_socket(D_SOCKET *dSock, int type)
  * This function will dequeue all events of a given type
  * from the given mobile.
  */
-/*
-void strip_event_mobile(D_MOBILE *dMob, int type)
+
+void strip_event_instance(ENTITY_INSTANCE *instance, int type)
 {
   EVENT_DATA *event;
   ITERATOR Iter;
 
-  AttachIterator(&Iter, dMob->events);
+  AttachIterator(&Iter, instance->events);
   while ((event = (EVENT_DATA *) NextInList(&Iter)) != NULL)
   {
     if (event->type == type)
@@ -381,7 +378,7 @@ void strip_event_mobile(D_MOBILE *dMob, int type)
   }
   DetachIterator(&Iter);
 }
-*/
+
 /* function   :: init_events_mobile()
  * arguments  :: the mobile
  * ======================================================
@@ -389,7 +386,7 @@ void strip_event_mobile(D_MOBILE *dMob, int type)
  * it will initialize all updating events for that player.
  */
 /*
-void init_events_player(D_MOBILE *dMob)
+void init_events_instance(D_MOBILE *dMob)
 {
   EVENT_DATA *event;
 

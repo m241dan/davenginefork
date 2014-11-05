@@ -12,6 +12,7 @@ ENTITY_INSTANCE *init_eInstance( void )
    eInstance->contents = AllocList();
    eInstance->stats = AllocList();
    eInstance->evars = AllocList();
+   eInstance->events = AllocList();
    for( x = 0; x < MAX_QUICK_SORT; x++ )
      eInstance->contents_sorted[x] = AllocList();
    eInstance->specifications = AllocList();

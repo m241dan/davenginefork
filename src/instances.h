@@ -13,6 +13,7 @@ struct entity_instance
    LLIST *specifications;
    LLIST *stats;
    LLIST *evars;
+   LLIST *events;
 
    ENTITY_FRAMEWORK *framework;
 

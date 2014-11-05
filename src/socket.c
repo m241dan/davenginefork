@@ -195,6 +195,7 @@ int main(int argc, char **argv)
   /* main game loop */
   GameLoop(control);
 
+
   /* close down the socket */
   close(control);
 

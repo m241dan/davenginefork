@@ -9,29 +9,25 @@
 /* event_game_tick is just to show how to make global events
  * which can be used to update the game.
  */
-/*
+
 bool event_game_tick(EVENT_DATA *event)
 {
-  ITERATOR Iter;
-  D_MOBILE *dMob;
+   ITERATOR Iter;
+   ENTITY_INSTANCE *instance;
 
-  * send a tick message to everyone *
-  AttachIterator(&Iter, dmobile_list);
-  while ((dMob = (D_MOBILE *) NextInList(&Iter)) != NULL)
-  {
-    text_to_mobile(dMob, "Tick!\n\r");
-  }
-  DetachIterator(&Iter);
+   AttachIterator(&Iter, eInstances_list);
+   while ((instance = (ENTITY_INSTANCE *) NextInList(&Iter)) != NULL)
+      text_to_entity( instance, "Tick! The event queue is working.\r\n" );
+   DetachIterator(&Iter);
 
-  * enqueue another game tick in 10 minutes *
-  event = alloc_event();
-  event->fun = &event_game_tick;
-  event->type = EVENT_GAME_TICK;
-  add_event_game(event, 10 * 60 * PULSES_PER_SECOND);
+   event = alloc_event();
+   event->fun = &event_game_tick;
+   event->type = EVENT_GAME_TICK;
+   add_event_game(event, 10 * 60 * PULSES_PER_SECOND);
 
-  return FALSE;
+   return FALSE;
 }
-*/
+
 /*
 bool event_mobile_save(EVENT_DATA *event)
 {
@@ -67,7 +63,7 @@ bool event_socket_idle(EVENT_DATA *event)
    * If there is no owner, we return TRUE, because
    * it's the safest - and post a bug message.
    */
-  if ((dSock = event->owner.dSock) == NULL)
+  if ((dSock = (D_SOCKET *)event->owner) == NULL)
   {
     bug("event_socket_idle: no owner.");
     return TRUE;
