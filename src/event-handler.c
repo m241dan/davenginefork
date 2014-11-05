@@ -107,6 +107,8 @@ EVENT_DATA *alloc_event()
    event->bucket     = 0;
    event->ownertype  = EVENT_UNOWNED;
    event->type       = EVENT_NONE;
+   event->lua_cypher = NULL;
+   event->lua_args   = AllocList();
 
    /* return the allocated and cleared event */
    return event;
@@ -117,8 +119,13 @@ void free_event( EVENT_DATA *event )
    event->fun = NULL;
    FREE( event->argument );
    event->owner = NULL;
+   free_lua_args( event->lua_args, event->lua_cypher );
+   FreeList( event->lua_args );
+   event->lua_args = NULL;
+   FREE( event->lua_cypher );
    FREE( event );
 }
+
 
 /* function   :: init_event_queue()
  * arguments  :: what section to initialize.
@@ -203,13 +210,13 @@ void add_event_instance(EVENT_DATA *event, ENTITY_INSTANCE *instance, int delay)
 {
   if (event->type == EVENT_NONE)
   {
-    bug("add_event_mobile: no type.");
+    bug("%s: no type", __FUNCTION__);
     return;
   }
 
   if (event->fun == NULL)
   {
-    bug("add_event_mobile: event type %d has no callback function.", event->type);
+    bug("%s: event type %d has no callback function.", __FUNCTION__, event->type);
     return;
   }
 

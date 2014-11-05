@@ -33,6 +33,7 @@ const struct luaL_Reg EntityInstanceLib_m[] = {
    { "hasItemInInventoryFramework", hasItemInInventoryFramework },
    { "isSameRoom", isSameRoom },
    /* actions */
+   { "callBack", luaCallBack },
    { "interp", luaEntityInstanceInterp },
    { "to", luaEntityInstanceTeleport },
    { "echo", luaEcho },
@@ -787,6 +788,90 @@ int hasItemInInventoryFramework( lua_State *L )
 }
 
 /* actions */
+int luaCallBack( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+   EVENT_DATA *event;
+   int callbackwhen;
+   const char *func_name;
+   const char *cypher;
+   int num_args;
+   int x;
+
+   DAVLUACM_INSTANCE_NONE( instance, L );
+
+   if( ( callbackwhen = luaL_checknumber( L, 2 ) ) == 0 )
+   {
+      bug( "%s: having a callback with 0 seconds is not possible.", __FUNCTION__ );
+      return 0;
+   }
+
+   if( ( func_name = luaL_checkstring( L, 3 ) ) == NULL )
+   {
+      bug( "%s: no function name passed.", __FUNCTION__ );
+      return 0;
+   }
+
+   if( ( cypher = luaL_checkstring( L, 4 ) ) == NULL )
+   {
+      bug( "%s: no cypher string passed.", __FUNCTION__ );
+      return 0;
+   }
+   event = alloc_event();
+   num_args = strlen( cypher );
+
+   for( x = num_args; x > 0; x-- )
+   {
+      ENTITY_INSTANCE *arg_instance;
+      char *arg_string;
+      int  *arg_int;
+
+      switch( cypher[x-1] )
+      {
+         case 's':
+            if( lua_type( L, ( 4 + x ) ) != LUA_TSTRING )
+            {
+               bug( "%s: bad/cyper passed value, not a string at position %d.", __FUNCTION__, x );
+               arg_string = strdup( "nil" );
+               AttachToList( arg_string, event->lua_args );
+               continue;
+            }
+            arg_string = strdup( lua_tostring( L, ( 4 + x ) ) );
+            AttachToList( arg_string, event->lua_args );
+            break;
+         case 'n':
+            CREATE( arg_int, int, 1 );
+            if( lua_type( L, ( 4 + x ) ) != LUA_TNUMBER )
+            {
+               bug( "%s: bad/cypher passed value, not a number at position %d.", __FUNCTION__, x );
+               *arg_int = 0;
+               AttachToList( arg_int, event->lua_args );
+               continue;
+            }
+            *arg_int = lua_tonumber( L, ( 4 + x ) );
+            AttachToList( arg_int, event->lua_args );
+            break;
+         case 'i':
+            if( ( arg_instance = *(ENTITY_INSTANCE **)luaL_checkudata( L, ( 4 + x ), "EntityInstance.meta" ) ) == NULL )
+            {
+               bug( "%s: bad/cypher passed value, not an entity instance at position %d.", __FUNCTION__, x );
+               arg_instance = init_eInstance();
+               AttachToList( instance, event->lua_args );
+               continue;
+            }
+            AttachToList( arg_instance, event->lua_args );
+            break;
+      }
+   }
+
+
+   event->argument = strdup( func_name );
+   event->lua_cypher = strdup( cypher );
+   event->type = EVENT_LUA_CALLBACK;
+   event->fun = &event_instance_lua_callback;
+   add_event_instance( event, instance, callbackwhen * PULSES_PER_SECOND );
+   return 0;
+}
 int luaEntityInstanceInterp( lua_State *L )
 {
    ENTITY_INSTANCE *instance;

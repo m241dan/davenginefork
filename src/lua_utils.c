@@ -141,6 +141,33 @@ bool until_end( char *str )
    return FALSE;
 }
 
+void free_lua_args( LLIST *list, char *cypher )
+{
+   void *content;
+   ITERATOR Iter;
+   int counter = 0;
+
+   if( SizeOfList( list ) == 0 )
+      return;
+
+   AttachIterator( &Iter, list );
+   while( ( content = NextInList( &Iter ) ) != NULL )
+   {
+      DetachFromList( content, list );
+      switch( tolower( cypher[counter++] ) )
+      {
+         case 's':
+         case 'n':
+            FREE( content );
+            break;
+         case 'i':
+            break;
+      }
+   }
+   DetachIterator( &Iter );
+   return;
+}
+
 int luaopen_mud( lua_State *L )
 {
    luaL_newlib( L, EntityVariablesLib_f );

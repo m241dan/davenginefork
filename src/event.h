@@ -22,7 +22,11 @@
  * Each value should be unique and explicit,
  * besides that, there are no restrictions.
  */
-#define EVENT_MOBILE_SAVE       1
+
+typedef enum
+{
+   EVENT_LUA_CALLBACK = 1, MAX_INSTANCE_EVENT
+} INSTANCE_EVENTS;
 
 /* Socket events are given a type value here.
  * Each value should be unique and explicit,
@@ -49,22 +53,29 @@ struct event_data
    sh_int             bucket;           /* which bucket is this event in       */
    void             * owner;
    sh_int             ownertype;        /* type of owner (unlinking req)       */
+   char             * lua_cypher;
+   LLIST            * lua_args;
 
 };
 
 /* functions which can be accessed outside event-handler.c */
 EVENT_DATA *alloc_event          ( void );
 void free_event                  ( EVENT_DATA *event );
+
 EVENT_DATA *event_isset_socket   ( D_SOCKET *dSock, int type );
 void dequeue_event               ( EVENT_DATA *event );
 void init_event_queue            ( int section );
 void init_events_socket          ( D_SOCKET *dSock );
 void heartbeat                   ( void );
 void add_event_socket            ( EVENT_DATA *event, D_SOCKET *dSock, int delay );
+void add_event_instance          ( EVENT_DATA *event, ENTITY_INSTANCE *instance, int delay );
 void add_event_game              ( EVENT_DATA *event, int delay );
 void strip_event_socket          ( D_SOCKET *dSock, int type );
+void strip_event_instance        ( ENTITY_INSTANCE *instance, int type );
+
 
 /* all events should be defined here */
 bool event_mobile_save           ( EVENT_DATA *event );
 bool event_socket_idle           ( EVENT_DATA *event );
 bool event_game_tick             ( EVENT_DATA *event );
+bool event_instance_lua_callback ( EVENT_DATA *event );

@@ -42,6 +42,7 @@ int isSameRoom( lua_State  *L );
 int hasItemInInventoryFramework( lua_State *L );
 
 /* actions */
+int luaCallBack( lua_State *L );
 int luaEntityInstanceInterp( lua_State *L );
 int luaEntityInstanceTeleport( lua_State *L );
 int luaEcho( lua_State *L );

@@ -79,3 +79,36 @@ bool event_socket_idle(EVENT_DATA *event)
    */
   return TRUE;
 }
+
+bool event_instance_lua_callback( EVENT_DATA *event )
+{
+   ENTITY_INSTANCE *instance = (ENTITY_INSTANCE *)event->owner;
+   void *content;
+   ITERATOR Iter;
+   int counter = 0;
+
+   prep_stack( get_frame_script_path( instance->framework ), event->argument );
+   if( SizeOfList( event->lua_args ) > 0 )
+   {
+      AttachIterator( &Iter, event->lua_args );
+      while( ( content = NextInList( &Iter ) ) != NULL )
+      {
+         switch( tolower( event->lua_cypher[counter++] ) )
+         {
+            case 's':
+               lua_pushstring( lua_handle, (const char *)content );
+               break;
+            case 'n':
+               lua_pushnumber( lua_handle, *((int *)content) );
+               break;
+            case 'i':
+               push_instance( (ENTITY_INSTANCE *)content, lua_handle );
+               break;
+         }
+      }
+      DetachIterator( &Iter );
+   }
+   lua_pcall( lua_handle, strlen( event->lua_cypher ), LUA_MULTRET, 0 );
+
+   return FALSE;
+}

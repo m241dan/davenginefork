@@ -72,6 +72,11 @@ int free_eInstance( ENTITY_INSTANCE *eInstance )
    free_tag( eInstance->tag );
    eInstance->tag = NULL;
 
+   for( x = 0; x < MAX_INSTANCE_EVENT; x++ )
+      strip_event_instance( eInstance, x );
+
+   FreeList( eInstance->events );
+
    eInstance->socket = NULL;
    eInstance->contained_by = NULL;
    eInstance->account = NULL;
