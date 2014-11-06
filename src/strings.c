@@ -820,8 +820,8 @@ const char *format_string_for_sql( const char *string )
          string++;
          continue;
       }
-      if( *string == '\'' )
-         *buf_ptr++ = '\'';
+      if( *string == 39 )
+         *buf_ptr++ = 39;
       *buf_ptr++ = *string++;
    }
    buf[strlen(buf)] = '\0';
