@@ -36,3 +36,7 @@ as well as
 /etc/init.d/apache2 restart
 
 
+also, dont forgot:
+    GRANT ALL on <wiki_name>.* to user@localhost;
+
+
