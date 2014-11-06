@@ -69,3 +69,63 @@ void load_helps()
   closedir(directory);
 }
 
+void get_help( D_SOCKET *dsock, const char *arg )
+{
+   const char *helpbody = NULL;
+
+   if( ( helpbody = grab_help_from_wiki( arg ) ) == NULL )
+   {
+      text_to_buffer( dsock, helpbody );
+      return;
+   }
+
+}
+
+const char *grab_help_from_wiki( const char *name )
+{
+   MYSQL_RES *result;
+   MYSQL_ROW row;
+   static char buf[MAX_BUFFER];
+   char query[MAX_BUFFER];
+   int old_id;
+
+   if( help_handle == NULL )
+   {
+      bug( "%s: has found that the HELP handle is NULL.", __FUNCTION__ );
+      return NULL;
+   }
+
+   mud_printf( query, "SELECT page_latest FROM `page` WHERE UPPER(page_title) = UPPER(%s);", name );
+
+   if( mysql_query( help_handle, query ) )
+   {
+      report_sql_error( help_handle );
+      return NULL;
+   }
+   if( ( result = mysql_store_result( help_handle ) ) == NULL )
+      return NULL;
+   if( mysql_num_rows( result ) == 0 )
+      return NULL;
+
+   row = mysql_fetch_row( result );
+   old_id = atoi( row[0] );
+   mysql_free_result( result );
+
+   mud_printf( query, "SELECT old_text FROM `text` WHERE old_id=%d;", old_id );
+
+   if( mysql_query( help_handle, query ) )
+   {
+      report_sql_error( help_handle );
+      return NULL;
+   }
+   if( ( result = mysql_store_result( help_handle ) ) == NULL )
+      return NULL;
+   if( mysql_num_rows( result ) == 0 )
+      return NULL;
+
+   row = mysql_fetch_row( result );
+   mud_printf( buf, "%s\n", row[0] );
+   mysql_free_result( result );
+
+   return buf;
+}

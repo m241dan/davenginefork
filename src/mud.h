@@ -460,6 +460,7 @@ extern  LLIST        *  active_frameworks; /* a linked list of active frameworks
 extern  LLIST        *  help_list;        /* the linked LLIST of help files      */
 extern  LLIST        *  eInstances_list;   /* list of entity instances */
 extern  MYSQL        *  sql_handle;       /* global connection to sql database */
+extern  MYSQL        *  help_handle;
 extern  lua_State    *  lua_handle;       /* global connection to lua */
 extern  const struct    typCmd tabCmd[];  /* the command table                  */
 extern  bool            shut_down;        /* used for shutdown                  */
@@ -554,6 +555,8 @@ int change_socket_state( D_SOCKET *dsock, int state );
  * help.c
  */
 void  load_helps              ( void );
+void get_help( D_SOCKET *dsock, const char *arg );
+const char *grab_help_from_wiki( const char *name );
 
 /*
  * utils.c

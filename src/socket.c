@@ -41,6 +41,7 @@ const char *DB_PASSWORD = NULL;
 const char *WIKI_NAME = NULL;
 
 MYSQL    * sql_handle = NULL;
+MYSQL    * help_handle = NULL;
 lua_State *lua_handle  = NULL;
 
 /* mccp support */
@@ -149,7 +150,21 @@ int main(int argc, char **argv)
 
    if( mysql_real_connect( sql_handle, DB_ADDR, DB_LOGIN, DB_PASSWORD, DB_NAME, 0, NULL, 0 ) == NULL )
    {
-      bug( "Could not connectto database: %s", mysql_error( sql_handle ) );
+      bug( "Could not connect to database: %s", mysql_error( sql_handle ) );
+      mysql_close( sql_handle );
+      exit(1);
+   }
+
+   if( ( help_handle = mysql_init(NULL) ) == NULL )
+   {
+      bug( "Could not initialize mysql connection: %s", mysql_error( help_handle ) );
+      exit(1);
+   }
+
+   if( mysql_real_connect( help_handle, DB_ADDR, DB_LOGIN, DB_PASSWORD, WIKI_NAME, 0, NULL, 0 ) == NULL )
+   {
+      bug( "Could not connect to database: %s", mysql_error( help_handle ) );
+      mysql_close( help_handle );
       mysql_close( sql_handle );
       exit(1);
    }
