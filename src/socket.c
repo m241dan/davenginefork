@@ -38,7 +38,7 @@ const char *DB_NAME = NULL;
 const char *DB_ADDR = NULL;
 const char *DB_LOGIN = NULL;
 const char *DB_PASSWORD = NULL;
-
+const char *WIKI_NAME = NULL;
 
 MYSQL    * sql_handle = NULL;
 lua_State *lua_handle  = NULL;

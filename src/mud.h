@@ -472,7 +472,7 @@ extern const char *DB_NAME;
 extern const char *DB_ADDR;
 extern const char *DB_LOGIN;
 extern const char *DB_PASSWORD;
-
+extern const char *WIKI_NAME;
 
 /***************************
  * End of Global Variables *

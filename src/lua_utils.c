@@ -252,6 +252,9 @@ void lua_loadsql( void )
    DB_LOGIN = strdup( lua_tostring( lua_handle, -1 ) );
    lua_getglobal( lua_handle, "db_pass" );
    DB_PASSWORD = strdup( lua_tostring( lua_handle, -1 ) );
+   lua_getglobal( lua_handle, "wiki_name" );
+   WIKI_NAME = strdup( lua_tostring( lua_handle, -1 ) );
+
    lua_settop( lua_handle, top );
 }
 
