@@ -235,6 +235,26 @@ inline const char *get_stat_instance_script_path( STAT_INSTANCE *stat )
    return quick_format( "../scripts/stats/%d.lua", stat->framework->tag->id );
 }
 
+void lua_loadsql( void )
+{
+   int top = lua_gettop( lua_handle );
+
+   if( luaL_loadfile( lua_handle, "../scripts/settings/server.lua" ) || lua_pcall( lua_handle, 0, 0, 0 ) )
+   {
+      bug( "%s: could not load sql variables.", __FUNCTION__ );
+      return;
+   }
+   lua_getglobal( lua_handle, "db_name" );
+   DB_NAME = strdup( lua_tostring( lua_handle, -1 ) );
+   lua_getglobal( lua_handle, "db_addr" );
+   DB_ADDR = strdup( lua_tostring( lua_handle, -1 ) );
+   lua_getglobal( lua_handle, "db_login" );
+   DB_LOGIN = strdup( lua_tostring( lua_handle, -1 ) );
+   lua_getglobal( lua_handle, "db_pass" );
+   DB_PASSWORD = strdup( lua_tostring( lua_handle, -1 ) );
+   lua_settop( lua_handle, top );
+}
+
 void push_instance( ENTITY_INSTANCE *instance, lua_State *L )
 {
    ENTITY_INSTANCE **box;

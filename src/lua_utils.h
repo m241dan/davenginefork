@@ -30,6 +30,7 @@ extern inline const char *get_frame_script_path( ENTITY_FRAMEWORK *frame );
 extern inline const char *get_instance_script_path( ENTITY_INSTANCE *instance );
 extern inline const char *get_stat_framework_script_path( STAT_FRAMEWORK *fstat );
 extern inline const char *get_stat_instance_script_path( STAT_INSTANCE *stat );
+void lua_loadsql( void );
 
 void push_instance( ENTITY_INSTANCE *instance, lua_State *L );
 void push_framework( ENTITY_FRAMEWORK *frame, lua_State *L );

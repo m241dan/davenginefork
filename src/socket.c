@@ -34,6 +34,12 @@ LLIST    * eInstances_list = NULL;
 LLIST    * global_variables = NULL;
 LLIST    * stat_frameworks = NULL;
 
+const char *DB_NAME = NULL;
+const char *DB_ADDR = NULL;
+const char *DB_LOGIN = NULL;
+const char *DB_PASSWORD = NULL;
+
+
 MYSQL    * sql_handle = NULL;
 lua_State *lua_handle  = NULL;
 
@@ -101,6 +107,7 @@ int main(int argc, char **argv)
    luaL_requiref( lua_handle, "mud", luaopen_mud, 1 );
    lua_pop( lua_handle, -1 );
 
+   lua_loadsql( ); /* loading the sql variables */
 
    log_string( "Connecting to Database" );
 
