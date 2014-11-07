@@ -2499,7 +2499,8 @@ void entity_target( void *passed, char *arg )
    {
       if( NO_TARGET( entity ) )
       {
-         text_to_entity( entity, "Target what?\r\n" );
+         set_target_i( entity->target, entity->contained_by );
+         text_to_entity( entity, "You target the room you're in.\r\n" );
          return;
       }
       set_target_none( entity->target );
