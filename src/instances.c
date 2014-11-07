@@ -1211,7 +1211,7 @@ void move_create( ENTITY_INSTANCE *entity, ENTITY_FRAMEWORK *exit_frame, char *a
          continue;
       }
 
-      if( !strcasecmp( buf, "target" ) )
+      if( is_prefix( buf, "target" ) )
       {
          if( !entity->target )
          {
