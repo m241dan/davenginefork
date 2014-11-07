@@ -538,6 +538,7 @@ const char *handle_pagewidth( int width, const char *txt )
                txt--;
          *ptr++ = '\n';
          *ptr++ = '\r';
+         continue;
       }
       *ptr++ = *txt++;
    }
