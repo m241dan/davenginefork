@@ -1396,7 +1396,7 @@ void show_all_projects_to_olc( INCEPTION *olc )
       text_to_olc( olc, "Project %d: %s\r\n", atoi( row[0] ), row[1] );
    DetachIterator( &Iter );
 
-   FreeList( list);
+   FreeList( list );
    return;
 }
 
