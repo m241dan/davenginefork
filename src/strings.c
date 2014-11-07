@@ -535,7 +535,11 @@ const char *handle_pagewidth( int width, const char *txt )
          x = 0;
          if( !isspace( *txt ) )
             while( !isspace( *txt ) )
+            {
                txt--;
+               ptr--;
+            }
+            txt++;
          *ptr++ = '\n';
          *ptr++ = '\r';
          continue;
