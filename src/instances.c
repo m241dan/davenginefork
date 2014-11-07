@@ -35,6 +35,7 @@ int clear_eInstance( ENTITY_INSTANCE *eInstance )
    eInstance->socket = NULL;
    eInstance->account = NULL;
    eInstance->contained_by = NULL;
+   eInstance->primary_dmg_received_stat = NULL;
    return RET_SUCCESS;
 }
 
@@ -82,6 +83,7 @@ int free_eInstance( ENTITY_INSTANCE *eInstance )
    eInstance->socket = NULL;
    eInstance->contained_by = NULL;
    eInstance->account = NULL;
+   eInstance->primary_dmg_received_stat = NULL;
 
    FREE( eInstance );
    return RET_SUCCESS;
@@ -138,6 +140,7 @@ ENTITY_INSTANCE *load_eInstance_by_query( const char *query )
    load_specifications_to_list( instance->specifications, quick_format( "%d", instance->tag->id ) );
    load_entity_vars( instance );
    load_entity_stats( instance );
+   instance->primary_dmg_received_stat = get_stat_from_instance_by_id( instance, atoi( row[10] ) );
    if( get_spec_value( instance, "IsPlayer" ) <= 0 )
       load_commands( instance->commands, mobile_commands, LEVEL_BASIC );
    free( row );
@@ -336,11 +339,12 @@ int new_eInstance( ENTITY_INSTANCE *eInstance )
       }
    }
 
-   if( !quick_query( "INSERT INTO entity_instances VALUES( %d, %d, '%s', '%s', '%s', '%s', %d, %d, %d, %d );",
+   if( !quick_query( "INSERT INTO entity_instances VALUES( %d, %d, '%s', '%s', '%s', '%s', %d, %d, %d, %d, %d );",
          eInstance->tag->id, eInstance->tag->type, eInstance->tag->created_by,
          eInstance->tag->created_on, eInstance->tag->modified_by, eInstance->tag->modified_on,
          eInstance->contained_by ? eInstance->contained_by->tag->id : -1, eInstance->framework->tag->id,
-         (int)eInstance->live, (int)eInstance->loaded ) )
+         (int)eInstance->live, (int)eInstance->loaded,
+         eInstance->primary_dmg_received_stat ? eInstance->primary_dmg_received_stat->framework->tag->id : 0 ) )
       return RET_FAILED_OTHER;
 
    AttachIterator( &Iter, eInstance->specifications );

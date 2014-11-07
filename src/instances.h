@@ -16,6 +16,7 @@ struct entity_instance
    LLIST *stats;
    LLIST *evars;
    LLIST *events;
+   STAT_INSTANCE *primary_dmg_received_stat;
 
    ENTITY_FRAMEWORK *framework;
 
