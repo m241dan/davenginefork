@@ -25,6 +25,8 @@ bool is_prefix(const char *aStr, const char *bStr)
   /* check if aStr is a prefix of bStr */
   while (*aStr)
   {
+    if( *bStr == '\0' )
+       break;
     if (tolower(*aStr++) != tolower(*bStr++))
       return FALSE;
   }

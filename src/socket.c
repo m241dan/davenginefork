@@ -301,49 +301,53 @@ void GameLoop(int control)
       /* Is there a new command pending ? */
       if (dsock->next_command[0] != '\0')
       {
-        /* figure out how to deal with the incoming command */
-        switch(dsock->state)
+        if( is_prefix( dsock->next_command, "/help" ) )
+           get_help( dsock, dsock->next_command );
+        else
         {
-          default:
-            bug("Descriptor in bad state.");
-            break;
-          case STATE_NANNY:
-            if( handle_nanny_input( dsock, dsock->next_command ) != RET_SUCCESS )
-               bug( "handle_nanny_input failed to interpret the input." );
-            break;
-          case STATE_ACCOUNT:
-             if( account_handle_cmd( dsock->account, dsock->next_command ) != RET_SUCCESS )
-                bug( "account_handle_cmd failed to interpret the input." );
-             break;
-          case STATE_OLC:
-             if( olc_handle_cmd( dsock->account->olc, dsock->next_command ) != RET_SUCCESS )
-                bug( "olc_handle_cmd failed to interpret the input." );
-             break;
-          case STATE_EFRAME_EDITOR:
-             if( eFrame_editor_handle_command( dsock->account->olc, dsock->next_command ) != RET_SUCCESS )
-                bug( "eFrame_editor_handle_command failed to interpret the input." );
-             break;
-          case STATE_PROJECT_EDITOR:
-             if( project_editor_handle_command( dsock->account->olc, dsock->next_command ) != RET_SUCCESS )
-                bug( "project_editor_handle_command failed to inter[ret the input." );
-             break;
-          case STATE_WORKSPACE_EDITOR:
-             if( workspace_editor_handle_command( dsock->account->olc, dsock->next_command ) != RET_SUCCESS )
-                bug( "workspace_editor_handle_command failed to interpret the input." );
-             break;
-          case STATE_EINSTANCE_EDITOR:
-             if( instance_editor_handle_command( dsock->account->olc, dsock->next_command ) != RET_SUCCESS )
-                bug( "instance_editor_handle_command failed to interpret the input." );
-             break;
-          case STATE_SFRAME_EDITOR:
-             if( sFrame_editor_handle_command( dsock->account->olc, dsock->next_command ) != RET_SUCCESS )
-                bug( "sframe_editor_handle_command failed to interpret the input." );
-             break;
-          case STATE_BUILDER:
-          case STATE_PLAYING:
-             if( entity_handle_cmd( dsock->controlling, dsock->next_command ) != RET_SUCCESS )
-                bug( "entity_handle_cmd failed ot interpret the input." );
-             break;
+           switch(dsock->state)
+           {
+             default:
+               bug("Descriptor in bad state.");
+               break;
+             case STATE_NANNY:
+               if( handle_nanny_input( dsock, dsock->next_command ) != RET_SUCCESS )
+                  bug( "handle_nanny_input failed to interpret the input." );
+               break;
+             case STATE_ACCOUNT:
+                if( account_handle_cmd( dsock->account, dsock->next_command ) != RET_SUCCESS )
+                   bug( "account_handle_cmd failed to interpret the input." );
+                break;
+             case STATE_OLC:
+                if( olc_handle_cmd( dsock->account->olc, dsock->next_command ) != RET_SUCCESS )
+                   bug( "olc_handle_cmd failed to interpret the input." );
+                break;
+             case STATE_EFRAME_EDITOR:
+                if( eFrame_editor_handle_command( dsock->account->olc, dsock->next_command ) != RET_SUCCESS )
+                   bug( "eFrame_editor_handle_command failed to interpret the input." );
+                break;
+             case STATE_PROJECT_EDITOR:
+                if( project_editor_handle_command( dsock->account->olc, dsock->next_command ) != RET_SUCCESS )
+                   bug( "project_editor_handle_command failed to inter[ret the input." );
+                break;
+             case STATE_WORKSPACE_EDITOR:
+                if( workspace_editor_handle_command( dsock->account->olc, dsock->next_command ) != RET_SUCCESS )
+                   bug( "workspace_editor_handle_command failed to interpret the input." );
+                break;
+             case STATE_EINSTANCE_EDITOR:
+                if( instance_editor_handle_command( dsock->account->olc, dsock->next_command ) != RET_SUCCESS )
+                   bug( "instance_editor_handle_command failed to interpret the input." );
+                break;
+             case STATE_SFRAME_EDITOR:
+                if( sFrame_editor_handle_command( dsock->account->olc, dsock->next_command ) != RET_SUCCESS )
+                   bug( "sframe_editor_handle_command failed to interpret the input." );
+                break;
+             case STATE_BUILDER:
+             case STATE_PLAYING:
+                if( entity_handle_cmd( dsock->controlling, dsock->next_command ) != RET_SUCCESS )
+                   bug( "entity_handle_cmd failed ot interpret the input." );
+                break;
+           }
         }
 
         dsock->next_command[0] = '\0';

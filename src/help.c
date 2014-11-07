@@ -69,13 +69,33 @@ void load_helps()
   closedir(directory);
 }
 
-void get_help( D_SOCKET *dsock, const char *arg )
+void get_help( D_SOCKET *dsock, char *arg )
 {
    const char *helpbody = NULL;
+   char buf[MAX_BUFFER];
 
-   if( ( helpbody = grab_help_from_wiki( arg ) ) == NULL )
+   arg = one_arg_delim( arg, buf, ' ' );
+
+   if( !arg || arg[0] == '\0' )
    {
+      text_to_buffer( dsock, "Help what?\r\n" );
+      return;
+   }
+
+   if( ( helpbody = grab_help_from_wiki( arg ) ) != NULL )
+   {
+      text_to_buffer( dsock, print_bar( "-", dsock->account ? dsock->account->pagewidth : 80 ) );
+      text_to_buffer( dsock, "\r\n" );
       text_to_buffer( dsock, helpbody );
+      text_to_buffer( dsock, "\r\n" );
+      text_to_buffer( dsock, print_bar( "-", dsock->account ? dsock->account->pagewidth : 80 ) );
+      text_to_buffer( dsock, "\r\n" );
+
+      return;
+   }
+   else
+   {
+      text_to_buffer( dsock, "No such help file.\r\n" );
       return;
    }
 
@@ -95,7 +115,7 @@ const char *grab_help_from_wiki( const char *name )
       return NULL;
    }
 
-   mud_printf( query, "SELECT page_latest FROM `page` WHERE UPPER(page_title) = UPPER(%s);", name );
+   mud_printf( query, "SELECT page_latest FROM `page` WHERE UPPER( page_title ) = UPPER( '%s' );", format_string_for_sql( name ) );
 
    if( mysql_query( help_handle, query ) )
    {
@@ -124,8 +144,10 @@ const char *grab_help_from_wiki( const char *name )
       return NULL;
 
    row = mysql_fetch_row( result );
-   mud_printf( buf, "%s\n", row[0] );
+   mud_printf( buf, "%s", row[0] );
    mysql_free_result( result );
+
+   buf[strlen( buf )] = '\0';
 
    return buf;
 }

@@ -555,7 +555,7 @@ int change_socket_state( D_SOCKET *dsock, int state );
  * help.c
  */
 void  load_helps              ( void );
-void get_help( D_SOCKET *dsock, const char *arg );
+void get_help( D_SOCKET *dsock, char *arg );
 const char *grab_help_from_wiki( const char *name );
 
 /*
