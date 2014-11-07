@@ -2189,9 +2189,9 @@ void olc_list( void *passed, char *arg )
       arg = one_arg_delim( arg, buf, ',' );
 
       type = tolower( buf[0] );
-      if( type != 'f' && type != 'i' && type != 'w' )
+      if( type != 'f' && type != 'i' && type != 'w' && type != 'p' )
       {
-         text_to_olc( olc, "%c not valid, (f)rameworks, (i)nstances and (w)orkspaces only.\r\n" );
+         text_to_olc( olc, "%c not valid, (f)rameworks, (i)nstances and (w)orkspaces only.\r\n", type );
          continue;
       }
 
