@@ -1211,27 +1211,51 @@ void move_create( ENTITY_INSTANCE *entity, ENTITY_FRAMEWORK *exit_frame, char *a
          continue;
       }
 
-      if( !interpret_entity_selection( buf ) )
+      if( !strcasecmp( buf, "target" ) )
       {
-         text_to_entity( entity, STD_SELECTION_ERRMSG_PTR_USED );
-         return;
+         if( !entity->target )
+         {
+            text_to_entity( entity, "You do not have a target.\r\n" );
+            return;
+         }
+         switch( entity->target->type )
+         {
+            default: text_to_entity( entity, "You cannot create an exit to that target.\r\n" ); return;
+            case TARGET_FRAMEWORK:
+               have_frame = TRUE;
+               room_frame = (ENTITY_FRAMEWORK *)entity->target->target;
+               break;
+            case TARGET_INSTANCE:
+               have_frame = TRUE;
+               new_room = TRUE;
+               room_instance = (ENTITY_INSTANCE *)entity->target->target;
+               break;
+         }
       }
-
-      switch( input_selection_typing )
+      else
       {
-         default: clear_entity_selection(); break;
-         case SEL_FRAME:
-            have_frame = TRUE;
-            room_frame = (ENTITY_FRAMEWORK *)retrieve_entity_selection();
-            break;
-         case SEL_INSTANCE:
-            have_frame = TRUE;
-            new_room = TRUE;
-            room_instance = (ENTITY_INSTANCE *)retrieve_entity_selection();
-            break;
-         case SEL_STRING:
-            text_to_entity( entity, (char *)retrieve_entity_selection(), buf );
-            break;
+         if( !interpret_entity_selection( buf ) )
+         {
+            text_to_entity( entity, STD_SELECTION_ERRMSG_PTR_USED );
+            return;
+         }
+
+         switch( input_selection_typing )
+         {
+            default: clear_entity_selection(); break;
+            case SEL_FRAME:
+               have_frame = TRUE;
+               room_frame = (ENTITY_FRAMEWORK *)retrieve_entity_selection();
+               break;
+            case SEL_INSTANCE:
+               have_frame = TRUE;
+               new_room = TRUE;
+               room_instance = (ENTITY_INSTANCE *)retrieve_entity_selection();
+               break;
+            case SEL_STRING:
+               text_to_entity( entity, (char *)retrieve_entity_selection(), buf );
+               break;
+         }
       }
       if( count == 2 )
          break;
