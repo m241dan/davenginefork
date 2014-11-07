@@ -2173,8 +2173,8 @@ void entity_edit( void *passed, char *arg )
       }
       if( entity->contained_by )
       {
-         to_edit = entity->contained_by;
-         boot_instance_editor( olc, (ENTITY_INSTANCE *)to_edit );
+         to_edit = entity->contained_by->framework;
+         boot_eFramework_editor( olc, (ENTITY_FRAMEWORK *)to_edit );
          return;
       }
       else
