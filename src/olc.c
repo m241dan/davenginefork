@@ -1643,7 +1643,7 @@ void workspace_unload( void *passed, char *arg )
 
    AttachIterator( &Iter, olc->wSpaces );
    while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
-      if( !strcmp( arg, wSpace->name ) )
+      if( !strcasecmp( wSpace->name, arg ) )
          break;
    DetachIterator( &Iter );
 
