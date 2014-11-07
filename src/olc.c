@@ -138,6 +138,7 @@ WORKSPACE_FILTER *init_wfilter( void )
 
    CREATE( filter, WORKSPACE_FILTER, 1 );
    CREATE( filter->spec_filters, GRAB_PARAMS, 1 );
+   filter->limit = 10;
    return filter;
 }
 
