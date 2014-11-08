@@ -223,6 +223,8 @@ const char *editor_return_desc( void *extra )
       case STATE_WORKSPACE_EDITOR:
          strcat( buf, quick_format( "(%d)Workspace: %s", ((WORKSPACE *)link->to_edit)->tag->id, ((WORKSPACE *)link->to_edit)->name ) );
          break;
+      case STATE_SFRAME_EDITOR:
+         strcat( buf, quick_format( "(%d)Stat: %s", ((STAT_FRAMEWORK *)link->to_edit)->tag->id, ((STAT_FRAMEWORK *)link->to_edit)->name ) );
    }
 
    buf[strlen( buf )] = '\0';
