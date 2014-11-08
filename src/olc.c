@@ -1912,13 +1912,6 @@ void olc_instantiate( void *passed, char *arg )
       return;
    }
 
-   if( new_eInstance( instance ) != RET_SUCCESS )
-   {
-      free_eInstance( instance );
-      text_to_olc( olc, "Could not add new instance to database, deleting it from live memory.\r\n" );
-      return;
-   }
-
    AttachToList( instance, eInstances_list );
    if( olc->using_workspace )
       add_instance_to_workspace( instance, olc->using_workspace );

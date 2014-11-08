@@ -108,7 +108,6 @@ int luaNewInstance( lua_State *L )
    }
 
    instance = eInstantiate( frame );
-   new_eInstance( instance );
    push_instance( instance, L );
    return 1;
 }
