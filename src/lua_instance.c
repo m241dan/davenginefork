@@ -821,6 +821,7 @@ int luaCallBack( lua_State *L )
 
    for( x = num_args; x > 0; x-- )
    {
+      ENTITY_FRAMEWORK *arg_frame;
       ENTITY_INSTANCE *arg_instance;
       char *arg_string;
       int  *arg_int;
@@ -860,6 +861,18 @@ int luaCallBack( lua_State *L )
                continue;
             }
             *arg_int = arg_instance->tag->id;
+            AttachToList( arg_int, event->lua_args );
+            break;
+         case 'f':
+            CREATE( arg_int, int, 1 );
+            if( ( arg_frame = *(ENTITY_FRAMEWORK **)luaL_checkudata( L, ( 4 + x ), "EntityFramework.meta" ) ) == NULL )
+            {
+               bug( "%s: bad/cypher passed value, not an entity framework at position %d.", __FUNCTION__, x );
+               *arg_int = -1;
+               AttachToList( arg_int, event->lua_args );
+               continue;
+            }
+            *arg_int = arg_frame->tag->id;
             AttachToList( arg_int, event->lua_args );
             break;
       }
