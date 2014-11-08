@@ -50,6 +50,8 @@ void new_stat_framework( STAT_FRAMEWORK *fstat )
 
 inline void new_stat_on_frame( STAT_FRAMEWORK *fstat, ENTITY_FRAMEWORK *frame )
 {
+   if( !strcmp( frame->tag->created_by, "null" ) )
+      return;
    quick_query( "INSERT INTO `entity_framework_stats` VALUES ( '%d', '%d' );", frame->tag->id, fstat->tag->id );
 }
 
@@ -58,8 +60,6 @@ inline void add_stat_to_frame( STAT_FRAMEWORK *fstat, ENTITY_FRAMEWORK *frame )
    int nober;
    if( get_stat_from_framework_by_id( frame, fstat->tag->id, &nober ) ) return;
    AttachToList( fstat, frame->stats );
-   if( !strcmp( frame->tag->created_by, "null" ) )
-      return;
    new_stat_on_frame( fstat, frame );
 }
 

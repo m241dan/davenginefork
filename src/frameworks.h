@@ -65,8 +65,14 @@ const char *chase_description( ENTITY_FRAMEWORK *frame );
 
 void add_frame_to_fixed_contents( ENTITY_FRAMEWORK *frame_to_add, ENTITY_FRAMEWORK *container );
 void rem_frame_from_fixed_contents( ENTITY_FRAMEWORK *frame_to_rem, ENTITY_FRAMEWORK *container );
+extern inline void set_primary_dmg_stat_framework( ENTITY_FRAMEWORK *frame, STAT_FRAMEWORK *fstat );
 
 FILE *open_f_script( ENTITY_FRAMEWORK *frame, const char *permissions );
 bool f_script_exists( ENTITY_FRAMEWORK *frame );
 void init_f_script( ENTITY_FRAMEWORK *frame, bool force );
 const char *print_f_script( ENTITY_FRAMEWORK *frame );
+
+
+/* databasing */
+extern inline void new_fixed_content( ENTITY_FRAMEWORK *frame, ENTITY_FRAMEWORK *content );
+extern inline void delete_fixed_content( ENTITY_FRAMEWORK *frame, ENTITY_FRAMEWORK *content );

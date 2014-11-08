@@ -24,6 +24,7 @@ void eFramework_save( void *passed, char *arg );
 void eFramework_addContent( void *passed, char *arg );
 void eFramework_script( void *passed, char *arg );
 void eFramework_addPak( void *passed, char *arg );
+void eFramework_setPrimaryDmg( void *passed, char *arg );
 
 int init_project_editor( INCEPTION *olc, PROJECT *project );
 void boot_project_editor( INCEPTION *olc, PROJECT *project );

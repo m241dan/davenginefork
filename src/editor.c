@@ -692,6 +692,29 @@ void eFramework_addPak( void *passed, char *arg )
    return;
 }
 
+void eFramework_setPrimaryDmg( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_FRAMEWORK *frame = (ENTITY_FRAMEWORK *)olc->editing;
+   STAT_FRAMEWORK *fstat;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Set the Primary Damage Stat to what?\r\n" );
+      olc_short_prompt( olc );
+      return;
+   }
+   if( ( fstat = get_stat_framework_by_name( arg ) ) == NULL )
+   {
+      text_to_olc( olc, "%s not a Stat.\r\n", arg );
+      olc_short_prompt( olc );
+      return;
+   }
+   set_primary_dmg_stat_framework( frame, fstat );
+   text_to_olc( olc, "You set the Primary Damage Stat to %s.\r\n", fstat->name );
+   return;
+}
+
 int init_project_editor( INCEPTION *olc, PROJECT *project )
 {
    int ret = RET_SUCCESS;
@@ -1576,7 +1599,7 @@ void sFramework_hardcap( void *passed, char *arg )
 
    set_hardcap( fstat, value );
    update_tag( fstat->tag, olc->account->name );
-   text_to_olc( olc, "You set the hardcap to ds.\r\n", fstat->hardcap );
+   text_to_olc( olc, "You set the hardcap to %d.\r\n", fstat->hardcap );
    return;
 
 }

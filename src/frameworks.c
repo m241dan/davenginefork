@@ -148,6 +148,7 @@ ENTITY_FRAMEWORK *load_eFramework_by_name( const char *name )
 
 int new_eFramework( ENTITY_FRAMEWORK *frame )
 {
+   ENTITY_FRAMEWORK *fixed_content;
    SPECIFICATION *spec;
    STAT_FRAMEWORK *fstat;
    ITERATOR Iter;
@@ -182,6 +183,11 @@ int new_eFramework( ENTITY_FRAMEWORK *frame )
       mud_printf( spec->owner, "f%d", frame->tag->id );
       new_specification( spec );
    }
+   DetachIterator( &Iter );
+
+   AttachIterator( &Iter, frame->fixed_contents );
+   while( ( fixed_content = (ENTITY_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
+      new_fixed_content( frame, fixed_content );
    DetachIterator( &Iter );
 
    AttachIterator( &Iter, frame->stats );
@@ -712,7 +718,7 @@ const char *chase_description( ENTITY_FRAMEWORK *frame )
 }
 
 void add_frame_to_fixed_contents( ENTITY_FRAMEWORK *frame_to_add, ENTITY_FRAMEWORK *container )
-	{
+{
    if( !frame_to_add || !container )
       return;
 
@@ -721,7 +727,7 @@ void add_frame_to_fixed_contents( ENTITY_FRAMEWORK *frame_to_add, ENTITY_FRAMEWO
 
    AttachToList( frame_to_add, container->fixed_contents );
 
-   quick_query( "INSERT INTO `framework_fixed_possessions` VALUES( %d, %d );", container->tag->id, frame_to_add->tag->id );
+   new_fixed_content( container, frame_to_add );
    return;
 }
 
@@ -735,8 +741,21 @@ void rem_frame_from_fixed_contents( ENTITY_FRAMEWORK *frame_to_rem, ENTITY_FRAME
 
    DetachFromList( frame_to_rem, container->fixed_contents );
 
-   quick_query( "DELETE FROM `framework_fixed_possessions` WHERE frameworkID=%d AND content_frameworkID=%d;", container->tag->id, frame_to_rem->tag->id );
+   if( !strcmp( container->tag->created_by, "null" ) )
+      return;
+
+   delete_fixed_content( container, frame_to_rem );
    return;
+}
+
+inline void set_primary_dmg_stat_framework( ENTITY_FRAMEWORK *frame, STAT_FRAMEWORK *fstat )
+{
+   int source;
+   frame->f_primary_dmg_received_stat = fstat;
+   if( !get_stat_from_framework_by_id( frame, fstat->tag->id, &source ) )
+      add_stat_to_frame( fstat, frame );
+   else if( source != 0 )
+      add_stat_to_frame( fstat, frame );
 }
 
 FILE *open_f_script( ENTITY_FRAMEWORK *frame, const char *permissions )
@@ -801,3 +820,17 @@ const char *print_f_script( ENTITY_FRAMEWORK *frame )
    return buf;
 }
 
+
+inline void new_fixed_content( ENTITY_FRAMEWORK *frame, ENTITY_FRAMEWORK *content )
+{
+   if( !strcmp( frame->tag->created_by, "null" ) )
+      return;
+   quick_query( "INSERT INTO `framework_fixed_possessions` VALUES( %d, %d );", frame->tag->id, content->tag->id );
+}
+
+inline void delete_fixed_content( ENTITY_FRAMEWORK *frame, ENTITY_FRAMEWORK *content )
+{
+   if( !strcmp( frame->tag->created_by, "null" ) )
+      return;
+   quick_query( "DELETE FROM `framework_fixed_possessions` WHERE frameworkID=%d AND content_frameworkID=%d;", frame->tag->id, content->tag->id );
+}
