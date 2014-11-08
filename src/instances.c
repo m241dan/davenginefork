@@ -197,7 +197,6 @@ ENTITY_INSTANCE *full_load_eFramework( ENTITY_FRAMEWORK *frame )
 {
    ENTITY_INSTANCE *instance;
    instance = eInstantiate( frame );
-   new_eInstance( instance );
    full_load_instance( instance );
    return instance;
 }
@@ -1139,7 +1138,12 @@ ENTITY_INSTANCE *eInstantiate( ENTITY_FRAMEWORK *frame )
 
    eInstance = init_eInstance();
    eInstance->framework = frame;
+   new_eInstance( eInstance );
    instantiate_entity_stats_from_framework( eInstance );
+   prep_stack( get_frame_script_path( frame ), "onInstanceInit" );
+   push_framework( frame, lua_handle );
+   push_instance( eInstance, lua_handle );
+   lua_pcall( lua_handle, 2, LUA_MULTRET, 0 );
    return eInstance;
 }
 
@@ -1150,7 +1154,6 @@ ENTITY_INSTANCE *create_room_instance( const char *name )
 
    frame = create_room_framework( name );
    instance = eInstantiate( frame );
-   new_eInstance( instance );
 
    return instance;
 
@@ -1172,8 +1175,6 @@ ENTITY_INSTANCE *create_exit_instance( const char *name, int dir )
       spec->value = dir;
       add_spec_to_instance( spec, instance );
    }
-   new_eInstance( instance );
-
    return instance;
 }
 
@@ -1184,8 +1185,6 @@ ENTITY_INSTANCE *create_mobile_instance( const char *name  )
 
    frame = create_mobile_framework( name );
    instance = eInstantiate( frame );
-   new_eInstance( instance );
-
    return instance;
 
 }
@@ -1270,14 +1269,10 @@ void move_create( ENTITY_INSTANCE *entity, ENTITY_FRAMEWORK *exit_frame, char *a
       room_frame = create_room_framework( "room" );
 
    if( !new_room )
-   {
       room_instance = eInstantiate( room_frame );
-      new_eInstance( room_instance );
-   }
    entity_to_world( room_instance, NULL );
    /* create exit */
    exit_instance = eInstantiate( exit_frame );
-   new_eInstance( exit_instance );
 
    spec = init_specification();
    spec->type = SPEC_ISEXIT;
@@ -1299,7 +1294,6 @@ void move_create( ENTITY_INSTANCE *entity, ENTITY_FRAMEWORK *exit_frame, char *a
       }
 
       mirrored_exit_instance = eInstantiate( get_framework_by_id( mirror_id ) );
-      new_eInstance( mirrored_exit_instance );
 
       spec = init_specification();
       spec->type = SPEC_ISEXIT;
@@ -1869,13 +1863,6 @@ void entity_instance( void *passed, char *arg )
       text_to_entity( entity, "There's been a major problem, framework you are trying to instantiate from may not be live.\r\n" );
       return;
    }
-   if( new_eInstance( new_ent ) != RET_SUCCESS )
-   {
-      free_eInstance( new_ent );
-      text_to_entity( entity, "Could not add new instance to the database, deleting it from live memory.\r\n" );
-      return;
-   }
-
    entity_to_world( new_ent, entity );
    text_to_entity( entity, "You create a new instance of %s. It has been placed in your inventory.\r\n", instance_name( new_ent ) );
    return;

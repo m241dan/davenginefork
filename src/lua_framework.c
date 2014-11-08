@@ -12,7 +12,7 @@ const struct luaL_Reg EntityFrameworkLib_m[] = {
    { "getSpec", getFrameSpec },
    { "getInheritance", getFrameInheritance },
    /* actions */
-   { "luaInherits", luaInherits },
+   { "inherits", luaInherits },
    { NULL, NULL }
 };
 

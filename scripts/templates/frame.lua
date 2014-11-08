@@ -1,5 +1,5 @@
 function onInstanceInit( frame, instance )
-   frame:inherits( "onInstanceInit", "ii", frame, instance )
+   frame:inherits( "onInstanceInit", "fi", frame, instance )
    --- autowrite init ---
    --- end autowrite init ---
 end
