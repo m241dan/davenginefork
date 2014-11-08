@@ -20,3 +20,9 @@ end
 
 function onFarewellEntity( farewell, entity )
 end
+
+function onSay( entity, sayer )
+end
+
+function onGive( entity, giver )
+end

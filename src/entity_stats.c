@@ -219,15 +219,14 @@ void load_entity_stats( ENTITY_INSTANCE *entity )
 void instantiate_entity_stats_from_framework( ENTITY_INSTANCE *entity )
 {
    STAT_FRAMEWORK *fstat;
-   ITERATOR Iter;
+   int MAX_STAT = 0;
+   int from, x;
 
-   if( !entity->framework )
-      return;
+   MAX_STAT = get_potential_id( ENTITY_STAT_FRAMEWORK_IDS );
 
-   AttachIterator( &Iter, entity->framework->stats );
-   while( ( fstat = (STAT_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
-      stat_instantiate( entity, fstat );
-   DetachIterator( &Iter );
+   for( x = 0; x < MAX_STAT; x++ )
+      if( ( fstat = get_stat_from_framework_by_id( entity->framework, x, &from ) ) != NULL )
+         stat_instantiate( entity, fstat );
 
    return;
 }

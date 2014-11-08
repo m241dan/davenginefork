@@ -53,7 +53,6 @@
 #define MAX_BUFFER         4096                   /* seems like a decent amount         */
 #define MAX_OUTPUT         4096                   /* well shoot me if it isn't enough   */
 #define MAX_HELP_ENTRY     4096                   /* roughly 40 lines of blocktext      */
-#define MUDPORT            6500                   /* just set whatever port you want    */
 #define FILE_TERMINATOR    "EOF"                  /* end of file marker                 */
 #define COPYOVER_FILE      "../txt/copyover.dat"  /* tempfile to store copyover data    */
 #define EXE_FILE           "../src/SocketMud"     /* the name of the mud binary         */
@@ -474,6 +473,7 @@ extern const char *DB_ADDR;
 extern const char *DB_LOGIN;
 extern const char *DB_PASSWORD;
 extern const char *WIKI_NAME;
+extern int  MUDPORT;
 
 /***************************
  * End of Global Variables *

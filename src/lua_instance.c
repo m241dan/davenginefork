@@ -167,7 +167,6 @@ int getLevel( lua_State *L )
    lua_pushnumber( L, instance->level );
    return 1;
 }
-
 int getItemFromInventory( lua_State *L )
 {
    ENTITY_INSTANCE *instance;

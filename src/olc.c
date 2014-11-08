@@ -2263,7 +2263,7 @@ void olc_pak( void *passed, char *arg )
 
    if( !strcasecmp( buf, "show"  ) )
    {
-      text_to_olc( olc, return_pak_contents( arg ) );
+      text_to_olc( olc, return_pak_contents( name ) );
       olc_short_prompt( olc );
       return;
    }
@@ -2313,7 +2313,7 @@ void olc_pak( void *passed, char *arg )
 
    if( !strcasecmp( buf, "rem" ) )
    {
-      if( !arg || arg[0] )
+      if( !arg || arg[0] == '\0' )
       {
          text_to_olc( olc, "Remove which stat or spec?\r\n" );
          olc_short_prompt( olc );

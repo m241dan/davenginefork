@@ -1,3 +1,4 @@
+mudport  = 6500
 db_name  = "muddb"
 db_addr  = "localhost"
 db_login = "m241dan"

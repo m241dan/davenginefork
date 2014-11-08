@@ -150,7 +150,7 @@ const char *return_pak_contents( const char *pak_name )
    strcat( buf, quick_format( "Pak %s Specs:\r\n", pak_name ) );
 
    list = AllocList();
-   if( !db_query_list_row( list, quick_format( "SELECT label, value FROM `paks` WHERE name'%s' AND type'%d';", pak_name, PAK_SPEC ) ) )
+   if( !db_query_list_row( list, quick_format( "SELECT label, value FROM `paks` WHERE name='%s' AND type='%d';", pak_name, PAK_SPEC ) ) )
    {
       FreeList( list );
       strcat( buf, " - None\r\n" );

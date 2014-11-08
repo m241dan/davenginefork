@@ -39,7 +39,7 @@ const char *DB_ADDR = NULL;
 const char *DB_LOGIN = NULL;
 const char *DB_PASSWORD = NULL;
 const char *WIKI_NAME = NULL;
-
+int        MUDPORT = 0;
 MYSQL    * sql_handle = NULL;
 MYSQL    * help_handle = NULL;
 lua_State *lua_handle  = NULL;
@@ -108,7 +108,7 @@ int main(int argc, char **argv)
    luaL_requiref( lua_handle, "mud", luaopen_mud, 1 );
    lua_pop( lua_handle, -1 );
 
-   lua_loadsql( ); /* loading the sql variables */
+   lua_serversettings( ); /* loading the sql variables */
 
    log_string( "Connecting to Database" );
 
