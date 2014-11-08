@@ -2,6 +2,8 @@
 
 #define AUTOWRITE_INIT "   --- autowrite init ---"
 #define ENDAUTOWRITE_INIT "   --- end autowrite init ---"
+#define prep_stack( path, func ) prep_stack_handle( lua_handle, (path), (func) )
+
 
 typedef struct lua_function
 {
@@ -24,7 +26,7 @@ bool until_end( char *str );
 void free_lua_args( LLIST *list );
 
 int luaopen_mud( lua_State *L );
-bool prep_stack( const char *file, const char *function );
+bool prep_stack_handle( lua_State *handle, const char *file, const char *function );
 const char *get_script_path_from_spec( SPECIFICATION *spec );
 extern inline const char *get_frame_script_path( ENTITY_FRAMEWORK *frame );
 extern inline const char *get_instance_script_path( ENTITY_INSTANCE *instance );
