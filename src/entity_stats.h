@@ -54,6 +54,8 @@ STAT_FRAMEWORK *get_stat_from_framework_by_name( ENTITY_FRAMEWORK *frame, const 
 STAT_INSTANCE  *get_stat_from_instance_by_id( ENTITY_INSTANCE *entity, int id );
 STAT_INSTANCE  *get_stat_from_instance_by_name( ENTITY_INSTANCE *entity, const char *name );
 
+STAT_FRAMEWORK *get_primary_dmg_stat_from_framework( ENTITY_FRAMEWORK *frame, int *source );
+
 extern inline void set_softcap( STAT_FRAMEWORK *fstat, int value );
 extern inline void set_hardcap( STAT_FRAMEWORK *fstat, int value );
 extern inline void set_softfloor( STAT_FRAMEWORK *fstat, int value );

@@ -11,6 +11,7 @@ struct entity_framework
    LLIST *fixed_contents; /* frameworks structs */
    LLIST *specifications;
    LLIST *stats;
+   STAT_FRAMEWORK *f_primary_dmg_received_stat;
 
    ENTITY_FRAMEWORK *inherits;
 

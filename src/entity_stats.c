@@ -357,6 +357,9 @@ STAT_INSTANCE  *get_stat_from_instance_by_id( ENTITY_INSTANCE *entity, int id )
    STAT_INSTANCE *stat;
    ITERATOR Iter;
 
+   if( id < 0 )
+      return NULL;
+
    AttachIterator( &Iter, entity->stats );
    while( ( stat = (STAT_INSTANCE *)NextInList( &Iter ) ) != NULL )
       if( stat->framework->tag->id == id )
@@ -377,6 +380,18 @@ STAT_INSTANCE  *get_stat_from_instance_by_name( ENTITY_INSTANCE *entity, const c
    DetachIterator( &Iter );
 
    return stat;
+}
+
+STAT_FRAMEWORK *get_primary_dmg_stat_from_framework( ENTITY_FRAMEWORK *frame, int *source )
+{
+   if( frame->f_primary_dmg_received_stat )
+      return frame->f_primary_dmg_received_stat;
+
+   if( !frame->inherits )
+      return NULL;
+
+   *source = 1;
+   return get_primary_dmg_stat_from_framework( frame->inherits, source );
 }
 
 inline void set_softcap( STAT_FRAMEWORK *fstat, int value )

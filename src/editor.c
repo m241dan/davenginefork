@@ -194,10 +194,11 @@ int editor_eFramework_prompt( D_SOCKET *dsock, bool commands )
 
 const char *return_framework_strings( ENTITY_FRAMEWORK *frame, const char *border, int width )
 {
+   STAT_FRAMEWORK *fstat;
    static char buf[MAX_BUFFER];
    char tempstring[MAX_BUFFER];
    int space_after_border;
-
+   int source = 0;
 
    memset( &buf[0], 0, sizeof( buf ) );
    space_after_border = width - ( strlen( border ) * 2 );
@@ -234,6 +235,16 @@ const char *return_framework_strings( ENTITY_FRAMEWORK *frame, const char *borde
       border );
 
    strcat( buf, tempstring );
+
+
+   if( ( fstat = get_primary_dmg_stat_from_framework( frame, &source ) ) != NULL )
+   {
+      mud_printf( tempstring, "%s%s%s\r\n", border,
+         fit_string_to_space(
+         quick_format( " Primary Dmg Stat : %s%s", fstat->name, source == 1 ? "( inherited )" : "" ),
+         space_after_border ),
+         border );
+   }
 
    buf[strlen( buf )] = '\0';
    return buf;

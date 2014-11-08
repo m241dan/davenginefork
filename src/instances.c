@@ -343,7 +343,7 @@ int new_eInstance( ENTITY_INSTANCE *eInstance )
          eInstance->tag->created_on, eInstance->tag->modified_by, eInstance->tag->modified_on,
          eInstance->contained_by ? eInstance->contained_by->tag->id : -1, eInstance->framework->tag->id,
          (int)eInstance->live, (int)eInstance->loaded,
-         eInstance->primary_dmg_received_stat ? eInstance->primary_dmg_received_stat->framework->tag->id : 0 ) )
+         eInstance->primary_dmg_received_stat ? eInstance->primary_dmg_received_stat->framework->tag->id : -1 ) )
       return RET_FAILED_OTHER;
 
    AttachIterator( &Iter, eInstance->specifications );
