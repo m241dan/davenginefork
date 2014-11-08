@@ -13,6 +13,8 @@ const char *const spec_table[] = {
    /* Scripting Specs */
    "onEntityEnter", "onEntityLeave", "onEntering", "onLeaving",
    "onGreetEntity", "onFarewellEntity",
+   /* Combat Specs */
+   "onMelee",
    /* Misc Specs */
    "MirrorExit", "Terrain",
 

@@ -27,3 +27,6 @@ end
 
 function onGive( entity, giver )
 end
+
+function onMelee( attacker, defender )
+end

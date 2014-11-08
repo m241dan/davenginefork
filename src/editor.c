@@ -244,6 +244,8 @@ const char *return_framework_strings( ENTITY_FRAMEWORK *frame, const char *borde
          quick_format( " Primary Dmg Stat : %s%s", fstat->name, source == 1 ? "( inherited )" : "" ),
          space_after_border ),
          border );
+
+      strcat( buf, tempstring );
    }
 
    buf[strlen( buf )] = '\0';

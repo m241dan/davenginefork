@@ -5,3 +5,6 @@ function onDodge( attacker, dodger )
   
    return dodgechance
 end
+
+function onMelee( attack, defender )
+end

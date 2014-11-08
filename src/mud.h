@@ -129,6 +129,8 @@ typedef enum
    /* Scripting Specs */
    SPEC_ONENTER, SPEC_ONLEAVE, SPEC_ONENTERING, SPEC_ONLEAVING,
    SPEC_ONGREET, SPEC_ONFAREWELL,
+   /* Combat Specs */
+   SPEC_ONMELEE,
    /* Misc Specs */
    SPEC_MIRROREXIT, SPEC_TERRAIN,
 
