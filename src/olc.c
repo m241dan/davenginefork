@@ -452,7 +452,7 @@ int olc_prompt( D_SOCKET *dsock, bool commands )
          }
 
          if( frame )
-            text_to_olc( olc, "|%s|", fit_string_to_space( quick_format( " %-7d: %s", frame->tag->id, frame->name ), ( space_after_pipes - 1 ) / 2 ) );
+            text_to_olc( olc, "|%s|", fit_string_to_space( quick_format( " %-7d: %s", frame->tag->id, chase_name( frame ) ), ( space_after_pipes - 1 ) / 2 ) );
          else
             text_to_olc( olc, "|%s|", print_header( " ", " ", ( space_after_pipes - 1 ) / 2 ) );
 
