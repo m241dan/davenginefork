@@ -713,7 +713,7 @@ void eFramework_setPrimaryDmg( void *passed, char *arg )
       return;
    }
    set_primary_dmg_stat_framework( frame, fstat );
-   text_to_olc( olc, "You set the Primary Damage Stat to %s.\r\n", fstat->name );
+   text_to_olc( olc, "You set the Primary Damage Stat to %s.\r\n", frame->f_primary_dmg_received_stat->name );
    return;
 }
 
