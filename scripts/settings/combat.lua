@@ -6,5 +6,8 @@ function onDodge( attacker, dodger )
    return dodgechance
 end
 
-function onMelee( attack, defender )
+function onMeleeAttack( attacker ) -- calculates the amount of melee damage the attacker does --
+end
+
+function onMeleeDefend( defender, damage ) -- calculates the amount of melee damage the defender receives based on the damage object passed --
 end

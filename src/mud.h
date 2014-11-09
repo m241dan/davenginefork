@@ -366,6 +366,7 @@ typedef struct  target_data    TARGET_DATA;
 typedef struct  entity_variable EVAR;
 typedef struct  stat_framework  STAT_FRAMEWORK;
 typedef struct  stat_instance   STAT_INSTANCE;
+typedef struct  damage_data     DAMAGE;
 
 /* the actual structures */
 struct dSocket
@@ -445,6 +446,7 @@ typedef struct buffer_type
 #include "entity_stats.h"
 #include "pak.h"
 #include "combat.h"
+#include "lua_damage.h"
 
 /******************************
  * End of new structures      *
