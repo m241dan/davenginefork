@@ -33,6 +33,7 @@ LLIST    * active_frameworks = NULL;
 LLIST    * eInstances_list = NULL;
 LLIST    * global_variables = NULL;
 LLIST    * stat_frameworks = NULL;
+LLIST    * damage_queue = NULL;
 
 /* server settings */
 int        MUDPORT = 0;
@@ -87,6 +88,7 @@ int main(int argc, char **argv)
    eInstances_list = AllocList();
    global_variables = AllocList();
    stat_frameworks = AllocList();
+   damage_queue = AllocList();
 
    builder_count = 0;
 
@@ -112,6 +114,9 @@ int main(int argc, char **argv)
    lua_pop( lua_handle, -1 );
 
    luaL_requiref( lua_handle, "Specification", luaopen_SpecificationLib, 1 );
+   lua_pop( lua_handle, -1 );
+
+   luaL_requiref( lua_handle, "Damage", luaopen_DamageLib, 1 );
    lua_pop( lua_handle, -1 );
 
    luaL_requiref( lua_handle, "mud", luaopen_mud, 1 );

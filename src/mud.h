@@ -307,6 +307,37 @@ do                                                                      \
    }                                                                    \
 } while(0)
 
+#define DAVLUACM_DAMAGE_NIL( dmg, L )					\
+do									\
+{									\
+   if( ( (dmg) = *(DAMAGE **)luaL_checkudata( (L), 1, "Damage.meta" ) ) == NULL ) \
+   {									\
+      bug( "%s: bad meta table.", __FUNCTION__ );			\
+      lua_pushnil( (L) );						\
+      return 1;								\
+   }									\
+} while(0)
+
+#define DAVLUACM_DAMAGE_BOOL( dmg, L )                                  \
+do                                                                      \
+{                                                                       \
+   if( ( (dmg) = *(DAMAGE **)luaL_checkudata( (L), 1, "Damage.meta" ) ) == NULL ) \
+   {                                                                    \
+      bug( "%s: bad meta table.", __FUNCTION__ );                       \
+      lua_pushboolean( (L), 0 );                                        \
+      return 1;                                                         \
+   }                                                                    \
+} while(0)
+
+#define DAVLUACM_DAMAGE_NONE( dmg, L )                                  \
+do                                                                      \
+{                                                                       \
+   if( ( (dmg) = *(DAMAGE **)luaL_checkudata( (L), 1, "Damage.meta" ) ) == NULL ) \
+   {                                                                    \
+      bug( "%s: bad meta table.", __FUNCTION__ );                       \
+      return 0;                                                         \
+   }                                                                    \
+} while(0)
 
 #define UMIN(a, b)		((a) < (b) ? (a) : (b))
 #define UMAX(a, b)              ((a) < (b) ? (b) : (a))

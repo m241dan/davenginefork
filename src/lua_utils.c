@@ -382,6 +382,32 @@ void push_specification( SPECIFICATION *spec, lua_State *L )
    return;
 }
 
+void push_damage( DAMAGE *dmg, lua_State *L )
+{
+   DAMAGE **box;
+
+   if( !dmg )
+   {
+      bug( "%s: trying to push a NULL dmg.", __FUNCTION__ );
+      lua_pushnil( L );
+      return;
+   }
+
+   box = (DAMAGE **)lua_newuserdata( L, sizeof( DAMAGE * ) );
+   luaL_getmetatable( L, "Damage.meta" );
+   if( lua_isnil( L, -1 ) )
+   {
+      bug( "%s: Damage.meta is missing.", __FUNCTION__ );
+      lua_pop( L, -1 );
+      lua_pop( L, -1 );
+      lua_pushnil( L );
+      return;
+   }
+   lua_setmetatable( L, -2 );
+   *box = dmg;
+   return;
+}
+
 int lua_bug( lua_State *L )
 {
    switch( lua_type( L, -1 ) )

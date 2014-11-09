@@ -15,6 +15,8 @@ ENTITY_INSTANCE *init_eInstance( void )
    eInstance->stats = AllocList();
    eInstance->evars = AllocList();
    eInstance->events = AllocList();
+   eInstance->damages_sent = AllocList();
+   eInstance->damages_received = AllocList();
    for( x = 0; x < MAX_QUICK_SORT; x++ )
      eInstance->contents_sorted[x] = AllocList();
    eInstance->specifications = AllocList();
@@ -77,6 +79,9 @@ int free_eInstance( ENTITY_INSTANCE *eInstance )
 
    for( x = 0; x < MAX_INSTANCE_EVENT; x++ )
       strip_event_instance( eInstance, x );
+
+   free_damage_list( eInstance->damages_sent );
+   free_damage_list( eInstance->damages_received );
 
    FreeList( eInstance->events );
 
