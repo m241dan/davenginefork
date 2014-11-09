@@ -1,9 +1,13 @@
-function onDodge( attacker, dodger )
-   local dodgechance = mud.getGlobal( "BonusDodge" )
+function dodgeChance( attacker, dodger )
+   return 0
+end
 
-   dodgechance = dodgechance + dodger:getStatValue( "dodge" )
-  
-   return dodgechance
+function parryChance( attacker, parryr )
+   return 0
+end
+
+function missChance( attacker, victim )
+   return 0
 end
 
 function onMeleeAttack( attacker, damage ) -- design the damage object to send to the defender --

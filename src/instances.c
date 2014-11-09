@@ -291,36 +291,6 @@ void full_load_instance( ENTITY_INSTANCE *instance )
    return;
 }
 
-void set_to_loaded( ENTITY_INSTANCE *instance )
-{
-   instance->loaded = TRUE;
-   if( !quick_query( "UPDATE `entity_instances` SET loaded=1 WHERE %s=%d;", tag_table_whereID[ENTITY_INSTANCE_IDS], instance->tag->id ) )
-      bug( "%s: could not set entity to loaded: ID %d", __FUNCTION__, instance->tag->id );
-   return;
-}
-
-void instance_toggle_live( ENTITY_INSTANCE *instance )
-{
-   if( instance->live )
-      instance->live = FALSE;
-   else
-      instance->live = TRUE;
-
-   if( !strcmp( instance->tag->created_by, "null" ) )
-      return;
-   quick_query( "UPDATE `entity_instances` SET live=%d WHERE %s=%d;", (int)instance->live, tag_table_whereID[ENTITY_INSTANCE_IDS], instance->tag->id );
-   return;
-}
-
-void set_instance_level( ENTITY_INSTANCE *instance, int level )
-{
-   instance->level = level;
-   if( !strcmp( instance->tag->created_by, "null" ) )
-      return;
-   quick_query( "UPDATE `entity_instances` SET level=%d WHERE %s=%d;", instance->level, tag_table_whereID[ENTITY_INSTANCE_IDS], instance->tag->id );
-   return;
-}
-
 int new_eInstance( ENTITY_INSTANCE *eInstance )
 {
    STAT_INSTANCE *stat;
@@ -1332,6 +1302,8 @@ bool should_move_create( ENTITY_INSTANCE *entity, char *arg )
    return TRUE;
 }
 
+/* getters */
+
 const char *instance_name( ENTITY_INSTANCE *instance )
 {
    return instance->framework ? chase_name( instance->framework ) : "null";
@@ -1352,6 +1324,51 @@ const char *instance_description( ENTITY_INSTANCE *instance )
    return instance->framework ? chase_description( instance->framework ) : "null";
 }
 
+/* setters */
+
+void do_damage( ENTITY_INSTANCE *entity, int amount )
+{
+   STAT_INSTANCE *stat = entity->primary_dmg_received_stat;
+
+   if( !stat )
+   {
+      bug( "%s: cannot do damage to %s, no primary dmg stat.", __FUNCTION__, instance_name( entity ) );
+      return;
+   }
+
+   set_mod_stat( stat, stat->mod_stat - amount );
+   return;
+}
+
+void instance_toggle_live( ENTITY_INSTANCE *instance )
+{
+   if( instance->live )
+      instance->live = FALSE;
+   else
+      instance->live = TRUE;
+
+   if( !strcmp( instance->tag->created_by, "null" ) )
+      return;
+   quick_query( "UPDATE `entity_instances` SET live=%d WHERE %s=%d;", (int)instance->live, tag_table_whereID[ENTITY_INSTANCE_IDS], instance->tag->id );
+   return;
+}
+
+void set_instance_level( ENTITY_INSTANCE *instance, int level )
+{
+   instance->level = level;
+   if( !strcmp( instance->tag->created_by, "null" ) )
+      return;
+   quick_query( "UPDATE `entity_instances` SET level=%d WHERE %s=%d;", instance->level, tag_table_whereID[ENTITY_INSTANCE_IDS], instance->tag->id );
+   return;
+}
+
+void set_to_loaded( ENTITY_INSTANCE *instance )
+{
+   instance->loaded = TRUE;
+   if( !quick_query( "UPDATE `entity_instances` SET loaded=1 WHERE %s=%d;", tag_table_whereID[ENTITY_INSTANCE_IDS], instance->tag->id ) )
+      bug( "%s: could not set entity to loaded: ID %d", __FUNCTION__, instance->tag->id );
+   return;
+}
 
 
 int text_to_entity( ENTITY_INSTANCE *entity, const char *fmt, ... )

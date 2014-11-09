@@ -49,6 +49,7 @@ const char *WIKI_NAME = NULL;
 bool AUTOMELEE = FALSE;
 bool DODGE_ON = FALSE;
 bool PARRY_ON = FALSE;
+bool MISS_ON = FALSE;
 
 MYSQL    * sql_handle = NULL;
 MYSQL    * help_handle = NULL;

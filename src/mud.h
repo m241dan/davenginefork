@@ -130,7 +130,8 @@ typedef enum
    SPEC_ONENTER, SPEC_ONLEAVE, SPEC_ONENTERING, SPEC_ONLEAVING,
    SPEC_ONGREET, SPEC_ONFAREWELL,
    /* Combat Specs */
-   SPEC_ONMELEE,
+   SPEC_DODGECHANCE, SPEC_PARRYCHANCE, SPEC_MISSCHANCE,
+   SPEC_ONMELEEATTACK, SPEC_ONMELEEDEFEND,
    /* Misc Specs */
    SPEC_MIRROREXIT, SPEC_TERRAIN,
 
@@ -520,6 +521,7 @@ extern const char *WIKI_NAME;
 extern bool AUTOMELEE;
 extern bool DODGE_ON;
 extern bool PARRY_ON;
+extern bool MISS_ON;
 
 /***************************
  * End of Global Variables *

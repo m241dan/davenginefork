@@ -52,10 +52,6 @@ ENTITY_INSTANCE *full_load_eFramework( ENTITY_FRAMEWORK *frame );
 void full_load_workspace( WORKSPACE *wSpace );
 void full_load_project( PROJECT *project );
 void full_load_instance( ENTITY_INSTANCE *instance );
-void set_to_loaded( ENTITY_INSTANCE *instance );
-
-void instance_toggle_live( ENTITY_INSTANCE *instance );
-void set_instance_level( ENTITY_INSTANCE *instance, int level );
 
 int new_eInstance( ENTITY_INSTANCE *eInstance );
 void db_load_eInstance( ENTITY_INSTANCE *eInstance, MYSQL_ROW *row );
@@ -104,10 +100,17 @@ void move_create( ENTITY_INSTANCE *entity, ENTITY_FRAMEWORK *exit_frame, char *a
 bool should_move_create( ENTITY_INSTANCE *entity, char *arg );
 
 
+/* getters */
 const char *instance_name( ENTITY_INSTANCE *instance );
 const char *instance_short_descr( ENTITY_INSTANCE *instance );
 const char *instance_long_descr( ENTITY_INSTANCE *instance );
 const char *instance_description( ENTITY_INSTANCE *instance );
+
+/* setters */
+void do_damage( ENTITY_INSTANCE *entity, int amount );
+void instance_toggle_live( ENTITY_INSTANCE *instance );
+void set_instance_level( ENTITY_INSTANCE *instance, int level );
+void set_to_loaded( ENTITY_INSTANCE *instance );
 
 int text_to_entity( ENTITY_INSTANCE *entity, const char *fmt, ... );
 void text_around_entity( ENTITY_INSTANCE *perspective, int num_around, const char *fmt, ... );

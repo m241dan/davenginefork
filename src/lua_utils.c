@@ -283,6 +283,8 @@ void lua_combat_settings( void )
    DODGE_ON = lua_toboolean( lua_handle, -1 );
    lua_getglobal( lua_handle, "parry_on" );
    PARRY_ON = lua_toboolean( lua_handle, -1 );
+   lua_getglobal( lua_handle, "miss_on" );
+   MISS_ON = lua_toboolean( lua_handle, -1 );
 
    lua_settop( lua_handle, top );
 }

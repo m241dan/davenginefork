@@ -340,7 +340,7 @@ const char *return_framework_specs_and_stats( ENTITY_FRAMEWORK *frame, const cha
       if( x < MAX_SPEC )
         while( ( spec = frame_has_spec_detailed_by_type( frame, x++, &spec_from ) ) == NULL && x < MAX_SPEC );
       if( y < MAX_STAT )
-         while( ( fstat = get_stat_from_framework_by_id( frame, y++, &stat_from ) ) == NULL && y < MAX_STAT );
+         while( ( fstat = get_stat_from_framework_by_id( frame, y++, &stat_from ) ) == NULL && y < MAX_STAT && fstat != frame->f_primary_dmg_received_stat );
 
       if( !spec && !fstat )
          break;
@@ -1101,6 +1101,13 @@ int editor_instance_prompt( D_SOCKET *dsock, bool commands )
    text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " This instance is contained by %s.", instance->contained_by ? instance_short_descr( instance->contained_by ) : "The Ether" ), space_after_border ), border );
    if( SizeOfList( instance->contents ) > 0 )
       text_to_olc( olc, "%s", return_instance_contents_string( instance, border, dsock->account->pagewidth ) );
+   if( instance->primary_dmg_received_stat )
+   {
+      text_to_olc( olc, "%s%s%s\r\n", border, print_bar( "-", space_after_border ), border );
+      text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " Primary Damage: %s %d/%d",
+         instance->primary_dmg_received_stat->framework->name, instance->primary_dmg_received_stat->perm_stat,
+         instance->primary_dmg_received_stat->mod_stat ), space_after_border ), border );
+   }
    text_to_olc( olc, "%s", return_instance_spec_and_stats( instance, border, dsock->account->pagewidth ) );
 
    bprintf( buf, "%s%s%s\r\n", border, print_bar( "-", space_after_border ), border ) ;

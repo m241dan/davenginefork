@@ -11,7 +11,6 @@ DAMAGE *init_damage( void )
    dmg->attacker = NULL;
    dmg->victim = NULL;
    dmg->dmg_src = NULL;
-   dmg->type = DMG_UNKNOWN;
    dmg->amount = 0;
    dmg->duration = -1;
    dmg->frequency = -1;
@@ -31,35 +30,142 @@ void free_damage( DAMAGE *dmg )
 
 
 /* actions */
+void prep_melee( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim )
+{
+   SPECIFICATION *spec;
+   DAMAGE *dmg;
+   const char *path;
+   int top = lua_gettop( lua_handle );
+
+   if( ( spec = has_spec( attacker, "onMeleeAttack" ) ) != NULL && spec->value > 0 )
+      path = get_script_path_from_spec( spec );
+   else
+      path = "../scripts/settings/combat.lua";
+
+   prep_stack( path, "onMeleeAttack" );
+   push_instance( attacker, lua_handle );
+
+   dmg = init_damage();
+   dmg->attacker = attacker;
+   dmg->victim = victim;
+
+   /* this will be turned into a method later that will check for wielded weapons */
+   dmg->dmg_src = attacker;
+   dmg->type = DMG_MELEE;
+   dmg->duration = 1;
+   dmg->frequency = 1;
+   dmg->pcounter = 0;
+   /* end later method */
+
+   push_damage( dmg, lua_handle );
+   if( !lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) )
+   {
+      bug( "%s: failed to call onMeleeAttack script with path %s.", __FUNCTION__, path );
+      lua_settop( lua_handle, top );
+      return;
+   }
+   lua_settop( lua_handle, top );
+   send_damage( dmg );
+   return;
+}
+
 ch_ret melee_attack( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim )
 {
+   if( DODGE_ON && does_check( attacker, victim, "dodgeChance" ) )
+      return HIT_DODGED;
+
+   if( PARRY_ON && does_check( attacker, victim, "parryChance" ) )
+      return HIT_PARRIED;
+
+   if( MISS_ON && does_check( attacker, victim, "missChance" ) )
+      return HIT_MISSED;
+
    return HIT_SUCCESS;
 }
 
 bool send_damage( DAMAGE *dmg )
 {
-   return FALSE;
+   add_damage( dmg );
+   return TRUE;
 }
 
 bool receive_damage( DAMAGE *dmg )
 {
+   ch_ret status;
+   int damage_done;
+
+   switch( dmg->type )
+   {
+      default: return FALSE;
+      case DMG_MELEE:
+         status = melee_attack( dmg->attacker, dmg->victim );
+         break;
+   }
+   if( status == HIT_SUCCESS )
+   {
+      int top = lua_gettop( lua_handle );
+      
+   }
+
    return FALSE;
 }
 
 
 /* checkers */
-bool dodge_dodge( ENTITY_INSTANCE *attack, ENTITY_INSTANCE *victim )
+bool does_check( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim, const char *does )
 {
-   return FALSE;
-}
+   SPECIFICATION *spec;
+   const char *path;
+   int chance, top = lua_gettop( lua_handle );
 
-bool does_parry( ENTITY_INSTANCE *attack, ENTITY_INSTANCE *victim )
-{
+   if( ( spec = has_spec( victim, does ) ) != NULL && spec->value > 0 )
+      path = get_script_path_from_spec( spec );
+   else
+      path = "../scripts/settings/combat.lua";
+
+   prep_stack( path, does );
+   push_instance( attacker, lua_handle );
+   push_instance( victim, lua_handle );
+   if( !lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) )
+   {
+      bug( "%s: failed to call does_check script %s path: %s", __FUNCTION__, does, path );
+      lua_settop( lua_handle, top );
+      return FALSE;
+   }
+
+   if( lua_type( lua_handle, -1 ) != LUA_TNUMBER )
+   {
+      bug( "%s: bad value returned by lua.", __FUNCTION__ );
+      lua_settop( lua_handle, top );
+      return FALSE;
+   }
+   chance = lua_tonumber( lua_handle, -1 );
+   if( number_percent() < chance )
+      return TRUE;
    return FALSE;
 }
 
 /* monitor */
 void damage_monitor( void )
+{
+   DAMAGE *dmg;
+   ITERATOR Iter;
+
+   AttachIterator( &Iter, damage_queue );
+   while( ( dmg = (DAMAGE *)NextInList( &Iter ) ) != NULL )
+   {
+      if( ++dmg->pcounter == dmg->frequency )
+      {
+         receive_damage( dmg );
+         dmg->pcounter = 0;
+      }
+      if( --dmg->duration <= 0 )
+         free_damage( dmg );
+   }
+   return;
+}
+
+void combat_message( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim, DAMAGE *dmg, ch_ret status )
 {
    return;
 }
