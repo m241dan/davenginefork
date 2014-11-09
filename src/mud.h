@@ -472,12 +472,21 @@ extern  char        *   motd;             /* the MOTD help file                 
 extern  int             control;          /* boot control socket thingy         */
 extern  time_t          current_time;     /* let's cut down on calls to time()  */
 
+
+/* server settings */
+extern int  MUDPORT;
+
+/* database settings */
 extern const char *DB_NAME;
 extern const char *DB_ADDR;
 extern const char *DB_LOGIN;
 extern const char *DB_PASSWORD;
 extern const char *WIKI_NAME;
-extern int  MUDPORT;
+
+/* combat settings */
+extern bool AUTOMELEE;
+extern bool DODGE_ON;
+extern bool PARRY_ON;
 
 /***************************
  * End of Global Variables *

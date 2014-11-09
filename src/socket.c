@@ -34,12 +34,21 @@ LLIST    * eInstances_list = NULL;
 LLIST    * global_variables = NULL;
 LLIST    * stat_frameworks = NULL;
 
+/* server settings */
+int        MUDPORT = 0;
+
+/* database settings */
 const char *DB_NAME = NULL;
 const char *DB_ADDR = NULL;
 const char *DB_LOGIN = NULL;
 const char *DB_PASSWORD = NULL;
 const char *WIKI_NAME = NULL;
-int        MUDPORT = 0;
+
+/* combat settings */
+bool AUTOMELEE = FALSE;
+bool DODGE_ON = FALSE;
+bool PARRY_ON = FALSE;
+
 MYSQL    * sql_handle = NULL;
 MYSQL    * help_handle = NULL;
 lua_State *lua_handle  = NULL;
@@ -108,7 +117,10 @@ int main(int argc, char **argv)
    luaL_requiref( lua_handle, "mud", luaopen_mud, 1 );
    lua_pop( lua_handle, -1 );
 
-   lua_serversettings( ); /* loading the sql variables */
+   load_server_script();
+   lua_server_settings(); /* loading server stuff */
+   lua_database_settings(); /* loading the sql variables */
+   lua_combat_settings(); /* loading combat settings */
 
    log_string( "Connecting to Database" );
 

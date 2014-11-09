@@ -236,17 +236,29 @@ inline const char *get_stat_instance_script_path( STAT_INSTANCE *stat )
    return quick_format( "../scripts/stats/%d.lua", stat->framework->tag->id );
 }
 
-void lua_serversettings( void )
+inline void load_server_script( void )
 {
-   int top = lua_gettop( lua_handle );
-
    if( luaL_loadfile( lua_handle, "../scripts/settings/server.lua" ) || lua_pcall( lua_handle, 0, 0, 0 ) )
    {
       bug( "%s: could not load sql variables.", __FUNCTION__ );
       return;
    }
+}
+
+void lua_server_settings( void )
+{
+   int top = lua_gettop( lua_handle );
+
    lua_getglobal( lua_handle, "mudport" );
    MUDPORT = lua_tonumber( lua_handle, -1 );
+
+   lua_settop( lua_handle, top );
+}
+
+void lua_database_settings( void )
+{
+   int top = lua_gettop( lua_handle );
+
    lua_getglobal( lua_handle, "db_name" );
    DB_NAME = strdup( lua_tostring( lua_handle, -1 ) );
    lua_getglobal( lua_handle, "db_addr" );
@@ -257,6 +269,20 @@ void lua_serversettings( void )
    DB_PASSWORD = strdup( lua_tostring( lua_handle, -1 ) );
    lua_getglobal( lua_handle, "wiki_name" );
    WIKI_NAME = strdup( lua_tostring( lua_handle, -1 ) );
+
+   lua_settop( lua_handle, top );
+}
+
+void lua_combat_settings( void )
+{
+   int top = lua_gettop( lua_handle );
+
+   lua_getglobal( lua_handle, "automelee" );
+   AUTOMELEE = lua_toboolean( lua_handle, -1 );
+   lua_getglobal( lua_handle, "dodge_on" );
+   DODGE_ON = lua_toboolean( lua_handle, -1 );
+   lua_getglobal( lua_handle, "parry_on" );
+   PARRY_ON = lua_toboolean( lua_handle, -1 );
 
    lua_settop( lua_handle, top );
 }
