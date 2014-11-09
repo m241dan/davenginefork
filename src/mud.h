@@ -444,6 +444,8 @@ typedef struct buffer_type
 #include "entity_variables.h"
 #include "entity_stats.h"
 #include "pak.h"
+#include "combat.h"
+
 /******************************
  * End of new structures      *
  ******************************/
