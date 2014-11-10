@@ -94,6 +94,7 @@ bool receive_damage( DAMAGE *dmg )
    ch_ret status;
    int damage_done;
 
+   /* check to see if the attack is successful */
    switch( dmg->type )
    {
       default: return FALSE;
@@ -101,13 +102,46 @@ bool receive_damage( DAMAGE *dmg )
          status = melee_attack( dmg->attacker, dmg->victim );
          break;
    }
+
+   /* if successful, get the actual damage done */
    if( status == HIT_SUCCESS )
    {
+      SPECIFICATION *spec;
+      const char *path;
       int top = lua_gettop( lua_handle );
-      
-   }
 
-   return FALSE;
+      if( ( spec = has_spec( dmg->victim, "onReceiveDamage" ) ) != NULL && spec->value > 0 )
+         path = get_script_path_from_spec( spec );
+      else
+         path = "../scripts/settings/combat.lua";
+
+      prep_stack( path, "onReceiveDamage" );
+      push_instance( dmg->victim, lua_handle );
+      push_damage( dmg, lua_handle );
+      if( !lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) )
+      {
+         bug( "%s: failed to call the onReceiveDamage script path: %s", __FUNCTION__, path );
+         damage_done = 0;
+      }
+      else
+      {
+         if( lua_type( lua_handle, -1 ) != LUA_TNUMBER )
+            bug( "%s: onReceiveDamage script did not pass a number back.", __FUNCTION__ );
+         else
+            damage_done = lua_tonumber( lua_handle, -1 );
+      }
+      lua_settop( lua_handle, top );
+   }
+   /* if damage_done is not 0, apply it */
+   if( damage_done )
+      do_damage( dmg->victim, damage_done );
+   /* this is just a test message */
+   if( !get_primary_current( dmg->victim ) )
+      text_to_entity( dmg->attacker, "You killed %s.\r\n", instance_short_descr( dmg->victim ) );
+
+   /* actual combat messaging */
+   combat_message( dmg->attacker, dmg->victim, dmg, status );
+   return TRUE;
 }
 
 

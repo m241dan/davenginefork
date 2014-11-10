@@ -66,6 +66,8 @@ extern inline int  get_stat_total( STAT_INSTANCE *stat );
 extern inline int  get_stat_effective_perm( STAT_INSTANCE *stat );
 extern inline int  get_stat_effective_mod( STAT_INSTANCE *stat );
 extern inline int  get_stat_value( STAT_INSTANCE *stat );
+extern inline int  get_primary_current( ENTITY_INSTANCE *entity );
+extern inline int  get_primary_max( ENTITY_INSTANCE *entity );
 extern inline void set_perm_stat( STAT_INSTANCE *stat, int value );
 extern inline void add_perm_stat( STAT_INSTANCE *stat, int value );
 extern inline void set_mod_stat( STAT_INSTANCE *stat, int value );

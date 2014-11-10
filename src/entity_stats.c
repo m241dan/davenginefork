@@ -455,6 +455,16 @@ inline int  get_stat_value( STAT_INSTANCE *stat )
    return urange( stat->framework->hardfloor, ( perm + stat->mod_stat ), stat->framework->hardcap );
 }
 
+inline int  get_primary_current( ENTITY_INSTANCE *entity )
+{
+   return entity->primary_dmg_received_stat ? entity->primary_dmg_received_stat->mod_stat : 0;
+}
+
+inline int  get_primary_max( ENTITY_INSTANCE *entity )
+{
+   return entity->primary_dmg_received_stat ? entity->primary_dmg_received_stat->perm_stat : 0;
+}
+
 inline void set_perm_stat( STAT_INSTANCE *stat, int value )
 {
    lua_set_stat( stat, urange( stat->framework->softfloor, value, stat->framework->softcap ), get_stat_effective_perm( stat ) );
