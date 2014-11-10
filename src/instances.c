@@ -250,6 +250,12 @@ void full_load_instance( ENTITY_INSTANCE *instance )
          stat_instantiate( instance, fstat );
    DetachIterator( &Iter );
 
+   if( instance->framework->f_primary_dmg_received_stat )
+   {
+      instance->primary_dmg_received_stat = get_stat_from_instance_by_id( instance, instance->framework->f_primary_dmg_received_stat->tag->id );
+      set_mod_stat( instance->primary_dmg_received_stat, instance->primary_dmg_received_stat->perm_stat );
+   }
+
    if( !instance->loaded )
    {
       set_to_loaded( instance );

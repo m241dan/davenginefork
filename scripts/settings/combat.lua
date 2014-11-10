@@ -1,4 +1,10 @@
-require( "../scripts/settings/combat_vars" )
+-- status vars for combat messaging --
+-- this needs a module or something but I can't figure out how to require it... as ridiculous as that sonuds
+HIT_UNKNOWN = -1;
+HIT_SUCCESS = 0;
+HIT_DODGED  = 1;
+HIT_PARRIED = 2;
+HIT_MISSED  = 3;
 
 function dodgeChance( attacker, dodger )
    return 0
@@ -38,9 +44,9 @@ function combatMessage( attacker, defender, damage, status )
       atk_msg = string.format( "You attack %s doing %d damage.", defender:getShort(), damage:getAmount() )
       def_msg = string.format( "%s attacks you doing %d damage.", attacker:getShort(), damage:getAmount() )
       room_msg = string.format( "%s attacks %s.", attackere:getShort(), defender:getShort() )
-   elseif( status == HITDODGED ) then
-   elseif( status == HITPARRIED ) then
-   elseif( status = HITMISSED ) then
+   elseif( status == HIT_DODGED ) then
+   elseif( status == HIT_PARRIED ) then
+   elseif( status == HIT_MISSED ) then
    end
    return atk_msg, def_msg, room_msg
 end

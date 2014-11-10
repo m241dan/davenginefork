@@ -340,7 +340,7 @@ const char *return_framework_specs_and_stats( ENTITY_FRAMEWORK *frame, const cha
       if( x < MAX_SPEC )
         while( ( spec = frame_has_spec_detailed_by_type( frame, x++, &spec_from ) ) == NULL && x < MAX_SPEC );
       if( y < MAX_STAT )
-         while( ( fstat = get_stat_from_framework_by_id( frame, y++, &stat_from ) ) == NULL && y < MAX_STAT && fstat != frame->f_primary_dmg_received_stat );
+         while( ( ( fstat = get_stat_from_framework_by_id( frame, y++, &stat_from ) ) == NULL && y < MAX_STAT ) || fstat == frame->f_primary_dmg_received_stat );
 
       if( !spec && !fstat )
          break;
@@ -712,6 +712,12 @@ void eFramework_setPrimaryDmg( void *passed, char *arg )
       olc_short_prompt( olc );
       return;
    }
+   if( fstat == frame->f_primary_dmg_received_stat )
+   {
+      text_to_olc( olc, "Primary Damage Stat is already set to %s.\r\n", fstat->name );
+      return;
+   }
+
    set_primary_dmg_stat_framework( frame, fstat );
    text_to_olc( olc, "You set the Primary Damage Stat to %s.\r\n", frame->f_primary_dmg_received_stat->name );
    return;
@@ -1105,8 +1111,8 @@ int editor_instance_prompt( D_SOCKET *dsock, bool commands )
    {
       text_to_olc( olc, "%s%s%s\r\n", border, print_bar( "-", space_after_border ), border );
       text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " Primary Damage: %s %d/%d",
-         instance->primary_dmg_received_stat->framework->name, instance->primary_dmg_received_stat->perm_stat,
-         instance->primary_dmg_received_stat->mod_stat ), space_after_border ), border );
+         instance->primary_dmg_received_stat->framework->name, instance->primary_dmg_received_stat->mod_stat,
+         instance->primary_dmg_received_stat->perm_stat ), space_after_border ), border );
    }
    text_to_olc( olc, "%s", return_instance_spec_and_stats( instance, border, dsock->account->pagewidth ) );
 
@@ -1189,7 +1195,7 @@ const char *return_instance_spec_and_stats( ENTITY_INSTANCE *instance, const cha
       if( x < MAX_SPEC )
          while( ( spec = has_spec_detailed_by_type( instance, x++, &spec_from ) ) == NULL && x < MAX_SPEC );
       if( y < MAX_STAT )
-         while( ( stat = get_stat_from_instance_by_id( instance, y++ ) ) == NULL && y < MAX_SPEC );
+         while( ( ( stat = get_stat_from_instance_by_id( instance, y++ ) ) == NULL && y < MAX_SPEC ) || stat == instance->primary_dmg_received_stat );
 
       if( !spec && !stat )
          break;
@@ -1295,17 +1301,20 @@ void instance_autowrite( void *passed, char *arg )
    if( !f_script_exists( instance->framework ) )
    {
       text_to_olc( olc, "This instance's framework has no script generated.\r\n" );
+      olc_short_prompt( olc );
       return;
    }
 
    if( autowrite_init( instance ) )
    {
       text_to_olc( olc, "You write the init script for this instance's framework.\r\n" ) ;
+      olc_short_prompt( olc );
       return;
    }
    else
    {
       text_to_olc( olc, "Failed to write the init script for this instance's framework.\r\n" );
+      olc_short_prompt( olc );
       return;
    }
 }

@@ -758,6 +758,7 @@ inline void set_primary_dmg_stat_framework( ENTITY_FRAMEWORK *frame, STAT_FRAMEW
       add_stat_to_frame( fstat, frame );
    else if( source != 0 )
       add_stat_to_frame( fstat, frame );
+   quick_query( "UPDATE `entity_frameworks` SET primary_dmg=%d WHERE entityFrameworkID=%d;", fstat->tag->id, frame->tag->id );
 }
 
 FILE *open_f_script( ENTITY_FRAMEWORK *frame, const char *permissions )

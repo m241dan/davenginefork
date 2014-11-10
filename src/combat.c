@@ -59,7 +59,7 @@ void prep_melee( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim )
    /* end later method */
 
    push_damage( dmg, lua_handle );
-   if( !lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) )
+   if( lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) )
    {
       bug( "%s: failed to call onMeleeAttack script with path %s.", __FUNCTION__, path );
       lua_settop( lua_handle, top );
@@ -128,7 +128,7 @@ bool receive_damage( DAMAGE *dmg )
       prep_stack( path, "onReceiveDamage" );
       push_instance( dmg->victim, lua_handle );
       push_damage( dmg, lua_handle );
-      if( !lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) )
+      if( lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) )
       {
          bug( "%s: failed to call the onReceiveDamage script path: %s", __FUNCTION__, path );
          dmg->amount = 0;
@@ -165,7 +165,7 @@ bool does_check( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim, const char 
    prep_stack( path, does );
    push_instance( attacker, lua_handle );
    push_instance( victim, lua_handle );
-   if( !lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) )
+   if( lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) )
    {
       bug( "%s: failed to call does_check script %s path: %s", __FUNCTION__, does, path );
       lua_settop( lua_handle, top );
@@ -213,7 +213,9 @@ void combat_message( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim, DAMAGE 
    const char *path;
    char msg_attacker[MAX_BUFFER], msg_victim[MAX_BUFFER], msg_room[MAX_BUFFER];
    int top = lua_gettop( lua_handle );
+   int ret;
 
+   bug( "%s: top is at %d.", __FUNCTION__, top );
 
    if( ( spec = has_spec( attacker, "combatMessage" ) ) != NULL && spec->value > 0 )
       path = get_script_path_from_spec( spec );
@@ -225,9 +227,9 @@ void combat_message( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim, DAMAGE 
    push_instance( victim, lua_handle );
    push_damage( dmg, lua_handle );
    lua_pushnumber( lua_handle, (int)status );
-   if( !lua_pcall( lua_handle, 4, LUA_MULTRET, 0 ) )
+   if( ( ret = lua_pcall( lua_handle, 4, LUA_MULTRET, 0 ) ) )
    {
-      bug( "%s: could not get error messages for combatMessage at path: %s", __FUNCTION__, path );
+      bug( "%s: could not get messages for combatMessage at path: %s ret: %d", __FUNCTION__, path, ret );
       lua_settop( lua_handle, top );
       return;
    }
