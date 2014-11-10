@@ -452,12 +452,14 @@ int olc_prompt( D_SOCKET *dsock, bool commands )
          }
 
          if( frame )
-            text_to_olc( olc, "|%s|", fit_string_to_space( quick_format( " %-7d: %s", frame->tag->id, chase_name( frame ) ), ( space_after_pipes - 1 ) / 2 ) );
+            text_to_olc( olc, "|%s|", fit_string_to_space( quick_format( " %-7d%s: %s", frame->tag->id,
+               frame->inherits ? quick_format( "(f%d)", frame->inherits->tag->id ) : "",
+               chase_name( frame ) ), ( space_after_pipes - 1 ) / 2 ) );
          else
             text_to_olc( olc, "|%s|", print_header( " ", " ", ( space_after_pipes - 1 ) / 2 ) );
 
          if( instance )
-            text_to_olc( olc, " %s|\r\n", fit_string_to_space( quick_format( " %-7d: %s", instance->tag->id, instance_name( instance ) ), ( space_after_pipes - 1 ) / 2 ) );
+            text_to_olc( olc, " %s|\r\n", fit_string_to_space( quick_format( " %-7d(f%d): %s", instance->tag->id, instance->framework->tag->id, instance_name( instance ) ), ( space_after_pipes - 1 ) / 2 ) );
          else
             text_to_olc( olc, " %s|\r\n", print_header( " ", " ", ( space_after_pipes - 1 ) / 2 ) );
       }
@@ -605,7 +607,7 @@ int add_instance_to_workspace( ENTITY_INSTANCE *instance, WORKSPACE *wSpace )
 void rem_frame_from_workspace( ENTITY_FRAMEWORK *frame, WORKSPACE *wSpace )
 {
    DetachFromList( frame, wSpace->frameworks );
-   quick_query( "DELTE FROM `workspace_entries` WHERE entry='f%d' AND workspaceID=%d;", frame->tag->id, wSpace->tag->id );
+   quick_query( "DELETE FROM `workspace_entries` WHERE entry='f%d' AND workspaceID=%d;", frame->tag->id, wSpace->tag->id );
    return;
 }
 

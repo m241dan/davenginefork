@@ -43,6 +43,10 @@ end
 function onMeleeAttack( attacker, damage ) -- design the damage object to send to the defender --
 end
 
-function onMeleeDefend( defender, damage ) -- analyze the damage object sent to defender and return how much dmg it actually does --
+function onReceiveDamage( defender, damage ) -- analyze the damage object sent to defender and return how much dmg it actually does --
+end
+
+-- return order attacker -> defender -> room
+function combatMessage( attacker, defender, damage, status )
 end
 

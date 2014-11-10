@@ -92,7 +92,6 @@ bool send_damage( DAMAGE *dmg )
 bool receive_damage( DAMAGE *dmg )
 {
    ch_ret status;
-   int damage_done;
 
    /* check to see if the attack is successful */
    switch( dmg->type )
@@ -121,20 +120,20 @@ bool receive_damage( DAMAGE *dmg )
       if( !lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) )
       {
          bug( "%s: failed to call the onReceiveDamage script path: %s", __FUNCTION__, path );
-         damage_done = 0;
+         dmg->amount = 0;
       }
       else
       {
          if( lua_type( lua_handle, -1 ) != LUA_TNUMBER )
             bug( "%s: onReceiveDamage script did not pass a number back.", __FUNCTION__ );
          else
-            damage_done = lua_tonumber( lua_handle, -1 );
+            dmg->amount = lua_tonumber( lua_handle, -1 );
       }
       lua_settop( lua_handle, top );
    }
    /* if damage_done is not 0, apply it */
-   if( damage_done )
-      do_damage( dmg->victim, damage_done );
+   if( dmg->amount )
+      do_damage( dmg->victim, dmg->amount );
    /* this is just a test message */
    if( !get_primary_current( dmg->victim ) )
       text_to_entity( dmg->attacker, "You killed %s.\r\n", instance_short_descr( dmg->victim ) );
@@ -201,6 +200,43 @@ void damage_monitor( void )
 
 void combat_message( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim, DAMAGE *dmg, ch_ret status )
 {
+   SPECIFICATION *spec;
+   const char *path;
+   char msg_attacker[MAX_BUFFER], msg_victim[MAX_BUFFER], msg_room[MAX_BUFFER];
+   int top = lua_gettop( lua_handle );
+
+
+   if( ( spec = has_spec( attacker, "combatMessage" ) ) != NULL && spec->value > 0 )
+      path = get_script_path_from_spec( spec );
+   else
+      path = "../scripts/settings/combat.lua";
+
+   prep_stack( path, "combatMessage" );
+   push_instance( attacker, lua_handle );
+   push_instance( victim, lua_handle );
+   push_damage( dmg, lua_handle );
+   lua_pushnumber( lua_handle, (int)status );
+   if( !lua_pcall( lua_handle, 4, LUA_MULTRET, 0 ) )
+   {
+      bug( "%s: could not get error messages for combatMessage at path: %s", __FUNCTION__, path );
+      lua_settop( lua_handle, top );
+      return;
+   }
+
+   mud_printf( msg_attacker, "%s\r\n", lua_tostring( lua_handle, -3 ) );
+   mud_printf( msg_victim, "%s\r\n", lua_tostring( lua_handle, -2 ) );
+   mud_printf( msg_room, "%s\r\n", lua_tostring( lua_handle, -1 ) );
+   lua_settop( lua_handle, top );
+
+   text_to_entity( attacker, msg_attacker );
+   text_to_entity( victim, msg_victim );
+   if( attacker->contained_by == victim->contained_by )
+      text_around_entity( attacker->contained_by, 2, msg_room, attacker, victim );
+   else
+   {
+      text_around_entity( attacker->contained_by, 1, msg_room, attacker );
+      text_around_entity( victim->contained_by, 1, msg_room, victim );
+   }
    return;
 }
 

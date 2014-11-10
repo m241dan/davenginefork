@@ -476,6 +476,8 @@ bool live_frame( ENTITY_FRAMEWORK *frame )
       return FALSE;
    if( !frame->tag )
       return FALSE;
+   if( !frame->tag->created_by )
+      return FALSE;
    if( !strcmp( frame->tag->created_by, "null" ) )
       return FALSE;
 
