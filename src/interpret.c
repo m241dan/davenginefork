@@ -246,6 +246,7 @@ struct typCmd create_sFramework_commands[] = {
 };
 
 struct typCmd builder_commands[] = {
+   { "attack", mobile_attack, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
    { "show", entity_show, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
    { "target", entity_target, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
    { "olc", entity_olc, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },

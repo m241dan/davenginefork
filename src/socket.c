@@ -382,6 +382,8 @@ void GameLoop(int control)
 
     /* call the event queue */
     heartbeat();
+    /* call the damage queue */
+    damage_monitor();
 
     /*
      * Here we sleep out the rest of the pulse, thus forcing

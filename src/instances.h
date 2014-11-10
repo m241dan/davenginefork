@@ -107,10 +107,12 @@ const char *instance_long_descr( ENTITY_INSTANCE *instance );
 const char *instance_description( ENTITY_INSTANCE *instance );
 
 /* setters */
-void do_damage( ENTITY_INSTANCE *entity, int amount );
 void instance_toggle_live( ENTITY_INSTANCE *instance );
 void set_instance_level( ENTITY_INSTANCE *instance, int level );
 void set_to_loaded( ENTITY_INSTANCE *instance );
+
+/* actions */
+void do_damage( ENTITY_INSTANCE *entity, DAMAGE *dmg );
 
 int text_to_entity( ENTITY_INSTANCE *entity, const char *fmt, ... );
 void text_around_entity( ENTITY_INSTANCE *perspective, int num_around, const char *fmt, ... );
@@ -124,6 +126,7 @@ int show_ent_objects_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing )
 int show_ent_rooms_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing );
 int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *move_to );
 
+/* builders commands */
 void entity_goto( void *passed, char *arg );
 void entity_instance( void *passed, char *arg );
 void entity_look( void *passed, char *arg );
@@ -152,6 +155,8 @@ void entity_olc( void *passed, char *arg );
 void entity_target( void *passed, char *arg );
 void entity_show( void *passed, char *arg );
 
+/* mobile commands */
 void mobile_look( void *passed, char *arg );
 void mobile_inventory( void *passed, char *arg );
 void mobile_say( void *passed, char *arg );
+void mobile_attack( void *passed, char *arg );

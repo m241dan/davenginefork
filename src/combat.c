@@ -20,7 +20,8 @@ DAMAGE *init_damage( void )
 
 void free_damage( DAMAGE *dmg )
 {
-   rem_damage( dmg );
+   if( is_dmg_queued( dmg ) )
+      rem_damage( dmg );
    dmg->attacker = NULL;
    dmg->victim = NULL;
    dmg->dmg_src = NULL;
@@ -85,6 +86,16 @@ ch_ret melee_attack( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim )
 
 bool send_damage( DAMAGE *dmg )
 {
+   /* safeties */
+   if( !dmg->attacker->primary_dmg_received_stat && !dmg->attacker->builder )
+   {
+      bug( "%s: %s trying to do damage at the utility level but it cannot receive any in return.", __FUNCTION__, instance_name( dmg->attacker ) );
+   }
+   if( !dmg->victim->primary_dmg_received_stat )
+   {
+      bug( "%s: %s trying to do damage at the utility level to something that can't take damage.", __FUNCTION__, instance_name( dmg->attacker ) );
+      return FALSE;
+   }
    add_damage( dmg );
    return TRUE;
 }
@@ -122,18 +133,13 @@ bool receive_damage( DAMAGE *dmg )
          bug( "%s: failed to call the onReceiveDamage script path: %s", __FUNCTION__, path );
          dmg->amount = 0;
       }
-      else
-      {
-         if( lua_type( lua_handle, -1 ) != LUA_TNUMBER )
-            bug( "%s: onReceiveDamage script did not pass a number back.", __FUNCTION__ );
-         else
-            dmg->amount = lua_tonumber( lua_handle, -1 );
-      }
       lua_settop( lua_handle, top );
    }
+   else
+      dmg->amount = 0;
    /* if damage_done is not 0, apply it */
    if( dmg->amount )
-      do_damage( dmg->victim, dmg->amount );
+      do_damage( dmg->victim, dmg );
    /* this is just a test message */
    if( !get_primary_current( dmg->victim ) )
       text_to_entity( dmg->attacker, "You killed %s.\r\n", instance_short_descr( dmg->victim ) );
@@ -183,6 +189,9 @@ void damage_monitor( void )
 {
    DAMAGE *dmg;
    ITERATOR Iter;
+
+   if( SizeOfList( damage_queue ) <= 0 )
+      return;
 
    AttachIterator( &Iter, damage_queue );
    while( ( dmg = (DAMAGE *)NextInList( &Iter ) ) != NULL )

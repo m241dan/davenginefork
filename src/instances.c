@@ -1326,20 +1326,6 @@ const char *instance_description( ENTITY_INSTANCE *instance )
 
 /* setters */
 
-void do_damage( ENTITY_INSTANCE *entity, int amount )
-{
-   STAT_INSTANCE *stat = entity->primary_dmg_received_stat;
-
-   if( !stat )
-   {
-      bug( "%s: cannot do damage to %s, no primary dmg stat.", __FUNCTION__, instance_name( entity ) );
-      return;
-   }
-
-   set_mod_stat( stat, stat->mod_stat - amount );
-   return;
-}
-
 void instance_toggle_live( ENTITY_INSTANCE *instance )
 {
    if( instance->live )
@@ -1367,6 +1353,21 @@ void set_to_loaded( ENTITY_INSTANCE *instance )
    instance->loaded = TRUE;
    if( !quick_query( "UPDATE `entity_instances` SET loaded=1 WHERE %s=%d;", tag_table_whereID[ENTITY_INSTANCE_IDS], instance->tag->id ) )
       bug( "%s: could not set entity to loaded: ID %d", __FUNCTION__, instance->tag->id );
+   return;
+}
+
+/* actions */
+void do_damage( ENTITY_INSTANCE *entity, DAMAGE *dmg )
+{
+   STAT_INSTANCE *stat = entity->primary_dmg_received_stat;
+
+   if( !stat )
+   {
+      bug( "%s: cannot do damage to %s, no primary dmg stat.", __FUNCTION__, instance_name( entity ) );
+      return;
+   }
+
+   set_mod_stat( stat, stat->mod_stat - dmg->amount );
    return;
 }
 
@@ -1921,7 +1922,7 @@ void entity_drop( void *passed, char *arg )
 
    if( !arg || arg[0] == '\0' )
    {
-      if( NO_TARGET( entity ) || entity->target->type != TARGET_INSTANCE )
+      if( NO_TARGET( entity ) || TARGET_TYPE( entity ) != TARGET_INSTANCE )
       {
          text_to_entity( entity, "Drop what?\r\n" );
          return;
@@ -1973,7 +1974,7 @@ void entity_get( void *passed, char *arg )
 
    if( !arg || arg[0] == '\0' )
    {
-      if( NO_TARGET( entity ) || entity->target->type != TARGET_INSTANCE )
+      if( NO_TARGET( entity ) || TARGET_TYPE( entity ) != TARGET_INSTANCE )
       {
          text_to_entity( entity, "Get what?\r\n" );
          return;
@@ -2448,7 +2449,7 @@ void entity_grab( void *passed, char *arg )
 
    if( !arg || arg[0] == '\0' )
    {
-      if( !NO_TARGET( entity ) && ( entity->target->type == TARGET_INSTANCE || entity->target->type == TARGET_FRAMEWORK ) )
+      if( !NO_TARGET( entity ) && ( TARGET_TYPE( entity ) == TARGET_INSTANCE || TARGET_TYPE( entity ) == TARGET_FRAMEWORK ) )
       {
          char buf[MAX_BUFFER];
          strcpy( buf, quick_format( "%c%d", entity->target->type == TARGET_INSTANCE ? 'i' : 'f',
@@ -2643,3 +2644,41 @@ void mobile_say( void *passed, char *arg )
    return;
 }
 
+void mobile_attack( void *passed, char *arg )
+{
+   ENTITY_INSTANCE *mob = (ENTITY_INSTANCE *)passed;
+   ENTITY_INSTANCE *victim;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      if( NO_TARGET( mob ) || TARGET_TYPE( mob ) != TARGET_INSTANCE )
+      {
+         text_to_entity( mob, "Attack who?\r\n" );
+         return;
+      }
+      victim = (ENTITY_INSTANCE *)mob->target->target;
+      if( victim->contained_by != mob->contained_by )
+      {
+         text_to_entity( mob, "You aren't in the same room as your target.\r\n" );
+         return;
+      }
+   }
+   else if( ( victim = instance_list_has_by_name_regex( mob->contained_by->contents, arg ) ) == NULL )
+   {
+      text_to_entity( mob, "There is no %s here to attack.\r\n", arg );
+      return;
+   }
+
+   if( !victim->primary_dmg_received_stat )
+   {
+      text_to_entity( mob, "You cannot attack that.\r\n" );
+      return;
+   }
+   if( !mob->builder && !mob->primary_dmg_received_stat )
+   {
+      text_to_entity( mob, "You cannot attack.\r\n" );
+      return;
+   }
+   prep_melee( mob, victim );
+   return;
+}
