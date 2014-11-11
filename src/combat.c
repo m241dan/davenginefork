@@ -213,9 +213,6 @@ void combat_message( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim, DAMAGE 
    const char *path;
    char msg_attacker[MAX_BUFFER], msg_victim[MAX_BUFFER], msg_room[MAX_BUFFER];
    int top = lua_gettop( lua_handle );
-   int ret;
-
-   bug( "%s: top is at %d.", __FUNCTION__, top );
 
    if( ( spec = has_spec( attacker, "combatMessage" ) ) != NULL && spec->value > 0 )
       path = get_script_path_from_spec( spec );
@@ -227,9 +224,10 @@ void combat_message( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim, DAMAGE 
    push_instance( victim, lua_handle );
    push_damage( dmg, lua_handle );
    lua_pushnumber( lua_handle, (int)status );
-   if( ( ret = lua_pcall( lua_handle, 4, LUA_MULTRET, 0 ) ) )
+   if( lua_pcall( lua_handle, 4, LUA_MULTRET, 0 ) )
    {
-      bug( "%s: could not get messages for combatMessage at path: %s ret: %d", __FUNCTION__, path, ret );
+      bug( "%s: could not get messages for combatMessage at path: %s", __FUNCTION__, path );
+      bug( "%s: error: %s", __FUNCTION__, lua_tostring( lua_handle, -1 ) );
       lua_settop( lua_handle, top );
       return;
    }
