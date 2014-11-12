@@ -40,15 +40,13 @@ function missChance( attacker, victim )
    return 0
 end
 
--- design the damage object to send to the defender
--- deal with any attacker specific factors and set the amount
--- note that elemental damage and damage types will be handled by C
+-- design the duration/frequency parts of the damage object
 function onMeleeAttack( attacker, damage )
 end
 
 -- analyze the damage object sent to the defender
--- deal with any mitigating factors and adjust the damage amount as necessary
--- note that elemental damage and damage types will be handle by C
+-- calculator any the actual damage that the object does
+-- note that any elemental damage will be handled by C
 function onReceiveDamage( defender, damage )
 end
 

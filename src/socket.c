@@ -124,6 +124,7 @@ int main(int argc, char **argv)
    lua_pop( lua_handle, -1 );
 
    load_server_script();
+   load_combat_vars_script();
    lua_server_settings(); /* loading server stuff */
    lua_database_settings(); /* loading the sql variables */
    lua_combat_settings(); /* loading combat settings */

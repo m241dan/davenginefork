@@ -34,6 +34,7 @@ extern inline const char *get_stat_framework_script_path( STAT_FRAMEWORK *fstat 
 extern inline const char *get_stat_instance_script_path( STAT_INSTANCE *stat );
 
 extern inline void load_server_script( void );
+extern inline void load_combat_vars_script( void );
 void lua_server_settings( void );
 void lua_database_settings( void );
 void lua_combat_settings( void );

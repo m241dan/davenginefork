@@ -245,6 +245,15 @@ inline void load_server_script( void )
    }
 }
 
+inline void load_combat_vars_script( void )
+{
+   if( luaL_loadfile( lua_handle, "../scripts/settings/combat_vars.lua" ) || lua_pcall( lua_handle, 0, 0, 0 ) )
+   {
+      bug( "%s: could not load combat variables.", __FUNCTION__ );
+      return;
+   }
+}
+
 void lua_server_settings( void )
 {
    int top = lua_gettop( lua_handle );

@@ -50,14 +50,6 @@ void prep_melee( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim )
    dmg->attacker = attacker;
    dmg->victim = victim;
 
-   /* this will be turned into a method later that will check for wielded weapons */
-   dmg->dmg_src = attacker;
-   dmg->type = DMG_MELEE;
-   dmg->duration = 1;
-   dmg->frequency = 1;
-   dmg->pcounter = 0;
-   /* end later method */
-
    push_damage( dmg, lua_handle );
    if( lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) )
    {
