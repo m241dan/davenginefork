@@ -1372,8 +1372,7 @@ void do_damage( ENTITY_INSTANCE *entity, DAMAGE *dmg )
       bug( "%s: cannot do damage to %s, no primary dmg stat.", __FUNCTION__, instance_name( entity ) );
       return;
    }
-
-   set_mod_stat( stat, stat->mod_stat - dmg->amount );
+   dec_pool_stat( stat, dmg->amount );
    return;
 }
 

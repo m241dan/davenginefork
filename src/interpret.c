@@ -237,6 +237,7 @@ struct typCmd create_sFramework_commands[] = {
    { "switch", editor_switch, LEVEL_BASIC, NULL, FALSE, NULL, create_instance_commands },
    { "save", sFramework_save, LEVEL_BASIC, NULL, FALSE, NULL, create_sFramework_commands },
    { "script", sFramework_script, LEVEL_BASIC, NULL, FALSE, NULL, create_sFramework_commands },
+   { "type", sFramework_type, LEVEL_BASIC, NULL, FALSE, NULL, create_sFramework_commands },
    { "hardfloor", sFramework_hardfloor, LEVEL_BASIC, NULL, FALSE, NULL, create_sFramework_commands },
    { "softfloor", sFramework_softfloor, LEVEL_BASIC, NULL, FALSE, NULL, create_sFramework_commands },
    { "hardcap", sFramework_hardcap, LEVEL_BASIC, NULL, FALSE, NULL, create_sFramework_commands },

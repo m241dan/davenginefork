@@ -40,9 +40,9 @@ void new_stat_framework( STAT_FRAMEWORK *fstat )
       }
    }
 
-   if( !quick_query( "INSERT INTO `stat_frameworks` VALUES ( '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%d', '%d' );",
+   if( !quick_query( "INSERT INTO `stat_frameworks` VALUES ( '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%d', '%d', '%d' );",
       fstat->tag->id, fstat->tag->type, fstat->tag->created_by, fstat->tag->created_on, fstat->tag->modified_by, fstat->tag->modified_on,
-      fstat->name, fstat->softcap, fstat->hardcap, fstat->softfloor, fstat->hardfloor ) )
+      fstat->name, fstat->softcap, fstat->hardcap, fstat->softfloor, fstat->hardfloor, (int)fstat->pool ) )
       bug( "%s: could not add to database %s.", __FUNCTION__, fstat->name );
 
    return;
@@ -434,6 +434,14 @@ inline void set_name( STAT_FRAMEWORK *fstat, const char *name )
       bug( "%s: could not update database with new name.", __FUNCTION__ );
 }
 
+inline void set_stat_style( STAT_FRAMEWORK *fstat, bool value )
+{
+   fstat->pool = value;
+   if( !strcmp( fstat->tag->created_by, "null" ) ) return;
+   if( !quick_query( "UPDATE `stat_frameworks` SET type=%d WHERE statFrameworkID=%d;", (int)value, fstat->tag->id ) )
+      bug( "%s: could not update database with new name.", __FUNCTION__ );
+}
+
 inline int  get_stat_total( STAT_INSTANCE *stat )
 {
    return ( stat->perm_stat + stat->mod_stat );
@@ -455,14 +463,51 @@ inline int  get_stat_value( STAT_INSTANCE *stat )
    return urange( stat->framework->hardfloor, ( perm + stat->mod_stat ), stat->framework->hardcap );
 }
 
-inline int  get_primary_current( ENTITY_INSTANCE *entity )
+inline int  get_stat_current( STAT_INSTANCE *stat )
 {
-   return entity->primary_dmg_received_stat ? entity->primary_dmg_received_stat->mod_stat : 0;
+   return stat->mod_stat;
 }
 
-inline int  get_primary_max( ENTITY_INSTANCE *entity )
+inline int  get_stat_max( STAT_INSTANCE *stat )
 {
-   return entity->primary_dmg_received_stat ? entity->primary_dmg_received_stat->perm_stat : 0;
+   return stat->perm_stat;
+}
+
+inline void set_stat_current( STAT_INSTANCE *stat, int value )
+{
+   if( value > stat->perm_stat ) value = stat->perm_stat;
+   else if( value < stat->framework->softfloor ) value = stat->framework->softfloor;
+   lua_set_stat( stat, ( value - stat->mod_stat ), 0 );
+   stat->mod_stat = value;
+   if( !quick_query( "UPDATE `entity_stats` SET mod_stat=%d WHERE statFrameworkID=%d AND owner=%d;", value, stat->framework->tag->id, stat->owner->tag->id ) )
+      bug( "%s: could not update database with new value.", __FUNCTION__ );
+}
+
+inline void set_stat_max( STAT_INSTANCE *stat, int value )
+{
+   if( value > stat->framework->softcap ) value = stat->framework->softcap;
+   else if( value < stat->framework->softfloor ) value = stat->framework->softfloor;
+   stat->perm_stat = value;
+   if( !quick_query( "UPDATE `entity_stats` SET perm_stat=%d WHERE statFrameworkID=%d AND owner=%d;", value, stat->framework->tag->id, stat->owner->tag->id ) )
+      bug( "%s: could not update database with new value.", __FUNCTION__ );
+}
+
+inline void inc_pool_stat( STAT_INSTANCE *stat, int value )
+{
+   if( ( value + stat->mod_stat ) > stat->perm_stat ) value = stat->perm_stat - stat->mod_stat;
+   stat->mod_stat += value;
+   lua_set_stat( stat, value, 0 );
+   if( !quick_query( "UPDATE `entity_stats` SET mod_stat=%d WHERE statFrameworkID=%d AND owner=%d;", stat->mod_stat, stat->framework->tag->id, stat->owner->tag->id ) )
+      bug( "%s: coudl not update database with new value.", __FUNCTION__ );
+}
+
+inline void dec_pool_stat( STAT_INSTANCE *stat, int value )
+{
+   if( ( stat->mod_stat - value ) < stat->framework->softfloor ) value = stat->mod_stat - stat->framework->softfloor;
+   stat->mod_stat -= value;
+   lua_set_stat( stat, ( value * -1 ), 0 );
+   if( !quick_query( "UPDATE `entity_stats` SET mod_stat=%d WHERE statFrameworkID=%d AND owner=%d;", stat->mod_stat, stat->framework->tag->id, stat->owner->tag->id ) )
+      bug( "%s: could not update database with new value.", __FUNCTION__ );
 }
 
 inline void set_perm_stat( STAT_INSTANCE *stat, int value )

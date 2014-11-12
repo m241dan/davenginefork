@@ -133,7 +133,7 @@ bool receive_damage( DAMAGE *dmg )
    if( dmg->amount )
       do_damage( dmg->victim, dmg );
    /* this is just a test message */
-   if( !get_primary_current( dmg->victim ) )
+   if( !get_stat_current( dmg->victim->primary_dmg_received_stat ) )
       text_to_entity( dmg->attacker, "You killed %s.\r\n", instance_short_descr( dmg->victim ) );
 
    /* actual combat messaging */

@@ -10,6 +10,7 @@ struct stat_framework
    int hardcap;
    int softfloor;
    int hardfloor;
+   bool pool;
 
 };
 
@@ -61,13 +62,18 @@ extern inline void set_hardcap( STAT_FRAMEWORK *fstat, int value );
 extern inline void set_softfloor( STAT_FRAMEWORK *fstat, int value );
 extern inline void set_hardfloor( STAT_FRAMEWORK *fstat, int value );
 extern inline void set_name( STAT_FRAMEWORK *fstat, const char *name );
+extern inline void set_stat_style( STAT_FRAMEWORK *fstat, bool value );
 
 extern inline int  get_stat_total( STAT_INSTANCE *stat );
 extern inline int  get_stat_effective_perm( STAT_INSTANCE *stat );
 extern inline int  get_stat_effective_mod( STAT_INSTANCE *stat );
 extern inline int  get_stat_value( STAT_INSTANCE *stat );
-extern inline int  get_primary_current( ENTITY_INSTANCE *entity );
-extern inline int  get_primary_max( ENTITY_INSTANCE *entity );
+extern inline int  get_stat_current( STAT_INSTANCE *stat );
+extern inline int  get_stat_max( STAT_INSTANCE *stat );
+extern inline void set_stat_current( STAT_INSTANCE *stat, int value );
+extern inline void set_stat_max( STAT_INSTANCE *stat, int value );
+extern inline void inc_pool_stat( STAT_INSTANCE *stat, int value );
+extern inline void dec_pool_stat( STAT_INSTANCE *stat, int value );
 extern inline void set_perm_stat( STAT_INSTANCE *stat, int value );
 extern inline void add_perm_stat( STAT_INSTANCE *stat, int value );
 extern inline void set_mod_stat( STAT_INSTANCE *stat, int value );

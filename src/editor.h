@@ -72,6 +72,7 @@ void sFramework_softcap( void *passed, char *arg );
 void sFramework_hardcap( void *passed, char *arg );
 void sFramework_softfloor( void *passed, char *arg );
 void sFramework_hardfloor( void *passed, char *arg );
+void sFramework_type( void *passed, char *arg );
 void sFramework_script( void *passed, char *arg );
 void sFramework_save( void *passed, char *arg );
 void sFramework_done( void *passed, char *arg );
