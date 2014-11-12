@@ -298,6 +298,31 @@ void add_event_game(EVENT_DATA *event, int delay)
     bug("add_event_game: event type %d failed to be enqueued.", event->type);
 }
 
+void add_event_lua( EVENT_DATA *event, const char *path, int delay )
+{
+   if( event->type == EVENT_NONE )
+   {
+      bug( "%s: no type.", __FUNCTION__ );
+      return;
+   }
+
+   if( event->fun == NULL )
+   {
+      bug( "%s: event type %d has no callback function.", __FUNCTION__, event->type );
+      return;
+   }
+
+   event->owner = strdup( path );
+   event->ownertype = EVENT_OWNER_LUA;
+   AttachToList( event, global_events );
+
+   if( enqueue_event( event, delay ) == FALSE )
+   {
+      bug( "%s event type %d failed to be enqueued.", __FUNCTION__, event->type );
+      DetachFromList( event, global_events );
+   }
+}
+
 /* function   :: event_isset_socket()
  * arguments  :: the socket and the type of event
  * ======================================================

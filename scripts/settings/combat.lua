@@ -17,6 +17,10 @@ function onMeleeAttack( attacker, damage )
    return
 end
 
+function onAutoMeleeAttack( attacker, damage )
+   
+end
+
 -- analyze the damage object sent to the defender
 -- calculator any the actual damage that the object does
 -- note that any elemental damage will be handled by C

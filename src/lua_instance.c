@@ -790,7 +790,7 @@ int luaCallBack( lua_State *L )
 {
    ENTITY_INSTANCE *instance;
    EVENT_DATA *event;
-   int callbackwhen;
+   int callbackwhen; /* server pulses, ie .25 seconds. So 1 second = 4 */
    const char *func_name;
    const char *cypher;
    int num_args;
@@ -882,7 +882,7 @@ int luaCallBack( lua_State *L )
    event->lua_cypher = strdup( cypher );
    event->type = EVENT_LUA_CALLBACK;
    event->fun = &event_instance_lua_callback;
-   add_event_instance( event, instance, callbackwhen * PULSES_PER_SECOND );
+   add_event_instance( event, instance, callbackwhen );
    return 0;
 }
 int luaEntityInstanceInterp( lua_State *L )

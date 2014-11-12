@@ -47,4 +47,5 @@ void push_damage( DAMAGE *dmg, lua_State *L );
 int lua_bug( lua_State *L );
 int lua_getGlobalVar( lua_State *L );
 int lua_setGlobalVar( lua_State *L );
+int global_luaCallBack( lua_State *L );
 bool autowrite_init( ENTITY_INSTANCE *instance );

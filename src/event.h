@@ -70,6 +70,7 @@ void heartbeat                   ( void );
 void add_event_socket            ( EVENT_DATA *event, D_SOCKET *dSock, int delay );
 void add_event_instance          ( EVENT_DATA *event, ENTITY_INSTANCE *instance, int delay );
 void add_event_game              ( EVENT_DATA *event, int delay );
+void add_event_lua               ( EVENT_DATA *event, const char *path, int delay );
 void strip_event_socket          ( D_SOCKET *dSock, int type );
 void strip_event_instance        ( ENTITY_INSTANCE *instance, int type );
 
@@ -79,3 +80,4 @@ bool event_mobile_save           ( EVENT_DATA *event );
 bool event_socket_idle           ( EVENT_DATA *event );
 bool event_game_tick             ( EVENT_DATA *event );
 bool event_instance_lua_callback ( EVENT_DATA *event );
+bool event_global_lua_callback   ( EVENT_DATA *event );

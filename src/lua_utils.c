@@ -6,6 +6,7 @@ const struct luaL_Reg EntityVariablesLib_f[] = {
   { "bug",       lua_bug },
   { "getGlobal", lua_getGlobalVar },
   { "setGlobal", lua_setGlobalVar },
+  { "callBack",  global_luaCallBack },
   { NULL, NULL }
 };
 
@@ -504,6 +505,113 @@ int lua_setGlobalVar( lua_State *L )
          return 0;
    }
    return 0;
+}
+
+int global_luaCallBack( lua_State *L )
+{
+   EVENT_DATA *event;
+   int callbackwhen; /* server pulses, ie .25 seconds. So 1 second = 4 */
+   const char *func_name;
+   const char *cypher;
+   const char *path;
+   int num_args;
+   int x;
+
+   if( ( path = luaL_checkstring( L, 1 ) ) == NULL )
+   {
+      bug( "%s: no path passed.", __FUNCTION__ );
+      return 0;
+   }
+
+   if( ( callbackwhen = luaL_checknumber( L, 2 ) ) == 0 )
+   {
+      bug( "%s: having a callback with 0 seconds is not possible.", __FUNCTION__ );
+      return 0;
+   }
+
+   if( ( func_name = luaL_checkstring( L, 3 ) ) == NULL )
+   {
+      bug( "%s: no function name passed.", __FUNCTION__ );
+      return 0;
+   }
+
+   if( ( cypher = luaL_checkstring( L, 4 ) ) == NULL )
+   {
+      bug( "%s: no cypher string passed.", __FUNCTION__ );
+      return 0;
+   }
+   event = alloc_event();
+   num_args = strlen( cypher );
+
+   for( x = num_args; x > 0; x-- )
+   {
+      ENTITY_FRAMEWORK *arg_frame;
+      ENTITY_INSTANCE *arg_instance;
+      char *arg_string;
+      int  *arg_int;
+
+      switch( cypher[x-1] )
+      {
+         case 's':
+            if( lua_type( L, ( 4 + x ) ) != LUA_TSTRING )
+            {
+               bug( "%s: bad/cyper passed value, not a string at position %d.", __FUNCTION__, x );
+               arg_string = strdup( "nil" );
+               AttachToList( arg_string, event->lua_args );
+               continue;
+            }
+            arg_string = strdup( lua_tostring( L, ( 4 + x ) ) );
+            AttachToList( arg_string, event->lua_args );
+            break;
+         case 'n':
+            CREATE( arg_int, int, 1 );
+            if( lua_type( L, ( 4 + x ) ) != LUA_TNUMBER )
+            {
+               bug( "%s: bad/cypher passed value, not a number at position %d.", __FUNCTION__, x );
+               *arg_int = 0;
+               AttachToList( arg_int, event->lua_args );
+               continue;
+            }
+            *arg_int = lua_tonumber( L, ( 4 + x ) );
+            AttachToList( arg_int, event->lua_args );
+            break;
+         case 'i':
+            CREATE( arg_int, int, 1 );
+            if( ( arg_instance = *(ENTITY_INSTANCE **)luaL_checkudata( L, ( 4 + x ), "EntityInstance.meta" ) ) == NULL )
+            {
+               bug( "%s: bad/cypher passed value, not an entity instance at position %d.", __FUNCTION__, x );
+               *arg_int = 0;
+               AttachToList( arg_int, event->lua_args );
+               continue;
+            }
+            *arg_int = arg_instance->tag->id;
+            AttachToList( arg_int, event->lua_args );
+            break;
+         case 'f':
+            CREATE( arg_int, int, 1 );
+            if( ( arg_frame = *(ENTITY_FRAMEWORK **)luaL_checkudata( L, ( 4 + x ), "EntityFramework.meta" ) ) == NULL )
+            {
+               bug( "%s: bad/cypher passed value, not an entity framework at position %d.", __FUNCTION__, x );
+               *arg_int = -1;
+               AttachToList( arg_int, event->lua_args );
+               continue;
+            }
+            *arg_int = arg_frame->tag->id;
+            AttachToList( arg_int, event->lua_args );
+            break;
+      }
+   }
+
+
+   event->argument = strdup( func_name );
+   event->lua_cypher = strdup( cypher );
+   event->type = EVENT_LUA_CALLBACK;
+   event->fun = &event_global_lua_callback;
+   add_event_lua( event, path, callbackwhen );
+   return 0;
+
+
+
 }
 
 bool autowrite_init( ENTITY_INSTANCE *instance )

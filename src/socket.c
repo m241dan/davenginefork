@@ -34,6 +34,8 @@ LLIST    * eInstances_list = NULL;
 LLIST    * global_variables = NULL;
 LLIST    * stat_frameworks = NULL;
 LLIST    * damage_queue = NULL;
+LLIST    * timer_queue = NULL;
+LLIST    * paused_timer_queue = NULL;
 
 /* server settings */
 int        MUDPORT = 0;
@@ -90,6 +92,8 @@ int main(int argc, char **argv)
    global_variables = AllocList();
    stat_frameworks = AllocList();
    damage_queue = AllocList();
+   timer_queue = AllocList();
+   paused_timer_queue = AllocList();
 
    builder_count = 0;
 
@@ -385,7 +389,8 @@ void GameLoop(int control)
     heartbeat();
     /* call the damage queue */
     damage_monitor();
-
+    /* call the timer queue */
+    timer_monitor();
     /*
      * Here we sleep out the rest of the pulse, thus forcing
      * SocketMud(tm) to run at PULSES_PER_SECOND pulses each second.

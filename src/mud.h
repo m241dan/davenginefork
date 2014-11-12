@@ -399,6 +399,7 @@ typedef struct  entity_variable EVAR;
 typedef struct  stat_framework  STAT_FRAMEWORK;
 typedef struct  stat_instance   STAT_INSTANCE;
 typedef struct  damage_data     DAMAGE;
+typedef struct  timer           TIMER;
 
 /* the actual structures */
 struct dSocket
@@ -479,6 +480,7 @@ typedef struct buffer_type
 #include "pak.h"
 #include "combat.h"
 #include "lua_damage.h"
+#include "timers.h"
 
 /******************************
  * End of new structures      *

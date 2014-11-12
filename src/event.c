@@ -119,3 +119,42 @@ bool event_instance_lua_callback( EVENT_DATA *event )
 
    return FALSE;
 }
+
+bool event_global_lua_callback( EVENT_DATA *event )
+{
+   ENTITY_INSTANCE *arg_entity;
+   void *content;
+   ITERATOR Iter;
+   int counter = 0;
+
+   prep_stack( (char *)event->owner, event->argument );
+   if( SizeOfList( event->lua_args ) > 0 )
+   {
+      AttachIterator( &Iter, event->lua_args );
+      while( ( content = NextInList( &Iter ) ) != NULL )
+      {
+         switch( tolower( event->lua_cypher[counter++] ) )
+         {
+            case 's':
+               lua_pushstring( lua_handle, (const char *)content );
+               break;
+            case 'n':
+               lua_pushnumber( lua_handle, *((int *)content) );
+               break;
+            case 'i':
+               if( ( arg_entity = get_active_instance_by_id( *((int *)content ) ) ) == NULL )
+               {
+                  bug( "%s: instance with ID:%d is no longer active.", __FUNCTION__, *((int *)content ) );
+                  lua_pushnil( lua_handle );
+                  break;
+               }
+               push_instance( arg_entity, lua_handle );
+               break;
+         }
+      }
+      DetachIterator( &Iter );
+   }
+   if( lua_pcall( lua_handle, strlen( event->lua_cypher ), LUA_MULTRET, 0 ) )
+      bug( "%s: %s.", __FUNCTION__, lua_tostring( lua_handle, -1 ) );
+   return FALSE;
+}
