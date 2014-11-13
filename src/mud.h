@@ -524,7 +524,7 @@ extern bool AUTOMELEE;
 extern bool DODGE_ON;
 extern bool PARRY_ON;
 extern bool MISS_ON;
-
+extern int  BASE_MELEE_DELAY;
 /***************************
  * End of Global Variables *
  ***************************/

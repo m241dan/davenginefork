@@ -10,7 +10,8 @@ db_pass  = "Grc937!"
 wiki_name = "core_wiki"
 
 -- combat stuff --
-automelee = false
-miss_on   = false
-dodge_on  = false
-parry_on  = false
+automelee	= false
+automelee_delay = 2
+miss_on		= false
+dodge_on	= false
+parry_on	= false

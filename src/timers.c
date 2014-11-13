@@ -1,5 +1,7 @@
 /* timers.c containers the functions of the timer library written by Davenge */
 
+#include "mud.h"
+
 /* creation */
 TIMER *init_timer( void )
 {
@@ -58,7 +60,7 @@ void end_timer( TIMER *timer )
       case TIMER_INSTANCE:
          DetachFromList( timer, ((ENTITY_INSTANCE *)timer->owner)->timers );
          if( timer->end_message && timer->end_message[0] != '\0' )
-            text_to_entity( (ENTITY_INSTANCE *)timer->owner, end_message );
+            text_to_entity( (ENTITY_INSTANCE *)timer->owner, timer->end_message );
          break;
    }
    free_timer( timer );
@@ -73,5 +75,5 @@ void timer_monitor( void )
    while( ( timer = (TIMER *)NextInList( &Iter ) ) != NULL )
       if( ( timer->duration -= .25 ) == 0 )
          end_timer( timer );
-   DetachIterator( &Iter, timer_queue );
+   DetachIterator( &Iter );
 }

@@ -52,6 +52,7 @@ bool AUTOMELEE = FALSE;
 bool DODGE_ON = FALSE;
 bool PARRY_ON = FALSE;
 bool MISS_ON = FALSE;
+int  BASE_MELEE_DELAY = 10;
 
 MYSQL    * sql_handle = NULL;
 MYSQL    * help_handle = NULL;

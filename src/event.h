@@ -28,6 +28,11 @@ typedef enum
    EVENT_LUA_CALLBACK = 1, MAX_INSTANCE_EVENT
 } INSTANCE_EVENTS;
 
+typedef enum
+{
+   GLOBAL_EVENT_LUA_CALLBACK = 1, MAX_GLOBAL_EVENT
+} GLOBAL_EVENTS;
+
 /* Socket events are given a type value here.
  * Each value should be unique and explicit,
  * besides that, there are no restrictions.
@@ -81,3 +86,4 @@ bool event_socket_idle           ( EVENT_DATA *event );
 bool event_game_tick             ( EVENT_DATA *event );
 bool event_instance_lua_callback ( EVENT_DATA *event );
 bool event_global_lua_callback   ( EVENT_DATA *event );
+bool event_auto_attack		 ( EVENT_DATA *event );

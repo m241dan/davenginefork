@@ -8,6 +8,11 @@ typedef enum
    TIMER_NO_OWNER = -1, TIMER_MUD, TIMER_INSTANCE, MAX_TIMER_OWNER
 } TIMER_OWNER_TYPES;
 
+typedef enum
+{
+   TT_UNKNOWN, TT_COOLDOWN, MAX_TT
+} TIMER_TYPES;
+
 struct timer
 {
    void *owner;
@@ -15,6 +20,7 @@ struct timer
    char *key;
    double duration;
    char *end_message;
+   char type;
 };
 
 /* creation */
@@ -29,7 +35,6 @@ void timer_monitor( void );
 
 extern inline int check_timer( const char *key );
 extern inline int check_timer_instance( ENTITY_INSTANCE *instance, const char *key );
-
 #define MELEE_KEY "melee attack"
 #define CHECK_MELEE( instance ) ( check_timer_instance( (instance), MELEE_KEY ) )
 

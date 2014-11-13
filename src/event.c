@@ -158,3 +158,11 @@ bool event_global_lua_callback( EVENT_DATA *event )
       bug( "%s: %s.", __FUNCTION__, lua_tostring( lua_handle, -1 ) );
    return FALSE;
 }
+
+bool event_auto_attack( EVENT_DATA *event )
+{
+   /* check auto delay timer, requeue if necessary */
+   /* otherwise, prep melee on target, if no target dequeue */
+   return FALSE;
+}
+

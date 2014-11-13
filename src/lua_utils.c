@@ -295,7 +295,8 @@ void lua_combat_settings( void )
    PARRY_ON = lua_toboolean( lua_handle, -1 );
    lua_getglobal( lua_handle, "miss_on" );
    MISS_ON = lua_toboolean( lua_handle, -1 );
-
+   lua_getglobal( lua_handle, "automelee_delay" );
+   BASE_MELEE_DELAY = lua_tonumber( lua_handle, -1 );
    lua_settop( lua_handle, top );
 }
 
@@ -605,7 +606,7 @@ int global_luaCallBack( lua_State *L )
 
    event->argument = strdup( func_name );
    event->lua_cypher = strdup( cypher );
-   event->type = EVENT_LUA_CALLBACK;
+   event->type = GLOBAL_EVENT_LUA_CALLBACK;
    event->fun = &event_global_lua_callback;
    add_event_lua( event, path, callbackwhen );
    return 0;
