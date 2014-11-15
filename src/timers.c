@@ -66,14 +66,60 @@ void end_timer( TIMER *timer )
    free_timer( timer );
 }
 
+/* setters */
+void set_melee_timer( ENTITY_INSTANCE *instance, bool message )
+{
+   TIMER *timer;
+
+   if( CHECK_MELEE( instance ) != 0 ) )
+      return;
+
+   timer = init_timer();
+   timer->duration = 
+}
+
+/* monitor */
 void timer_monitor( void )
 {
    TIMER *timer;
    ITERATOR Iter;
 
-   AttachToList( &Iter, timer_queue );
+   AttachIterator( &Iter, timer_queue );
    while( ( timer = (TIMER *)NextInList( &Iter ) ) != NULL )
       if( ( timer->duration -= .25 ) == 0 )
          end_timer( timer );
    DetachIterator( &Iter );
 }
+
+inline double check_timer( const char *key )
+{
+   TIMER *timer;
+   ITERATOR Iter;
+   double time = 0;
+   AttachIterator( &Iter, timer_queue );
+   while( ( timer = (TIMER *)NextInList( &Iter ) ) != NULL )
+      if( !strcmp( timer->key, key ) )
+      {
+         time = timer->duration;
+         break;
+      }
+   DetachIterator( &Iter );
+   return time;
+}
+
+inline double check_timer_instance( ENTITY_INSTANCE *instance, const char *key )
+{
+   TIMER *timer;
+   ITERATOR Iter;
+   double time = 0;
+   AttachIterator( &Iter, instance->timers );
+   while( ( timer = (TIMER *)NextInList( &Iter ) ) != NULL )
+       if( !strcmp( timer->key, key ) )
+       {
+          time = time->duration;
+          break;
+       }
+   DetachIterator( &Iter );
+   return time;
+}
+
