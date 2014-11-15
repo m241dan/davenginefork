@@ -340,7 +340,7 @@ const char *return_framework_specs_and_stats( ENTITY_FRAMEWORK *frame, const cha
       if( x < MAX_SPEC )
         while( ( spec = frame_has_spec_detailed_by_type( frame, x++, &spec_from ) ) == NULL && x < MAX_SPEC );
       if( y < MAX_STAT )
-         while( ( ( fstat = get_stat_from_framework_by_id( frame, y++, &stat_from ) ) == NULL && y < MAX_STAT ) || fstat == frame->f_primary_dmg_received_stat );
+         while( ( ( fstat = get_stat_from_framework_by_id( frame, y++, &stat_from ) ) == NULL && y < MAX_STAT ) || ( fstat != NULL && fstat == frame->f_primary_dmg_received_stat ) );
 
       if( !spec && !fstat )
          break;
@@ -1201,7 +1201,7 @@ const char *return_instance_spec_and_stats( ENTITY_INSTANCE *instance, const cha
       if( x < MAX_SPEC )
          while( ( spec = has_spec_detailed_by_type( instance, x++, &spec_from ) ) == NULL && x < MAX_SPEC );
       if( y < MAX_STAT )
-         while( ( ( stat = get_stat_from_instance_by_id( instance, y++ ) ) == NULL && y < MAX_SPEC ) || stat == instance->primary_dmg_received_stat );
+         while( ( ( stat = get_stat_from_instance_by_id( instance, y++ ) ) == NULL && y < MAX_STAT ) || ( stat != NULL && stat == instance->primary_dmg_received_stat ));
 
       if( !spec && !stat )
          break;

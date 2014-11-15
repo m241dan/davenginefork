@@ -73,6 +73,7 @@ void db_load_stat_framework( STAT_FRAMEWORK *fstat, MYSQL_ROW *row )
    fstat->hardcap = atoi( (*row)[counter++] );
    fstat->softfloor = atoi( (*row)[counter++] );
    fstat->hardfloor = atoi( (*row)[counter++] );
+   fstat->pool = atoi( (*row)[counter++] );
    return;
 }
 
