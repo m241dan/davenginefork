@@ -42,4 +42,5 @@ void timer_monitor( void );
 extern inline double check_timer( const char *key );
 extern inline double check_timer_instance( ENTITY_INSTANCE *instance, const char *key );
 #define MELEE_KEY "melee attack"
+#define MELEE_CD_MSG "You may attack again."
 #define CHECK_MELEE( instance ) ( check_timer_instance( (instance), MELEE_KEY ) )

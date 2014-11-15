@@ -60,7 +60,7 @@ void end_timer( TIMER *timer )
       case TIMER_INSTANCE:
          DetachFromList( timer, ((ENTITY_INSTANCE *)timer->owner)->timers );
          if( timer->end_message && timer->end_message[0] != '\0' )
-            text_to_entity( (ENTITY_INSTANCE *)timer->owner, timer->end_message );
+            text_to_entity( (ENTITY_INSTANCE *)timer->owner, "%s\r\n", timer->end_message );
          break;
    }
    free_timer( timer );
@@ -71,11 +71,18 @@ void set_melee_timer( ENTITY_INSTANCE *instance, bool message )
 {
    TIMER *timer;
 
-   if( CHECK_MELEE( instance ) != 0 ) )
+   if( CHECK_MELEE( instance ) != 0 )
       return;
 
    timer = init_timer();
-   timer->duration = 
+   timer->duration = BASE_MELEE_DELAY;
+   timer->owner = instance;
+   timer->owner_type = TIMER_INSTANCE;
+   timer->type = TT_COOLDOWN;
+   timer->key = strdup( MELEE_KEY );
+   if( message )
+      timer->end_message = strdup( MELEE_CD_MSG );
+   start_timer( timer );
 }
 
 /* monitor */
@@ -116,7 +123,7 @@ inline double check_timer_instance( ENTITY_INSTANCE *instance, const char *key )
    while( ( timer = (TIMER *)NextInList( &Iter ) ) != NULL )
        if( !strcmp( timer->key, key ) )
        {
-          time = time->duration;
+          time = timer->duration;
           break;
        }
    DetachIterator( &Iter );

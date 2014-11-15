@@ -2656,6 +2656,7 @@ void mobile_attack( void *passed, char *arg )
 {
    ENTITY_INSTANCE *mob = (ENTITY_INSTANCE *)passed;
    ENTITY_INSTANCE *victim;
+   double cd;
 
    if( !arg || arg[0] == '\0' )
    {
@@ -2677,6 +2678,11 @@ void mobile_attack( void *passed, char *arg )
       return;
    }
 
+   if( ( cd = CHECK_MELEE( mob ) ) != 0 )
+   {
+      text_to_entity( mob, "You cannot attack for another %-3.3f seconds.\r\n", cd );
+      return;
+   }
    if( !victim->primary_dmg_received_stat )
    {
       text_to_entity( mob, "You cannot attack that.\r\n" );
@@ -2688,5 +2694,6 @@ void mobile_attack( void *passed, char *arg )
       return;
    }
    prep_melee_atk( mob, victim );
+   set_melee_timer( mob, TRUE );
    return;
 }
