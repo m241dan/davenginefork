@@ -2689,6 +2689,6 @@ void mobile_attack( void *passed, char *arg )
       text_to_entity( mob, "You cannot attack.\r\n" );
       return;
    }
-   prep_melee( mob, victim );
+   prep_melee_atk( mob, victim );
    return;
 }

@@ -37,4 +37,3 @@ extern inline int check_timer( const char *key );
 extern inline int check_timer_instance( ENTITY_INSTANCE *instance, const char *key );
 #define MELEE_KEY "melee attack"
 #define CHECK_MELEE( instance ) ( check_timer_instance( (instance), MELEE_KEY ) )
-

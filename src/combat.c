@@ -31,19 +31,19 @@ void free_damage( DAMAGE *dmg )
 
 
 /* actions */
-void prep_melee( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim )
+void prep_melee_atk( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim )
 {
    SPECIFICATION *spec;
    DAMAGE *dmg;
    const char *path;
    int top = lua_gettop( lua_handle );
 
-   if( ( spec = has_spec( attacker, "onMeleeAttack" ) ) != NULL && spec->value > 0 )
+   if( ( spec = has_spec( attacker, "prepMeleeAttack" ) ) != NULL && spec->value > 0 )
       path = get_script_path_from_spec( spec );
    else
       path = "../scripts/settings/combat.lua";
 
-   prep_stack( path, "onMeleeAttack" );
+   prep_stack( path, "prepMeleeAttack" );
    push_instance( attacker, lua_handle );
 
    dmg = init_damage();
@@ -62,7 +62,54 @@ void prep_melee( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim )
    return;
 }
 
-ch_ret melee_attack( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim )
+void prep_melee_dmg( DAMAGE *dmg )
+{
+   SPECIFICATION *spec;
+   const char *path;
+   int top = lua_gettop( lua_handle );
+
+   if( ( spec = has_spec( dmg->attacker, "prepMeleeDamage" ) ) != NULL && spec->value > 0 )
+      path = get_script_path_from_spec( spec );
+   else
+      path = "../scripts/settings/combat.lua";
+
+   prep_stack( path, "prepMeleeDamage" );
+   push_instance( dmg->attacker, lua_handle );
+   push_damage( dmg, lua_handle );
+   if( lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) )
+   {
+      bug( "%s: %s.", __FUNCTION__, lua_tostring( lua_handle, -1 ) );
+      dmg->amount = 0;
+   }
+   lua_settop( lua_handle, top );
+   return;
+}
+
+bool receive_damage( DAMAGE *dmg )
+{
+   SPECIFICATION *spec;
+   const char *path;
+   int top = lua_gettop( lua_handle );
+
+   if( ( spec = has_spec( dmg->victim, "onReceiveDamage" ) ) != NULL && spec->value > 0 )
+      path = get_script_path_from_spec( spec );
+   else
+      path = "../scripts/settings/combat.lua";
+
+   prep_stack( path, "onReceiveDamage" );
+   push_instance( dmg->victim, lua_handle );
+   push_damage( dmg, lua_handle );
+   if( lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) )
+   {
+      bug( "%s: %s.", __FUNCTION__, lua_tostring( lua_handle, -1 ) );
+      dmg->amount = 0;
+   }
+   lua_settop( lua_handle, top );
+   return TRUE;
+}
+
+
+cbt_ret melee_attack( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim )
 {
    if( DODGE_ON && does_check( attacker, victim, "dodgeChance" ) )
       return HIT_DODGED;
@@ -91,56 +138,6 @@ bool send_damage( DAMAGE *dmg )
    add_damage( dmg );
    return TRUE;
 }
-
-bool receive_damage( DAMAGE *dmg )
-{
-   ch_ret status;
-
-   /* check to see if the attack is successful */
-   switch( dmg->type )
-   {
-      default: return FALSE;
-      case DMG_MELEE:
-         status = melee_attack( dmg->attacker, dmg->victim );
-         break;
-   }
-
-   /* if successful, get the actual damage done */
-   if( status == HIT_SUCCESS )
-   {
-      SPECIFICATION *spec;
-      const char *path;
-      int top = lua_gettop( lua_handle );
-
-      if( ( spec = has_spec( dmg->victim, "onReceiveDamage" ) ) != NULL && spec->value > 0 )
-         path = get_script_path_from_spec( spec );
-      else
-         path = "../scripts/settings/combat.lua";
-
-      prep_stack( path, "onReceiveDamage" );
-      push_instance( dmg->victim, lua_handle );
-      push_damage( dmg, lua_handle );
-      if( lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) )
-      {
-         bug( "%s: failed to call the onReceiveDamage script path: %s", __FUNCTION__, path );
-         dmg->amount = 0;
-      }
-      lua_settop( lua_handle, top );
-   }
-   else
-      dmg->amount = 0;
-   /* if damage_done is not 0, apply it */
-   if( dmg->amount )
-      do_damage( dmg->victim, dmg );
-   /* this is just a test message */
-   if( !get_stat_current( dmg->victim->primary_dmg_received_stat ) )
-      text_to_entity( dmg->attacker, "You killed %s.\r\n", instance_short_descr( dmg->victim ) );
-
-   /* actual combat messaging */
-   combat_message( dmg->attacker, dmg->victim, dmg, status );
-   return TRUE;
-}
-
 
 /* checkers */
 bool does_check( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim, const char *does )
@@ -190,7 +187,7 @@ void damage_monitor( void )
    {
       if( ++dmg->pcounter == dmg->frequency )
       {
-         receive_damage( dmg );
+         handle_damage( dmg );
          dmg->pcounter = 0;
       }
       if( --dmg->duration <= 0 )
@@ -199,7 +196,42 @@ void damage_monitor( void )
    return;
 }
 
-void combat_message( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim, DAMAGE *dmg, ch_ret status )
+void handle_damage( DAMAGE *dmg )
+{
+   cbt_ret status;
+   switch( dmg->type )
+   {
+      default: return;
+      case DMG_MELEE:
+         status = melee_attack( dmg->attacker, dmg->victim );
+         break;
+   }
+   if( status != HIT_SUCCESS )
+   {
+      dmg->amount = 0;
+      combat_message( dmg->attacker, dmg->victim, dmg, status );
+      return;
+   }
+
+   /* run the necessary lua scripts */
+   if( dmg->type == DMG_MELEE )
+      prep_melee_dmg( dmg );
+
+   /* damage is received universally via lua, can be global script or local */
+   receive_damage( dmg );
+
+   if( dmg->amount )
+      do_damage( dmg->victim, dmg );
+
+   /* this is just a test message */
+   if( !get_stat_current( dmg->victim->primary_dmg_received_stat ) )
+      text_to_entity( dmg->attacker, "You killed %s.\r\n", instance_short_descr( dmg->victim ) );
+
+   /* actual combat messaging */
+   combat_message( dmg->attacker, dmg->victim, dmg, status );
+}
+
+void combat_message( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim, DAMAGE *dmg, cbt_ret status )
 {
    SPECIFICATION *spec;
    const char *path;

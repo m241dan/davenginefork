@@ -4,8 +4,8 @@ extern LLIST *damage_queue; /* queue of sent damages */
 
 typedef enum
 {
-   HIT_UNKNOWN = -1, HIT_SUCCESS, HIT_DODGED, HIT_PARRIED, HIT_MISSED, MAX_CH_RET
-} ch_ret;
+   HIT_UNKNOWN = -1, HIT_SUCCESS, HIT_DODGED, HIT_PARRIED, HIT_MISSED, MAX_CBT_RET
+} cbt_ret;
 
 typedef enum
 {
@@ -19,6 +19,7 @@ struct damage_data
    void *dmg_src;
    DMG_SRC type;
    int amount;
+   bool crit;
    sh_int duration; /* total time this damage stays alive in pulses */
    sh_int frequency; /* when ( pcounter == frequency ) do damage */
    sh_int pcounter; /* inc every iteration, when ( pcounter == frequnecy ) pcounter = 0 */
@@ -31,18 +32,20 @@ DAMAGE *init_damage	( void );
 void    free_damage	( DAMAGE *dmg );
 
 /* actions */
-void	prep_melee	( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim );
-ch_ret  melee_attack	( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim );
-bool	send_damage	( DAMAGE *dmg );
+void	prep_melee_atk	( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim );
+void    prep_melee_dmg	( DAMAGE *dmg );
 bool	receive_damage	( DAMAGE *dmg );
+
+cbt_ret melee_attack	( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim );
+bool	send_damage	( DAMAGE *dmg );
 
 /* checkers */
 bool	does_check	( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim, const char *does );
 
 /* monitor */
 void damage_monitor ( void );
-void combat_message ( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim, DAMAGE *dmg, ch_ret status );
-
+void handle_damage( DAMAGE *dmg );
+void combat_message ( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim, DAMAGE *dmg, cbt_ret status );
 
 /* inlines */
 

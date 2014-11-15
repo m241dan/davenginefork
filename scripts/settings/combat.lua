@@ -11,14 +11,16 @@ function missChance( attacker, victim )
 end
 
 -- design the duration/frequency parts of the damage object
-function onMeleeAttack( attacker, damage ) 
-   if( attacker:isBuilder() ) then damage:setAmount( 100 ) return end
-   damage:setAmount( 1 )
-   return
+function prepMeleeAttack( attacker, damage )
+   damage:setDuration( 1 )
+   damage:setFrequency( 1 )
+   damage:setPCounter( 0 )
 end
 
-function onAutoMeleeAttack( attacker, damage )
-   
+-- figure out the damage amount portion of the damage object
+function prepMeleeDamage( attacker, damage ) 
+   if( attacker:isBuilder() ) then damage:setAmount( 100 ) return end
+   damage:setAmount( 1 )
 end
 
 -- analyze the damage object sent to the defender

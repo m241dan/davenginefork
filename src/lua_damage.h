@@ -29,6 +29,8 @@ int setFrequency( lua_State *L );
 int setPCounter( lua_State * L );
 int setAddDmg( lua_State *L );
 
-/* actions */
+/* checkers */
+int getDmgCrit( lua_State *L );
 
+/* actions */
 int lua_damageSend( lua_State *L );

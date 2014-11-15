@@ -19,6 +19,8 @@ const struct luaL_Reg DamageLib_m[] = {
    { "setDuration", setDuration },
    { "setFrequency", setFrequency },
    { "setPCounter", setPCounter },
+   /* checkers */
+   { "crit", getDmgCrit },
    /* actions */
    { "send", lua_damageSend },
    { NULL, NULL } /* gandalf */
@@ -265,6 +267,16 @@ int setPCounter( lua_State * L )
    }
    dmg->pcounter = (sh_int)lua_tonumber( L, 2 );
    return 0;
+}
+
+/* checkers */
+int getDmgCrit( lua_State *L )
+{
+   DAMAGE *dmg;
+
+   DAVLUACM_DAMAGE_BOOL( dmg, L );
+   lua_pushboolean( L, dmg->crit );
+   return 1;
 }
 
 /* actions */
