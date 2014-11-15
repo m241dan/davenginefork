@@ -657,7 +657,11 @@ bool autowrite_init( ENTITY_INSTANCE *instance )
          {
             AttachIterator( &Iter, instance->stats );
             while( ( stat = (STAT_INSTANCE *)NextInList( &Iter ) ) != NULL )
+            {
                fprintf( fp, "   instance:setStatPerm( \"%s\", %d )\n", stat->framework->name, stat->perm_stat );
+               if( stat->framework->pool )
+                  fprintf( fp, "   instance:setStatMod( \"%s\", %d )\n", stat->framework->name, stat->perm_stat );
+            }
             DetachIterator( &Iter );
             mode = FIND_END;
          }
