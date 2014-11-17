@@ -131,7 +131,7 @@ typedef enum
    SPEC_ONGREET, SPEC_ONFAREWELL,
    /* Combat Specs */
    SPEC_DODGECHANCE, SPEC_PARRYCHANCE, SPEC_MISSCHANCE,
-   SPEC_PREPMELEEATTACK, SPEC_PREPMELEEDAMAGE, SPEC_ONRECEIVEDAMAGE, SPEC_COMBATMESSAGE,
+   SPEC_PREPMELEETIMER, SPEC_PREPMELEEDAMAGE, SPEC_ONRECEIVEDAMAGE, SPEC_COMBATMESSAGE,
    /* Misc Specs */
    SPEC_MIRROREXIT, SPEC_TERRAIN,
 
@@ -340,6 +340,37 @@ do                                                                      \
    }                                                                    \
 } while(0)
 
+#define DAVLUACM_TIMER_NIL( timer, L )                                  \
+do                                                                      \
+{                                                                       \
+   if( ( (timer) = *(TIMER **)luaL_checkudata( (L), 1, "Timers.meta" ) ) == NULL ) \
+   {                                                                    \
+      bug( "%s: bad meta table.", __FUNCTION__ );                       \
+      lua_pushnil( (L) );                                               \
+      return 1;                                                         \
+   }                                                                    \
+} while(0)
+#define DAVLUACM_TIMER_BOOL( timer , L )                                \
+do                                                                      \
+{                                                                       \
+   if( ( (timer) = *(TIMER **)luaL_checkudata( (L), 1, "Timers.meta" ) ) == NULL ) \
+   {                                                                    \
+      bug( "%s: bad meta table.", __FUNCTION__ );                       \
+      lua_pushboolean( (L), 0 );                                        \
+      return 1;                                                         \
+   }                                                                    \
+} while(0)
+#define DAVLUACM_TIMER_NONE( timer, L )                                 \
+do                                                                      \
+{                                                                       \
+   if( ( (timer) = *(TIMER **)luaL_checkudata( (L), 1, "Timers.meta" ) ) == NULL ) \
+   {                                                                    \
+      bug( "%s: bad meta table.", __FUNCTION__ );                       \
+      return 0;                                                         \
+   }                                                                    \
+} while(0)
+
+
 #define UMIN(a, b)		((a) < (b) ? (a) : (b))
 #define UMAX(a, b)              ((a) < (b) ? (b) : (a))
 #define IS_ADMIN(dMob)          ((dMob->level) > LEVEL_PLAYER ? TRUE : FALSE)
@@ -481,6 +512,7 @@ typedef struct buffer_type
 #include "combat.h"
 #include "lua_damage.h"
 #include "timers.h"
+#include "lua_timers.h"
 
 /******************************
  * End of new structures      *

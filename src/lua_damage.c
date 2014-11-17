@@ -8,17 +8,12 @@ const struct luaL_Reg DamageLib_m[] = {
    { "getVictim", getVictim },
    { "getDmgSrc", getDmgSrc },
    { "getAmount", getAmount },
-   { "getDuration", getDuration },
-   { "getFrequency", getFrequency },
-   { "getPCounter", getPCounter },
+   { "getTimer", getDamageTimer },
    /* setters */
    { "setAttacker", setAttacker },
    { "setVictim", setVictim },
    { "setDmgSrc", setDmgSrc },
    { "setAmount", setAmount },
-   { "setDuration", setDuration },
-   { "setFrequency", setFrequency },
-   { "setPCounter", setPCounter },
    /* checkers */
    { "crit", getDmgCrit },
    /* actions */
@@ -124,26 +119,11 @@ int getAmount( lua_State *L )
    return 1;
 }
 
-int getDuration( lua_State *L )
+int getDamageTimer( lua_State *L )
 {
    DAMAGE *dmg;
    DAVLUACM_DAMAGE_NIL( dmg, L );
-   lua_pushnumber( L, (int)dmg->duration );
-   return 1;
-}
-
-int getFrequency( lua_State *L )
-{
-   DAMAGE *dmg;
-   DAVLUACM_DAMAGE_NIL( dmg, L );
-   lua_pushnumber( L, (int)dmg->frequency );
-   return 1;
-}
-int getPCounter( lua_State *L )
-{
-   DAMAGE *dmg;
-   DAVLUACM_DAMAGE_NIL( dmg, L );
-   lua_pushnumber( L, (int)dmg->pcounter );
+   push_timer( dmg->timer, L );
    return 1;
 }
 
@@ -225,47 +205,6 @@ int setAmount( lua_State *L )
       return 0;
    }
    dmg->amount = lua_tonumber( L, 2 );
-   return 0;
-}
-
-int setDuration( lua_State *L )
-{
-   DAMAGE *dmg;
-
-   DAVLUACM_DAMAGE_NONE( dmg, L );
-   if( lua_type( L, 2 ) != LUA_TNUMBER )
-   {
-      bug( "%s: bad argument passed, not a number.", __FUNCTION__ );
-      return 0;
-   }
-   dmg->duration = (sh_int)lua_tonumber( L, 2 );
-   return 0;
-}
-
-int setFrequency( lua_State *L )
-{
-   DAMAGE *dmg;
-
-   DAVLUACM_DAMAGE_NONE( dmg, L );
-   if( lua_type( L, 2 ) != LUA_TNUMBER )
-   {
-      bug( "%s: bad argument passed, not a number.", __FUNCTION__ );
-      return 0;
-   }
-   dmg->frequency = (sh_int)lua_tonumber( L, 2 );
-   return 0;
-}
-int setPCounter( lua_State * L )
-{
-   DAMAGE *dmg;
-
-   DAVLUACM_DAMAGE_NONE( dmg, L );
-   if( lua_type( L, 2 ) != LUA_TNUMBER )
-   {
-      bug( "%s: bad argument passed, not a number.", __FUNCTION__ );
-      return 0;
-   }
-   dmg->pcounter = (sh_int)lua_tonumber( L, 2 );
    return 0;
 }
 

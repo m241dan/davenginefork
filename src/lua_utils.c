@@ -421,6 +421,32 @@ void push_damage( DAMAGE *dmg, lua_State *L )
    return;
 }
 
+void push_timer( TIMER *timer, lua_State *L )
+{
+   TIMER **box;
+
+   if( !timer )
+   {
+      bug( "%s: trying to push a NULL timer.", __FUNCTION__ );
+      lua_pushnil( L );
+      return;
+   }
+
+   box = (TIMER **)lua_newuserdata( L, sizeof( TIMER * ) );
+   luaL_getmetatable( L, "Timers.meta" );
+   if( lua_isnil( L, -1 ) )
+   {
+      bug( "%s: Timers.meta is missing.", __FUNCTION__ );
+      lua_pop( L, -1 );
+      lua_pop( L, -1 );
+      lua_pushnil( L );
+      return;
+   }
+   lua_setmetatable( L, -2 );
+   *box = timer;
+   return;
+}
+
 int lua_bug( lua_State *L )
 {
    switch( lua_type( L, -1 ) )

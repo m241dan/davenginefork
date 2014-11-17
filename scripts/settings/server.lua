@@ -11,7 +11,7 @@ wiki_name = "core_wiki"
 
 -- combat stuff --
 automelee	= false
-automelee_delay = 2
+automelee_delay = 8 -- in quarter seconds --
 miss_on		= false
 dodge_on	= false
 parry_on	= false

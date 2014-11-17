@@ -11,10 +11,11 @@ DAMAGE *init_damage( void )
    dmg->attacker = NULL;
    dmg->victim = NULL;
    dmg->dmg_src = NULL;
+   dmg->type = DMG_UNKNOWN;
    dmg->amount = 0;
-   dmg->duration = -1;
-   dmg->frequency = -1;
-   dmg->pcounter = -1;
+   dmg->timer = init_timer();
+   set_timer_owner( dmg->timer, dmg, TIMER_DAMAGE );
+   dmg->timer->key = strdup( "dmg key" );
    return dmg;
 }
 
@@ -22,6 +23,7 @@ void free_damage( DAMAGE *dmg )
 {
    if( is_dmg_queued( dmg ) )
       rem_damage( dmg );
+   free_timer( dmg->timer );
    dmg->attacker = NULL;
    dmg->victim = NULL;
    dmg->dmg_src = NULL;
@@ -38,19 +40,20 @@ void prep_melee_atk( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim )
    const char *path;
    int top = lua_gettop( lua_handle );
 
-   if( ( spec = has_spec( attacker, "prepMeleeAttack" ) ) != NULL && spec->value > 0 )
+   if( ( spec = has_spec( attacker, "prepMeleeTimer" ) ) != NULL && spec->value > 0 )
       path = get_script_path_from_spec( spec );
    else
       path = "../scripts/settings/combat.lua";
 
-   prep_stack( path, "prepMeleeAttack" );
+   prep_stack( path, "prepMeleeTimer" );
    push_instance( attacker, lua_handle );
 
    dmg = init_damage();
-   dmg->attacker = attacker;
-   dmg->victim = victim;
+   set_dmg_attacker( dmg, attacker );
+   set_dmg_victim( dmg, victim );
+   set_dmg_src( dmg, attacker, DMG_MELEE );
 
-   push_damage( dmg, lua_handle );
+   push_timer( dmg->timer, lua_handle );
    if( lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) )
    {
       bug( "%s: failed to call onMeleeAttack script with path %s.", __FUNCTION__, path );
@@ -173,27 +176,31 @@ bool does_check( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim, const char 
    return FALSE;
 }
 
-/* monitor */
-void damage_monitor( void )
+/* utility */
+
+const char *compose_dmg_key( DAMAGE *dmg )
 {
-   DAMAGE *dmg;
-   ITERATOR Iter;
+   static char buf[MAX_BUFFER];
+   memset( &buf[0], 0, sizeof( buf ) );
 
-   if( SizeOfList( damage_queue ) <= 0 )
-      return;
+   if( dmg->attacker )
+      strcat( buf, quick_format( "%s's ", instance_name( dmg->attacker ) ) );
 
-   AttachIterator( &Iter, damage_queue );
-   while( ( dmg = (DAMAGE *)NextInList( &Iter ) ) != NULL )
+   if( dmg->type != DMG_UNKNOWN )
    {
-      if( ++dmg->pcounter == dmg->frequency )
+      if( dmg->type == DMG_MELEE )
       {
-         handle_damage( dmg );
-         dmg->pcounter = 0;
-      }
-      if( --dmg->duration <= 0 )
-         free_damage( dmg );
+         strcat( buf, "melee " );
+         if( dmg->dmg_src != dmg->attacker )
+            strcat( buf, quick_format( "with %s", instance_name( (ENTITY_INSTANCE *)dmg->dmg_src ) ) );
+       }
    }
-   return;
+
+   if( dmg->victim )
+      strcat( buf, quick_format( "against %s", instance_name( dmg->victim ) ) );
+
+   buf[strlen( buf )] = '\0';
+   return buf;
 }
 
 void handle_damage( DAMAGE *dmg )
@@ -327,4 +334,35 @@ inline bool is_dmg_queued( DAMAGE *dmg )
    if( dmg_q ) return TRUE;
    return FALSE;
 
+}
+
+/* setters */
+
+inline void set_dmg_attacker( DAMAGE *dmg, ENTITY_INSTANCE *attacker )
+{
+   dmg->attacker = attacker;
+   if( dmg->type == DMG_UNKNOWN ) return;
+   FREE( dmg->timer->key );
+   dmg->timer->key = strdup( compose_dmg_key( dmg ) );
+}
+
+inline void set_dmg_victim( DAMAGE *dmg, ENTITY_INSTANCE *victim )
+{
+   dmg->victim = victim;
+   if( dmg->type == DMG_UNKNOWN ) return;
+   FREE( dmg->timer->key );
+   dmg->timer->key = strdup( compose_dmg_key( dmg ) );
+}
+
+inline void set_dmg_type( DAMAGE *dmg, DMG_SRC type )
+{
+   dmg->type = type;
+   FREE( dmg->timer->key );
+   dmg->timer->key = strdup( compose_dmg_key( dmg ) );
+}
+
+inline void set_dmg_src( DAMAGE *dmg, void *dmg_src, DMG_SRC type )
+{
+   dmg->dmg_src = dmg_src;
+   set_dmg_type( dmg, type );
 }

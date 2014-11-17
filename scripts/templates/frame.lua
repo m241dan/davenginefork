@@ -41,7 +41,7 @@ function missChance( attacker, victim )
 end
 
 -- design the duration/frequency parts of the damage object
-function prepMeleeAttack( attacker, damage )
+function prepMeleeTimer( attacker, timer )
 end
 
 -- figure out the damage amount portion of the damage object

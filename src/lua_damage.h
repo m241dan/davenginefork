@@ -15,9 +15,7 @@ int getVictim( lua_State *L );
 int getDmgSrc( lua_State *L );
 int getAmount( lua_State *L );
 int getDuration( lua_State *L );
-int getFrequency( lua_State *L );
-int getPCounter( lua_State *L );
-int getAddDmg( lua_State *L );
+int getDamageTimer( lua_State *L );
 
 /* setters */
 int setAttacker( lua_State *L );
@@ -25,9 +23,6 @@ int setVictim( lua_State *L );
 int setDmgSrc( lua_State *L );
 int setAmount( lua_State *L );
 int setDuration( lua_State *L );
-int setFrequency( lua_State *L );
-int setPCounter( lua_State * L );
-int setAddDmg( lua_State *L );
 
 /* checkers */
 int getDmgCrit( lua_State *L );

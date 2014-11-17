@@ -125,6 +125,9 @@ int main(int argc, char **argv)
    luaL_requiref( lua_handle, "Damage", luaopen_DamageLib, 1 );
    lua_pop( lua_handle, -1 );
 
+   luaL_requiref( lua_handle, "Timers", luaopen_TimersLib, 1 );
+   lua_pop( lua_handle, -1 );
+
    luaL_requiref( lua_handle, "mud", luaopen_mud, 1 );
    lua_pop( lua_handle, -1 );
 
@@ -388,8 +391,6 @@ void GameLoop(int control)
 
     /* call the event queue */
     heartbeat();
-    /* call the damage queue */
-    damage_monitor();
     /* call the timer queue */
     timer_monitor();
     /*

@@ -20,9 +20,7 @@ struct damage_data
    DMG_SRC type;
    int amount;
    bool crit;
-   sh_int duration; /* total time this damage stays alive in pulses */
-   sh_int frequency; /* when ( pcounter == frequency ) do damage */
-   sh_int pcounter; /* inc every iteration, when ( pcounter == frequnecy ) pcounter = 0 */
+   TIMER *timer;
    /* bitvector composition */
    DAMAGE *additional_dmg;
 };
@@ -42,19 +40,29 @@ bool	send_damage	( DAMAGE *dmg );
 /* checkers */
 bool	does_check	( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim, const char *does );
 
-/* monitor */
-void damage_monitor ( void );
+/* getters */
+const char *dmg_src_name( DAMAGE *dmg );
+
+
+/* utility */
+const char *compose_dmg_key( DAMAGE *dmg );
 void handle_damage( DAMAGE *dmg );
 void combat_message ( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim, DAMAGE *dmg, cbt_ret status );
 
 /* inlines */
 
 /* creation */
-extern inline void	free_damage_list( LLIST *damages );
+extern inline void free_damage_list( LLIST *damages );
 
 /* utility */
-extern inline void    add_damage( DAMAGE *dmg );
-extern inline void    rem_damage( DAMAGE *dmg );
+extern inline void add_damage( DAMAGE *dmg );
+extern inline void rem_damage( DAMAGE *dmg );
 
 /* checkers */
 extern inline bool is_dmg_queued( DAMAGE *dmg );
+
+/* setters */
+extern inline void set_dmg_attacker	( DAMAGE *dmg, ENTITY_INSTANCE *attacker );
+extern inline void set_dmg_victim	( DAMAGE *dmg, ENTITY_INSTANCE *victim );
+extern inline void set_dmg_type		( DAMAGE *dmg, DMG_SRC type );
+extern inline void set_dmg_src		( DAMAGE *dmg, void *dmg_src, DMG_SRC type );
