@@ -119,7 +119,7 @@ void set_melee_timer( ENTITY_INSTANCE *instance, bool message )
       return;
 
    timer = init_timer();
-   timer->duration = BASE_MELEE_DELAY;
+   timer->duration = get_auto_cd( instance );
    set_timer_owner( timer, instance, TIMER_INSTANCE );
    timer->timer_type = TT_COOLDOWN;
    timer->key = strdup( MELEE_KEY );
@@ -268,7 +268,7 @@ inline TIMER *get_timer_from_list_by_key_and_type( const char *key, TIMER_OWNER_
    return timer;
 }
 
-inline double check_timer( const char *key )
+inline int check_timer( const char *key )
 {
    TIMER *timer;
    ITERATOR Iter;
@@ -284,7 +284,7 @@ inline double check_timer( const char *key )
    return time;
 }
 
-inline double check_timer_instance( ENTITY_INSTANCE *instance, const char *key )
+inline int check_timer_instance( ENTITY_INSTANCE *instance, const char *key )
 {
    TIMER *timer;
    ITERATOR Iter;

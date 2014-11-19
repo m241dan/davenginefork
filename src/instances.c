@@ -2656,7 +2656,7 @@ void mobile_attack( void *passed, char *arg )
 {
    ENTITY_INSTANCE *mob = (ENTITY_INSTANCE *)passed;
    ENTITY_INSTANCE *victim;
-   double cd;
+   int cd;
 
    if( !arg || arg[0] == '\0' )
    {
@@ -2680,7 +2680,7 @@ void mobile_attack( void *passed, char *arg )
 
    if( ( cd = CHECK_MELEE( mob ) ) != 0 )
    {
-      text_to_entity( mob, "You cannot attack for another %-3.3f seconds.\r\n", cd );
+      text_to_entity( mob, "You cannot attack for another %-3.3f seconds.\r\n", CALC_SECONDS( cd ) );
       return;
    }
    if( !victim->primary_dmg_received_stat )
@@ -2696,4 +2696,47 @@ void mobile_attack( void *passed, char *arg )
    prep_melee_atk( mob, victim );
    set_melee_timer( mob, TRUE );
    return;
+}
+
+void mobile_kill( void *passed, char *arg )
+{
+   ENTITY_INSTANCE *mob = (ENTITY_INSTANCE *)passed;
+   ENTITY_INSTANCE *victim;
+   EVENT_DATA *event;
+   int cd;
+
+   if( !AUTOMELEE )
+   {
+      text_to_entity( mob, "No such command.\r\n" );
+      return;
+   }
+
+   cd = CHECK_MELEE( mob );
+   event = event_isset_instance( mob, EVENT_AUTO_ATTACK );
+
+   if( !arg || arg[0] == '\0' )
+   {
+      if( NO_TARGET( mob ) || TARGET_TYPE( mob ) != TARGET_INSTANCE )
+      {
+         if( event )
+            text_to_entity( mob, "You are already in a killing mode.\r\n" );
+         else
+         {
+            start_killing_mode( mob );
+            text_to_entity( mob, "You will attack anything you target.\r\n" );
+         }
+         return;
+      }
+      victim = (ENTITY_INSTANCE *)mob->target->target;
+      if( event )
+         text_to_entity( mob, "Your autoattack is on cooldown, there is nothing more you can do at the moment.\r\n" );
+      else if( !victim->primary_dmg_received_stat )
+         text_to_entity( mob, "You cannot attack that.\r\n" );
+      return;
+   }
+   else
+   {
+      if( ( victim 
+   }
+
 }

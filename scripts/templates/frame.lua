@@ -40,6 +40,11 @@ function missChance( attacker, victim )
    return 0
 end
 
+-- calculate any factors effecting melee cooldowns
+function meleeCooldown( attacker )
+   return automelee_delay
+end
+
 -- design the duration/frequency parts of the damage object
 function prepMeleeTimer( attacker, timer )
 end

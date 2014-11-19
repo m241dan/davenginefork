@@ -25,7 +25,7 @@
 
 typedef enum
 {
-   EVENT_LUA_CALLBACK = 1, MAX_INSTANCE_EVENT
+   EVENT_LUA_CALLBACK = 1, EVENT_AUTO_ATTACK, MAX_INSTANCE_EVENT
 } INSTANCE_EVENTS;
 
 typedef enum
@@ -68,6 +68,7 @@ EVENT_DATA *alloc_event          ( void );
 void free_event                  ( EVENT_DATA *event );
 
 EVENT_DATA *event_isset_socket   ( D_SOCKET *dSock, int type );
+EVENT_DATA *event_isset_instance ( ENTITY_INSTANCE *instance, int type );
 void dequeue_event               ( EVENT_DATA *event );
 void init_event_queue            ( int section );
 void init_events_socket          ( D_SOCKET *dSock );

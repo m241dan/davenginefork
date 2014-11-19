@@ -176,6 +176,33 @@ bool does_check( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim, const char 
    return FALSE;
 }
 
+/* getters */
+int get_auto_cd( ENTITY_INSTANCE *instance )
+{
+   SPECIFICATION *spec;
+   const char *path;
+   int cd, top = lua_gettop( lua_handle );
+
+   if( ( spec = has_spec( instance, "meleeCooldown" ) ) != NULL && spec->value > 0 )
+      path = get_script_path_from_spec( spec );
+   else
+      path = "../scripts/settings.combat.lua";
+
+   prep_stack( path, "meleeCooldown" );
+   push_instance( instance );
+
+   if( int ret = lua_pcall( lua_handle, 1, LUA_MULTRET, 0 ) )
+      bug( "%s: ret %s: path: %s\r\n - error message: %s.", __FUNCTION__, ret, path, lua_tostring( lua_handle, -1 ) );
+   else
+      cd = lua_tonumber( lua_handle, -1 );
+
+   if( cd == 0 )
+      cd = 10; /* safe number, should never be zero */
+
+   lua_settop( lua_handle, top );
+   return cd;
+}
+
 /* utility */
 
 const char *compose_dmg_key( DAMAGE *dmg )
@@ -202,6 +229,8 @@ const char *compose_dmg_key( DAMAGE *dmg )
    buf[strlen( buf )] = '\0';
    return buf;
 }
+
+/* actions */
 
 void handle_damage( DAMAGE *dmg )
 {
@@ -277,6 +306,19 @@ void combat_message( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim, DAMAGE 
       text_around_entity( attacker->contained_by, 1, msg_room, attacker );
       text_around_entity( victim->contained_by, 1, msg_room, victim );
    }
+   return;
+}
+
+void start_killing_mode( ENTITY_INSTANCE *instance )
+{
+   EVENT_DATA *event;
+
+   if( ( event = event_isset_instance( instance, EVENT_AUTO_ATTACK ) ) != NULL )
+      return;
+
+   event = alloc_event();
+   event->fun = &event_auto_attack;
+   add_event_instance( event, instance, get_auto_cd( instance ) );
    return;
 }
 

@@ -161,3 +161,4 @@ void mobile_look( void *passed, char *arg );
 void mobile_inventory( void *passed, char *arg );
 void mobile_say( void *passed, char *arg );
 void mobile_attack( void *passed, char *arg );
+void mobile_kill( void *passed, char *arg );

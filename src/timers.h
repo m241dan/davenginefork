@@ -27,6 +27,8 @@ struct timer
    bool active;
 };
 
+#define CALC_SECONDS( duration ) ( (double)( (double)duration / PULSES_PER_SECOND ) )
+
 /* creation */
 TIMER *init_timer( void );
 void free_timer( TIMER *timer );
@@ -60,8 +62,8 @@ extern inline TIMER *get_timer_from_list_by_key_and_type( const char *key, TIMER
 #define get_timer_from_damage( damage ) ( ((DAMAGE *)(damage))->timer )
 
 /* checkers */
-extern inline double check_timer( const char *key );
-extern inline double check_timer_instance( ENTITY_INSTANCE *instance, const char *key );
+extern inline int check_timer( const char *key );
+extern inline int check_timer_instance( ENTITY_INSTANCE *instance, const char *key );
 #define MELEE_KEY "melee attack"
 #define MELEE_CD_MSG "You may attack again."
 #define CHECK_MELEE( instance ) ( check_timer_instance( (instance), MELEE_KEY ) )

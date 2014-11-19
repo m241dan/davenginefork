@@ -73,6 +73,7 @@ void dequeue_event(EVENT_DATA *event)
          bug("dequeue_event: event type %d has no owner.", event->type);
          break;
       case EVENT_OWNER_GAME:
+      case EVENT_OWNER_LUA:
          DetachFromList(event, global_events);
          break;
       case EVENT_OWNER_INSTANCE:
@@ -324,7 +325,7 @@ void add_event_lua( EVENT_DATA *event, const char *path, int delay )
 }
 
 /* function   :: event_isset_socket()
- * arguments  :: the socket and the type of event
+ * arguments  :: the socket and the type of event
  * ======================================================
  * This function checks to see if a given type of event
  * is enqueued/attached to a given socket, and if it is,
