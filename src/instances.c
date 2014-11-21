@@ -2703,7 +2703,7 @@ void mobile_kill( void *passed, char *arg )
    ENTITY_INSTANCE *mob = (ENTITY_INSTANCE *)passed;
    ENTITY_INSTANCE *victim;
    EVENT_DATA *event;
-   int cd;
+   int specific;
 
    if( !AUTOMELEE )
    {
@@ -2711,32 +2711,28 @@ void mobile_kill( void *passed, char *arg )
       return;
    }
 
-   cd = CHECK_MELEE( mob );
-   event = event_isset_instance( mob, EVENT_AUTO_ATTACK );
-
-   if( !arg || arg[0] == '\0' )
+   if( ( event = event_isset_instance( mob, EVENT_AUTO_ATTACK ) ) == NULL )
    {
-      if( NO_TARGET( mob ) || TARGET_TYPE( mob ) != TARGET_INSTANCE )
-      {
-         if( event )
-            text_to_entity( mob, "You are already in a killing mode.\r\n" );
-         else
-         {
-            start_killing_mode( mob );
-            text_to_entity( mob, "You will attack anything you target.\r\n" );
-         }
-         return;
-      }
-      victim = (ENTITY_INSTANCE *)mob->target->target;
-      if( event )
-         text_to_entity( mob, "Your autoattack is on cooldown, there is nothing more you can do at the moment.\r\n" );
-      else if( !victim->primary_dmg_received_stat )
-         text_to_entity( mob, "You cannot attack that.\r\n" );
-      return;
+      text_to_entity( mob, "You will attack anything you target.\r\n" );
+      start_killing_mode( mob );
    }
    else
-   {
-      if( ( victim 
-   }
+      text_to_entity( mob, "You are already in a killing mode.\r\n" );
 
+   if( !arg || arg[0] == '\0' || !mob->contained_by )
+      return;
+
+   if( ( specific = number_arg_single( arg ) ) > 0 )
+      victim = instance_list_has_by_name_regex_specific( mob->contained_by->contents, arg, specific );
+   else
+      victim = instance_list_has_by_name_regex( mob->contained_by->contents, arg );
+
+   if( victim )
+   {
+      text_to_entity( mob, "%s\r\n", NO_TARGET( mob ) ? "You target %s." : "You switch targets to %s.", instance_short_descr( mob ) );
+      set_target_i( mob->target, victim );
+   }
+   else
+      text_to_entity(  mob, "There is no %s here.\r\n" );
+   return;
 }

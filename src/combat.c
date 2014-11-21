@@ -181,18 +181,17 @@ int get_auto_cd( ENTITY_INSTANCE *instance )
 {
    SPECIFICATION *spec;
    const char *path;
-   int cd, top = lua_gettop( lua_handle );
-
+   int cd, ret, top = lua_gettop( lua_handle );
    if( ( spec = has_spec( instance, "meleeCooldown" ) ) != NULL && spec->value > 0 )
       path = get_script_path_from_spec( spec );
    else
       path = "../scripts/settings.combat.lua";
 
    prep_stack( path, "meleeCooldown" );
-   push_instance( instance );
+   push_instance( instance, lua_handle );
 
-   if( int ret = lua_pcall( lua_handle, 1, LUA_MULTRET, 0 ) )
-      bug( "%s: ret %s: path: %s\r\n - error message: %s.", __FUNCTION__, ret, path, lua_tostring( lua_handle, -1 ) );
+   if( ( ret = lua_pcall( lua_handle, 1, LUA_MULTRET, 0 ) ) )
+      bug( "%s: ret %d: path: %s\r\n - error message: %s.", __FUNCTION__, ret, path, lua_tostring( lua_handle, -1 ) );
    else
       cd = lua_tonumber( lua_handle, -1 );
 
@@ -312,13 +311,16 @@ void combat_message( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim, DAMAGE 
 void start_killing_mode( ENTITY_INSTANCE *instance )
 {
    EVENT_DATA *event;
+   int cd;
 
    if( ( event = event_isset_instance( instance, EVENT_AUTO_ATTACK ) ) != NULL )
       return;
 
    event = alloc_event();
    event->fun = &event_auto_attack;
-   add_event_instance( event, instance, get_auto_cd( instance ) );
+   event->type = EVENT_AUTO_ATTACK;
+   cd = get_auto_cd( instance );
+   add_event_instance( event, instance, cd ? 1 : cd );
    return;
 }
 

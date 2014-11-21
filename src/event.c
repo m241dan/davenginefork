@@ -161,6 +161,20 @@ bool event_global_lua_callback( EVENT_DATA *event )
 
 bool event_auto_attack( EVENT_DATA *event )
 {
+   ENTITY_INSTANCE *mob, *victim;
+   int cd;
+
+   if( event->owner_type != EVENT_OWNER_INSTANCE )
+   {
+      bug( "%s: bad event owner.", __FUNCTION__ );
+      return FALSE;
+   }
+   if( ( mob = (ENTITY_INSTANCE *)event->owner ) == NULL )
+   {
+      bug( "%s: NULL event owner.", __FUNCTION__ );
+      return FALSE;
+   }
+
    /* check auto delay timer, requeue if necessary */
    /* otherwise, prep melee on target, if no target dequeue */
    return FALSE;

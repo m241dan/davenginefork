@@ -273,6 +273,7 @@ struct typCmd builder_commands[] = {
    { "west", entity_west, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
    { "up", entity_up, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
    { "down", entity_down, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
+   { "kill", mobile_kill, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
    { '\0', NULL, 0, NULL, FALSE, NULL }
 };
 
@@ -284,6 +285,7 @@ struct typCmd mobile_commands[] = {
    { "give", entity_give, LEVEL_BASIC, NULL, FALSE, NULL, mobile_commands },
    { "put", entity_put, LEVEL_BASIC, NULL, FALSE, NULL, mobile_commands },
    { "say", mobile_say, LEVEL_BASIC, NULL, FALSE, NULL, mobile_commands },
+   { "kill", mobile_kill, LEVEL_BASIC, NULL, FALSE, NULL, mobile_commands },
    { '\0', NULL, 0, NULL, FALSE, NULL }
 };
 
