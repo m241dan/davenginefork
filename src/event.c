@@ -186,15 +186,21 @@ bool event_auto_attack( EVENT_DATA *event )
    /* otherwise, prep melee on target, if no target dequeue */
    if( !NO_TARGET( mob ) && TARGET_TYPE( mob ) == TARGET_INSTANCE && can_melee( mob, GT_INSTANCE( mob ) ) )
    {
+      if( !(GT_INSTANCE( mob ))->primary_dmg_received_stat )
+      {
+         text_to_entity( mob, "You cannot attack that.\r\n" );
+         goto short_melee;
+      }
       prep_melee_atk( mob, GT_INSTANCE( mob ) );
       set_melee_timer( mob, FALSE );
       event = melee_event();
       add_event_instance( event, mob, CHECK_MELEE( mob ) );
       return FALSE;
    }
+   text_to_entity( mob, "You aren't targetting anything.\r\n" );
+short_melee:
    event = melee_event();
    add_event_instance( event, mob, (int)( 1.5 * PULSES_PER_SECOND ) );
-   text_to_entity( mob, "You aren't targetting anything.\r\n" );
    return FALSE;
 }
 
