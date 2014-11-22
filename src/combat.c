@@ -176,6 +176,33 @@ bool does_check( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim, const char 
    return FALSE;
 }
 
+bool can_melee( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim )
+{
+   SPECIFICATION *spec;
+   const char *path;
+   int ret, top = lua_gettop( lua_handle );
+   bool can = FALSE;
+
+   if( ( spec = has_spec( attacker, "meleeCheck" ) ) != NULL && spec->value > 0 )
+      path = get_script_path_from_spec( spec );
+   else
+      path = "../scripts/settings/combat.lua";
+
+   prep_stack( path, "meleeCheck" );
+   push_instance( attacker, lua_handle );
+   push_instance( victim, lua_handle );
+
+   if( ( ret = lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) ) )
+      bug( "%s: ret %d: path %s\r\n - error message: %s.", __FUNCTION__, ret, path, lua_tostring( lua_handle, -1 ) );
+   else if( lua_type( lua_handle, -1 ) == LUA_TSTRING )
+      text_to_entity( attacker, "%s\r\n", lua_tostring( lua_handle, -1 ) );
+   else
+      can = TRUE;
+
+   lua_settop( lua_handle, top );
+   return can;
+}
+
 /* getters */
 int get_auto_cd( ENTITY_INSTANCE *instance )
 {
@@ -185,7 +212,7 @@ int get_auto_cd( ENTITY_INSTANCE *instance )
    if( ( spec = has_spec( instance, "meleeCooldown" ) ) != NULL && spec->value > 0 )
       path = get_script_path_from_spec( spec );
    else
-      path = "../scripts/settings.combat.lua";
+      path = "../scripts/settings/combat.lua";
 
    prep_stack( path, "meleeCooldown" );
    push_instance( instance, lua_handle );
@@ -316,11 +343,22 @@ void start_killing_mode( ENTITY_INSTANCE *instance )
    if( ( event = event_isset_instance( instance, EVENT_AUTO_ATTACK ) ) != NULL )
       return;
 
-   event = alloc_event();
-   event->fun = &event_auto_attack;
-   event->type = EVENT_AUTO_ATTACK;
+   event = melee_event();
    cd = get_auto_cd( instance );
    add_event_instance( event, instance, cd ? 1 : cd );
+   text_to_entity( instance, "You will attack anything you target.\r\n" );
+   return;
+}
+
+void end_killing_mode( ENTITY_INSTANCE *instance )
+{
+   EVENT_DATA *event;
+
+   if( ( event = event_isset_instance( instance, EVENT_AUTO_ATTACK ) ) == NULL )
+      return;
+
+   dequeue_event( event );
+   text_to_entity( instance, "You no longer attack anything you target.\r\n" );
    return;
 }
 
@@ -338,6 +376,14 @@ inline void free_damage_list( LLIST *damages )
       DetachFromList( dmg, damages );
    }
    DetachIterator( &Iter );
+}
+
+inline EVENT_DATA *melee_event( void )
+{
+   EVENT_DATA *event = alloc_event();
+   event->fun = &event_auto_attack;
+   event->type = EVENT_AUTO_ATTACK;
+   return event;
 }
 
 /* utility */

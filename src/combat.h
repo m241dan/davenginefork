@@ -39,6 +39,7 @@ bool		send_damage	( DAMAGE *dmg );
 
 /* checkers */
 bool		does_check	( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim, const char *does );
+bool		can_melee	( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim );
 
 /* getters */
 int		get_auto_cd	( ENTITY_INSTANCE *instance ); 
@@ -57,7 +58,7 @@ void		start_killing_mode( ENTITY_INSTANCE *instance );
 
 /* creation */
 extern inline void free_damage_list	( LLIST *damages );
-
+extern inline EVENT_DATA *melee_event	( void );
 /* utility */
 extern inline void add_damage		( DAMAGE *dmg );
 extern inline void rem_damage		( DAMAGE *dmg );

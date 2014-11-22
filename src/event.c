@@ -161,10 +161,10 @@ bool event_global_lua_callback( EVENT_DATA *event )
 
 bool event_auto_attack( EVENT_DATA *event )
 {
-   ENTITY_INSTANCE *mob, *victim;
+   ENTITY_INSTANCE *mob;
    int cd;
 
-   if( event->owner_type != EVENT_OWNER_INSTANCE )
+   if( event->ownertype != EVENT_OWNER_INSTANCE )
    {
       bug( "%s: bad event owner.", __FUNCTION__ );
       return FALSE;
@@ -176,7 +176,25 @@ bool event_auto_attack( EVENT_DATA *event )
    }
 
    /* check auto delay timer, requeue if necessary */
+   if( ( cd = CHECK_MELEE( mob ) ) != 0 )
+   {
+      event = melee_event();
+      add_event_instance( event, mob, cd );
+      return FALSE;
+   }
+
    /* otherwise, prep melee on target, if no target dequeue */
+   if( !NO_TARGET( mob ) && TARGET_TYPE( mob ) == TARGET_INSTANCE && can_melee( mob, GT_INSTANCE( mob ) ) )
+   {
+      prep_melee_atk( mob, GT_INSTANCE( mob ) );
+      set_melee_timer( mob, FALSE );
+      event = melee_event();
+      add_event_instance( event, mob, CHECK_MELEE( mob ) );
+      return FALSE;
+   }
+   event = melee_event();
+   add_event_instance( event, mob, (int)( 1.5 * PULSES_PER_SECOND ) );
+   text_to_entity( mob, "You aren't targetting anything.\r\n" );
    return FALSE;
 }
 

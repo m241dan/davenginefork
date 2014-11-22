@@ -389,10 +389,10 @@ void GameLoop(int control)
     }
     DetachIterator(&Iter);
 
-    /* call the event queue */
-    heartbeat();
     /* call the timer queue */
     timer_monitor();
+    /* call the event queue */
+    heartbeat();
     /*
      * Here we sleep out the rest of the pulse, thus forcing
      * SocketMud(tm) to run at PULSES_PER_SECOND pulses each second.

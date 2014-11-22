@@ -2693,6 +2693,9 @@ void mobile_attack( void *passed, char *arg )
       text_to_entity( mob, "You cannot attack.\r\n" );
       return;
    }
+   if( !can_melee( mob, victim ) )
+      return;
+
    prep_melee_atk( mob, victim );
    set_melee_timer( mob, TRUE );
    return;
@@ -2712,10 +2715,7 @@ void mobile_kill( void *passed, char *arg )
    }
 
    if( ( event = event_isset_instance( mob, EVENT_AUTO_ATTACK ) ) == NULL )
-   {
-      text_to_entity( mob, "You will attack anything you target.\r\n" );
       start_killing_mode( mob );
-   }
    else
       text_to_entity( mob, "You are already in a killing mode.\r\n" );
 
@@ -2729,8 +2729,9 @@ void mobile_kill( void *passed, char *arg )
 
    if( victim )
    {
-      text_to_entity( mob, "%s\r\n", NO_TARGET( mob ) ? "You target %s." : "You switch targets to %s.", instance_short_descr( mob ) );
+      text_to_entity( mob, "%s %s.\r\n", NO_TARGET( mob ) ? "You target" : "You switch targets to", instance_short_descr( victim ) );
       set_target_i( mob->target, victim );
+      mob->socket->bust_prompt = FALSE;
    }
    else
       text_to_entity(  mob, "There is no %s here.\r\n" );

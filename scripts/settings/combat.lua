@@ -15,6 +15,18 @@ function meleeCooldown( attacker )
    return automelee_delay
 end
 
+-- check to see if the attacker can atk the victim, ie same room? can see? etc etc --
+-- return anything other than a string if you can attack, otherwise return the reason --
+-- for example "%s is not out of range" or "%s is not here" whatever you want chummy --
+function meleeCheck( attacker, victim )
+   if( attacker:isSameRoom( victim ) == true ) then
+      return true
+   else
+      local ret = string.format( "%s is not here.", vicitm:getShort() )
+      return ret
+   end
+end
+
 -- design the duration/frequency parts of the damage object
 function prepMeleeTimer( attacker, timer )
    timer:setDuration( 1 )

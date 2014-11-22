@@ -14,7 +14,7 @@ const char *const spec_table[] = {
    "onEntityEnter", "onEntityLeave", "onEntering", "onLeaving",
    "onGreetEntity", "onFarewellEntity",
    /* Combat Specs */
-   "dodgeChance", "parryChance", "missChance", "meleeCooldown",
+   "dodgeChance", "parryChance", "missChance", "meleeCooldown", "meleeCheck",
    "prepMeleeTimer", "prepMeleeDamage", "onReceiveDamage", "combatMessage",
    /* Misc Specs */
    "MirrorExit", "Terrain",

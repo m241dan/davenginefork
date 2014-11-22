@@ -241,7 +241,7 @@ inline void load_server_script( void )
 {
    if( luaL_loadfile( lua_handle, "../scripts/settings/server.lua" ) || lua_pcall( lua_handle, 0, 0, 0 ) )
    {
-      bug( "%s: could not load sql variables.", __FUNCTION__ );
+      bug( "%s: could not load server variables.", __FUNCTION__ );
       return;
    }
 }
