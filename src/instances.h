@@ -113,7 +113,7 @@ void set_instance_level( ENTITY_INSTANCE *instance, int level );
 void set_to_loaded( ENTITY_INSTANCE *instance );
 
 /* actions */
-void do_damage( ENTITY_INSTANCE *entity, DAMAGE *dmg );
+bool do_damage( ENTITY_INSTANCE *entity, DAMAGE *dmg );
 
 int text_to_entity( ENTITY_INSTANCE *entity, const char *fmt, ... );
 void text_around_entity( ENTITY_INSTANCE *perspective, int num_around, const char *fmt, ... );

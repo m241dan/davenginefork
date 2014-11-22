@@ -286,7 +286,6 @@ void full_load_instance( ENTITY_INSTANCE *instance )
          bug( "%s: trying to load an instance that doesnt exist: ID %d", __FUNCTION__, id_to_load );
          continue;
       }
-      bug( "%s: recursion", __FUNCTION__ );
       full_load_instance( instance_to_contain );
       if( !instance_list_has_by_id( instance->contents, id_to_load ) )
          attach_entity_to_contents( instance_to_contain, instance );
@@ -1360,17 +1359,21 @@ void set_to_loaded( ENTITY_INSTANCE *instance )
 }
 
 /* actions */
-void do_damage( ENTITY_INSTANCE *entity, DAMAGE *dmg )
+
+/* do_damage on kill return TRUE */
+bool do_damage( ENTITY_INSTANCE *entity, DAMAGE *dmg )
 {
    STAT_INSTANCE *stat = entity->primary_dmg_received_stat;
 
    if( !stat )
    {
       bug( "%s: cannot do damage to %s, no primary dmg stat.", __FUNCTION__, instance_name( entity ) );
-      return;
+      return FALSE;
    }
    dec_pool_stat( stat, dmg->amount );
-   return;
+   if( get_stat_current( stat ) <= 0 )
+      return TRUE;
+   return FALSE;
 }
 
 
@@ -2701,6 +2704,7 @@ void mobile_kill( void *passed, char *arg )
    ENTITY_INSTANCE *victim;
    EVENT_DATA *event;
    int specific;
+   bool message = FALSE;
 
    if( !AUTOMELEE )
    {
@@ -2708,20 +2712,24 @@ void mobile_kill( void *passed, char *arg )
       return;
    }
 
+   if( !arg || arg[0] == '\0' )
+      message = TRUE;
+
    if( ( event = event_isset_instance( mob, EVENT_AUTO_ATTACK ) ) == NULL )
-      start_killing_mode( mob );
+      start_killing_mode( mob, message );
+
    else
    {
       if( !strcmp( arg, "stop" ) )
       {
          text_to_entity( mob, "You are no longer in a killing mode.\r\n" );
-         end_killing_mode( mob );
+         end_killing_mode( mob, FALSE );
          return;
       }
       text_to_entity( mob, "You are already in a killing mode.\r\n" );
    }
 
-   if( !arg || arg[0] == '\0' || !mob->contained_by )
+   if( message || !mob->contained_by )
       return;
 
    if( ( specific = number_arg_single( arg ) ) > 0 )
@@ -2733,7 +2741,6 @@ void mobile_kill( void *passed, char *arg )
    {
       text_to_entity( mob, "%s %s.\r\n", NO_TARGET( mob ) ? "You target" : "You switch targets to", instance_short_descr( victim ) );
       set_target_i( mob->target, victim );
-      mob->socket->bust_prompt = FALSE;
    }
    else
       text_to_entity(  mob, "There is no %s here.\r\n" );

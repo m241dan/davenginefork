@@ -260,6 +260,7 @@ const char *compose_dmg_key( DAMAGE *dmg )
 
 void handle_damage( DAMAGE *dmg )
 {
+   bool kill = FALSE;
    cbt_ret status;
    switch( dmg->type )
    {
@@ -283,14 +284,16 @@ void handle_damage( DAMAGE *dmg )
    receive_damage( dmg );
 
    if( dmg->amount )
-      do_damage( dmg->victim, dmg );
-
-   /* this is just a test message */
-   if( !get_stat_current( dmg->victim->primary_dmg_received_stat ) )
-      text_to_entity( dmg->attacker, "You killed %s.\r\n", instance_short_descr( dmg->victim ) );
+      kill = do_damage( dmg->victim, dmg );
 
    /* actual combat messaging */
    combat_message( dmg->attacker, dmg->victim, dmg, status );
+   if( kill )
+   {
+      end_killing_mode( dmg->attacker, FALSE );
+      text_to_entity( dmg->attacker, "You have killed %s.\r\n", downcase( instance_short_descr( dmg->victim ) ) );
+      dmg->attacker->socket->bust_prompt = TRUE;
+   }
 }
 
 void combat_message( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim, DAMAGE *dmg, cbt_ret status )
@@ -335,7 +338,7 @@ void combat_message( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim, DAMAGE 
    return;
 }
 
-void start_killing_mode( ENTITY_INSTANCE *instance )
+void start_killing_mode( ENTITY_INSTANCE *instance, bool message )
 {
    EVENT_DATA *event;
    int cd;
@@ -346,11 +349,11 @@ void start_killing_mode( ENTITY_INSTANCE *instance )
    event = melee_event();
    cd = get_auto_cd( instance );
    add_event_instance( event, instance, cd ? 1 : cd );
-   text_to_entity( instance, "You will attack anything you target.\r\n" );
+   if( message ) text_to_entity( instance, "You will attack anything you target.\r\n" );
    return;
 }
 
-void end_killing_mode( ENTITY_INSTANCE *instance )
+void end_killing_mode( ENTITY_INSTANCE *instance, bool message )
 {
    EVENT_DATA *event;
 
@@ -358,7 +361,7 @@ void end_killing_mode( ENTITY_INSTANCE *instance )
       return;
 
    dequeue_event( event );
-   text_to_entity( instance, "You no longer attack anything you target.\r\n" );
+   if( message ) text_to_entity( instance, "You no longer attack anything you target.\r\n" );
    return;
 }
 

@@ -54,8 +54,8 @@ function combatMessage( attacker, defender, damage, status )
    local room_msg
 
    if( status == HIT_SUCCESS ) then
-      atk_msg = string.format( "You attack %s doing %d damage.", defender:getShort(), damage:getAmount() )
-      def_msg = string.format( "%s attacks you doing %d damage.", attacker:getShort(), damage:getAmount() )
+      atk_msg = string.format( "You attack %s doing %d damage.", defender:getShort():lower(), damage:getAmount() )
+      def_msg = string.format( "%s attacks you doing %d damage.", attacker:getShort():lower(), damage:getAmount() )
       room_msg = string.format( "%s attacks %s.", attacker:getShort(), defender:getShort() )
    elseif( status == HIT_DODGED ) then
    elseif( status == HIT_PARRIED ) then
