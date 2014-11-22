@@ -2323,3 +2323,43 @@ void olc_pak( void *passed, char *arg )
    }
    return;
 }
+
+void olc_delete( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_INSTANCE *instance;
+/*   ENTITY_FRAMEWORK *frame;
+   PROJECT *project;
+   WORKSPACE *wSpace; comment to avoid warnings for now */
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Delete what?\r\n" );
+      return;
+   }
+
+   if( !interpret_entity_selection( arg ) )
+   {
+      text_to_olc( olc, STD_SELECTION_ERRMSG_PTR_USED );
+      olc_short_prompt( olc );
+      return;
+   }
+
+   switch( input_selection_typing )
+   {
+      default:
+         clear_entity_selection();
+         text_to_olc( olc, "Invalid selection type, frame, instance, workspace and project only.\r\n" );
+         return;
+      case SEL_FRAME:
+      case SEL_WORKSPACE:
+      case SEL_PROJECT:
+         text_to_olc( olc, "Instances only for the moment.\r\n" );
+         return;
+      case SEL_INSTANCE:
+         instance = (ENTITY_INSTANCE *)retrieve_entity_selection();
+         text_to_olc( olc, "You delete %s from existence.\r\n", instance_name( instance ) );
+         delete_eInstance( instance );
+         return;
+   }
+}

@@ -79,7 +79,8 @@ int free_eInstance( ENTITY_INSTANCE *eInstance )
    FreeList( eInstance->timers );
    eInstance->timers = NULL;
 
-   free_tag( eInstance->tag );
+   if( eInstance->tag ) /* take deletion into consideration */
+      free_tag( eInstance->tag );
    eInstance->tag = NULL;
 
    for( x = 0; x < MAX_INSTANCE_EVENT; x++ )
@@ -124,10 +125,23 @@ void delete_eInstance( ENTITY_INSTANCE *instance )
    EVAR *var;
    ITERATOR Iter;
 
+   DetachFromList( instance, eInstances_list );
+
+   /* delete all exits going to this instance */
+   delete_all_exits_to( instance );
+
    /* dealing with inventory */
    AttachIterator( &Iter, instance->contents );
    while( ( content = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
+   {
+      if( content->framework->tag->id >= 0 && content->framework->tag->id <= 5 ) /* delete generic exits */
+      {
+         bug( "DELETING EXIT: (%d)%s", content->tag->id, instance_name( content ) );
+         entity_to_world( content, NULL );
+         delete_eInstance( content );
+      }
       entity_to_world( content, instance->contained_by ); /* handles the databasing */
+   }
    DetachIterator( &Iter );
 
    /* dealing with stats */
@@ -159,7 +173,41 @@ void delete_eInstance( ENTITY_INSTANCE *instance )
    /* delete the actual instance itself */
    if( !quick_query( "DELETE FROM `entity_instances` WHERE entityInstanceId=%d;", instance->tag->id ) )
       bug( "%s: could not delete instance %d from database.", __FUNCTION__, instance->tag->id );
+
+   delete_tag( instance->tag );
+   instance->tag = NULL;
    free_eInstance( instance );
+   return;
+}
+
+void delete_all_exits_to( ENTITY_INSTANCE *instance )
+{
+   ENTITY_INSTANCE *exit;
+   LLIST *list;
+   MYSQL_ROW row;
+   ITERATOR Iter;
+
+   list = AllocList();
+   if( !db_query_list_row( list, quick_format( "SELECT owner FROM `live_specs` WHERE specType='IsExit' AND value=%d;", instance->tag->id ) ) )
+   {
+      bug( "%s: exiting here." );
+      FreeList( list );
+      return;
+   }
+
+   AttachIterator( &Iter, list );
+   while( ( row = (MYSQL_ROW)NextInList( &Iter ) ) != NULL )
+   {
+      if( row[0][0] == 'f' )
+         continue;
+      if( ( exit = get_instance_by_id( atoi( row[0] ) ) ) == NULL )
+         continue;
+      bug( "DELETING EXIT: (%d)%s", exit->tag->id, instance_name( exit ) );
+      entity_to_world( exit, NULL );
+      delete_eInstance( exit );
+   }
+   DetachIterator( &Iter );
+   FreeList( list );
    return;
 }
 
@@ -198,7 +246,8 @@ ENTITY_INSTANCE *load_eInstance_by_query( const char *query )
    load_specifications_to_list( instance->specifications, quick_format( "%d", instance->tag->id ) );
    load_entity_vars( instance );
    load_entity_stats( instance );
-   instance->primary_dmg_received_stat = get_stat_from_instance_by_id( instance, instance->framework->f_primary_dmg_received_stat->tag->id );
+   if( instance->framework->f_primary_dmg_received_stat )
+      instance->primary_dmg_received_stat = get_stat_from_instance_by_id( instance, instance->framework->f_primary_dmg_received_stat->tag->id );
    if( get_spec_value( instance, "IsPlayer" ) <= 0 )
       load_commands( instance->commands, mobile_commands, LEVEL_BASIC );
    free( row );
@@ -434,12 +483,18 @@ void entity_to_contents( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container )
    if( !container )
    {
       entity->contained_by = NULL;
+      if( !quick_query( "UPDATE `entity_instances` SET containedBy='-1' WHERE entityInstanceID=%d;", entity->tag->id ) )
+         bug( "%s: could not update entity %d with new containedBy.", __FUNCTION__, entity->tag->id );
       return;
    }
    attach_entity_to_contents( entity, container );
    if( !entity->builder )
+   {
       if( !quick_query( "INSERT INTO `entity_instance_possessions` VALUES ( %d, %d );", entity->contained_by->tag->id, entity->tag->id ) )
          bug( "%s: could not insert into database with %d's new location in the world.", __FUNCTION__, entity->tag->id );
+      if( !quick_query( "UPDATE `entity_instances` SET containedBy=%d WHERE entityInstanceID=%d;", container->tag->id, entity->tag->id ) )
+         bug( "%s: could not update entity %d with new containedBy.", __FUNCTION__, entity->tag->id );
+   }
    return;
 }
 

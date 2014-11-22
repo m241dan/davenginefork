@@ -36,6 +36,7 @@ int clear_eInstance( ENTITY_INSTANCE *eInstance );
 int free_eInstance( ENTITY_INSTANCE *eInstance );
 int clear_ent_contents( ENTITY_INSTANCE *eInstance );
 void delete_eInstance( ENTITY_INSTANCE *instance );
+void delete_all_exits_to( ENTITY_INSTANCE *instance );
 
 ENTITY_INSTANCE *init_builder( void );
 
