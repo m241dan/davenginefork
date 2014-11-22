@@ -211,30 +211,24 @@ ENTITY_INSTANCE *full_load_eFramework( ENTITY_FRAMEWORK *frame )
    return instance;
 }
 
-void full_load_workspace( WORKSPACE *wSpace )
+inline void full_load_workspace( WORKSPACE *wSpace )
 {
    ENTITY_INSTANCE *instance;
    ITERATOR Iter;
-
    AttachIterator( &Iter, wSpace->instances );
    while( ( instance = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
       full_load_instance( instance );
    DetachIterator( &Iter );
-
-   return;
 }
 
-void full_load_project( PROJECT *project )
+inline void full_load_project( PROJECT *project )
 {
    WORKSPACE *wSpace;
    ITERATOR Iter;
-
    AttachIterator( &Iter, project->workspaces );
    while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
       full_load_workspace( wSpace );
    DetachIterator( &Iter );
-
-   return;
 }
 
 /* could be factored */
@@ -281,7 +275,6 @@ void full_load_instance( ENTITY_INSTANCE *instance )
    if( !db_query_list_row( list, quick_format( "SELECT content_instanceID FROM `entity_instance_possessions` WHERE %s=%d;", tag_table_whereID[ENTITY_INSTANCE_IDS], instance->tag->id ) ) )
    {
       FreeList( list );
-      bug( "%s: could not load contents, bad list.", __FUNCTION__ );
       return;
    }
    AttachIterator( &Iter, list );
@@ -293,9 +286,10 @@ void full_load_instance( ENTITY_INSTANCE *instance )
          bug( "%s: trying to load an instance that doesnt exist: ID %d", __FUNCTION__, id_to_load );
          continue;
       }
+      bug( "%s: recursion", __FUNCTION__ );
       full_load_instance( instance_to_contain );
       if( !instance_list_has_by_id( instance->contents, id_to_load ) )
-         entity_to_contents( instance_to_contain, instance );
+         attach_entity_to_contents( instance_to_contain, instance );
    }
    DetachIterator( &Iter );
    FreeList( list );
