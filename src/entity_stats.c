@@ -243,6 +243,15 @@ void clear_stat_list( LLIST *list )
    DetachIterator( &Iter );
 }
 
+inline void delete_stat_from_instance( STAT_INSTANCE *stat, ENTITY_INSTANCE *instance )
+{
+   DetachFromList( stat, instance->stats );
+   if( !quick_query( "DELETE FROM `entity_stats` WHERE owner=%d;", instance->tag->id ) )
+      bug( "%s: could not delete a stat with framework %d from instance %d from database.", __FUNCTION__, stat->framework->tag->id, instance->tag->id );
+   free_stat( stat );
+}
+
+
 STAT_FRAMEWORK *get_stat_framework_by_query( const char *query )
 {
    STAT_FRAMEWORK *fstat;

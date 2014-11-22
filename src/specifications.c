@@ -123,6 +123,28 @@ int add_spec_to_instance( SPECIFICATION *spec, ENTITY_INSTANCE *instance )
    return RET_SUCCESS;
 }
 
+int rem_spec_from_framework( SPECIFICATION *spec, ENTITY_FRAMEWORK *frame )
+{
+   DetachFromList( spec, frame->specifications );
+   if( !strcmp( frame->tag->created_by, "null" ) )
+      return RET_SUCCESS;
+   if( !quick_query( "DELETE FROM `live_specs` WHERE specType='%s' AND owner='%s';", spec_table[spec->type], spec->owner ) )
+      bug( "%s: could not delete spec %s on framework %d from database.", __FUNCTION__, spec_table[spec->type], frame->tag->id );
+   free_specification( spec );
+   return RET_SUCCESS;
+}
+
+int rem_spec_from_instance( SPECIFICATION *spec, ENTITY_INSTANCE *instance )
+{
+   DetachFromList( spec, instance->specifications );
+   if( !strcmp( instance->tag->created_by, "null" ) )
+      return RET_SUCCESS;
+   if( !quick_query( "DELETE FROM `live_specs` WHERE specType='%s' AND owner='%s';", spec_table[spec->type], spec->owner ) )
+      bug( "%s: could not delete spec %s on instance %d from database.", __FUNCTION__, spec_table[spec->type], instance->tag->id );
+   free_specification( spec );
+   return RET_SUCCESS;
+}
+
 int load_specifications_to_list( LLIST *spec_list, const char *owner )
 {
    SPECIFICATION *spec;

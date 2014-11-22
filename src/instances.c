@@ -115,6 +115,54 @@ int clear_ent_contents( ENTITY_INSTANCE *eInstance )
    return RET_SUCCESS;
 }
 
+void delete_eInstance( ENTITY_INSTANCE *instance )
+{
+   WORKSPACE *wSpace;
+   ENTITY_INSTANCE *content;
+   SPECIFICATION *spec;
+   STAT_INSTANCE *stat;
+   EVAR *var;
+   ITERATOR Iter;
+
+   /* dealing with inventory */
+   AttachIterator( &Iter, instance->contents );
+   while( ( content = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
+      entity_to_world( content, instance->contained_by ); /* handles the databasing */
+   DetachIterator( &Iter );
+
+   /* dealing with stats */
+   AttachIterator( &Iter, instance->stats );
+   while( ( stat = (STAT_INSTANCE *)NextInList( &Iter ) ) != NULL )
+      delete_stat_from_instance( stat, instance );
+   DetachIterator( &Iter );
+
+   /* dealing with variables */
+   AttachIterator( &Iter, instance->evars );
+   while( ( var = (EVAR *)NextInList( &Iter ) ) != NULL )
+      delete_variable_from_instance( var, instance );
+   DetachIterator( &Iter );
+
+   /* dealing with specifications */
+   AttachIterator( &Iter, instance->specifications );
+   while( ( spec = (SPECIFICATION *)NextInList( &Iter ) ) != NULL )
+      rem_spec_from_instance( spec, instance );
+   DetachIterator( &Iter );
+
+   /* remove from any workspaces, live or otherwise */
+   AttachIterator( &Iter, active_wSpaces );
+   while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
+      if( instance_list_has_by_id( wSpace->instances, instance->tag->id ) )
+         rem_instance_from_workspace( instance, wSpace );
+   DetachIterator( &Iter );
+   quick_query( "DELETE FROM `workspace_entries` WHERE entry='i%d';", instance->tag->id );
+
+   /* delete the actual instance itself */
+   if( !quick_query( "DELETE FROM `entity_instances` WHERE entityInstanceId=%d;", instance->tag->id ) )
+      bug( "%s: could not delete instance %d from database.", __FUNCTION__, instance->tag->id );
+   free_eInstance( instance );
+   return;
+}
+
 ENTITY_INSTANCE *init_builder( void )
 {
    ENTITY_INSTANCE *builder;

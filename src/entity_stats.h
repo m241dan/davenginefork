@@ -39,6 +39,7 @@ void stat_instantiate( ENTITY_INSTANCE *owner, STAT_FRAMEWORK *fstat );
 void load_entity_stats( ENTITY_INSTANCE *entity );
 void instantiate_entity_stats_from_framework( ENTITY_INSTANCE *entity );
 void clear_stat_list( LLIST *list );
+extern inline void delete_stat_from_instance( STAT_INSTANCE *stat, ENTITY_INSTANCE *instance );
 
 STAT_FRAMEWORK *get_stat_framework_by_query( const char *query );
 
