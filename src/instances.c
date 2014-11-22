@@ -2717,7 +2717,15 @@ void mobile_kill( void *passed, char *arg )
    if( ( event = event_isset_instance( mob, EVENT_AUTO_ATTACK ) ) == NULL )
       start_killing_mode( mob );
    else
+   {
+      if( !strcmp( arg, "stop" ) )
+      {
+         text_to_entity( mob, "You are no longer in a killing mode.\r\n" );
+         end_killing_mode( mob );
+         return;
+      }
       text_to_entity( mob, "You are already in a killing mode.\r\n" );
+   }
 
    if( !arg || arg[0] == '\0' || !mob->contained_by )
       return;
