@@ -219,7 +219,8 @@ bool event_instance_decay( EVENT_DATA *event )
       return FALSE;
    }
 
-   echo_to_room( corpse->contained_by, quick_format( "%s decays into nothingness.", instance_short_descr( corpse ) ) );
+   text_around_entity( corpse->contained_by, 0, "%s decays into nothingness.\r\n", instance_long_descr( corpse ) );
+   dequeue_event( event );
    delete_eInstance( corpse );
-   return FALSE;
+   return TRUE;
 }

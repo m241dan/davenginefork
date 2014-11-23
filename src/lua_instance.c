@@ -1015,7 +1015,10 @@ int inv_iter( lua_State *L )
    ITERATOR *Iter = (ITERATOR *)lua_touserdata( L, lua_upvalueindex(1) );
 
    if( ( item = (ENTITY_INSTANCE *)NextInList( Iter ) ) == NULL )
+   {
+      DetachIterator( Iter );
       return 0;
+   }
 
    push_instance( item, lua_handle );
    return 1;

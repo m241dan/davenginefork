@@ -418,11 +418,11 @@ int new_eInstance( ENTITY_INSTANCE *eInstance )
       }
    }
 
-   if( !quick_query( "INSERT INTO entity_instances VALUES( %d, %d, '%s', '%s', '%s', '%s', %d, %d, %d, %d );",
+   if( !quick_query( "INSERT INTO entity_instances VALUES( %d, %d, '%s', '%s', '%s', '%s', %d, %d, %d, %d, %d );",
          eInstance->tag->id, eInstance->tag->type, eInstance->tag->created_by,
          eInstance->tag->created_on, eInstance->tag->modified_by, eInstance->tag->modified_on,
          eInstance->contained_by ? eInstance->contained_by->tag->id : -1, eInstance->framework->tag->id,
-         (int)eInstance->live, (int)eInstance->loaded ) )
+         (int)eInstance->live, (int)eInstance->loaded, (int)eInstance->isCorpse ) )
       return RET_FAILED_OTHER;
 
    AttachIterator( &Iter, eInstance->specifications );
@@ -452,6 +452,7 @@ void db_load_eInstance( ENTITY_INSTANCE *eInstance, MYSQL_ROW *row )
    eInstance->framework = get_framework_by_id( atoi( (*row)[counter++] ) );
    eInstance->live = atoi( (*row)[counter++] );
    eInstance->loaded = atoi( (*row)[counter++] );
+   eInstance->isCorpse = atoi( (*row)[counter++] );
    return;
 }
 
@@ -1440,28 +1441,28 @@ inline EVENT_DATA *decay_event( void )
 const char *instance_name( ENTITY_INSTANCE *instance )
 {
    if( instance->isCorpse )
-      return instance->framework ? quick_format( "corpse %s.", chase_name( instance->framework ) ) : "corpse null";
+      return instance->framework ? quick_format( "corpse %s", chase_name( instance->framework ) ) : "corpse null";
    return instance->framework ? chase_name( instance->framework ) : "null";
 }
 
 const char *instance_short_descr( ENTITY_INSTANCE *instance )
 {
    if( instance->isCorpse )
-      return instance->framework ? quick_format( "Corpse of %s.", downcase( chase_short_descr( instance->framework ) ) ) : "Corpse of null.";
+      return instance->framework ? quick_format( "Corpse of %s", downcase( chase_short_descr( instance->framework ) ) ) : "Corpse of null";
    return instance->framework ? chase_short_descr( instance->framework ) : "null";
 }
 
 const char *instance_long_descr( ENTITY_INSTANCE *instance )
 {
    if( instance->isCorpse )
-      return instance->framework ? quick_format( "The corpse of %s.", downcase( chase_long_descr( instance->framework ) ) ) : "The corpse of null.";
+      return instance->framework ? quick_format( "The corpse of %s", downcase( chase_short_descr( instance->framework ) ) ) : "The corpse of null";
    return instance->framework ? chase_long_descr( instance->framework ) : "null";
 }
 
 const char *instance_description( ENTITY_INSTANCE *instance )
 {
    if( instance->isCorpse )
-      return instance->framework ? quick_format( "The rotting and decaying corpse of what was once: \r\n", chase_description( instance->framework ) ) : "The description of a null corpse.";
+      return instance->framework ? quick_format( "The rotting and decaying corpse of what was once:\r\n", chase_description( instance->framework ) ) : "The description of a null corpse";
    return instance->framework ? chase_description( instance->framework ) : "null";
 }
 
@@ -1472,9 +1473,9 @@ int get_corpse_decay( ENTITY_INSTANCE *instance )
    int ret, decay = CORPSE_DECAY, top = lua_gettop( lua_handle );
 
    if( ( spec = has_spec( instance, "corpseDecay" ) ) != NULL )
-      path = get_script_path_from_spec( spec ); 
+      path = get_script_path_from_spec( spec );
    else
-      path = "../script/settings/corpse.lua";
+      path = "../scripts/settings/corpse.lua";
 
    prep_stack( path, "corpseDecay" );
    push_instance( instance, lua_handle );
@@ -1561,7 +1562,7 @@ void corpsify_inventory( ENTITY_INSTANCE *instance, ENTITY_INSTANCE *corpse )
    if( ( spec = has_spec( instance, "inventoryToCorpse" ) ) != NULL )
       path = get_script_path_from_spec( spec );
    else
-      path = "../script/settings/corpse.lua";
+      path = "../scripts/settings/corpse.lua";
 
    prep_stack( path, "inventoryToCorpse" );
    push_instance( instance, lua_handle );
