@@ -1269,6 +1269,19 @@ ENTITY_INSTANCE *create_mobile_instance( const char *name  )
 
 }
 
+ENTITY_INSTANCE *corpsify( ENTITY_INSTANCE *instance )
+{
+   ENTITY_INSTANCE *corpse;
+   int decay;
+
+   corpse = eInstantiate( instance->frame );
+   corpse->isCorpse = TRUE;
+   corpsify_inventory( instance, corpse );
+   decay = get_corpse_decay( instance );
+   set_for_decay( corpse, decay );
+   return corpse;
+}
+
 /* factor me PLEASE */
 void move_create( ENTITY_INSTANCE *entity, ENTITY_FRAMEWORK *exit_frame, char *arg )
 {
@@ -1407,6 +1420,17 @@ bool should_move_create( ENTITY_INSTANCE *entity, char *arg )
    return TRUE;
 }
 
+/* creation */
+inline EVENT_DATA *decay_event( void )
+{
+   EVENT_DATA *event;
+
+   event = alloc_event();
+   event->fun = &event_instance_decay;
+   event->type = EVENT_DECAY;
+   return event;
+}
+
 /* getters */
 
 const char *instance_name( ENTITY_INSTANCE *instance )
@@ -1427,6 +1451,30 @@ const char *instance_long_descr( ENTITY_INSTANCE *instance )
 const char *instance_description( ENTITY_INSTANCE *instance )
 {
    return instance->framework ? chase_description( instance->framework ) : "null";
+}
+
+int get_corpse_decay( ENTITY_INSTANCE *instance )
+{
+   SPECIFICATION *spec;
+   const char *path;
+   int decay = CORPSE_DECAY, top = lua_gettop( lua_handle );
+
+   if( ( spec = has_spec( corpse, "corpseDecay" ) ) != NULL )
+      path = get_script_path_from_spec( spec ); 
+   else
+      path = "../script/settings/corpse.lua";
+
+   prep_stack( path, "corpseDecay" );
+   push_instance( instance, lua_handle );
+   if( ( ret = lua_pcall( lua_handle, 1, LUA_MULTRET, 0 ) ) )
+      bug( "%s: ret %d: path %s\r\n - error message: %s.\r\n - Setting to Standard", __FUNCTION__, ret, path, lua_tostring( lua_handle, -1 ) );
+   else if( lua_type( lua_handle, -1 ) != LUA_TNUMBER )
+      bug( "%s: expecting a number returned from lua.\r\n - Setting to Standard", __FUNCTION__ );
+   else
+      decay = lua_tonumber( lua_handle, -1 );
+
+   lua_settop( lua_handle, top );
+   return decay;
 }
 
 /* setters */
@@ -1466,17 +1514,31 @@ void set_to_loaded( ENTITY_INSTANCE *instance )
 /* do_damage on kill return TRUE */
 bool do_damage( ENTITY_INSTANCE *entity, DAMAGE *dmg )
 {
+   ENTITY_INSTANCE *corpse;
    STAT_INSTANCE *stat = entity->primary_dmg_received_stat;
+   bool dead = FALSE;
 
    if( !stat )
    {
       bug( "%s: cannot do damage to %s, no primary dmg stat.", __FUNCTION__, instance_name( entity ) );
-      return FALSE;
+      return dead;
    }
    dec_pool_stat( stat, dmg->amount );
    if( get_stat_current( stat ) <= 0 )
-      return TRUE;
-   return FALSE;
+   {
+      corpse = corpsify( entity );
+      entity_to_world( corpse, entity->contained_by );
+      dead = TRUE;
+   }
+   return dead;
+}
+
+void set_for_decay( ENTITY_INSTANCE *corpse, int decay )
+{
+   EVENT_DATA *event;
+
+   event = decay_event();
+   add_event_instance( corpse, decay );
 }
 
 

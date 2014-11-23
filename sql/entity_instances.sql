@@ -12,5 +12,6 @@ CREATE TABLE IF NOT EXISTS `entity_instances` (
    `frameworkID` int NOT NULL DEFAULT '-1',
    `live` int NOT NULL DEFAULT '0',
    `loaded` int NOT NULL DEFAULT '0'
+   `isCorpse` int NOT NULL DEFAULT '0',
    PRIMARY KEY (`entityInstanceID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

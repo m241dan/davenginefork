@@ -16,6 +16,8 @@ const char *const spec_table[] = {
    /* Combat Specs */
    "dodgeChance", "parryChance", "missChance", "meleeCooldown", "meleeCheck",
    "prepMeleeTimer", "prepMeleeDamage", "onReceiveDamage", "combatMessage",
+   /* Corpse Specs */
+   "corpseDecay", "inventoryToCorpse",
    /* Misc Specs */
    "MirrorExit", "Terrain",
 

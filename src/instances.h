@@ -8,6 +8,7 @@ struct entity_instance
    bool loaded;
    bool live;
    bool builder;
+   bool isCorpse;
    sh_int level;
 
    LLIST *contents;
@@ -97,16 +98,20 @@ ENTITY_INSTANCE *eInstantiate( ENTITY_FRAMEWORK *frame );
 ENTITY_INSTANCE *create_room_instance( const char *name );
 ENTITY_INSTANCE *create_exit_instance( const char *name, int dir );
 ENTITY_INSTANCE *create_mobile_instance( const char *name );
+ENTITY_INSTANCE *corpsify( ENTITY_INSTANCE *instance );
 
 void move_create( ENTITY_INSTANCE *entity, ENTITY_FRAMEWORK *exit_frame, char *arg );
 bool should_move_create( ENTITY_INSTANCE *entity, char *arg );
 
+/* creation */
+extern inline EVENT_DATA *decay_event( void );
 
 /* getters */
 const char *instance_name( ENTITY_INSTANCE *instance );
 const char *instance_short_descr( ENTITY_INSTANCE *instance );
 const char *instance_long_descr( ENTITY_INSTANCE *instance );
 const char *instance_description( ENTITY_INSTANCE *instance );
+int	    get_corpse_decay( ENTITY_INSTANCE *instance );
 
 /* setters */
 void instance_toggle_live( ENTITY_INSTANCE *instance );
@@ -115,6 +120,8 @@ void set_to_loaded( ENTITY_INSTANCE *instance );
 
 /* actions */
 bool do_damage( ENTITY_INSTANCE *entity, DAMAGE *dmg );
+void set_for_decay( ENTITY_INSTANCE *corpse, int delay );
+void corpsify_inventory( ENTITY_INSTANCE *instance, ENTITY_INSTANCE *corpse );
 
 int text_to_entity( ENTITY_INSTANCE *entity, const char *fmt, ... );
 void text_around_entity( ENTITY_INSTANCE *perspective, int num_around, const char *fmt, ... );

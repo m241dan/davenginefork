@@ -300,6 +300,16 @@ void lua_combat_settings( void )
    lua_settop( lua_handle, top );
 }
 
+void lua_corpse_settings( void )
+{
+   int top = lua_gettop( lua_handle );
+
+   lua_getglobal( lua_handle, "standard_corpse_decay" );
+   CORPSE_DECAY = lua_tonumber( lua_handle, -1 );
+
+   lua_settop( lua_handle, top );
+}
+
 void push_instance( ENTITY_INSTANCE *instance, lua_State *L )
 {
    ENTITY_INSTANCE **box;

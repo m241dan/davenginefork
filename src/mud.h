@@ -132,6 +132,8 @@ typedef enum
    /* Combat Specs */
    SPEC_DODGECHANCE, SPEC_PARRYCHANCE, SPEC_MISSCHANCE, SPEC_MELEECOOLDOWN, SPEC_MELEECHECK,
    SPEC_PREPMELEETIMER, SPEC_PREPMELEEDAMAGE, SPEC_ONRECEIVEDAMAGE, SPEC_COMBATMESSAGE,
+   /* Corpse Specs */
+   SPEC_CORPSEDELAY, SPEC_INVENTORYTOCORPSE,
    /* Misc Specs */
    SPEC_MIRROREXIT, SPEC_TERRAIN,
 
@@ -557,6 +559,9 @@ extern bool DODGE_ON;
 extern bool PARRY_ON;
 extern bool MISS_ON;
 extern int  BASE_MELEE_DELAY;
+
+/* corpse settings */
+extern int  CORPSE_DECAY;
 /***************************
  * End of Global Variables *
  ***************************/

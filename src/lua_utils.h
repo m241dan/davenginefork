@@ -38,6 +38,7 @@ extern inline void load_combat_vars_script( void );
 void lua_server_settings( void );
 void lua_database_settings( void );
 void lua_combat_settings( void );
+void lua_corpse_settings( void );
 
 void push_instance( ENTITY_INSTANCE *instance, lua_State *L );
 void push_framework( ENTITY_FRAMEWORK *frame, lua_State *L );

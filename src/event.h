@@ -25,7 +25,7 @@
 
 typedef enum
 {
-   EVENT_LUA_CALLBACK = 1, EVENT_AUTO_ATTACK, MAX_INSTANCE_EVENT
+   EVENT_LUA_CALLBACK = 1, EVENT_AUTO_ATTACK, EVENT_DECAY, MAX_INSTANCE_EVENT
 } INSTANCE_EVENTS;
 
 typedef enum
@@ -88,3 +88,4 @@ bool event_game_tick             ( EVENT_DATA *event );
 bool event_instance_lua_callback ( EVENT_DATA *event );
 bool event_global_lua_callback   ( EVENT_DATA *event );
 bool event_auto_attack		 ( EVENT_DATA *event );
+bool event_instance_decay	 ( EVENT_DAYA *event );
