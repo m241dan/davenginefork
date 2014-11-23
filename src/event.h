@@ -88,4 +88,4 @@ bool event_game_tick             ( EVENT_DATA *event );
 bool event_instance_lua_callback ( EVENT_DATA *event );
 bool event_global_lua_callback   ( EVENT_DATA *event );
 bool event_auto_attack		 ( EVENT_DATA *event );
-bool event_instance_decay	 ( EVENT_DAYA *event );
+bool event_instance_decay	 ( EVENT_DATA *event );

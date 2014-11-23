@@ -39,6 +39,8 @@ const struct luaL_Reg EntityInstanceLib_m[] = {
    { "echo", luaEcho },
    { "echoAt", luaEchoAt },
    { "echoAround", luaEchoAround },
+   /* iterators */
+   { "eachInventory", luaEachInventory },
    { NULL, NULL } /* gandalf */
 };
 
@@ -987,4 +989,34 @@ int luaEchoAround( lua_State *L )
       text_to_entity( instance, lua_tostring( L, -1 ) );
    }
    return 0;
+}
+
+int luaEachInventory( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+   ITERATOR *Iter;
+
+   DAVLUACM_INSTANCE_NIL( instance, L );
+
+   Iter = (ITERATOR *)lua_newuserdata( L, sizeof( ITERATOR ) );
+
+   luaL_getmetatable( L, "Iter.meta" );
+   lua_setmetatable( L, -2 );
+
+   AttachIterator( Iter, instance->contents );
+
+   lua_pushcclosure( L, inv_iter, 1 );
+   return 1;
+}
+
+int inv_iter( lua_State *L )
+{
+   ENTITY_INSTANCE *item;
+   ITERATOR *Iter = (ITERATOR *)lua_touserdata( L, lua_upvalueindex(1) );
+
+   if( ( item = (ENTITY_INSTANCE *)NextInList( Iter ) ) == NULL )
+      return 0;
+
+   push_instance( item, lua_handle );
+   return 1;
 }

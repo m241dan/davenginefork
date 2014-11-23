@@ -1,4 +1,4 @@
-	/*
+/*
  * This file contains the socket code, used for accepting
  * new connections as well as reading and writing to
  * sockets, and closing down unused sockets.
@@ -133,6 +133,8 @@ int main(int argc, char **argv)
 
    luaL_requiref( lua_handle, "mud", luaopen_mud, 1 );
    lua_pop( lua_handle, -1 );
+
+   luaopen_IterLib( lua_handle );
 
    load_server_script();
    load_combat_vars_script();

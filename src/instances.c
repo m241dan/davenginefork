@@ -125,7 +125,11 @@ void delete_eInstance( ENTITY_INSTANCE *instance )
    EVAR *var;
    ITERATOR Iter;
 
-   DetachFromList( instance, eInstances_list );
+   if( instance->socket )
+   {
+      bug( "%s: trying to delete an instance that is controlled by a socket. I won't allow this.", __FUNCTION__ );
+      return;
+   }
 
    /* delete all exits going to this instance */
    delete_all_exits_to( instance );
@@ -137,7 +141,6 @@ void delete_eInstance( ENTITY_INSTANCE *instance )
       if( content->framework->tag->id >= 0 && content->framework->tag->id <= 5 ) /* delete generic exits */
       {
          bug( "DELETING EXIT: (%d)%s", content->tag->id, instance_name( content ) );
-         entity_to_world( content, NULL );
          delete_eInstance( content );
       }
       entity_to_world( content, instance->contained_by ); /* handles the databasing */
@@ -174,6 +177,8 @@ void delete_eInstance( ENTITY_INSTANCE *instance )
    if( !quick_query( "DELETE FROM `entity_instances` WHERE entityInstanceId=%d;", instance->tag->id ) )
       bug( "%s: could not delete instance %d from database.", __FUNCTION__, instance->tag->id );
 
+   DetachFromList( instance, eInstances_list );
+   entity_to_world( instance, NULL );
    delete_tag( instance->tag );
    instance->tag = NULL;
    free_eInstance( instance );
@@ -203,7 +208,6 @@ void delete_all_exits_to( ENTITY_INSTANCE *instance )
       if( ( exit = get_instance_by_id( atoi( row[0] ) ) ) == NULL )
          continue;
       bug( "DELETING EXIT: (%d)%s", exit->tag->id, instance_name( exit ) );
-      entity_to_world( exit, NULL );
       delete_eInstance( exit );
    }
    DetachIterator( &Iter );
@@ -1274,7 +1278,7 @@ ENTITY_INSTANCE *corpsify( ENTITY_INSTANCE *instance )
    ENTITY_INSTANCE *corpse;
    int decay;
 
-   corpse = eInstantiate( instance->frame );
+   corpse = eInstantiate( instance->framework );
    corpse->isCorpse = TRUE;
    corpsify_inventory( instance, corpse );
    decay = get_corpse_decay( instance );
@@ -1435,21 +1439,29 @@ inline EVENT_DATA *decay_event( void )
 
 const char *instance_name( ENTITY_INSTANCE *instance )
 {
+   if( instance->isCorpse )
+      return instance->framework ? quick_format( "corpse %s.", chase_name( instance->framework ) ) : "corpse null";
    return instance->framework ? chase_name( instance->framework ) : "null";
 }
 
 const char *instance_short_descr( ENTITY_INSTANCE *instance )
 {
+   if( instance->isCorpse )
+      return instance->framework ? quick_format( "Corpse of %s.", downcase( chase_short_descr( instance->framework ) ) ) : "Corpse of null.";
    return instance->framework ? chase_short_descr( instance->framework ) : "null";
 }
 
 const char *instance_long_descr( ENTITY_INSTANCE *instance )
 {
+   if( instance->isCorpse )
+      return instance->framework ? quick_format( "The corpse of %s.", downcase( chase_long_descr( instance->framework ) ) ) : "The corpse of null.";
    return instance->framework ? chase_long_descr( instance->framework ) : "null";
 }
 
 const char *instance_description( ENTITY_INSTANCE *instance )
 {
+   if( instance->isCorpse )
+      return instance->framework ? quick_format( "The rotting and decaying corpse of what was once: \r\n", chase_description( instance->framework ) ) : "The description of a null corpse.";
    return instance->framework ? chase_description( instance->framework ) : "null";
 }
 
@@ -1457,9 +1469,9 @@ int get_corpse_decay( ENTITY_INSTANCE *instance )
 {
    SPECIFICATION *spec;
    const char *path;
-   int decay = CORPSE_DECAY, top = lua_gettop( lua_handle );
+   int ret, decay = CORPSE_DECAY, top = lua_gettop( lua_handle );
 
-   if( ( spec = has_spec( corpse, "corpseDecay" ) ) != NULL )
+   if( ( spec = has_spec( instance, "corpseDecay" ) ) != NULL )
       path = get_script_path_from_spec( spec ); 
    else
       path = "../script/settings/corpse.lua";
@@ -1536,11 +1548,29 @@ bool do_damage( ENTITY_INSTANCE *entity, DAMAGE *dmg )
 void set_for_decay( ENTITY_INSTANCE *corpse, int decay )
 {
    EVENT_DATA *event;
-
    event = decay_event();
-   add_event_instance( corpse, decay );
+   add_event_instance( event, corpse, decay );
 }
 
+void corpsify_inventory( ENTITY_INSTANCE *instance, ENTITY_INSTANCE *corpse )
+{
+   SPECIFICATION *spec;
+   const char *path;
+   int ret, top = lua_gettop( lua_handle );
+
+   if( ( spec = has_spec( instance, "inventoryToCorpse" ) ) != NULL )
+      path = get_script_path_from_spec( spec );
+   else
+      path = "../script/settings/corpse.lua";
+
+   prep_stack( path, "inventoryToCorpse" );
+   push_instance( instance, lua_handle );
+   push_instance( corpse, lua_handle );
+   if( ( ret = lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) ) )
+      bug( "%s: ret %d: path %s\r\n - error message: %s.\r\n", __FUNCTION__, ret, path, lua_tostring( lua_handle, -1 ) );
+   lua_settop( lua_handle, top );
+   return;
+}
 
 int text_to_entity( ENTITY_INSTANCE *entity, const char *fmt, ... )
 {

@@ -7,6 +7,9 @@ end
 -- the reason this is scripts is to handle any exceptions
 -- for example, maybe unique items don't go to your corpse
 function inventoryToCorpse( instance, corpse )
+   for item in instance:eachInventory() do
+      item.to( corpse )
+   end
 end
 
 

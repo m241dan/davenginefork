@@ -204,3 +204,22 @@ short_melee:
    return FALSE;
 }
 
+bool event_instance_decay( EVENT_DATA *event )
+{
+   ENTITY_INSTANCE *corpse;
+
+   if( event->ownertype != EVENT_OWNER_INSTANCE )
+   {
+      bug( "%s: bad event owner.", __FUNCTION__ );
+      return FALSE;
+   }
+   if( ( corpse = (ENTITY_INSTANCE *)event->owner ) == NULL )
+   {
+      bug( "%s: event had a NULL owner.", __FUNCTION__ );
+      return FALSE;
+   }
+
+   echo_to_room( corpse->contained_by, quick_format( "%s decays into nothingness.", instance_short_descr( corpse ) ) );
+   delete_eInstance( corpse );
+   return FALSE;
+}

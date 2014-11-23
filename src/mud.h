@@ -515,6 +515,7 @@ typedef struct buffer_type
 #include "lua_damage.h"
 #include "timers.h"
 #include "lua_timers.h"
+#include "lua_iter.h"
 
 /******************************
  * End of new structures      *
