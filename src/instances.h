@@ -15,7 +15,6 @@ typedef enum
 struct entity_instance
 {
    ID_TAG *tag;
-   bool loaded;
    bool live;
    bool builder;
    bool isCorpse;
@@ -129,7 +128,6 @@ int	    get_corpse_decay( ENTITY_INSTANCE *instance );
 /* setters */
 void instance_toggle_live( ENTITY_INSTANCE *instance );
 void set_instance_level( ENTITY_INSTANCE *instance, int level );
-void set_to_loaded( ENTITY_INSTANCE *instance );
 
 /* actions */
 bool do_damage( ENTITY_INSTANCE *entity, DAMAGE *dmg );

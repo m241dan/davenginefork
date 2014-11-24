@@ -254,6 +254,7 @@ ENTITY_INSTANCE *load_eInstance_by_query( const char *query )
       instance->primary_dmg_received_stat = get_stat_from_instance_by_id( instance, instance->framework->f_primary_dmg_received_stat->tag->id );
    if( get_spec_value( instance, "IsPlayer" ) <= 0 )
       load_commands( instance->commands, mobile_commands, LEVEL_BASIC );
+   full_load_instance( instance );
    free( row );
 
    return instance;
@@ -335,7 +336,6 @@ inline void full_load_project( PROJECT *project )
 /* could be factored */
 void full_load_instance( ENTITY_INSTANCE *instance )
 {
-   ENTITY_FRAMEWORK *frame;
    ENTITY_INSTANCE *instance_to_contain;
    STAT_FRAMEWORK *fstat;
    MYSQL_ROW row;
@@ -349,22 +349,6 @@ void full_load_instance( ENTITY_INSTANCE *instance )
       if( !get_stat_from_instance_by_id( instance, fstat->tag->id ) )
          stat_instantiate( instance, fstat );
    DetachIterator( &Iter );
-
-   if( !instance->loaded )
-   {
-      set_to_loaded( instance );
-      if( SizeOfList( instance->framework->fixed_contents ) > 0 )
-      {
-         AttachIterator( &Iter, instance->framework->fixed_contents );
-         while( ( frame = (ENTITY_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
-         {
-            instance_to_contain = full_load_eFramework( frame );
-            entity_to_world( instance_to_contain, instance );
-         }
-         DetachIterator( &Iter );
-      }
-      return;
-   }
 
    list = AllocList();
    if( !db_query_list_row( list, quick_format( "SELECT content_instanceID FROM `entity_instance_possessions` WHERE %s=%d;", tag_table_whereID[ENTITY_INSTANCE_IDS], instance->tag->id ) ) )
@@ -412,11 +396,11 @@ int new_eInstance( ENTITY_INSTANCE *eInstance )
       }
    }
 
-   if( !quick_query( "INSERT INTO entity_instances VALUES( %d, %d, '%s', '%s', '%s', '%s', %d, %d, %d, %d, %d, %d, %d, %d );",
+   if( !quick_query( "INSERT INTO entity_instances VALUES( %d, %d, '%s', '%s', '%s', '%s', %d, %d, %d, %d, %d, %d, %d );",
          eInstance->tag->id, eInstance->tag->type, eInstance->tag->created_by,
          eInstance->tag->created_on, eInstance->tag->modified_by, eInstance->tag->modified_on,
          eInstance->contained_by ? eInstance->contained_by->tag->id : -1, eInstance->framework->tag->id,
-         (int)eInstance->live, (int)eInstance->loaded, (int)eInstance->isCorpse, (int)eInstance->state,
+         (int)eInstance->live, (int)eInstance->isCorpse, (int)eInstance->state,
          (int)eInstance->mind, (int)eInstance->tspeed ) )
       return RET_FAILED_OTHER;
 
@@ -446,7 +430,6 @@ void db_load_eInstance( ENTITY_INSTANCE *eInstance, MYSQL_ROW *row )
    eInstance->contained_by = get_instance_by_id( atoi( (*row)[counter++] ) );
    eInstance->framework = get_framework_by_id( atoi( (*row)[counter++] ) );
    eInstance->live = atoi( (*row)[counter++] );
-   eInstance->loaded = atoi( (*row)[counter++] );
    eInstance->isCorpse = atoi( (*row)[counter++] );
    eInstance->state = atoi( (*row)[counter++] );
    eInstance->mind = atoi( (*row)[counter++] );
@@ -1214,7 +1197,9 @@ ENTITY_INSTANCE *instance_list_has_by_short_prefix( LLIST *instance_list, const 
 
 ENTITY_INSTANCE *eInstantiate( ENTITY_FRAMEWORK *frame )
 {
-   ENTITY_INSTANCE *eInstance;
+   ENTITY_FRAMEWORK *fixed_content;
+   ENTITY_INSTANCE *eInstance, *content;
+   ITERATOR Iter;
    int ret;
 
    if( !live_frame( frame ) )
@@ -1225,6 +1210,16 @@ ENTITY_INSTANCE *eInstantiate( ENTITY_FRAMEWORK *frame )
    eInstance->tspeed = frame->tspeed;
    new_eInstance( eInstance );
    instantiate_entity_stats_from_framework( eInstance );
+   if( SizeOfList( frame->fixed_contents ) > 0 )
+   {
+      AttachIterator( &Iter, frame->fixed_contents );
+      while( ( fixed_content = (ENTITY_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
+      {
+         content = full_load_eFramework( fixed_content );
+         entity_to_world( content, eInstance );
+      }
+      DetachIterator( &Iter );
+   }
    prep_stack( get_frame_script_path( frame ), "onInstanceInit" );
    push_framework( frame, lua_handle );
    push_instance( eInstance, lua_handle );
@@ -1512,14 +1507,6 @@ void set_instance_level( ENTITY_INSTANCE *instance, int level )
    if( !strcmp( instance->tag->created_by, "null" ) )
       return;
    quick_query( "UPDATE `entity_instances` SET level=%d WHERE %s=%d;", instance->level, tag_table_whereID[ENTITY_INSTANCE_IDS], instance->tag->id );
-   return;
-}
-
-void set_to_loaded( ENTITY_INSTANCE *instance )
-{
-   instance->loaded = TRUE;
-   if( !quick_query( "UPDATE `entity_instances` SET loaded=1 WHERE %s=%d;", tag_table_whereID[ENTITY_INSTANCE_IDS], instance->tag->id ) )
-      bug( "%s: could not set entity to loaded: ID %d", __FUNCTION__, instance->tag->id );
    return;
 }
 
