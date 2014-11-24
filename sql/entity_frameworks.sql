@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS `entity_frameworks` (
    `inheritsID` int NOT NULL DEFAULT '-1',
    `primary_dmg` int NOT NULL DEFAULT '-1',
    `tspeed` int NOT NULL DEFAULT '0',
+   `spawn_time` int NOT NULL DEFAULT '0',
    PRIMARY KEY (`entityFrameworkID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 

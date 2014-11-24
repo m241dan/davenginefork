@@ -133,6 +133,8 @@ void set_to_loaded( ENTITY_INSTANCE *instance );
 
 /* actions */
 bool do_damage( ENTITY_INSTANCE *entity, DAMAGE *dmg );
+void death_instance( ENTITY_INSTANCE *instance );
+void spawn_instance( ENTITY_INSTANCE *instance );
 void set_for_decay( ENTITY_INSTANCE *corpse, int delay );
 void corpsify_inventory( ENTITY_INSTANCE *instance, ENTITY_INSTANCE *corpse );
 

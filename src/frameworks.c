@@ -169,13 +169,14 @@ int new_eFramework( ENTITY_FRAMEWORK *frame )
       }
    }
 
-   if( !quick_query( "INSERT INTO entity_frameworks VALUES( %d, %d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%d' );",
+   if( !quick_query( "INSERT INTO entity_frameworks VALUES( %d, %d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%d', '%d' );",
          frame->tag->id, frame->tag->type, frame->tag->created_by,
          frame->tag->created_on, frame->tag->modified_by, frame->tag->modified_on,
-         frame->name, frame->short_descr, frame->long_descr, frame->description,
+         format_string_for_sql( frame->name ), format_string_for_sql( frame->short_descr ),
+         format_string_for_sql( frame->long_descr ), format_string_for_sql( frame->description ),
          ( frame->inherits ? frame->inherits->tag->id : -1 ),
          ( frame->f_primary_dmg_received_stat ? frame->f_primary_dmg_received_stat->tag->id : -1 ),
-         (int)frame->tspeed ) )
+         (int)frame->tspeed, frame->spawn_time ) )
       return RET_FAILED_OTHER;
 
    AttachIterator( &Iter, frame->specifications );
@@ -211,6 +212,7 @@ void db_load_eFramework( ENTITY_FRAMEWORK *frame, MYSQL_ROW *row )
    frame->description = strdup( (*row)[counter++] );
    frame->inherits = get_framework_by_id( atoi( (*row)[counter++] ) );
    frame->f_primary_dmg_received_stat = get_stat_framework_by_id( atoi( (*row)[counter++] ) );
+   frame->spawn_time = atoi( (*row)[counter++] );
    return;
 }
 
@@ -718,6 +720,69 @@ const char *chase_description( ENTITY_FRAMEWORK *frame )
       return chase_long_descr( frame->inherits );
    }
    return frame->description;
+}
+
+inline void set_frame_name( ENTITY_FRAMEWORK *frame, const char *name )
+{
+   FREE( frame->name );
+   frame->name = strdup( name );
+   if( !strcmp( frame->tag->created_by, "null" ) )
+      return;
+   if( !quick_query( "UPDATE `entity_frameworks` SET name='%s' WHERE entityFrameworkID=%d;", format_string_for_sql( frame->name ), frame->tag->id ) )
+      bug( "%s: could not update database for frame %d with new name.", __FUNCTION__, frame->tag->id );
+}
+
+inline void set_frame_short_descr( ENTITY_FRAMEWORK *frame, const char *short_descr )
+{
+   FREE( frame->short_descr );
+   frame->short_descr = strdup( short_descr );
+   if( !strcmp( frame->tag->created_by, "null" ) )
+      return;
+   if( !quick_query( "UPDATE `entity_frameworks` SET short_descr='%s' WHERE entityFrameworkID=%d;", format_string_for_sql( frame->short_descr ), frame->tag->id ) )
+      bug( "%s: could no tupdate database for frame %d with new short_descr.", __FUNCTION__, frame->tag->id );
+}
+
+inline void set_frame_long_descr( ENTITY_FRAMEWORK *frame, const char *long_descr )
+{
+   FREE( frame->long_descr );
+   frame->long_descr = strdup( long_descr );
+   if( !strcmp( frame->tag->created_by, "null" ) )
+      return;
+   if( !quick_query( "UPDATE `entity_frameworks` SET long_descr='%s' WHERE entityFrameworkID=%d;", format_string_for_sql( frame->long_descr ), frame->tag->id ) )
+      bug( "%s: could not update database for frame %d with new long_descr.", __FUNCTION__, frame->tag->id );
+}
+
+inline void set_frame_description( ENTITY_FRAMEWORK *frame, const char *description )
+{
+   FREE( frame->description );
+   frame->description = strdup( description );
+   if( !strcmp( frame->tag->created_by, "null" ) )
+      return;
+   if( !quick_query( "UPDATE `entity_frameworks` SET description='%s' WHERE entityFrameworkID=%d;", format_string_for_sql( frame->description ), frame->tag->id ) )
+      bug( "%s: could not update databaes for frame %d with new description.", __FUNCTION__, frame->tag->id );
+}
+
+inline void set_frame_tspeed( ENTITY_FRAMEWORK *frame, int tspeed )
+{
+   if( tspeed <= 0 )
+   {
+      bug( "%s: tspeed value given not valid, must be greater than 0.", __FUNCTION__ );
+      return;
+   }
+   frame->tspeed = tspeed;
+   if( !strcmp( frame->tag->created_by, "null" ) )
+      return;
+   if( !quick_query( "UPDATE `entity_frameworks` SET tspeed=%d WHERE entityFrameworkID=%d;", (int)frame->tspeed, frame->tag->id ) )
+      bug( "%s: could not update database for frame %d with new thought speed.", __FUNCTION__, frame->tag->id );
+}
+
+inline void set_frame_spawn_time( ENTITY_FRAMEWORK *frame, int spawn_time )
+{
+   frame->spawn_time = spawn_time;
+   if( !strcmp( frame->tag->created_by, "null" ) )
+      return;
+   if( !quick_query( "UPDATE `entity_frameworks` SET spawn_time=%d WHERE entityFrameworkID=%d;", frame->spawn_time, frame->tag->id ) )
+      bug( "%s: could not update dtabase for frame %d with new spawn time.", __FUNCTION__, frame->tag->id );
 }
 
 void add_frame_to_fixed_contents( ENTITY_FRAMEWORK *frame_to_add, ENTITY_FRAMEWORK *container )

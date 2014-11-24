@@ -382,16 +382,9 @@ void eFramework_name( void *passed, char *arg )
       return;
    }
 
-   FREE( frame->name );
-   frame->name = strdup( arg );
+   set_frame_name( frame, arg );
+   update_tag( frame->tag, olc->account->name );
    text_to_olc( olc, "Name changed.\r\n" );
-
-   if( live_frame( frame ) )
-   {
-      quick_query( "UPDATE entity_frameworks SET name='%s' WHERE entityFrameworkID=%d;", format_string_for_sql( frame->name ), frame->tag->id );
-      update_tag( frame->tag, olc->account->name );
-   }
-
    return;
 }
 
@@ -411,17 +404,9 @@ void eFramework_short( void *passed, char *arg )
       change_socket_state( olc->account->socket, STATE_OLC );
       return;
    }
-
-   FREE( frame->short_descr );
-   frame->short_descr = strdup( arg );
+   set_frame_short_descr( frame, arg );
+   update_tag( frame->tag, olc->account->name );
    text_to_olc( olc, "Short description changed.\r\n" );
-
-   if( live_frame( frame ) )
-   {
-      quick_query( "UPDATE entity_frameworks SET short_descr='%s' WHERE entityFrameworkID=%d;", format_string_for_sql( frame->short_descr ), frame->tag->id );
-      update_tag( frame->tag, olc->account->name );
-   }
-
    return;
 }
 
@@ -442,16 +427,9 @@ void eFramework_long( void *passed, char *arg )
       return;
    }
 
-   FREE( frame->long_descr );
-   frame->long_descr = strdup( arg );
+   set_frame_long_descr( frame, arg );
+   update_tag( frame->tag, olc->account->name );
    text_to_olc( olc, "Long description changed.\r\n" );
-
-   if( live_frame( frame ) )
-   {
-      quick_query( "UPDATE entity_frameworks SET long_descr='%s' WHERE entityFrameworkID=%d;", format_string_for_sql( frame->long_descr ), frame->tag->id );
-      update_tag( frame->tag, olc->account->name );
-   }
-
    return;
 }
 
@@ -472,16 +450,56 @@ void eFramework_description( void *passed, char *arg )
       return;
    }
 
-   FREE( frame->description );
-   frame->description = strdup( arg );
+   set_frame_description( frame, arg );
+   update_tag( frame->tag, olc->account->name );
    text_to_olc( olc, "Long description changed.\r\n" );
+   return;
+}
 
-   if( live_frame( frame ) )
+void eFramework_set_tspeed( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_FRAMEWORK *frame = (ENTITY_FRAMEWORK *)olc->editing;
+   int value;
+
+   if( !is_number( arg ) )
    {
-      quick_query( "UPDATE entity_frameworks SET description='%s' WHERE entityFrameworkID=%d;", format_string_for_sql( frame->description ), frame->tag->id );
-      update_tag( frame->tag, olc->account->name );
+      text_to_olc( olc, "Thought speeds must be numbers.\r\n" );
+      return;
+   }
+   value = atoi( arg );
+   if( value <= 0 )
+   {
+      text_to_olc( olc, "Thought speeds must be positive numbers.\r\n" );
+      return;
    }
 
+   set_frame_tspeed( frame, value );
+   update_tag( frame->tag, olc->account->name );
+   text_to_olc( olc, "Thought speed set.\r\n" );
+   return;
+}
+
+void eFramework_set_spawn_time( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_FRAMEWORK *frame = (ENTITY_FRAMEWORK *)olc->editing;
+   int value;
+
+   if( !is_number( arg ) )
+   {
+      text_to_olc( olc, "Spawn timers must be numbers.\r\n" );
+      return;
+   }
+   value = atoi( arg );
+   if( value < 0 )
+   {
+      text_to_olc( olc, "Spawn timers must be 0 or greater.\r\n - Note: Zero means it won't respawn.\r\n" );
+      return;
+   }
+   set_frame_spawn_time( frame, value );
+   update_tag( frame->tag, olc->account->name );
+   text_to_olc( olc, "Spawn time set.\r\n" );
    return;
 }
 

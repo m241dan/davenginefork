@@ -7,7 +7,8 @@ struct entity_framework
    char *short_descr;
    char *long_descr;
    char *description;
-   sh_int tspeed;
+   unsigned short int tspeed;
+   int spawn_time;
 
    LLIST *fixed_contents; /* frameworks structs */
    LLIST *specifications;
@@ -63,6 +64,14 @@ const char *chase_name( ENTITY_FRAMEWORK *frame );
 const char *chase_short_descr( ENTITY_FRAMEWORK *frame );
 const char *chase_long_descr( ENTITY_FRAMEWORK *frame );
 const char *chase_description( ENTITY_FRAMEWORK *frame );
+
+/* setters */
+extern inline void set_frame_name( ENTITY_FRAMEWORK *frame, const char *name );
+extern inline void set_frame_short_descr( ENTITY_FRAMEWORK *frame, const char *short_descr );
+extern inline void set_frame_long_descr( ENTITY_FRAMEWORK *frame, const char *long_descr );
+extern inline void set_frame_description( ENTITY_FRAMEWORK *frame, const char *description );
+extern inline void set_frame_tspeed( ENTITY_FRAMEWORK *frame, int tspeed );
+extern inline void set_frame_spawn_time( ENTITY_FRAMEWORK *frame, int spawn_time );
 
 void add_frame_to_fixed_contents( ENTITY_FRAMEWORK *frame_to_add, ENTITY_FRAMEWORK *container );
 void rem_frame_from_fixed_contents( ENTITY_FRAMEWORK *frame_to_rem, ENTITY_FRAMEWORK *container );

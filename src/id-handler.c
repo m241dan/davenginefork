@@ -166,6 +166,9 @@ int update_tag( ID_TAG *tag, const char *effector, ... )
    va_list va;
    int res;
 
+   if( !strcmp( tag->created_by, "null" ) )
+      return RET_FAILED_OTHER;
+
    va_start( va, effector );
    res = vsnprintf( buf, 50, effector, va );
    va_end( va );
