@@ -127,7 +127,10 @@ int	    get_corpse_decay( ENTITY_INSTANCE *instance );
 
 /* setters */
 void instance_toggle_live( ENTITY_INSTANCE *instance );
-void set_instance_level( ENTITY_INSTANCE *instance, int level );
+extern inline void set_instance_level( ENTITY_INSTANCE *instance, int level );
+extern inline void set_instance_state( ENTITY_INSTANCE *instance, INSTANCE_STATE state );
+extern inline void set_instance_mind( ENTITY_INSTANCE *instance, INSTANCE_MIND mind );
+extern inline void set_instance_tspeed( ENTITY_INSTANCE *instance, int tspeed );
 
 /* actions */
 bool do_damage( ENTITY_INSTANCE *entity, DAMAGE *dmg );

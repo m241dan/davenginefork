@@ -1488,7 +1488,7 @@ int get_corpse_decay( ENTITY_INSTANCE *instance )
 
 /* setters */
 
-void instance_toggle_live( ENTITY_INSTANCE *instance )
+inline void instance_toggle_live( ENTITY_INSTANCE *instance )
 {
    if( instance->live )
       instance->live = FALSE;
@@ -1501,13 +1501,37 @@ void instance_toggle_live( ENTITY_INSTANCE *instance )
    return;
 }
 
-void set_instance_level( ENTITY_INSTANCE *instance, int level )
+inline void set_instance_level( ENTITY_INSTANCE *instance, int level )
 {
    instance->level = level;
-   if( !strcmp( instance->tag->created_by, "null" ) )
+   if( !quick_query( "UPDATE `entity_instances` SET level=%d WHERE %s=%d;", instance->level, tag_table_whereID[ENTITY_INSTANCE_IDS], instance->tag->id ) )
+      bug( "%s: could not update database for instance %d with new level.", __FUNCTION__, instance->tag->id );
+}
+
+inline void set_instance_state( ENTITY_INSTANCE *instance, INSTANCE_STATE state )
+{
+   instance->state = state;
+   if( !quick_query( "UPDATE `entity_instances` SET state=%d WHERE entityInstanceID=%d;", (int)instance->state, instance->tag->id ) )
+      bug( "%s: could no tupdate database for instance %d with new state.", __FUNCTION__, instance->tag->id );
+}
+
+inline void set_instance_mind( ENTITY_INSTANCE *instance, INSTANCE_MIND mind )
+{
+   instance->mind = mind;
+   if( !quick_query( "UPDATE `entity_instances` SET mind=%d WHERE entityInstanceID=%d;", (int)instance->mind, instance->tag->id ) )
+      bug( "%s: could not update database for instance %d with new state.", __FUNCTION__, instance->tag->id );
+}
+
+inline void set_instance_tspeed( ENTITY_INSTANCE *instance, int tspeed )
+{
+   if( tspeed <= 0 )
+   {
+      bug( "%s: could not set new tspeed, has to be greater than zero.\r\n", __FUNCTION__ );
       return;
-   quick_query( "UPDATE `entity_instances` SET level=%d WHERE %s=%d;", instance->level, tag_table_whereID[ENTITY_INSTANCE_IDS], instance->tag->id );
-   return;
+   }
+   instance->tspeed = (unsigned short int)tspeed;
+   if( !quick_query( "UPDATE `entity_instances` SET tspeed=%d WHERE entityInstanceID=%d;", (int)instance->tspeed, instance->tag->id ) )
+      bug( "%s: could not update database for instance %d with new state.", __FUNCTION__, instance->tag->id );
 }
 
 /* actions */
