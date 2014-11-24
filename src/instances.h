@@ -2,6 +2,16 @@
 
 extern int builder_count;
 
+typedef enum
+{
+   STATE_ZOMBIE, STATE_LIVE, STATE_DEAD, STATE_SPAWNING, MAX_INSTANCE_STATE
+} INSTANCE_STATE;
+
+typedef enum
+{
+   MIND_ZOMBIE, MIND_NEUTRAL, MIND_PANIC, MIND_FIGHTING, MIND_SCARED, MIND_AGGRESSIVE, MAX_INSTANCE_MIND
+} INSTANCE_MIND;
+
 struct entity_instance
 {
    ID_TAG *tag;
@@ -10,6 +20,9 @@ struct entity_instance
    bool builder;
    bool isCorpse;
    sh_int level;
+   INSTANCE_STATE state;
+   INSTANCE_MIND mind;
+   sh_int tspeed;
 
    LLIST *contents;
    LLIST *contents_sorted[MAX_QUICK_SORT];

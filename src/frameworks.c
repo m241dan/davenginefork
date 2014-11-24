@@ -169,12 +169,13 @@ int new_eFramework( ENTITY_FRAMEWORK *frame )
       }
    }
 
-   if( !quick_query( "INSERT INTO entity_frameworks VALUES( %d, %d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%d' );",
+   if( !quick_query( "INSERT INTO entity_frameworks VALUES( %d, %d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%d' );",
          frame->tag->id, frame->tag->type, frame->tag->created_by,
          frame->tag->created_on, frame->tag->modified_by, frame->tag->modified_on,
          frame->name, frame->short_descr, frame->long_descr, frame->description,
          ( frame->inherits ? frame->inherits->tag->id : -1 ),
-         ( frame->f_primary_dmg_received_stat ? frame->f_primary_dmg_received_stat->tag->id : -1 ) ) )
+         ( frame->f_primary_dmg_received_stat ? frame->f_primary_dmg_received_stat->tag->id : -1 ),
+         (int)frame->tspeed ) )
       return RET_FAILED_OTHER;
 
    AttachIterator( &Iter, frame->specifications );

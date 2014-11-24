@@ -418,11 +418,12 @@ int new_eInstance( ENTITY_INSTANCE *eInstance )
       }
    }
 
-   if( !quick_query( "INSERT INTO entity_instances VALUES( %d, %d, '%s', '%s', '%s', '%s', %d, %d, %d, %d, %d );",
+   if( !quick_query( "INSERT INTO entity_instances VALUES( %d, %d, '%s', '%s', '%s', '%s', %d, %d, %d, %d, %d, %d, %d, %d );",
          eInstance->tag->id, eInstance->tag->type, eInstance->tag->created_by,
          eInstance->tag->created_on, eInstance->tag->modified_by, eInstance->tag->modified_on,
          eInstance->contained_by ? eInstance->contained_by->tag->id : -1, eInstance->framework->tag->id,
-         (int)eInstance->live, (int)eInstance->loaded, (int)eInstance->isCorpse ) )
+         (int)eInstance->live, (int)eInstance->loaded, (int)eInstance->isCorpse, (int)eInstance->state,
+         (int)eInstance->mind, (int)eInstance->tspeed ) )
       return RET_FAILED_OTHER;
 
    AttachIterator( &Iter, eInstance->specifications );
@@ -453,6 +454,9 @@ void db_load_eInstance( ENTITY_INSTANCE *eInstance, MYSQL_ROW *row )
    eInstance->live = atoi( (*row)[counter++] );
    eInstance->loaded = atoi( (*row)[counter++] );
    eInstance->isCorpse = atoi( (*row)[counter++] );
+   eInstance->state = atoi( (*row)[counter++] );
+   eInstance->mind = atoi( (*row)[counter++] );
+   eInstance->tspeed = atoi( (*row)[counter++] );
    return;
 }
 
@@ -1217,18 +1221,21 @@ ENTITY_INSTANCE *instance_list_has_by_short_prefix( LLIST *instance_list, const 
 ENTITY_INSTANCE *eInstantiate( ENTITY_FRAMEWORK *frame )
 {
    ENTITY_INSTANCE *eInstance;
+   int ret;
 
    if( !live_frame( frame ) )
       return NULL;
 
    eInstance = init_eInstance();
    eInstance->framework = frame;
+   eInstance->tspeed = frame->tspeed;
    new_eInstance( eInstance );
    instantiate_entity_stats_from_framework( eInstance );
    prep_stack( get_frame_script_path( frame ), "onInstanceInit" );
    push_framework( frame, lua_handle );
    push_instance( eInstance, lua_handle );
-   lua_pcall( lua_handle, 2, LUA_MULTRET, 0 );
+   if( ( ret = lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) ) )
+      bug( "%s: ret %d: path %s\r\n - error message: %s.", __FUNCTION__, ret, get_frame_script_path( frame ), lua_tostring( lua_handle, -1 ) );
    return eInstance;
 }
 

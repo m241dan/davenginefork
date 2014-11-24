@@ -7,6 +7,7 @@ struct entity_framework
    char *short_descr;
    char *long_descr;
    char *description;
+   sh_int tspeed;
 
    LLIST *fixed_contents; /* frameworks structs */
    LLIST *specifications;
