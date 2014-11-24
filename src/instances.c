@@ -1890,6 +1890,7 @@ int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *exit )
    ENTITY_INSTANCE *move_to, *content;
    SPECIFICATION *script;
    ITERATOR Iter;
+   int lua_ret;
 
    if( !entity->builder )
    {
@@ -1917,7 +1918,8 @@ int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *exit )
       {
          push_instance( entity->contained_by, lua_handle );
          push_instance( entity, lua_handle );
-         lua_pcall( lua_handle, 2, LUA_MULTRET, 0 );
+         if( ( lua_ret = lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) ) )
+            bug( "%s: ret %d: path: %s\r\n - error message: %s.", __FUNCTION__, ret, get_script_path_from_spec( script ), lua_tostring( lua_handle, -1 ) );
       }
    }
 
@@ -1927,7 +1929,8 @@ int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *exit )
       {
          push_instance( entity->contained_by, lua_handle);
          push_instance( entity, lua_handle );
-         lua_pcall( lua_handle, 2, LUA_MULTRET, 0 );
+         if( ( lua_ret = lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) ) )
+            bug( "%s: ret %d: path: %s\r\n - error message: %s.", __FUNCTION__, ret, get_script_path_from_spec( script ), lua_tostring( lua_handle, -1 ) );
       }
    }
 
@@ -1940,7 +1943,8 @@ int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *exit )
          {
             push_instance( content, lua_handle );
             push_instance( entity, lua_handle );
-            lua_pcall( lua_handle, 2, LUA_MULTRET, 0 );
+            if( ( lua_ret = lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) ) )
+               bug( "%s: ret %d: path: %s\r\n - error message: %s.", __FUNCTION__, ret, get_script_path_from_spec( script ), lua_tostring( lua_handle, -1 ) );
          }
       }
    }
@@ -1956,7 +1960,8 @@ int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *exit )
       {
          push_instance( move_to, lua_handle );
          push_instance( entity, lua_handle );
-         lua_pcall( lua_handle, 2, LUA_MULTRET, 0 );
+         if( ( lua_ret = lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) ) )
+            bug( "%s: ret %d: path: %s\r\n - error message: %s.", __FUNCTION__, ret, get_script_path_from_spec( script ), lua_tostring( lua_handle, -1 ) );
       }
    }
 
@@ -1966,7 +1971,8 @@ int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *exit )
       {
          push_instance( entity->contained_by, lua_handle );
          push_instance( entity, lua_handle );
-         lua_pcall( lua_handle, 2, LUA_MULTRET, 0 );
+         if( ( lua_ret = lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) ) )
+            bug( "%s: ret %d: path: %s\r\n - error message: %s.", __FUNCTION__, ret, get_script_path_from_spec( script ), lua_tostring( lua_handle, -1 ) );
       }
    }
 
@@ -1981,7 +1987,8 @@ int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *exit )
          {
             push_instance( content, lua_handle );
             push_instance( entity, lua_handle );
-            lua_pcall( lua_handle, 2, LUA_MULTRET, 0 );
+            if( ( lua_ret = lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) ) )
+               bug( "%s: ret %d: path: %s\r\n - error message: %s.", __FUNCTION__, ret, get_script_path_from_spec( script ), lua_tostring( lua_handle, -1 ) );
          }
       }
    }

@@ -189,7 +189,7 @@ bool prep_stack_handle( lua_State *handle, const char *file, const char *functio
 
    if( ( ret = lua_pcall( handle, 0, 0, 0 ) ) != 0 )
    {
-      bug( "%s: %s %s\r\n", __FUNCTION__, function, lua_tostring( handle, -1 ) );
+      bug( "%s: ret %d: path: %s\r\n - error message: %s.", __FUNCTION__, ret, file, lua_tostring( handle, -1 ) );
       lua_pop( handle, 1 );
       return FALSE;
    }

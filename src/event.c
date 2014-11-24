@@ -86,7 +86,7 @@ bool event_instance_lua_callback( EVENT_DATA *event )
    ENTITY_INSTANCE *arg_entity;
    void *content;
    ITERATOR Iter;
-   int counter = 0;
+   int ret, counter = 0;
 
    prep_stack( get_frame_script_path( instance->framework ), event->argument );
    if( SizeOfList( event->lua_args ) > 0 )
@@ -115,7 +115,8 @@ bool event_instance_lua_callback( EVENT_DATA *event )
       }
       DetachIterator( &Iter );
    }
-   lua_pcall( lua_handle, strlen( event->lua_cypher ), LUA_MULTRET, 0 );
+   if( ( ret = lua_pcall( lua_handle, strlen( event->lua_cypher ), LUA_MULTRET, 0 ) ) )
+      bug( "%s: ret %d: path: %s\r\n - error message: %s.", __FUNCTION__, ret, get_frame_script_path( instance->framework ), lua_tostring( lua_handle, -1 ) );
 
    return FALSE;
 }
@@ -125,7 +126,7 @@ bool event_global_lua_callback( EVENT_DATA *event )
    ENTITY_INSTANCE *arg_entity;
    void *content;
    ITERATOR Iter;
-   int counter = 0;
+   int ret, counter = 0;
 
    prep_stack( (char *)event->owner, event->argument );
    if( SizeOfList( event->lua_args ) > 0 )
@@ -154,8 +155,8 @@ bool event_global_lua_callback( EVENT_DATA *event )
       }
       DetachIterator( &Iter );
    }
-   if( lua_pcall( lua_handle, strlen( event->lua_cypher ), LUA_MULTRET, 0 ) )
-      bug( "%s: %s.", __FUNCTION__, lua_tostring( lua_handle, -1 ) );
+   if( ( ret = lua_pcall( lua_handle, strlen( event->lua_cypher ), LUA_MULTRET, 0 ) ) )
+      bug( "%s: ret %d: path: %s\r\n - error message: %s", __FUNCTION__, ret, (char *)event->owner, lua_tostring( lua_handle, -1 ) );
    return FALSE;
 }
 

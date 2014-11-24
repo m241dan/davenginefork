@@ -563,8 +563,7 @@ inline void set_stat_owner( STAT_INSTANCE *stat, ENTITY_INSTANCE *owner )
 
 void lua_set_stat( STAT_INSTANCE *stat, int change, int effective )
 {
-   int top = lua_gettop( lua_handle );
-   int difference;
+   int ret, difference, top = lua_gettop( lua_handle );
 
    if( !s_script_exists( stat->framework ) )
       return;
@@ -577,14 +576,17 @@ void lua_set_stat( STAT_INSTANCE *stat, int change, int effective )
       prep_stack( get_stat_instance_script_path( stat ), "onStatGain" );
       push_instance( stat->owner, lua_handle );
       lua_pushnumber( lua_handle, difference );
-      lua_pcall( lua_handle, 2, LUA_MULTRET, 0 );
+      if( ( ret = lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) ) )
+         bug( "%s: ret %d: path: %s\r\n - error message: %s.", __FUNCTION__, ret, get_stat_instance_script_path( stat ), lua_tostring( lua_handle, -1 ) );
    }
    else
    {
       prep_stack( get_stat_instance_script_path( stat ), "onStatLose" );
       push_instance( stat->owner, lua_handle );
       lua_pushnumber( lua_handle, abs( difference ) );
-      lua_pcall( lua_handle, 2, LUA_MULTRET, 0 );
+      if( ( ret = lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) ) )
+         bug( "%s: ret %d: path: %s\r\n - error message: %s.", __FUNCTION__, ret, get_stat_instance_script_path( stat ), lua_tostring( lua_handle, -1 ) );
+
    }
 
    lua_settop( lua_handle, top );

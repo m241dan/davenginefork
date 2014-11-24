@@ -38,7 +38,7 @@ void prep_melee_atk( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim )
    SPECIFICATION *spec;
    DAMAGE *dmg;
    const char *path;
-   int top = lua_gettop( lua_handle );
+   int ret, top = lua_gettop( lua_handle );
 
    if( ( spec = has_spec( attacker, "prepMeleeTimer" ) ) != NULL && spec->value > 0 )
       path = get_script_path_from_spec( spec );
@@ -54,9 +54,9 @@ void prep_melee_atk( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim )
    set_dmg_src( dmg, attacker, DMG_MELEE );
 
    push_timer( dmg->timer, lua_handle );
-   if( lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) )
+   if( ( ret = lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) ) )
    {
-      bug( "%s: failed to call onMeleeAttack script with path %s.", __FUNCTION__, path );
+      bug( "%s: ret: %d path: %s\r\n - error message %s.", __FUNCTION__, ret, path, lua_tostring( lua_handle, -1 ) );
       lua_settop( lua_handle, top );
       return;
    }
@@ -69,7 +69,7 @@ void prep_melee_dmg( DAMAGE *dmg )
 {
    SPECIFICATION *spec;
    const char *path;
-   int top = lua_gettop( lua_handle );
+   int ret, top = lua_gettop( lua_handle );
 
    if( ( spec = has_spec( dmg->attacker, "prepMeleeDamage" ) ) != NULL && spec->value > 0 )
       path = get_script_path_from_spec( spec );
@@ -79,9 +79,9 @@ void prep_melee_dmg( DAMAGE *dmg )
    prep_stack( path, "prepMeleeDamage" );
    push_instance( dmg->attacker, lua_handle );
    push_damage( dmg, lua_handle );
-   if( lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) )
+   if( ( ret = lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) ) )
    {
-      bug( "%s: %s.", __FUNCTION__, lua_tostring( lua_handle, -1 ) );
+      bug( "%s: ret %d: path: %s\r\n - error message: %s.", __FUNCTION__, ret, path, lua_tostring( lua_handle, -1 ) );
       dmg->amount = 0;
    }
    lua_settop( lua_handle, top );
@@ -92,7 +92,7 @@ bool receive_damage( DAMAGE *dmg )
 {
    SPECIFICATION *spec;
    const char *path;
-   int top = lua_gettop( lua_handle );
+   int ret, top = lua_gettop( lua_handle );
 
    if( ( spec = has_spec( dmg->victim, "onReceiveDamage" ) ) != NULL && spec->value > 0 )
       path = get_script_path_from_spec( spec );
@@ -102,9 +102,9 @@ bool receive_damage( DAMAGE *dmg )
    prep_stack( path, "onReceiveDamage" );
    push_instance( dmg->victim, lua_handle );
    push_damage( dmg, lua_handle );
-   if( lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) )
+   if( ( ret = lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) ) )
    {
-      bug( "%s: %s.", __FUNCTION__, lua_tostring( lua_handle, -1 ) );
+      bug( "%s: ret %d: path %s\r\n - error message: %s.", __FUNCTION__, ret, path, lua_tostring( lua_handle, -1 ) );
       dmg->amount = 0;
    }
    lua_settop( lua_handle, top );
@@ -147,7 +147,7 @@ bool does_check( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim, const char 
 {
    SPECIFICATION *spec;
    const char *path;
-   int chance, top = lua_gettop( lua_handle );
+   int ret, chance, top = lua_gettop( lua_handle );
 
    if( ( spec = has_spec( victim, does ) ) != NULL && spec->value > 0 )
       path = get_script_path_from_spec( spec );
@@ -157,9 +157,9 @@ bool does_check( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim, const char 
    prep_stack( path, does );
    push_instance( attacker, lua_handle );
    push_instance( victim, lua_handle );
-   if( lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) )
+   if( ( ret = lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) ) )
    {
-      bug( "%s: failed to call does_check script %s path: %s", __FUNCTION__, does, path );
+      bug( "%s: ret %d: path: %s\r\n - error message: %s.", __FUNCTION__, ret, path, lua_tostring( lua_handle, -1 ) );
       lua_settop( lua_handle, top );
       return FALSE;
    }
@@ -301,7 +301,7 @@ void combat_message( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim, DAMAGE 
    SPECIFICATION *spec;
    const char *path;
    char msg_attacker[MAX_BUFFER], msg_victim[MAX_BUFFER], msg_room[MAX_BUFFER];
-   int top = lua_gettop( lua_handle );
+   int ret, top = lua_gettop( lua_handle );
 
    if( ( spec = has_spec( attacker, "combatMessage" ) ) != NULL && spec->value > 0 )
       path = get_script_path_from_spec( spec );
@@ -313,10 +313,9 @@ void combat_message( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim, DAMAGE 
    push_instance( victim, lua_handle );
    push_damage( dmg, lua_handle );
    lua_pushnumber( lua_handle, (int)status );
-   if( lua_pcall( lua_handle, 4, LUA_MULTRET, 0 ) )
+   if( ( ret = lua_pcall( lua_handle, 4, LUA_MULTRET, 0 ) ) )
    {
-      bug( "%s: could not get messages for combatMessage at path: %s", __FUNCTION__, path );
-      bug( "%s: error: %s", __FUNCTION__, lua_tostring( lua_handle, -1 ) );
+      bug( "%s: ret %d: path: %s\r\n - error message: %s", __FUNCTION__, ret, path, lua_tostring( lua_handle, -1 ) );
       lua_settop( lua_handle, top );
       return;
    }

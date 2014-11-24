@@ -178,7 +178,7 @@ int luaInherits( lua_State *L )
    const char *func_name;
    const char *cypher;
    int num_args;
-   int x;
+   int x, ret;
 
    DAVLUACM_FRAME_NONE( frame, L );
 
@@ -243,7 +243,8 @@ int luaInherits( lua_State *L )
             break;
       }
    }
-   lua_pcall( L, num_args, 0, 0 );
+   if( ( ret = lua_pcall( L, num_args, 0, 0 ) ) )
+      bug( "%s: ret %d: path: %s\r\n - error message: %s\r\n", __FUNCTION__, ret, get_frame_script_path( frame->inherits ), lua_tostring( L, -1 ) );
    return 0;
 
 }
