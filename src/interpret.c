@@ -150,6 +150,8 @@ struct typCmd create_eFramework_commands[] = {
    { "addstat", eFramework_addStat, LEVEL_BASIC, NULL, FALSE, NULL, create_eFramework_commands },
    { "addspec", eFramework_addSpec, LEVEL_BASIC, NULL, FALSE, NULL, create_eFramework_commands },
    { "setprimary", eFramework_setPrimaryDmg, LEVEL_BASIC, NULL, FALSE, NULL, create_eFramework_commands },
+   { "spawntime", eFramework_set_spawn_time, LEVEL_BASIC, NULL, FALSE, NULL, create_eFramework_commands },
+   { "tspeed", eFramework_set_tspeed, LEVEL_BASIC, NULL, FALSE, NULL, create_eFramework_commands },
    { "desc", eFramework_description, LEVEL_BASIC, NULL, FALSE, NULL, create_eFramework_commands },
    { "long", eFramework_long, LEVEL_BASIC, NULL, FALSE, NULL, create_eFramework_commands },
    { "short", eFramework_short, LEVEL_BASIC, NULL, FALSE, NULL, create_eFramework_commands },
