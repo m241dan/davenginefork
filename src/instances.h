@@ -15,13 +15,14 @@ typedef enum
 struct entity_instance
 {
    ID_TAG *tag;
+   int corpse_owner;
    bool live;
    bool builder;
-   bool isCorpse;
+   bool isPlayer;
    sh_int level;
+   sh_int tspeed;
    INSTANCE_STATE state;
    INSTANCE_MIND mind;
-   sh_int tspeed;
 
    LLIST *contents;
    LLIST *contents_sorted[MAX_QUICK_SORT];
@@ -139,6 +140,7 @@ void spawn_instance( ENTITY_INSTANCE *instance );
 void set_for_decay( ENTITY_INSTANCE *corpse, int delay );
 void corpsify_inventory( ENTITY_INSTANCE *instance, ENTITY_INSTANCE *corpse );
 
+/* utility */
 int text_to_entity( ENTITY_INSTANCE *entity, const char *fmt, ... );
 void text_around_entity( ENTITY_INSTANCE *perspective, int num_around, const char *fmt, ... );
 void echo_to_room( ENTITY_INSTANCE *room, const char *msg );

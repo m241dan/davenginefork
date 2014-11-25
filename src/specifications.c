@@ -5,7 +5,7 @@
 const char *const spec_table[] = {
    /* Is Specs */
    "IsRoom", "IsExit", "IsMob", "IsObject", "IsDoor", "IsContainer",
-   "IsPlayer", "IsSilenced", "IsDeafened",
+   "IsSilenced", "IsDeafened",
    /* Can Specs */
    "CanGet", "CanGive", "CanDrop", "CanPut", "CanMove",
    /* No Specs */

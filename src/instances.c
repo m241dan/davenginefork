@@ -252,7 +252,7 @@ ENTITY_INSTANCE *load_eInstance_by_query( const char *query )
    load_entity_stats( instance );
    if( instance->framework->f_primary_dmg_received_stat )
       instance->primary_dmg_received_stat = get_stat_from_instance_by_id( instance, instance->framework->f_primary_dmg_received_stat->tag->id );
-   if( get_spec_value( instance, "IsPlayer" ) <= 0 )
+   if( !instance->isPlayer )
       load_commands( instance->commands, mobile_commands, LEVEL_BASIC );
    full_load_instance( instance );
    free( row );
@@ -396,12 +396,12 @@ int new_eInstance( ENTITY_INSTANCE *eInstance )
       }
    }
 
-   if( !quick_query( "INSERT INTO entity_instances VALUES( %d, %d, '%s', '%s', '%s', '%s', %d, %d, %d, %d, %d, %d, %d );",
+   if( !quick_query( "INSERT INTO entity_instances VALUES( %d, %d, '%s', '%s', '%s', '%s', %d, %d, %d, %d, %d, %d, %d, %d );",
          eInstance->tag->id, eInstance->tag->type, eInstance->tag->created_by,
          eInstance->tag->created_on, eInstance->tag->modified_by, eInstance->tag->modified_on,
          eInstance->contained_by ? eInstance->contained_by->tag->id : -1, eInstance->framework->tag->id,
-         (int)eInstance->live, (int)eInstance->isCorpse, (int)eInstance->state,
-         (int)eInstance->mind, (int)eInstance->tspeed ) )
+         (int)eInstance->live, eInstance->corpse_owner, (int)eInstance->state,
+         (int)eInstance->mind, (int)eInstance->tspeed, (int)eInstance->isPlayer ) )
       return RET_FAILED_OTHER;
 
    AttachIterator( &Iter, eInstance->specifications );
@@ -430,10 +430,11 @@ void db_load_eInstance( ENTITY_INSTANCE *eInstance, MYSQL_ROW *row )
    eInstance->contained_by = get_instance_by_id( atoi( (*row)[counter++] ) );
    eInstance->framework = get_framework_by_id( atoi( (*row)[counter++] ) );
    eInstance->live = atoi( (*row)[counter++] );
-   eInstance->isCorpse = atoi( (*row)[counter++] );
+   eInstance->corpse_owner = atoi( (*row)[counter++] );
    eInstance->state = atoi( (*row)[counter++] );
    eInstance->mind = atoi( (*row)[counter++] );
    eInstance->tspeed = atoi( (*row)[counter++] );
+   eInstance->isPlayer = atoi( (*row)[counter++] );
    return;
 }
 
@@ -1276,7 +1277,7 @@ ENTITY_INSTANCE *corpsify( ENTITY_INSTANCE *instance )
    int decay;
 
    corpse = eInstantiate( instance->framework );
-   corpse->isCorpse = TRUE;
+   corpse->corpse_owner = instance->tag->id;
    corpsify_inventory( instance, corpse );
    decay = get_corpse_decay( instance );
    set_for_decay( corpse, decay );
@@ -1436,28 +1437,28 @@ inline EVENT_DATA *decay_event( void )
 
 const char *instance_name( ENTITY_INSTANCE *instance )
 {
-   if( instance->isCorpse )
+   if( instance->corpse_owner > 0 )
       return instance->framework ? quick_format( "corpse %s", chase_name( instance->framework ) ) : "corpse null";
    return instance->framework ? chase_name( instance->framework ) : "null";
 }
 
 const char *instance_short_descr( ENTITY_INSTANCE *instance )
 {
-   if( instance->isCorpse )
+   if( instance->corpse_owner > 0 )
       return instance->framework ? quick_format( "Corpse of %s", downcase( chase_short_descr( instance->framework ) ) ) : "Corpse of null";
    return instance->framework ? chase_short_descr( instance->framework ) : "null";
 }
 
 const char *instance_long_descr( ENTITY_INSTANCE *instance )
 {
-   if( instance->isCorpse )
+   if( instance->corpse_owner > 0)
       return instance->framework ? quick_format( "The corpse of %s", downcase( chase_short_descr( instance->framework ) ) ) : "The corpse of null";
    return instance->framework ? chase_long_descr( instance->framework ) : "null";
 }
 
 const char *instance_description( ENTITY_INSTANCE *instance )
 {
-   if( instance->isCorpse )
+   if( instance->corpse_owner > 0 )
       return instance->framework ? quick_format( "The rotting and decaying corpse of what was once:\r\n", chase_description( instance->framework ) ) : "The description of a null corpse";
    return instance->framework ? chase_description( instance->framework ) : "null";
 }
