@@ -248,6 +248,25 @@ const char *return_framework_strings( ENTITY_FRAMEWORK *frame, const char *borde
       strcat( buf, tempstring );
    }
 
+   if( frame->tspeed > 0 )
+   {
+      mud_printf( tempstring, "%s%s%s\r\n", border,
+      fit_string_to_space(
+      quick_format( " Thought Speed : %d", (int)frame->tspeed ),
+      space_after_border ),
+      border );
+   }
+
+   if( frame->spawn_time > 0 )
+   {
+      mud_printf( tempstring, "%s%s%s\r\n", border,
+      fit_string_to_space(
+      quick_format( " If killed, will respawn in %d seconds\r\n", frame->spawn_time ),
+      space_after_border ),
+      border );
+   }
+
+
    buf[strlen( buf )] = '\0';
    return buf;
 }
