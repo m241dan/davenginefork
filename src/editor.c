@@ -389,6 +389,13 @@ void eFramework_name( void *passed, char *arg )
    INCEPTION *olc = (INCEPTION *)passed;
    ENTITY_FRAMEWORK *frame;
 
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Set the name to what?\r\n" );
+      olc_short_prompt( olc );
+      return;
+   }
+
    if( strlen( arg ) > MAX_FRAMEWORK_NSL )
    {
       text_to_olc( olc, "%s is too long.\r\n", arg );
@@ -412,6 +419,13 @@ void eFramework_short( void *passed, char *arg )
    INCEPTION *olc = (INCEPTION *)passed;
    ENTITY_FRAMEWORK *frame;
 
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Set the short description to what?\r\n" );
+      olc_short_prompt( olc );
+      return;
+   }
+
    if( strlen( arg ) > MAX_FRAMEWORK_NSL )
    {
       text_to_olc( olc, "%s is too long.\r\n", arg );
@@ -434,9 +448,17 @@ void eFramework_long( void *passed, char *arg )
    INCEPTION *olc = (INCEPTION *)passed;
    ENTITY_FRAMEWORK *frame;
 
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Set the long description to what?\r\n" );
+      olc_short_prompt( olc );
+      return;
+   }
+
    if( strlen( arg ) > MAX_FRAMEWORK_NSL )
    {
       text_to_olc( olc, "%s is too long.\r\n", arg );
+      olc_short_prompt( olc );
       return;
    }
    if( ( frame = (ENTITY_FRAMEWORK*)olc->editing ) == NULL )
@@ -457,9 +479,17 @@ void eFramework_description( void *passed, char *arg )
    INCEPTION *olc = (INCEPTION *)passed;
    ENTITY_FRAMEWORK *frame;
 
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Set the description to what?\r\n" );
+      olc_short_prompt( olc );
+      return;
+   }
+
    if( strlen( arg ) > MAX_BUFFER )
    {
       text_to_olc( olc, "%s is too long.\r\n", arg );
+      olc_short_prompt( olc );
       return;
    }
    if( ( frame = (ENTITY_FRAMEWORK*)olc->editing ) == NULL )
@@ -480,6 +510,12 @@ void eFramework_set_tspeed( void *passed, char *arg )
    INCEPTION *olc = (INCEPTION *)passed;
    ENTITY_FRAMEWORK *frame = (ENTITY_FRAMEWORK *)olc->editing;
    int value;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Set the thought speed in quarter seconds. So, 4 = 1 second.\r\n" );
+      return;
+   }
 
    if( !is_number( arg ) )
    {
@@ -504,6 +540,12 @@ void eFramework_set_spawn_time( void *passed, char *arg )
    INCEPTION *olc = (INCEPTION *)passed;
    ENTITY_FRAMEWORK *frame = (ENTITY_FRAMEWORK *)olc->editing;
    int value;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Set the respawn time in seconds. Zero means the instance does not respawn.\r\n" );
+      return;
+   }
 
    if( !is_number( arg ) )
    {
