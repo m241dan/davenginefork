@@ -15,6 +15,7 @@ EVAR *new_str_var( const char *name, const char *string );
 void free_var( EVAR *var );
 void clear_evar_list( LLIST *list );
 void db_load_evar( EVAR *var,  MYSQL_ROW *row );
+extern inline void delete_variable_from_instance( EVAR *var, ENTITY_INSTANCE *instance );
 
 void new_global_var( EVAR *var );
 void new_entity_var( ENTITY_INSTANCE *entity, EVAR *var );

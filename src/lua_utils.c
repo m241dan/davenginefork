@@ -6,6 +6,7 @@ const struct luaL_Reg EntityVariablesLib_f[] = {
   { "bug",       lua_bug },
   { "getGlobal", lua_getGlobalVar },
   { "setGlobal", lua_setGlobalVar },
+  { "callBack",  global_luaCallBack },
   { NULL, NULL }
 };
 
@@ -165,41 +166,42 @@ int luaopen_mud( lua_State *L )
    return 1;
 }
 
-bool prep_stack( const char *file, const char *function )
+bool prep_stack_handle( lua_State *handle, const char *file, const char *function )
 {
    int ret;
 
-   if( !lua_handle )
+   if( !handle )
    {
       bug( "%s: the lua stack isn't initialized", __FUNCTION__ );
       return FALSE;
    }
 
-   lua_pushnil( lua_handle );
-   lua_setglobal( lua_handle, function );
+   lua_pushnil( handle );
+   lua_setglobal( handle, function );
 
-   if( ( ret = luaL_loadfile( lua_handle, file ) ) != 0 )
+   if( ( ret = luaL_loadfile( handle, file ) ) != 0 )
    {
       if( ret != LUA_ERRFILE )
-         bug( "%s: %s: %s\n\r", __FUNCTION__, function, lua_tostring( lua_handle, -1 ) );
-      lua_pop( lua_handle, 1 );
+         bug( "%s: %s: %s\n\r", __FUNCTION__, function, lua_tostring( handle, -1 ) );
+      lua_pop( handle, 1 );
       return FALSE;
    }
 
-   if( ( ret = lua_pcall( lua_handle, 0, 0, 0 ) ) != 0 )
+   if( ( ret = lua_pcall( handle, 0, 0, 0 ) ) != 0 )
    {
-      bug( "%s: %s %s\r\n", __FUNCTION__, function, lua_tostring( lua_handle, -1 ) );
-      lua_pop( lua_handle, 1 );
+      bug( "%s: ret %d: path: %s\r\n - error message: %s.", __FUNCTION__, ret, file, lua_tostring( handle, -1 ) );
+      lua_pop( handle, 1 );
       return FALSE;
    }
 
-   lua_getglobal( lua_handle, function );
-   if( lua_isnil( lua_handle, -1 ) )
+   lua_getglobal( handle, function );
+   if( lua_isnil( handle, -1 ) )
    {
-      lua_pop( lua_handle, -1 );
+      lua_pop( handle, -1 );
       return FALSE;
    }
    return TRUE;
+
 }
 
 const char *get_script_path_from_spec( SPECIFICATION *spec )
@@ -235,15 +237,38 @@ inline const char *get_stat_instance_script_path( STAT_INSTANCE *stat )
    return quick_format( "../scripts/stats/%d.lua", stat->framework->tag->id );
 }
 
-void lua_loadsql( void )
+inline void load_server_script( void )
+{
+   if( luaL_loadfile( lua_handle, "../scripts/settings/server.lua" ) || lua_pcall( lua_handle, 0, 0, 0 ) )
+   {
+      bug( "%s: could not load server variables.", __FUNCTION__ );
+      return;
+   }
+}
+
+inline void load_combat_vars_script( void )
+{
+   if( luaL_loadfile( lua_handle, "../scripts/settings/combat_vars.lua" ) || lua_pcall( lua_handle, 0, 0, 0 ) )
+   {
+      bug( "%s: could not load combat variables.", __FUNCTION__ );
+      return;
+   }
+}
+
+void lua_server_settings( void )
 {
    int top = lua_gettop( lua_handle );
 
-   if( luaL_loadfile( lua_handle, "../scripts/settings/server.lua" ) || lua_pcall( lua_handle, 0, 0, 0 ) )
-   {
-      bug( "%s: could not load sql variables.", __FUNCTION__ );
-      return;
-   }
+   lua_getglobal( lua_handle, "mudport" );
+   MUDPORT = lua_tonumber( lua_handle, -1 );
+
+   lua_settop( lua_handle, top );
+}
+
+void lua_database_settings( void )
+{
+   int top = lua_gettop( lua_handle );
+
    lua_getglobal( lua_handle, "db_name" );
    DB_NAME = strdup( lua_tostring( lua_handle, -1 ) );
    lua_getglobal( lua_handle, "db_addr" );
@@ -254,6 +279,33 @@ void lua_loadsql( void )
    DB_PASSWORD = strdup( lua_tostring( lua_handle, -1 ) );
    lua_getglobal( lua_handle, "wiki_name" );
    WIKI_NAME = strdup( lua_tostring( lua_handle, -1 ) );
+
+   lua_settop( lua_handle, top );
+}
+
+void lua_combat_settings( void )
+{
+   int top = lua_gettop( lua_handle );
+
+   lua_getglobal( lua_handle, "automelee" );
+   AUTOMELEE = lua_toboolean( lua_handle, -1 );
+   lua_getglobal( lua_handle, "dodge_on" );
+   DODGE_ON = lua_toboolean( lua_handle, -1 );
+   lua_getglobal( lua_handle, "parry_on" );
+   PARRY_ON = lua_toboolean( lua_handle, -1 );
+   lua_getglobal( lua_handle, "miss_on" );
+   MISS_ON = lua_toboolean( lua_handle, -1 );
+   lua_getglobal( lua_handle, "automelee_delay" );
+   BASE_MELEE_DELAY = lua_tonumber( lua_handle, -1 );
+   lua_settop( lua_handle, top );
+}
+
+void lua_corpse_settings( void )
+{
+   int top = lua_gettop( lua_handle );
+
+   lua_getglobal( lua_handle, "standard_corpse_decay" );
+   CORPSE_DECAY = lua_tonumber( lua_handle, -1 );
 
    lua_settop( lua_handle, top );
 }
@@ -353,6 +405,58 @@ void push_specification( SPECIFICATION *spec, lua_State *L )
    return;
 }
 
+void push_damage( DAMAGE *dmg, lua_State *L )
+{
+   DAMAGE **box;
+
+   if( !dmg )
+   {
+      bug( "%s: trying to push a NULL dmg.", __FUNCTION__ );
+      lua_pushnil( L );
+      return;
+   }
+
+   box = (DAMAGE **)lua_newuserdata( L, sizeof( DAMAGE * ) );
+   luaL_getmetatable( L, "Damage.meta" );
+   if( lua_isnil( L, -1 ) )
+   {
+      bug( "%s: Damage.meta is missing.", __FUNCTION__ );
+      lua_pop( L, -1 );
+      lua_pop( L, -1 );
+      lua_pushnil( L );
+      return;
+   }
+   lua_setmetatable( L, -2 );
+   *box = dmg;
+   return;
+}
+
+void push_timer( TIMER *timer, lua_State *L )
+{
+   TIMER **box;
+
+   if( !timer )
+   {
+      bug( "%s: trying to push a NULL timer.", __FUNCTION__ );
+      lua_pushnil( L );
+      return;
+   }
+
+   box = (TIMER **)lua_newuserdata( L, sizeof( TIMER * ) );
+   luaL_getmetatable( L, "Timers.meta" );
+   if( lua_isnil( L, -1 ) )
+   {
+      bug( "%s: Timers.meta is missing.", __FUNCTION__ );
+      lua_pop( L, -1 );
+      lua_pop( L, -1 );
+      lua_pushnil( L );
+      return;
+   }
+   lua_setmetatable( L, -2 );
+   *box = timer;
+   return;
+}
+
 int lua_bug( lua_State *L )
 {
    switch( lua_type( L, -1 ) )
@@ -440,6 +544,113 @@ int lua_setGlobalVar( lua_State *L )
    return 0;
 }
 
+int global_luaCallBack( lua_State *L )
+{
+   EVENT_DATA *event;
+   int callbackwhen; /* server pulses, ie .25 seconds. So 1 second = 4 */
+   const char *func_name;
+   const char *cypher;
+   const char *path;
+   int num_args;
+   int x;
+
+   if( ( path = luaL_checkstring( L, 1 ) ) == NULL )
+   {
+      bug( "%s: no path passed.", __FUNCTION__ );
+      return 0;
+   }
+
+   if( ( callbackwhen = luaL_checknumber( L, 2 ) ) == 0 )
+   {
+      bug( "%s: having a callback with 0 seconds is not possible.", __FUNCTION__ );
+      return 0;
+   }
+
+   if( ( func_name = luaL_checkstring( L, 3 ) ) == NULL )
+   {
+      bug( "%s: no function name passed.", __FUNCTION__ );
+      return 0;
+   }
+
+   if( ( cypher = luaL_checkstring( L, 4 ) ) == NULL )
+   {
+      bug( "%s: no cypher string passed.", __FUNCTION__ );
+      return 0;
+   }
+   event = alloc_event();
+   num_args = strlen( cypher );
+
+   for( x = num_args; x > 0; x-- )
+   {
+      ENTITY_FRAMEWORK *arg_frame;
+      ENTITY_INSTANCE *arg_instance;
+      char *arg_string;
+      int  *arg_int;
+
+      switch( cypher[x-1] )
+      {
+         case 's':
+            if( lua_type( L, ( 4 + x ) ) != LUA_TSTRING )
+            {
+               bug( "%s: bad/cyper passed value, not a string at position %d.", __FUNCTION__, x );
+               arg_string = strdup( "nil" );
+               AttachToList( arg_string, event->lua_args );
+               continue;
+            }
+            arg_string = strdup( lua_tostring( L, ( 4 + x ) ) );
+            AttachToList( arg_string, event->lua_args );
+            break;
+         case 'n':
+            CREATE( arg_int, int, 1 );
+            if( lua_type( L, ( 4 + x ) ) != LUA_TNUMBER )
+            {
+               bug( "%s: bad/cypher passed value, not a number at position %d.", __FUNCTION__, x );
+               *arg_int = 0;
+               AttachToList( arg_int, event->lua_args );
+               continue;
+            }
+            *arg_int = lua_tonumber( L, ( 4 + x ) );
+            AttachToList( arg_int, event->lua_args );
+            break;
+         case 'i':
+            CREATE( arg_int, int, 1 );
+            if( ( arg_instance = *(ENTITY_INSTANCE **)luaL_checkudata( L, ( 4 + x ), "EntityInstance.meta" ) ) == NULL )
+            {
+               bug( "%s: bad/cypher passed value, not an entity instance at position %d.", __FUNCTION__, x );
+               *arg_int = 0;
+               AttachToList( arg_int, event->lua_args );
+               continue;
+            }
+            *arg_int = arg_instance->tag->id;
+            AttachToList( arg_int, event->lua_args );
+            break;
+         case 'f':
+            CREATE( arg_int, int, 1 );
+            if( ( arg_frame = *(ENTITY_FRAMEWORK **)luaL_checkudata( L, ( 4 + x ), "EntityFramework.meta" ) ) == NULL )
+            {
+               bug( "%s: bad/cypher passed value, not an entity framework at position %d.", __FUNCTION__, x );
+               *arg_int = -1;
+               AttachToList( arg_int, event->lua_args );
+               continue;
+            }
+            *arg_int = arg_frame->tag->id;
+            AttachToList( arg_int, event->lua_args );
+            break;
+      }
+   }
+
+
+   event->argument = strdup( func_name );
+   event->lua_cypher = strdup( cypher );
+   event->type = GLOBAL_EVENT_LUA_CALLBACK;
+   event->fun = &event_global_lua_callback;
+   add_event_lua( event, path, callbackwhen );
+   return 0;
+
+
+
+}
+
 bool autowrite_init( ENTITY_INSTANCE *instance )
 {
    typedef enum
@@ -482,7 +693,11 @@ bool autowrite_init( ENTITY_INSTANCE *instance )
          {
             AttachIterator( &Iter, instance->stats );
             while( ( stat = (STAT_INSTANCE *)NextInList( &Iter ) ) != NULL )
+            {
                fprintf( fp, "   instance:setStatPerm( \"%s\", %d )\n", stat->framework->name, stat->perm_stat );
+               if( stat->framework->pool )
+                  fprintf( fp, "   instance:setStatMod( \"%s\", %d )\n", stat->framework->name, stat->perm_stat );
+            }
             DetachIterator( &Iter );
             mode = FIND_END;
          }

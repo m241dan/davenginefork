@@ -3,6 +3,7 @@
 #include "mud.h"
 
 const struct luaL_Reg EntityFrameworkLib_m[] = {
+   /* getters */
    { "getID", getFrameID },
    { "getName", getFrameName },
    { "getShort", getFrameShort },
@@ -10,6 +11,8 @@ const struct luaL_Reg EntityFrameworkLib_m[] = {
    { "getDesc", getFrameDesc },
    { "getSpec", getFrameSpec },
    { "getInheritance", getFrameInheritance },
+   /* actions */
+   { "inherits", luaInherits },
    { NULL, NULL }
 };
 
@@ -54,7 +57,7 @@ int getFramework( lua_State *L )
    {
       default:
          bug( "5s: passed a bad argument.", __FUNCTION__ );
-         lua_pushnil( L );
+          lua_pushnil( L );
          return 1;
       case LUA_TUSERDATA:
          if( ( instance = *(ENTITY_INSTANCE **)luaL_checkudata( L, -1, "EntityInstance.meta" ) ) == NULL )
@@ -161,10 +164,88 @@ int getFrameInheritance( lua_State *L )
    ENTITY_FRAMEWORK *frame;
 
    DAVLUACM_FRAME_NIL( frame, L );
-   push_framework( frame->inherits, L );
+   if( !frame->inherits )
+      lua_pushnil( L );
+   else
+      push_framework( frame->inherits, L );
    return 1;
 }
 
 
+int luaInherits( lua_State *L )
+{
+   ENTITY_FRAMEWORK *frame;
+   const char *func_name;
+   const char *cypher;
+   int num_args;
+   int x, ret;
 
+   DAVLUACM_FRAME_NONE( frame, L );
+
+   if( !frame->inherits )
+      return 0;
+
+   if( ( func_name = luaL_checkstring( L, 2 ) ) == NULL )
+   {
+      bug( "%s: no function name passed.", __FUNCTION__ );
+      return 0;
+   }
+   if( ( cypher = luaL_checkstring( L, 3 ) ) == NULL )
+   {
+      bug( "%s: no cypher string passed.", __FUNCTION__ );
+      return 0;
+   }
+
+   prep_stack_handle( L, get_frame_script_path( frame->inherits ), func_name );
+
+   for( x = 0, num_args = strlen( cypher ); x < num_args; x++ )
+   {
+      ENTITY_FRAMEWORK *arg_frame;
+      ENTITY_INSTANCE *arg_instance;
+
+      switch( cypher[x] )
+      {
+         case 's':
+            if( lua_type( L, ( 4 + x ) ) != LUA_TSTRING )
+            {
+               bug( "%s: bad/cypeer passed value, not a string at position %d.", __FUNCTION__, x );
+               lua_pushnil( L );
+               continue;
+            }
+            lua_pushstring( L, lua_tostring( L, ( 4 + x ) ) );
+            break;
+         case 'n':
+            if( lua_type( L, ( 4 + x ) ) != LUA_TNUMBER )
+            {
+               bug( "%s: bad/cypher passed value, not a number at position %d.", __FUNCTION__, x );
+               lua_pushnil( L );
+               continue;
+            }
+            lua_pushnumber( L, lua_tonumber( L, ( 4 + x ) ) );
+            break;
+         case 'i':
+            if( ( arg_instance = *(ENTITY_INSTANCE **)luaL_checkudata( L, ( 4 + x ), "EntityInstance.meta" ) ) == NULL )
+            {
+               bug( "%s: bad/cypher passed value, not an instance at position %d.", __FUNCTION__, x );
+               lua_pushnil( L );
+               continue;
+            }
+           push_instance( arg_instance, L );
+            break;
+         case 'f':
+            if( ( arg_frame = *(ENTITY_FRAMEWORK **)luaL_checkudata( L, ( 4 + x ), "EntityFramework.meta" ) ) == NULL )
+            {
+               bug( "%s: bad/cypher passed value, not a framework at position %d.", __FUNCTION__, x );
+               lua_pushnil( L );
+               continue;
+            }
+            push_framework( arg_frame, L );
+            break;
+      }
+   }
+   if( ( ret = lua_pcall( L, num_args, 0, 0 ) ) )
+      bug( "%s: ret %d: path: %s\r\n - error message: %s\r\n", __FUNCTION__, ret, get_frame_script_path( frame->inherits ), lua_tostring( L, -1 ) );
+   return 0;
+
+}
 

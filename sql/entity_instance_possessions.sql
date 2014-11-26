@@ -6,3 +6,4 @@ CREATE TABLE IF NOT EXISTS `entity_instance_possessions` (
    `content_instanceID` int NOT NULL DEFAULT '-1'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+ALTER TABLE `entity_instance_possessions` ADD UNIQUE `unique_index` ( `entityInstanceID`, `content_instanceID` );

@@ -10,6 +10,7 @@ struct stat_framework
    int hardcap;
    int softfloor;
    int hardfloor;
+   bool pool;
 
 };
 
@@ -38,6 +39,7 @@ void stat_instantiate( ENTITY_INSTANCE *owner, STAT_FRAMEWORK *fstat );
 void load_entity_stats( ENTITY_INSTANCE *entity );
 void instantiate_entity_stats_from_framework( ENTITY_INSTANCE *entity );
 void clear_stat_list( LLIST *list );
+extern inline void delete_stat_from_instance( STAT_INSTANCE *stat, ENTITY_INSTANCE *instance );
 
 STAT_FRAMEWORK *get_stat_framework_by_query( const char *query );
 
@@ -54,16 +56,25 @@ STAT_FRAMEWORK *get_stat_from_framework_by_name( ENTITY_FRAMEWORK *frame, const 
 STAT_INSTANCE  *get_stat_from_instance_by_id( ENTITY_INSTANCE *entity, int id );
 STAT_INSTANCE  *get_stat_from_instance_by_name( ENTITY_INSTANCE *entity, const char *name );
 
+STAT_FRAMEWORK *get_primary_dmg_stat_from_framework( ENTITY_FRAMEWORK *frame, int *source );
+
 extern inline void set_softcap( STAT_FRAMEWORK *fstat, int value );
 extern inline void set_hardcap( STAT_FRAMEWORK *fstat, int value );
 extern inline void set_softfloor( STAT_FRAMEWORK *fstat, int value );
 extern inline void set_hardfloor( STAT_FRAMEWORK *fstat, int value );
 extern inline void set_name( STAT_FRAMEWORK *fstat, const char *name );
+extern inline void set_stat_style( STAT_FRAMEWORK *fstat, bool value );
 
 extern inline int  get_stat_total( STAT_INSTANCE *stat );
 extern inline int  get_stat_effective_perm( STAT_INSTANCE *stat );
 extern inline int  get_stat_effective_mod( STAT_INSTANCE *stat );
 extern inline int  get_stat_value( STAT_INSTANCE *stat );
+extern inline int  get_stat_current( STAT_INSTANCE *stat );
+extern inline int  get_stat_max( STAT_INSTANCE *stat );
+extern inline void set_stat_current( STAT_INSTANCE *stat, int value );
+extern inline void set_stat_max( STAT_INSTANCE *stat, int value );
+extern inline void inc_pool_stat( STAT_INSTANCE *stat, int value );
+extern inline void dec_pool_stat( STAT_INSTANCE *stat, int value );
 extern inline void set_perm_stat( STAT_INSTANCE *stat, int value );
 extern inline void add_perm_stat( STAT_INSTANCE *stat, int value );
 extern inline void set_mod_stat( STAT_INSTANCE *stat, int value );

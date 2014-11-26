@@ -7,7 +7,8 @@ struct target_data
 };
 
 #define NO_TARGET( instance ) ( (instance->target->type) == -1 ? TRUE : FALSE )
-
+#define TARGET_TYPE( instance ) ( (instance)->target->type )
+#define GT_INSTANCE( instance ) ( (ENTITY_INSTANCE *)(instance)->target->target ) /* get target instance */
 TARGET_DATA *init_target( void );
 void free_target( TARGET_DATA *target );
 

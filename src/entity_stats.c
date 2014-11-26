@@ -40,9 +40,9 @@ void new_stat_framework( STAT_FRAMEWORK *fstat )
       }
    }
 
-   if( !quick_query( "INSERT INTO `stat_frameworks` VALUES ( '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%d', '%d' );",
+   if( !quick_query( "INSERT INTO `stat_frameworks` VALUES ( '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%d', '%d', '%d' );",
       fstat->tag->id, fstat->tag->type, fstat->tag->created_by, fstat->tag->created_on, fstat->tag->modified_by, fstat->tag->modified_on,
-      fstat->name, fstat->softcap, fstat->hardcap, fstat->softfloor, fstat->hardfloor ) )
+      fstat->name, fstat->softcap, fstat->hardcap, fstat->softfloor, fstat->hardfloor, (int)fstat->pool ) )
       bug( "%s: could not add to database %s.", __FUNCTION__, fstat->name );
 
    return;
@@ -50,6 +50,8 @@ void new_stat_framework( STAT_FRAMEWORK *fstat )
 
 inline void new_stat_on_frame( STAT_FRAMEWORK *fstat, ENTITY_FRAMEWORK *frame )
 {
+   if( !strcmp( frame->tag->created_by, "null" ) )
+      return;
    quick_query( "INSERT INTO `entity_framework_stats` VALUES ( '%d', '%d' );", frame->tag->id, fstat->tag->id );
 }
 
@@ -58,8 +60,6 @@ inline void add_stat_to_frame( STAT_FRAMEWORK *fstat, ENTITY_FRAMEWORK *frame )
    int nober;
    if( get_stat_from_framework_by_id( frame, fstat->tag->id, &nober ) ) return;
    AttachToList( fstat, frame->stats );
-   if( !strcmp( frame->tag->created_by, "null" ) )
-      return;
    new_stat_on_frame( fstat, frame );
 }
 
@@ -73,6 +73,7 @@ void db_load_stat_framework( STAT_FRAMEWORK *fstat, MYSQL_ROW *row )
    fstat->hardcap = atoi( (*row)[counter++] );
    fstat->softfloor = atoi( (*row)[counter++] );
    fstat->hardfloor = atoi( (*row)[counter++] );
+   fstat->pool = atoi( (*row)[counter++] );
    return;
 }
 
@@ -219,15 +220,14 @@ void load_entity_stats( ENTITY_INSTANCE *entity )
 void instantiate_entity_stats_from_framework( ENTITY_INSTANCE *entity )
 {
    STAT_FRAMEWORK *fstat;
-   ITERATOR Iter;
+   int MAX_STAT = 0;
+   int from, x;
 
-   if( !entity->framework )
-      return;
+   MAX_STAT = get_potential_id( ENTITY_STAT_FRAMEWORK_IDS );
 
-   AttachIterator( &Iter, entity->framework->stats );
-   while( ( fstat = (STAT_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
-      stat_instantiate( entity, fstat );
-   DetachIterator( &Iter );
+   for( x = 0; x < MAX_STAT; x++ )
+      if( ( fstat = get_stat_from_framework_by_id( entity->framework, x, &from ) ) != NULL )
+         stat_instantiate( entity, fstat );
 
    return;
 }
@@ -242,6 +242,15 @@ void clear_stat_list( LLIST *list )
       free_stat( stat );
    DetachIterator( &Iter );
 }
+
+inline void delete_stat_from_instance( STAT_INSTANCE *stat, ENTITY_INSTANCE *instance )
+{
+   DetachFromList( stat, instance->stats );
+   if( !quick_query( "DELETE FROM `entity_stats` WHERE owner=%d;", instance->tag->id ) )
+      bug( "%s: could not delete a stat with framework %d from instance %d from database.", __FUNCTION__, stat->framework->tag->id, instance->tag->id );
+   free_stat( stat );
+}
+
 
 STAT_FRAMEWORK *get_stat_framework_by_query( const char *query )
 {
@@ -358,6 +367,9 @@ STAT_INSTANCE  *get_stat_from_instance_by_id( ENTITY_INSTANCE *entity, int id )
    STAT_INSTANCE *stat;
    ITERATOR Iter;
 
+   if( id < 0 )
+      return NULL;
+
    AttachIterator( &Iter, entity->stats );
    while( ( stat = (STAT_INSTANCE *)NextInList( &Iter ) ) != NULL )
       if( stat->framework->tag->id == id )
@@ -378,6 +390,18 @@ STAT_INSTANCE  *get_stat_from_instance_by_name( ENTITY_INSTANCE *entity, const c
    DetachIterator( &Iter );
 
    return stat;
+}
+
+STAT_FRAMEWORK *get_primary_dmg_stat_from_framework( ENTITY_FRAMEWORK *frame, int *source )
+{
+   if( frame->f_primary_dmg_received_stat )
+      return frame->f_primary_dmg_received_stat;
+
+   if( !frame->inherits )
+      return NULL;
+
+   *source = 1;
+   return get_primary_dmg_stat_from_framework( frame->inherits, source );
 }
 
 inline void set_softcap( STAT_FRAMEWORK *fstat, int value )
@@ -420,6 +444,14 @@ inline void set_name( STAT_FRAMEWORK *fstat, const char *name )
       bug( "%s: could not update database with new name.", __FUNCTION__ );
 }
 
+inline void set_stat_style( STAT_FRAMEWORK *fstat, bool value )
+{
+   fstat->pool = value;
+   if( !strcmp( fstat->tag->created_by, "null" ) ) return;
+   if( !quick_query( "UPDATE `stat_frameworks` SET type=%d WHERE statFrameworkID=%d;", (int)value, fstat->tag->id ) )
+      bug( "%s: could not update database with new name.", __FUNCTION__ );
+}
+
 inline int  get_stat_total( STAT_INSTANCE *stat )
 {
    return ( stat->perm_stat + stat->mod_stat );
@@ -439,6 +471,53 @@ inline int  get_stat_value( STAT_INSTANCE *stat )
 {
    int perm = urange( stat->framework->softfloor, stat->perm_stat, stat->framework->softcap );
    return urange( stat->framework->hardfloor, ( perm + stat->mod_stat ), stat->framework->hardcap );
+}
+
+inline int  get_stat_current( STAT_INSTANCE *stat )
+{
+   return stat->mod_stat;
+}
+
+inline int  get_stat_max( STAT_INSTANCE *stat )
+{
+   return stat->perm_stat;
+}
+
+inline void set_stat_current( STAT_INSTANCE *stat, int value )
+{
+   if( value > stat->perm_stat ) value = stat->perm_stat;
+   else if( value < stat->framework->softfloor ) value = stat->framework->softfloor;
+   lua_set_stat( stat, ( value - stat->mod_stat ), 0 );
+   stat->mod_stat = value;
+   if( !quick_query( "UPDATE `entity_stats` SET mod_stat=%d WHERE statFrameworkID=%d AND owner=%d;", value, stat->framework->tag->id, stat->owner->tag->id ) )
+      bug( "%s: could not update database with new value.", __FUNCTION__ );
+}
+
+inline void set_stat_max( STAT_INSTANCE *stat, int value )
+{
+   if( value > stat->framework->softcap ) value = stat->framework->softcap;
+   else if( value < stat->framework->softfloor ) value = stat->framework->softfloor;
+   stat->perm_stat = value;
+   if( !quick_query( "UPDATE `entity_stats` SET perm_stat=%d WHERE statFrameworkID=%d AND owner=%d;", value, stat->framework->tag->id, stat->owner->tag->id ) )
+      bug( "%s: could not update database with new value.", __FUNCTION__ );
+}
+
+inline void inc_pool_stat( STAT_INSTANCE *stat, int value )
+{
+   if( ( value + stat->mod_stat ) > stat->perm_stat ) value = stat->perm_stat - stat->mod_stat;
+   stat->mod_stat += value;
+   lua_set_stat( stat, value, 0 );
+   if( !quick_query( "UPDATE `entity_stats` SET mod_stat=%d WHERE statFrameworkID=%d AND owner=%d;", stat->mod_stat, stat->framework->tag->id, stat->owner->tag->id ) )
+      bug( "%s: coudl not update database with new value.", __FUNCTION__ );
+}
+
+inline void dec_pool_stat( STAT_INSTANCE *stat, int value )
+{
+   if( ( stat->mod_stat - value ) < stat->framework->softfloor ) value = stat->mod_stat - stat->framework->softfloor;
+   stat->mod_stat -= value;
+   lua_set_stat( stat, ( value * -1 ), 0 );
+   if( !quick_query( "UPDATE `entity_stats` SET mod_stat=%d WHERE statFrameworkID=%d AND owner=%d;", stat->mod_stat, stat->framework->tag->id, stat->owner->tag->id ) )
+      bug( "%s: could not update database with new value.", __FUNCTION__ );
 }
 
 inline void set_perm_stat( STAT_INSTANCE *stat, int value )
@@ -484,8 +563,7 @@ inline void set_stat_owner( STAT_INSTANCE *stat, ENTITY_INSTANCE *owner )
 
 void lua_set_stat( STAT_INSTANCE *stat, int change, int effective )
 {
-   int top = lua_gettop( lua_handle );
-   int difference;
+   int ret, difference, top = lua_gettop( lua_handle );
 
    if( !s_script_exists( stat->framework ) )
       return;
@@ -498,14 +576,17 @@ void lua_set_stat( STAT_INSTANCE *stat, int change, int effective )
       prep_stack( get_stat_instance_script_path( stat ), "onStatGain" );
       push_instance( stat->owner, lua_handle );
       lua_pushnumber( lua_handle, difference );
-      lua_pcall( lua_handle, 2, LUA_MULTRET, 0 );
+      if( ( ret = lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) ) )
+         bug( "%s: ret %d: path: %s\r\n - error message: %s.", __FUNCTION__, ret, get_stat_instance_script_path( stat ), lua_tostring( lua_handle, -1 ) );
    }
    else
    {
       prep_stack( get_stat_instance_script_path( stat ), "onStatLose" );
       push_instance( stat->owner, lua_handle );
       lua_pushnumber( lua_handle, abs( difference ) );
-      lua_pcall( lua_handle, 2, LUA_MULTRET, 0 );
+      if( ( ret = lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) ) )
+         bug( "%s: ret %d: path: %s\r\n - error message: %s.", __FUNCTION__, ret, get_stat_instance_script_path( stat ), lua_tostring( lua_handle, -1 ) );
+
    }
 
    lua_settop( lua_handle, top );

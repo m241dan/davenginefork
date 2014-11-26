@@ -11,6 +11,10 @@ CREATE TABLE IF NOT EXISTS `entity_instances` (
    `containedBy` int NOT NULL DEFAULT '-1',
    `frameworkID` int NOT NULL DEFAULT '-1',
    `live` int NOT NULL DEFAULT '0',
-   `loaded` int NOT NULL DEFAULT '0',
+   `corpse_owner` int NOT NULL DEFAULT '0',
+   `state` int NOT NULL DEFAULT '0',
+   `mind` int NOT NULL DEFAULT '0',
+   `tspeed` int NOT NULL DEFAULT '0',
+   `isPlayer` int NOT NULL DEFAULT '0',
    PRIMARY KEY (`entityInstanceID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

@@ -15,6 +15,9 @@ ENTITY_INSTANCE *init_eInstance( void )
    eInstance->stats = AllocList();
    eInstance->evars = AllocList();
    eInstance->events = AllocList();
+   eInstance->damages_sent = AllocList();
+   eInstance->damages_received = AllocList();
+   eInstance->timers = AllocList();
    for( x = 0; x < MAX_QUICK_SORT; x++ )
      eInstance->contents_sorted[x] = AllocList();
    eInstance->specifications = AllocList();
@@ -35,6 +38,7 @@ int clear_eInstance( ENTITY_INSTANCE *eInstance )
    eInstance->socket = NULL;
    eInstance->account = NULL;
    eInstance->contained_by = NULL;
+   eInstance->primary_dmg_received_stat = NULL;
    return RET_SUCCESS;
 }
 
@@ -71,17 +75,26 @@ int free_eInstance( ENTITY_INSTANCE *eInstance )
    FreeList( eInstance->evars );
    eInstance->evars = NULL;
 
-   free_tag( eInstance->tag );
+   clearlist( eInstance->timers );
+   FreeList( eInstance->timers );
+   eInstance->timers = NULL;
+
+   if( eInstance->tag ) /* take deletion into consideration */
+      free_tag( eInstance->tag );
    eInstance->tag = NULL;
 
    for( x = 0; x < MAX_INSTANCE_EVENT; x++ )
       strip_event_instance( eInstance, x );
+
+   free_damage_list( eInstance->damages_sent );
+   free_damage_list( eInstance->damages_received );
 
    FreeList( eInstance->events );
 
    eInstance->socket = NULL;
    eInstance->contained_by = NULL;
    eInstance->account = NULL;
+   eInstance->primary_dmg_received_stat = NULL;
 
    FREE( eInstance );
    return RET_SUCCESS;
@@ -101,6 +114,105 @@ int clear_ent_contents( ENTITY_INSTANCE *eInstance )
    DetachIterator( &Iter );
 
    return RET_SUCCESS;
+}
+
+void delete_eInstance( ENTITY_INSTANCE *instance )
+{
+   WORKSPACE *wSpace;
+   ENTITY_INSTANCE *content;
+   SPECIFICATION *spec;
+   STAT_INSTANCE *stat;
+   EVAR *var;
+   ITERATOR Iter;
+
+   if( instance->socket )
+   {
+      bug( "%s: trying to delete an instance that is controlled by a socket. I won't allow this.", __FUNCTION__ );
+      return;
+   }
+
+   /* delete all exits going to this instance */
+   delete_all_exits_to( instance );
+
+   /* dealing with inventory */
+   AttachIterator( &Iter, instance->contents );
+   while( ( content = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
+   {
+      if( content->framework->tag->id >= 0 && content->framework->tag->id <= 5 ) /* delete generic exits */
+      {
+         bug( "DELETING EXIT: (%d)%s", content->tag->id, instance_name( content ) );
+         delete_eInstance( content );
+      }
+      entity_to_world( content, instance->contained_by ); /* handles the databasing */
+   }
+   DetachIterator( &Iter );
+
+   /* dealing with stats */
+   AttachIterator( &Iter, instance->stats );
+   while( ( stat = (STAT_INSTANCE *)NextInList( &Iter ) ) != NULL )
+      delete_stat_from_instance( stat, instance );
+   DetachIterator( &Iter );
+
+   /* dealing with variables */
+   AttachIterator( &Iter, instance->evars );
+   while( ( var = (EVAR *)NextInList( &Iter ) ) != NULL )
+      delete_variable_from_instance( var, instance );
+   DetachIterator( &Iter );
+
+   /* dealing with specifications */
+   AttachIterator( &Iter, instance->specifications );
+   while( ( spec = (SPECIFICATION *)NextInList( &Iter ) ) != NULL )
+      rem_spec_from_instance( spec, instance );
+   DetachIterator( &Iter );
+
+   /* remove from any workspaces, live or otherwise */
+   AttachIterator( &Iter, active_wSpaces );
+   while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
+      if( instance_list_has_by_id( wSpace->instances, instance->tag->id ) )
+         rem_instance_from_workspace( instance, wSpace );
+   DetachIterator( &Iter );
+   quick_query( "DELETE FROM `workspace_entries` WHERE entry='i%d';", instance->tag->id );
+
+   /* delete the actual instance itself */
+   if( !quick_query( "DELETE FROM `entity_instances` WHERE entityInstanceId=%d;", instance->tag->id ) )
+      bug( "%s: could not delete instance %d from database.", __FUNCTION__, instance->tag->id );
+
+   DetachFromList( instance, eInstances_list );
+   entity_to_world( instance, NULL );
+   delete_tag( instance->tag );
+   instance->tag = NULL;
+   free_eInstance( instance );
+   return;
+}
+
+void delete_all_exits_to( ENTITY_INSTANCE *instance )
+{
+   ENTITY_INSTANCE *exit;
+   LLIST *list;
+   MYSQL_ROW row;
+   ITERATOR Iter;
+
+   list = AllocList();
+   if( !db_query_list_row( list, quick_format( "SELECT owner FROM `live_specs` WHERE specType='IsExit' AND value=%d;", instance->tag->id ) ) )
+   {
+      bug( "%s: exiting here." );
+      FreeList( list );
+      return;
+   }
+
+   AttachIterator( &Iter, list );
+   while( ( row = (MYSQL_ROW)NextInList( &Iter ) ) != NULL )
+   {
+      if( row[0][0] == 'f' )
+         continue;
+      if( ( exit = get_instance_by_id( atoi( row[0] ) ) ) == NULL )
+         continue;
+      bug( "DELETING EXIT: (%d)%s", exit->tag->id, instance_name( exit ) );
+      delete_eInstance( exit );
+   }
+   DetachIterator( &Iter );
+   FreeList( list );
+   return;
 }
 
 ENTITY_INSTANCE *init_builder( void )
@@ -138,8 +250,11 @@ ENTITY_INSTANCE *load_eInstance_by_query( const char *query )
    load_specifications_to_list( instance->specifications, quick_format( "%d", instance->tag->id ) );
    load_entity_vars( instance );
    load_entity_stats( instance );
-   if( get_spec_value( instance, "IsPlayer" ) <= 0 )
+   if( instance->framework->f_primary_dmg_received_stat )
+      instance->primary_dmg_received_stat = get_stat_from_instance_by_id( instance, instance->framework->f_primary_dmg_received_stat->tag->id );
+   if( !instance->isPlayer )
       load_commands( instance->commands, mobile_commands, LEVEL_BASIC );
+   full_load_instance( instance );
    free( row );
 
    return instance;
@@ -194,41 +309,33 @@ ENTITY_INSTANCE *full_load_eFramework( ENTITY_FRAMEWORK *frame )
 {
    ENTITY_INSTANCE *instance;
    instance = eInstantiate( frame );
-   new_eInstance( instance );
    full_load_instance( instance );
    return instance;
 }
 
-void full_load_workspace( WORKSPACE *wSpace )
+inline void full_load_workspace( WORKSPACE *wSpace )
 {
    ENTITY_INSTANCE *instance;
    ITERATOR Iter;
-
    AttachIterator( &Iter, wSpace->instances );
    while( ( instance = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
       full_load_instance( instance );
    DetachIterator( &Iter );
-
-   return;
 }
 
-void full_load_project( PROJECT *project )
+inline void full_load_project( PROJECT *project )
 {
    WORKSPACE *wSpace;
    ITERATOR Iter;
-
    AttachIterator( &Iter, project->workspaces );
    while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
       full_load_workspace( wSpace );
    DetachIterator( &Iter );
-
-   return;
 }
 
 /* could be factored */
 void full_load_instance( ENTITY_INSTANCE *instance )
 {
-   ENTITY_FRAMEWORK *frame;
    ENTITY_INSTANCE *instance_to_contain;
    STAT_FRAMEWORK *fstat;
    MYSQL_ROW row;
@@ -243,27 +350,10 @@ void full_load_instance( ENTITY_INSTANCE *instance )
          stat_instantiate( instance, fstat );
    DetachIterator( &Iter );
 
-   if( !instance->loaded )
-   {
-      set_to_loaded( instance );
-      if( SizeOfList( instance->framework->fixed_contents ) > 0 )
-      {
-         AttachIterator( &Iter, instance->framework->fixed_contents );
-         while( ( frame = (ENTITY_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
-         {
-            instance_to_contain = full_load_eFramework( frame );
-            entity_to_world( instance_to_contain, instance );
-         }
-         DetachIterator( &Iter );
-      }
-      return;
-   }
-
    list = AllocList();
    if( !db_query_list_row( list, quick_format( "SELECT content_instanceID FROM `entity_instance_possessions` WHERE %s=%d;", tag_table_whereID[ENTITY_INSTANCE_IDS], instance->tag->id ) ) )
    {
       FreeList( list );
-      bug( "%s: could not load contents, bad list.", __FUNCTION__ );
       return;
    }
    AttachIterator( &Iter, list );
@@ -277,40 +367,10 @@ void full_load_instance( ENTITY_INSTANCE *instance )
       }
       full_load_instance( instance_to_contain );
       if( !instance_list_has_by_id( instance->contents, id_to_load ) )
-         entity_to_contents( instance_to_contain, instance );
+         attach_entity_to_contents( instance_to_contain, instance );
    }
    DetachIterator( &Iter );
    FreeList( list );
-   return;
-}
-
-void set_to_loaded( ENTITY_INSTANCE *instance )
-{
-   instance->loaded = TRUE;
-   if( !quick_query( "UPDATE `entity_instances` SET loaded=1 WHERE %s=%d;", tag_table_whereID[ENTITY_INSTANCE_IDS], instance->tag->id ) )
-      bug( "%s: could not set entity to loaded: ID %d", __FUNCTION__, instance->tag->id );
-   return;
-}
-
-void instance_toggle_live( ENTITY_INSTANCE *instance )
-{
-   if( instance->live )
-      instance->live = FALSE;
-   else
-      instance->live = TRUE;
-
-   if( !strcmp( instance->tag->created_by, "null" ) )
-      return;
-   quick_query( "UPDATE `entity_instances` SET live=%d WHERE %s=%d;", (int)instance->live, tag_table_whereID[ENTITY_INSTANCE_IDS], instance->tag->id );
-   return;
-}
-
-void set_instance_level( ENTITY_INSTANCE *instance, int level )
-{
-   instance->level = level;
-   if( !strcmp( instance->tag->created_by, "null" ) )
-      return;
-   quick_query( "UPDATE `entity_instances` SET level=%d WHERE %s=%d;", instance->level, tag_table_whereID[ENTITY_INSTANCE_IDS], instance->tag->id );
    return;
 }
 
@@ -336,11 +396,12 @@ int new_eInstance( ENTITY_INSTANCE *eInstance )
       }
    }
 
-   if( !quick_query( "INSERT INTO entity_instances VALUES( %d, %d, '%s', '%s', '%s', '%s', %d, %d, %d, %d );",
+   if( !quick_query( "INSERT INTO entity_instances VALUES( %d, %d, '%s', '%s', '%s', '%s', %d, %d, %d, %d, %d, %d, %d, %d );",
          eInstance->tag->id, eInstance->tag->type, eInstance->tag->created_by,
          eInstance->tag->created_on, eInstance->tag->modified_by, eInstance->tag->modified_on,
          eInstance->contained_by ? eInstance->contained_by->tag->id : -1, eInstance->framework->tag->id,
-         (int)eInstance->live, (int)eInstance->loaded ) )
+         (int)eInstance->live, eInstance->corpse_owner, (int)eInstance->state,
+         (int)eInstance->mind, (int)eInstance->tspeed, (int)eInstance->isPlayer ) )
       return RET_FAILED_OTHER;
 
    AttachIterator( &Iter, eInstance->specifications );
@@ -369,8 +430,11 @@ void db_load_eInstance( ENTITY_INSTANCE *eInstance, MYSQL_ROW *row )
    eInstance->contained_by = get_instance_by_id( atoi( (*row)[counter++] ) );
    eInstance->framework = get_framework_by_id( atoi( (*row)[counter++] ) );
    eInstance->live = atoi( (*row)[counter++] );
-   eInstance->loaded = atoi( (*row)[counter++] );
-
+   eInstance->corpse_owner = atoi( (*row)[counter++] );
+   eInstance->state = atoi( (*row)[counter++] );
+   eInstance->mind = atoi( (*row)[counter++] );
+   eInstance->tspeed = atoi( (*row)[counter++] );
+   eInstance->isPlayer = atoi( (*row)[counter++] );
    return;
 }
 
@@ -406,12 +470,18 @@ void entity_to_contents( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container )
    if( !container )
    {
       entity->contained_by = NULL;
+      if( !quick_query( "UPDATE `entity_instances` SET containedBy='-1' WHERE entityInstanceID=%d;", entity->tag->id ) )
+         bug( "%s: could not update entity %d with new containedBy.", __FUNCTION__, entity->tag->id );
       return;
    }
    attach_entity_to_contents( entity, container );
    if( !entity->builder )
+   {
       if( !quick_query( "INSERT INTO `entity_instance_possessions` VALUES ( %d, %d );", entity->contained_by->tag->id, entity->tag->id ) )
          bug( "%s: could not insert into database with %d's new location in the world.", __FUNCTION__, entity->tag->id );
+      if( !quick_query( "UPDATE `entity_instances` SET containedBy=%d WHERE entityInstanceID=%d;", container->tag->id, entity->tag->id ) )
+         bug( "%s: could not update entity %d with new containedBy.", __FUNCTION__, entity->tag->id );
+   }
    return;
 }
 
@@ -1128,14 +1198,34 @@ ENTITY_INSTANCE *instance_list_has_by_short_prefix( LLIST *instance_list, const 
 
 ENTITY_INSTANCE *eInstantiate( ENTITY_FRAMEWORK *frame )
 {
-   ENTITY_INSTANCE *eInstance;
+   ENTITY_FRAMEWORK *fixed_content;
+   ENTITY_INSTANCE *eInstance, *content;
+   ITERATOR Iter;
+   int ret;
 
    if( !live_frame( frame ) )
       return NULL;
 
    eInstance = init_eInstance();
    eInstance->framework = frame;
+   eInstance->tspeed = frame->tspeed;
+   new_eInstance( eInstance );
    instantiate_entity_stats_from_framework( eInstance );
+   if( SizeOfList( frame->fixed_contents ) > 0 )
+   {
+      AttachIterator( &Iter, frame->fixed_contents );
+      while( ( fixed_content = (ENTITY_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
+      {
+         content = full_load_eFramework( fixed_content );
+         entity_to_world( content, eInstance );
+      }
+      DetachIterator( &Iter );
+   }
+   prep_stack( get_frame_script_path( frame ), "onInstanceInit" );
+   push_framework( frame, lua_handle );
+   push_instance( eInstance, lua_handle );
+   if( ( ret = lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) ) )
+      bug( "%s: ret %d: path %s\r\n - error message: %s.", __FUNCTION__, ret, get_frame_script_path( frame ), lua_tostring( lua_handle, -1 ) );
    return eInstance;
 }
 
@@ -1146,7 +1236,6 @@ ENTITY_INSTANCE *create_room_instance( const char *name )
 
    frame = create_room_framework( name );
    instance = eInstantiate( frame );
-   new_eInstance( instance );
 
    return instance;
 
@@ -1168,8 +1257,6 @@ ENTITY_INSTANCE *create_exit_instance( const char *name, int dir )
       spec->value = dir;
       add_spec_to_instance( spec, instance );
    }
-   new_eInstance( instance );
-
    return instance;
 }
 
@@ -1180,10 +1267,21 @@ ENTITY_INSTANCE *create_mobile_instance( const char *name  )
 
    frame = create_mobile_framework( name );
    instance = eInstantiate( frame );
-   new_eInstance( instance );
-
    return instance;
 
+}
+
+ENTITY_INSTANCE *corpsify( ENTITY_INSTANCE *instance )
+{
+   ENTITY_INSTANCE *corpse;
+   int decay;
+
+   corpse = eInstantiate( instance->framework );
+   corpse->corpse_owner = instance->tag->id;
+   corpsify_inventory( instance, corpse );
+   decay = get_corpse_decay( instance );
+   set_for_decay( corpse, decay );
+   return corpse;
 }
 
 /* factor me PLEASE */
@@ -1266,14 +1364,10 @@ void move_create( ENTITY_INSTANCE *entity, ENTITY_FRAMEWORK *exit_frame, char *a
       room_frame = create_room_framework( "room" );
 
    if( !new_room )
-   {
       room_instance = eInstantiate( room_frame );
-      new_eInstance( room_instance );
-   }
    entity_to_world( room_instance, NULL );
    /* create exit */
    exit_instance = eInstantiate( exit_frame );
-   new_eInstance( exit_instance );
 
    spec = init_specification();
    spec->type = SPEC_ISEXIT;
@@ -1295,7 +1389,6 @@ void move_create( ENTITY_INSTANCE *entity, ENTITY_FRAMEWORK *exit_frame, char *a
       }
 
       mirrored_exit_instance = eInstantiate( get_framework_by_id( mirror_id ) );
-      new_eInstance( mirrored_exit_instance );
 
       spec = init_specification();
       spec->type = SPEC_ISEXIT;
@@ -1329,27 +1422,179 @@ bool should_move_create( ENTITY_INSTANCE *entity, char *arg )
    return TRUE;
 }
 
+/* creation */
+inline EVENT_DATA *decay_event( void )
+{
+   EVENT_DATA *event;
+
+   event = alloc_event();
+   event->fun = &event_instance_decay;
+   event->type = EVENT_DECAY;
+   return event;
+}
+
+/* getters */
+
 const char *instance_name( ENTITY_INSTANCE *instance )
 {
+   if( instance->corpse_owner > 0 )
+      return instance->framework ? quick_format( "corpse %s", chase_name( instance->framework ) ) : "corpse null";
    return instance->framework ? chase_name( instance->framework ) : "null";
 }
 
 const char *instance_short_descr( ENTITY_INSTANCE *instance )
 {
+   if( instance->corpse_owner > 0 )
+      return instance->framework ? quick_format( "Corpse of %s", downcase( chase_short_descr( instance->framework ) ) ) : "Corpse of null";
    return instance->framework ? chase_short_descr( instance->framework ) : "null";
 }
 
 const char *instance_long_descr( ENTITY_INSTANCE *instance )
 {
+   if( instance->corpse_owner > 0)
+      return instance->framework ? quick_format( "The corpse of %s", downcase( chase_short_descr( instance->framework ) ) ) : "The corpse of null";
    return instance->framework ? chase_long_descr( instance->framework ) : "null";
 }
 
 const char *instance_description( ENTITY_INSTANCE *instance )
 {
+   if( instance->corpse_owner > 0 )
+      return instance->framework ? quick_format( "The rotting and decaying corpse of what was once:\r\n", chase_description( instance->framework ) ) : "The description of a null corpse";
    return instance->framework ? chase_description( instance->framework ) : "null";
 }
 
+int get_corpse_decay( ENTITY_INSTANCE *instance )
+{
+   SPECIFICATION *spec;
+   const char *path;
+   int ret, decay = CORPSE_DECAY, top = lua_gettop( lua_handle );
 
+   if( ( spec = has_spec( instance, "corpseDecay" ) ) != NULL )
+      path = get_script_path_from_spec( spec );
+   else
+      path = "../scripts/settings/corpse.lua";
+
+   prep_stack( path, "corpseDecay" );
+   push_instance( instance, lua_handle );
+   if( ( ret = lua_pcall( lua_handle, 1, LUA_MULTRET, 0 ) ) )
+      bug( "%s: ret %d: path %s\r\n - error message: %s.\r\n - Setting to Standard", __FUNCTION__, ret, path, lua_tostring( lua_handle, -1 ) );
+   else if( lua_type( lua_handle, -1 ) != LUA_TNUMBER )
+      bug( "%s: expecting a number returned from lua.\r\n - Setting to Standard", __FUNCTION__ );
+   else
+      decay = lua_tonumber( lua_handle, -1 );
+
+   lua_settop( lua_handle, top );
+   return decay;
+}
+
+/* setters */
+
+inline void instance_toggle_live( ENTITY_INSTANCE *instance )
+{
+   if( instance->live )
+      instance->live = FALSE;
+   else
+      instance->live = TRUE;
+
+   if( !strcmp( instance->tag->created_by, "null" ) )
+      return;
+   quick_query( "UPDATE `entity_instances` SET live=%d WHERE %s=%d;", (int)instance->live, tag_table_whereID[ENTITY_INSTANCE_IDS], instance->tag->id );
+   return;
+}
+
+inline void set_instance_level( ENTITY_INSTANCE *instance, int level )
+{
+   instance->level = level;
+   if( !quick_query( "UPDATE `entity_instances` SET level=%d WHERE %s=%d;", instance->level, tag_table_whereID[ENTITY_INSTANCE_IDS], instance->tag->id ) )
+      bug( "%s: could not update database for instance %d with new level.", __FUNCTION__, instance->tag->id );
+}
+
+inline void set_instance_state( ENTITY_INSTANCE *instance, INSTANCE_STATE state )
+{
+   instance->state = state;
+   if( !quick_query( "UPDATE `entity_instances` SET state=%d WHERE entityInstanceID=%d;", (int)instance->state, instance->tag->id ) )
+      bug( "%s: could no tupdate database for instance %d with new state.", __FUNCTION__, instance->tag->id );
+}
+
+inline void set_instance_mind( ENTITY_INSTANCE *instance, INSTANCE_MIND mind )
+{
+   instance->mind = mind;
+   if( !quick_query( "UPDATE `entity_instances` SET mind=%d WHERE entityInstanceID=%d;", (int)instance->mind, instance->tag->id ) )
+      bug( "%s: could not update database for instance %d with new state.", __FUNCTION__, instance->tag->id );
+}
+
+inline void set_instance_tspeed( ENTITY_INSTANCE *instance, int tspeed )
+{
+   if( tspeed <= 0 )
+   {
+      bug( "%s: could not set new tspeed, has to be greater than zero.\r\n", __FUNCTION__ );
+      return;
+   }
+   instance->tspeed = (unsigned short int)tspeed;
+   if( !quick_query( "UPDATE `entity_instances` SET tspeed=%d WHERE entityInstanceID=%d;", (int)instance->tspeed, instance->tag->id ) )
+      bug( "%s: could not update database for instance %d with new state.", __FUNCTION__, instance->tag->id );
+}
+
+/* actions */
+
+/* do_damage on kill return TRUE */
+bool do_damage( ENTITY_INSTANCE *entity, DAMAGE *dmg )
+{
+   ENTITY_INSTANCE *corpse;
+   STAT_INSTANCE *stat = entity->primary_dmg_received_stat;
+   bool dead = FALSE;
+
+   if( !stat )
+   {
+      bug( "%s: cannot do damage to %s, no primary dmg stat.", __FUNCTION__, instance_name( entity ) );
+      return dead;
+   }
+   dec_pool_stat( stat, dmg->amount );
+   if( get_stat_current( stat ) <= 0 )
+   {
+      corpse = corpsify( entity );
+      entity_to_world( corpse, entity->contained_by );
+      dead = TRUE;
+   }
+   return dead;
+}
+
+void death_instance( ENTITY_INSTANCE *instance )
+{
+   return;
+}
+
+void spawn_instance( ENTITY_INSTANCE *instance )
+{
+   return;
+}
+
+void set_for_decay( ENTITY_INSTANCE *corpse, int decay )
+{
+   EVENT_DATA *event;
+   event = decay_event();
+   add_event_instance( event, corpse, decay );
+}
+
+void corpsify_inventory( ENTITY_INSTANCE *instance, ENTITY_INSTANCE *corpse )
+{
+   SPECIFICATION *spec;
+   const char *path;
+   int ret, top = lua_gettop( lua_handle );
+
+   if( ( spec = has_spec( instance, "inventoryToCorpse" ) ) != NULL )
+      path = get_script_path_from_spec( spec );
+   else
+      path = "../scripts/settings/corpse.lua";
+
+   prep_stack( path, "inventoryToCorpse" );
+   push_instance( instance, lua_handle );
+   push_instance( corpse, lua_handle );
+   if( ( ret = lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) ) )
+      bug( "%s: ret %d: path %s\r\n - error message: %s.\r\n", __FUNCTION__, ret, path, lua_tostring( lua_handle, -1 ) );
+   lua_settop( lua_handle, top );
+   return;
+}
 
 int text_to_entity( ENTITY_INSTANCE *entity, const char *fmt, ... )
 {
@@ -1661,6 +1906,7 @@ int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *exit )
    ENTITY_INSTANCE *move_to, *content;
    SPECIFICATION *script;
    ITERATOR Iter;
+   int lua_ret;
 
    if( !entity->builder )
    {
@@ -1688,7 +1934,8 @@ int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *exit )
       {
          push_instance( entity->contained_by, lua_handle );
          push_instance( entity, lua_handle );
-         lua_pcall( lua_handle, 2, LUA_MULTRET, 0 );
+         if( ( lua_ret = lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) ) )
+            bug( "%s: ret %d: path: %s\r\n - error message: %s.", __FUNCTION__, ret, get_script_path_from_spec( script ), lua_tostring( lua_handle, -1 ) );
       }
    }
 
@@ -1698,7 +1945,8 @@ int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *exit )
       {
          push_instance( entity->contained_by, lua_handle);
          push_instance( entity, lua_handle );
-         lua_pcall( lua_handle, 2, LUA_MULTRET, 0 );
+         if( ( lua_ret = lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) ) )
+            bug( "%s: ret %d: path: %s\r\n - error message: %s.", __FUNCTION__, ret, get_script_path_from_spec( script ), lua_tostring( lua_handle, -1 ) );
       }
    }
 
@@ -1711,7 +1959,8 @@ int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *exit )
          {
             push_instance( content, lua_handle );
             push_instance( entity, lua_handle );
-            lua_pcall( lua_handle, 2, LUA_MULTRET, 0 );
+            if( ( lua_ret = lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) ) )
+               bug( "%s: ret %d: path: %s\r\n - error message: %s.", __FUNCTION__, ret, get_script_path_from_spec( script ), lua_tostring( lua_handle, -1 ) );
          }
       }
    }
@@ -1727,7 +1976,8 @@ int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *exit )
       {
          push_instance( move_to, lua_handle );
          push_instance( entity, lua_handle );
-         lua_pcall( lua_handle, 2, LUA_MULTRET, 0 );
+         if( ( lua_ret = lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) ) )
+            bug( "%s: ret %d: path: %s\r\n - error message: %s.", __FUNCTION__, ret, get_script_path_from_spec( script ), lua_tostring( lua_handle, -1 ) );
       }
    }
 
@@ -1737,7 +1987,8 @@ int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *exit )
       {
          push_instance( entity->contained_by, lua_handle );
          push_instance( entity, lua_handle );
-         lua_pcall( lua_handle, 2, LUA_MULTRET, 0 );
+         if( ( lua_ret = lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) ) )
+            bug( "%s: ret %d: path: %s\r\n - error message: %s.", __FUNCTION__, ret, get_script_path_from_spec( script ), lua_tostring( lua_handle, -1 ) );
       }
    }
 
@@ -1752,7 +2003,8 @@ int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *exit )
          {
             push_instance( content, lua_handle );
             push_instance( entity, lua_handle );
-            lua_pcall( lua_handle, 2, LUA_MULTRET, 0 );
+            if( ( lua_ret = lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) ) )
+               bug( "%s: ret %d: path: %s\r\n - error message: %s.", __FUNCTION__, ret, get_script_path_from_spec( script ), lua_tostring( lua_handle, -1 ) );
          }
       }
    }
@@ -1865,13 +2117,6 @@ void entity_instance( void *passed, char *arg )
       text_to_entity( entity, "There's been a major problem, framework you are trying to instantiate from may not be live.\r\n" );
       return;
    }
-   if( new_eInstance( new_ent ) != RET_SUCCESS )
-   {
-      free_eInstance( new_ent );
-      text_to_entity( entity, "Could not add new instance to the database, deleting it from live memory.\r\n" );
-      return;
-   }
-
    entity_to_world( new_ent, entity );
    text_to_entity( entity, "You create a new instance of %s. It has been placed in your inventory.\r\n", instance_name( new_ent ) );
    return;
@@ -1908,7 +2153,7 @@ void entity_drop( void *passed, char *arg )
 
    if( !arg || arg[0] == '\0' )
    {
-      if( NO_TARGET( entity ) || entity->target->type != TARGET_INSTANCE )
+      if( NO_TARGET( entity ) || TARGET_TYPE( entity ) != TARGET_INSTANCE )
       {
          text_to_entity( entity, "Drop what?\r\n" );
          return;
@@ -1960,7 +2205,7 @@ void entity_get( void *passed, char *arg )
 
    if( !arg || arg[0] == '\0' )
    {
-      if( NO_TARGET( entity ) || entity->target->type != TARGET_INSTANCE )
+      if( NO_TARGET( entity ) || TARGET_TYPE( entity ) != TARGET_INSTANCE )
       {
          text_to_entity( entity, "Get what?\r\n" );
          return;
@@ -2435,7 +2680,7 @@ void entity_grab( void *passed, char *arg )
 
    if( !arg || arg[0] == '\0' )
    {
-      if( !NO_TARGET( entity ) && ( entity->target->type == TARGET_INSTANCE || entity->target->type == TARGET_FRAMEWORK ) )
+      if( !NO_TARGET( entity ) && ( TARGET_TYPE( entity ) == TARGET_INSTANCE || TARGET_TYPE( entity ) == TARGET_FRAMEWORK ) )
       {
          char buf[MAX_BUFFER];
          strcpy( buf, quick_format( "%c%d", entity->target->type == TARGET_INSTANCE ? 'i' : 'f',
@@ -2630,3 +2875,100 @@ void mobile_say( void *passed, char *arg )
    return;
 }
 
+void mobile_attack( void *passed, char *arg )
+{
+   ENTITY_INSTANCE *mob = (ENTITY_INSTANCE *)passed;
+   ENTITY_INSTANCE *victim;
+   int cd;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      if( NO_TARGET( mob ) || TARGET_TYPE( mob ) != TARGET_INSTANCE )
+      {
+         text_to_entity( mob, "Attack who?\r\n" );
+         return;
+      }
+      victim = (ENTITY_INSTANCE *)mob->target->target;
+      if( victim->contained_by != mob->contained_by )
+      {
+         text_to_entity( mob, "You aren't in the same room as your target.\r\n" );
+         return;
+      }
+   }
+   else if( ( victim = instance_list_has_by_name_regex( mob->contained_by->contents, arg ) ) == NULL )
+   {
+      text_to_entity( mob, "There is no %s here to attack.\r\n", arg );
+      return;
+   }
+
+   if( ( cd = CHECK_MELEE( mob ) ) != 0 )
+   {
+      text_to_entity( mob, "You cannot attack for another %-3.3f seconds.\r\n", CALC_SECONDS( cd ) );
+      return;
+   }
+   if( !victim->primary_dmg_received_stat )
+   {
+      text_to_entity( mob, "You cannot attack that.\r\n" );
+      return;
+   }
+   if( !mob->builder && !mob->primary_dmg_received_stat )
+   {
+      text_to_entity( mob, "You cannot attack.\r\n" );
+      return;
+   }
+   if( !can_melee( mob, victim ) )
+      return;
+
+   prep_melee_atk( mob, victim );
+   set_melee_timer( mob, TRUE );
+   return;
+}
+
+void mobile_kill( void *passed, char *arg )
+{
+   ENTITY_INSTANCE *mob = (ENTITY_INSTANCE *)passed;
+   ENTITY_INSTANCE *victim;
+   EVENT_DATA *event;
+   int specific;
+   bool message = FALSE;
+
+   if( !AUTOMELEE )
+   {
+      text_to_entity( mob, "No such command.\r\n" );
+      return;
+   }
+
+   if( !arg || arg[0] == '\0' )
+      message = TRUE;
+
+   if( ( event = event_isset_instance( mob, EVENT_AUTO_ATTACK ) ) == NULL )
+      start_killing_mode( mob, message );
+
+   else
+   {
+      if( !strcmp( arg, "stop" ) )
+      {
+         text_to_entity( mob, "You are no longer in a killing mode.\r\n" );
+         end_killing_mode( mob, FALSE );
+         return;
+      }
+      text_to_entity( mob, "You are already in a killing mode.\r\n" );
+   }
+
+   if( message || !mob->contained_by )
+      return;
+
+   if( ( specific = number_arg_single( arg ) ) > 0 )
+      victim = instance_list_has_by_name_regex_specific( mob->contained_by->contents, arg, specific );
+   else
+      victim = instance_list_has_by_name_regex( mob->contained_by->contents, arg );
+
+   if( victim )
+   {
+      text_to_entity( mob, "%s %s.\r\n", NO_TARGET( mob ) ? "You target" : "You switch targets to", instance_short_descr( victim ) );
+      set_target_i( mob->target, victim );
+   }
+   else
+      text_to_entity(  mob, "There is no %s here.\r\n" );
+   return;
+}

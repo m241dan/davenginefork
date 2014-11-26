@@ -2,13 +2,27 @@
 
 extern int builder_count;
 
+typedef enum
+{
+   STATE_ZOMBIE, STATE_LIVE, STATE_DEAD, STATE_SPAWNING, MAX_INSTANCE_STATE
+} INSTANCE_STATE;
+
+typedef enum
+{
+   MIND_ZOMBIE, MIND_NEUTRAL, MIND_PANIC, MIND_FIGHTING, MIND_SCARED, MIND_AGGRESSIVE, MAX_INSTANCE_MIND
+} INSTANCE_MIND;
+
 struct entity_instance
 {
    ID_TAG *tag;
-   bool loaded;
+   int corpse_owner;
    bool live;
    bool builder;
+   bool isPlayer;
    sh_int level;
+   sh_int tspeed;
+   INSTANCE_STATE state;
+   INSTANCE_MIND mind;
 
    LLIST *contents;
    LLIST *contents_sorted[MAX_QUICK_SORT];
@@ -16,6 +30,10 @@ struct entity_instance
    LLIST *stats;
    LLIST *evars;
    LLIST *events;
+   LLIST *damages_sent;
+   LLIST *damages_received;
+   LLIST *timers;
+   STAT_INSTANCE *primary_dmg_received_stat;
 
    ENTITY_FRAMEWORK *framework;
 
@@ -31,7 +49,8 @@ ENTITY_INSTANCE *init_eInstance( void );
 int clear_eInstance( ENTITY_INSTANCE *eInstance );
 int free_eInstance( ENTITY_INSTANCE *eInstance );
 int clear_ent_contents( ENTITY_INSTANCE *eInstance );
-
+void delete_eInstance( ENTITY_INSTANCE *instance );
+void delete_all_exits_to( ENTITY_INSTANCE *instance );
 
 ENTITY_INSTANCE *init_builder( void );
 
@@ -46,13 +65,9 @@ ENTITY_INSTANCE *get_active_instance_by_name( const char *name );
 ENTITY_INSTANCE *load_eInstance_by_name( const char *name );
 
 ENTITY_INSTANCE *full_load_eFramework( ENTITY_FRAMEWORK *frame );
-void full_load_workspace( WORKSPACE *wSpace );
-void full_load_project( PROJECT *project );
+extern inline void full_load_workspace( WORKSPACE *wSpace );
+extern inline void full_load_project( PROJECT *project );
 void full_load_instance( ENTITY_INSTANCE *instance );
-void set_to_loaded( ENTITY_INSTANCE *instance );
-
-void instance_toggle_live( ENTITY_INSTANCE *instance );
-void set_instance_level( ENTITY_INSTANCE *instance, int level );
 
 int new_eInstance( ENTITY_INSTANCE *eInstance );
 void db_load_eInstance( ENTITY_INSTANCE *eInstance, MYSQL_ROW *row );
@@ -96,16 +111,36 @@ ENTITY_INSTANCE *eInstantiate( ENTITY_FRAMEWORK *frame );
 ENTITY_INSTANCE *create_room_instance( const char *name );
 ENTITY_INSTANCE *create_exit_instance( const char *name, int dir );
 ENTITY_INSTANCE *create_mobile_instance( const char *name );
+ENTITY_INSTANCE *corpsify( ENTITY_INSTANCE *instance );
 
 void move_create( ENTITY_INSTANCE *entity, ENTITY_FRAMEWORK *exit_frame, char *arg );
 bool should_move_create( ENTITY_INSTANCE *entity, char *arg );
 
+/* creation */
+extern inline EVENT_DATA *decay_event( void );
 
+/* getters */
 const char *instance_name( ENTITY_INSTANCE *instance );
 const char *instance_short_descr( ENTITY_INSTANCE *instance );
 const char *instance_long_descr( ENTITY_INSTANCE *instance );
 const char *instance_description( ENTITY_INSTANCE *instance );
+int	    get_corpse_decay( ENTITY_INSTANCE *instance );
 
+/* setters */
+void instance_toggle_live( ENTITY_INSTANCE *instance );
+extern inline void set_instance_level( ENTITY_INSTANCE *instance, int level );
+extern inline void set_instance_state( ENTITY_INSTANCE *instance, INSTANCE_STATE state );
+extern inline void set_instance_mind( ENTITY_INSTANCE *instance, INSTANCE_MIND mind );
+extern inline void set_instance_tspeed( ENTITY_INSTANCE *instance, int tspeed );
+
+/* actions */
+bool do_damage( ENTITY_INSTANCE *entity, DAMAGE *dmg );
+void death_instance( ENTITY_INSTANCE *instance );
+void spawn_instance( ENTITY_INSTANCE *instance );
+void set_for_decay( ENTITY_INSTANCE *corpse, int delay );
+void corpsify_inventory( ENTITY_INSTANCE *instance, ENTITY_INSTANCE *corpse );
+
+/* utility */
 int text_to_entity( ENTITY_INSTANCE *entity, const char *fmt, ... );
 void text_around_entity( ENTITY_INSTANCE *perspective, int num_around, const char *fmt, ... );
 void echo_to_room( ENTITY_INSTANCE *room, const char *msg );
@@ -118,6 +153,7 @@ int show_ent_objects_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing )
 int show_ent_rooms_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing );
 int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *move_to );
 
+/* builders commands */
 void entity_goto( void *passed, char *arg );
 void entity_instance( void *passed, char *arg );
 void entity_look( void *passed, char *arg );
@@ -146,6 +182,9 @@ void entity_olc( void *passed, char *arg );
 void entity_target( void *passed, char *arg );
 void entity_show( void *passed, char *arg );
 
+/* mobile commands */
 void mobile_look( void *passed, char *arg );
 void mobile_inventory( void *passed, char *arg );
 void mobile_say( void *passed, char *arg );
+void mobile_attack( void *passed, char *arg );
+void mobile_kill( void *passed, char *arg );

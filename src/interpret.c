@@ -93,6 +93,7 @@ struct typCmd olc_commands[] = {
    { "load", olc_load, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
    { "pak", olc_pak, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
    { "instance", olc_instantiate, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
+   { "delete", olc_delete, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
    { "iedit", framework_iedit, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
    { "edit", olc_edit, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
    { "screate", olc_screate, LEVEL_BASIC, NULL, FALSE, NULL, olc_commands },
@@ -148,6 +149,9 @@ struct typCmd create_eFramework_commands[] = {
    { "addcontent", eFramework_addContent, LEVEL_BASIC, NULL, FALSE, NULL, create_eFramework_commands },
    { "addstat", eFramework_addStat, LEVEL_BASIC, NULL, FALSE, NULL, create_eFramework_commands },
    { "addspec", eFramework_addSpec, LEVEL_BASIC, NULL, FALSE, NULL, create_eFramework_commands },
+   { "setprimary", eFramework_setPrimaryDmg, LEVEL_BASIC, NULL, FALSE, NULL, create_eFramework_commands },
+   { "spawntime", eFramework_set_spawn_time, LEVEL_BASIC, NULL, FALSE, NULL, create_eFramework_commands },
+   { "tspeed", eFramework_set_tspeed, LEVEL_BASIC, NULL, FALSE, NULL, create_eFramework_commands },
    { "desc", eFramework_description, LEVEL_BASIC, NULL, FALSE, NULL, create_eFramework_commands },
    { "long", eFramework_long, LEVEL_BASIC, NULL, FALSE, NULL, create_eFramework_commands },
    { "short", eFramework_short, LEVEL_BASIC, NULL, FALSE, NULL, create_eFramework_commands },
@@ -222,6 +226,8 @@ const char *editor_return_desc( void *extra )
       case STATE_WORKSPACE_EDITOR:
          strcat( buf, quick_format( "(%d)Workspace: %s", ((WORKSPACE *)link->to_edit)->tag->id, ((WORKSPACE *)link->to_edit)->name ) );
          break;
+      case STATE_SFRAME_EDITOR:
+         strcat( buf, quick_format( "(%d)Stat: %s", ((STAT_FRAMEWORK *)link->to_edit)->tag->id, ((STAT_FRAMEWORK *)link->to_edit)->name ) );
    }
 
    buf[strlen( buf )] = '\0';
@@ -234,6 +240,7 @@ struct typCmd create_sFramework_commands[] = {
    { "switch", editor_switch, LEVEL_BASIC, NULL, FALSE, NULL, create_instance_commands },
    { "save", sFramework_save, LEVEL_BASIC, NULL, FALSE, NULL, create_sFramework_commands },
    { "script", sFramework_script, LEVEL_BASIC, NULL, FALSE, NULL, create_sFramework_commands },
+   { "type", sFramework_type, LEVEL_BASIC, NULL, FALSE, NULL, create_sFramework_commands },
    { "hardfloor", sFramework_hardfloor, LEVEL_BASIC, NULL, FALSE, NULL, create_sFramework_commands },
    { "softfloor", sFramework_softfloor, LEVEL_BASIC, NULL, FALSE, NULL, create_sFramework_commands },
    { "hardcap", sFramework_hardcap, LEVEL_BASIC, NULL, FALSE, NULL, create_sFramework_commands },
@@ -243,6 +250,7 @@ struct typCmd create_sFramework_commands[] = {
 };
 
 struct typCmd builder_commands[] = {
+   { "attack", mobile_attack, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
    { "show", entity_show, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
    { "target", entity_target, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
    { "olc", entity_olc, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
@@ -268,6 +276,7 @@ struct typCmd builder_commands[] = {
    { "west", entity_west, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
    { "up", entity_up, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
    { "down", entity_down, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
+   { "kill", mobile_kill, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
    { '\0', NULL, 0, NULL, FALSE, NULL }
 };
 
@@ -279,6 +288,7 @@ struct typCmd mobile_commands[] = {
    { "give", entity_give, LEVEL_BASIC, NULL, FALSE, NULL, mobile_commands },
    { "put", entity_put, LEVEL_BASIC, NULL, FALSE, NULL, mobile_commands },
    { "say", mobile_say, LEVEL_BASIC, NULL, FALSE, NULL, mobile_commands },
+   { "kill", mobile_kill, LEVEL_BASIC, NULL, FALSE, NULL, mobile_commands },
    { '\0', NULL, 0, NULL, FALSE, NULL }
 };
 

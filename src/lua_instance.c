@@ -39,6 +39,8 @@ const struct luaL_Reg EntityInstanceLib_m[] = {
    { "echo", luaEcho },
    { "echoAt", luaEchoAt },
    { "echoAround", luaEchoAround },
+   /* iterators */
+   { "eachInventory", luaEachInventory },
    { NULL, NULL } /* gandalf */
 };
 
@@ -108,7 +110,6 @@ int luaNewInstance( lua_State *L )
    }
 
    instance = eInstantiate( frame );
-   new_eInstance( instance );
    push_instance( instance, L );
    return 1;
 }
@@ -167,7 +168,6 @@ int getLevel( lua_State *L )
    lua_pushnumber( L, instance->level );
    return 1;
 }
-
 int getItemFromInventory( lua_State *L )
 {
    ENTITY_INSTANCE *instance;
@@ -792,7 +792,7 @@ int luaCallBack( lua_State *L )
 {
    ENTITY_INSTANCE *instance;
    EVENT_DATA *event;
-   int callbackwhen;
+   int callbackwhen; /* server pulses, ie .25 seconds. So 1 second = 4 */
    const char *func_name;
    const char *cypher;
    int num_args;
@@ -822,6 +822,7 @@ int luaCallBack( lua_State *L )
 
    for( x = num_args; x > 0; x-- )
    {
+      ENTITY_FRAMEWORK *arg_frame;
       ENTITY_INSTANCE *arg_instance;
       char *arg_string;
       int  *arg_int;
@@ -863,6 +864,18 @@ int luaCallBack( lua_State *L )
             *arg_int = arg_instance->tag->id;
             AttachToList( arg_int, event->lua_args );
             break;
+         case 'f':
+            CREATE( arg_int, int, 1 );
+            if( ( arg_frame = *(ENTITY_FRAMEWORK **)luaL_checkudata( L, ( 4 + x ), "EntityFramework.meta" ) ) == NULL )
+            {
+               bug( "%s: bad/cypher passed value, not an entity framework at position %d.", __FUNCTION__, x );
+               *arg_int = -1;
+               AttachToList( arg_int, event->lua_args );
+               continue;
+            }
+            *arg_int = arg_frame->tag->id;
+            AttachToList( arg_int, event->lua_args );
+            break;
       }
    }
 
@@ -871,7 +884,7 @@ int luaCallBack( lua_State *L )
    event->lua_cypher = strdup( cypher );
    event->type = EVENT_LUA_CALLBACK;
    event->fun = &event_instance_lua_callback;
-   add_event_instance( event, instance, callbackwhen * PULSES_PER_SECOND );
+   add_event_instance( event, instance, callbackwhen );
    return 0;
 }
 int luaEntityInstanceInterp( lua_State *L )
@@ -976,4 +989,37 @@ int luaEchoAround( lua_State *L )
       text_to_entity( instance, lua_tostring( L, -1 ) );
    }
    return 0;
+}
+
+int luaEachInventory( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+   ITERATOR *Iter;
+
+   DAVLUACM_INSTANCE_NIL( instance, L );
+
+   Iter = (ITERATOR *)lua_newuserdata( L, sizeof( ITERATOR ) );
+
+   luaL_getmetatable( L, "Iter.meta" );
+   lua_setmetatable( L, -2 );
+
+   AttachIterator( Iter, instance->contents );
+
+   lua_pushcclosure( L, inv_iter, 1 );
+   return 1;
+}
+
+int inv_iter( lua_State *L )
+{
+   ENTITY_INSTANCE *item;
+   ITERATOR *Iter = (ITERATOR *)lua_touserdata( L, lua_upvalueindex(1) );
+
+   if( ( item = (ENTITY_INSTANCE *)NextInList( Iter ) ) == NULL )
+   {
+      DetachIterator( Iter );
+      return 0;
+   }
+
+   push_instance( item, lua_handle );
+   return 1;
 }

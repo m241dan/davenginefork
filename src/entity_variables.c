@@ -54,6 +54,14 @@ void db_load_var( EVAR *var, MYSQL_ROW *row )
    return;
 }
 
+inline void delete_variable_from_instance( EVAR *var, ENTITY_INSTANCE *instance )
+{
+   DetachFromList( var, instance->evars );
+   if( !quick_query( "DELETE FROM `entity_variables` WHERE owner=%d;", instance->tag->id ) )
+      bug( "%s: could not delete variable %s from instance %d from the database.", __FUNCTION__, var->name, instance->tag->id );
+   free_var( var );
+}
+
 void new_global_var( EVAR *var )
 {
    AttachToList( var, global_variables );

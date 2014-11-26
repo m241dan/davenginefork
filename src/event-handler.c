@@ -73,6 +73,7 @@ void dequeue_event(EVENT_DATA *event)
          bug("dequeue_event: event type %d has no owner.", event->type);
          break;
       case EVENT_OWNER_GAME:
+      case EVENT_OWNER_LUA:
          DetachFromList(event, global_events);
          break;
       case EVENT_OWNER_INSTANCE:
@@ -298,8 +299,33 @@ void add_event_game(EVENT_DATA *event, int delay)
     bug("add_event_game: event type %d failed to be enqueued.", event->type);
 }
 
+void add_event_lua( EVENT_DATA *event, const char *path, int delay )
+{
+   if( event->type == EVENT_NONE )
+   {
+      bug( "%s: no type.", __FUNCTION__ );
+      return;
+   }
+
+   if( event->fun == NULL )
+   {
+      bug( "%s: event type %d has no callback function.", __FUNCTION__, event->type );
+      return;
+   }
+
+   event->owner = strdup( path );
+   event->ownertype = EVENT_OWNER_LUA;
+   AttachToList( event, global_events );
+
+   if( enqueue_event( event, delay ) == FALSE )
+   {
+      bug( "%s event type %d failed to be enqueued.", __FUNCTION__, event->type );
+      DetachFromList( event, global_events );
+   }
+}
+
 /* function   :: event_isset_socket()
- * arguments  :: the socket and the type of event
+ * arguments  :: the socket and the type of event
  * ======================================================
  * This function checks to see if a given type of event
  * is enqueued/attached to a given socket, and if it is,

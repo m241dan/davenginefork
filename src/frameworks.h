@@ -7,10 +7,13 @@ struct entity_framework
    char *short_descr;
    char *long_descr;
    char *description;
+   unsigned short int tspeed;
+   int spawn_time;
 
    LLIST *fixed_contents; /* frameworks structs */
    LLIST *specifications;
    LLIST *stats;
+   STAT_FRAMEWORK *f_primary_dmg_received_stat;
 
    ENTITY_FRAMEWORK *inherits;
 
@@ -62,10 +65,24 @@ const char *chase_short_descr( ENTITY_FRAMEWORK *frame );
 const char *chase_long_descr( ENTITY_FRAMEWORK *frame );
 const char *chase_description( ENTITY_FRAMEWORK *frame );
 
+/* setters */
+extern inline void set_frame_name( ENTITY_FRAMEWORK *frame, const char *name );
+extern inline void set_frame_short_descr( ENTITY_FRAMEWORK *frame, const char *short_descr );
+extern inline void set_frame_long_descr( ENTITY_FRAMEWORK *frame, const char *long_descr );
+extern inline void set_frame_description( ENTITY_FRAMEWORK *frame, const char *description );
+extern inline void set_frame_tspeed( ENTITY_FRAMEWORK *frame, int tspeed );
+extern inline void set_frame_spawn_time( ENTITY_FRAMEWORK *frame, int spawn_time );
+
 void add_frame_to_fixed_contents( ENTITY_FRAMEWORK *frame_to_add, ENTITY_FRAMEWORK *container );
 void rem_frame_from_fixed_contents( ENTITY_FRAMEWORK *frame_to_rem, ENTITY_FRAMEWORK *container );
+extern inline void set_primary_dmg_stat_framework( ENTITY_FRAMEWORK *frame, STAT_FRAMEWORK *fstat );
 
 FILE *open_f_script( ENTITY_FRAMEWORK *frame, const char *permissions );
 bool f_script_exists( ENTITY_FRAMEWORK *frame );
 void init_f_script( ENTITY_FRAMEWORK *frame, bool force );
 const char *print_f_script( ENTITY_FRAMEWORK *frame );
+
+
+/* databasing */
+extern inline void new_fixed_content( ENTITY_FRAMEWORK *frame, ENTITY_FRAMEWORK *content );
+extern inline void delete_fixed_content( ENTITY_FRAMEWORK *frame, ENTITY_FRAMEWORK *content );

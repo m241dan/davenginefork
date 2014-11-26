@@ -194,10 +194,11 @@ int editor_eFramework_prompt( D_SOCKET *dsock, bool commands )
 
 const char *return_framework_strings( ENTITY_FRAMEWORK *frame, const char *border, int width )
 {
+   STAT_FRAMEWORK *fstat;
    static char buf[MAX_BUFFER];
    char tempstring[MAX_BUFFER];
    int space_after_border;
-
+   int source = 0;
 
    memset( &buf[0], 0, sizeof( buf ) );
    space_after_border = width - ( strlen( border ) * 2 );
@@ -234,6 +235,37 @@ const char *return_framework_strings( ENTITY_FRAMEWORK *frame, const char *borde
       border );
 
    strcat( buf, tempstring );
+
+
+   if( ( fstat = get_primary_dmg_stat_from_framework( frame, &source ) ) != NULL )
+   {
+      mud_printf( tempstring, "%s%s%s\r\n", border,
+         fit_string_to_space(
+         quick_format( " Primary Dmg Stat : %s%s", fstat->name, source == 1 ? "( inherited )" : "" ),
+         space_after_border ),
+         border );
+
+      strcat( buf, tempstring );
+   }
+
+   if( frame->tspeed > 0 )
+   {
+      mud_printf( tempstring, "%s%s%s\r\n", border,
+      fit_string_to_space(
+      quick_format( " Thought Speed : %d", (int)frame->tspeed ),
+      space_after_border ),
+      border );
+   }
+
+   if( frame->spawn_time > 0 )
+   {
+      mud_printf( tempstring, "%s%s%s\r\n", border,
+      fit_string_to_space(
+      quick_format( " If killed, will respawn in %d seconds\r\n", frame->spawn_time ),
+      space_after_border ),
+      border );
+   }
+
 
    buf[strlen( buf )] = '\0';
    return buf;
@@ -327,7 +359,7 @@ const char *return_framework_specs_and_stats( ENTITY_FRAMEWORK *frame, const cha
       if( x < MAX_SPEC )
         while( ( spec = frame_has_spec_detailed_by_type( frame, x++, &spec_from ) ) == NULL && x < MAX_SPEC );
       if( y < MAX_STAT )
-         while( ( fstat = get_stat_from_framework_by_id( frame, y++, &stat_from ) ) == NULL && y < MAX_STAT );
+         while( ( ( fstat = get_stat_from_framework_by_id( frame, y++, &stat_from ) ) == NULL && y < MAX_STAT ) || ( fstat != NULL && fstat == frame->f_primary_dmg_received_stat ) );
 
       if( !spec && !fstat )
          break;
@@ -357,6 +389,13 @@ void eFramework_name( void *passed, char *arg )
    INCEPTION *olc = (INCEPTION *)passed;
    ENTITY_FRAMEWORK *frame;
 
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Set the name to what?\r\n" );
+      olc_short_prompt( olc );
+      return;
+   }
+
    if( strlen( arg ) > MAX_FRAMEWORK_NSL )
    {
       text_to_olc( olc, "%s is too long.\r\n", arg );
@@ -369,16 +408,9 @@ void eFramework_name( void *passed, char *arg )
       return;
    }
 
-   FREE( frame->name );
-   frame->name = strdup( arg );
+   set_frame_name( frame, arg );
+   update_tag( frame->tag, olc->account->name );
    text_to_olc( olc, "Name changed.\r\n" );
-
-   if( live_frame( frame ) )
-   {
-      quick_query( "UPDATE entity_frameworks SET name='%s' WHERE entityFrameworkID=%d;", format_string_for_sql( frame->name ), frame->tag->id );
-      update_tag( frame->tag, olc->account->name );
-   }
-
    return;
 }
 
@@ -387,6 +419,13 @@ void eFramework_short( void *passed, char *arg )
    INCEPTION *olc = (INCEPTION *)passed;
    ENTITY_FRAMEWORK *frame;
 
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Set the short description to what?\r\n" );
+      olc_short_prompt( olc );
+      return;
+   }
+
    if( strlen( arg ) > MAX_FRAMEWORK_NSL )
    {
       text_to_olc( olc, "%s is too long.\r\n", arg );
@@ -398,17 +437,9 @@ void eFramework_short( void *passed, char *arg )
       change_socket_state( olc->account->socket, STATE_OLC );
       return;
    }
-
-   FREE( frame->short_descr );
-   frame->short_descr = strdup( arg );
+   set_frame_short_descr( frame, arg );
+   update_tag( frame->tag, olc->account->name );
    text_to_olc( olc, "Short description changed.\r\n" );
-
-   if( live_frame( frame ) )
-   {
-      quick_query( "UPDATE entity_frameworks SET short_descr='%s' WHERE entityFrameworkID=%d;", format_string_for_sql( frame->short_descr ), frame->tag->id );
-      update_tag( frame->tag, olc->account->name );
-   }
-
    return;
 }
 
@@ -417,9 +448,17 @@ void eFramework_long( void *passed, char *arg )
    INCEPTION *olc = (INCEPTION *)passed;
    ENTITY_FRAMEWORK *frame;
 
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Set the long description to what?\r\n" );
+      olc_short_prompt( olc );
+      return;
+   }
+
    if( strlen( arg ) > MAX_FRAMEWORK_NSL )
    {
       text_to_olc( olc, "%s is too long.\r\n", arg );
+      olc_short_prompt( olc );
       return;
    }
    if( ( frame = (ENTITY_FRAMEWORK*)olc->editing ) == NULL )
@@ -429,16 +468,9 @@ void eFramework_long( void *passed, char *arg )
       return;
    }
 
-   FREE( frame->long_descr );
-   frame->long_descr = strdup( arg );
+   set_frame_long_descr( frame, arg );
+   update_tag( frame->tag, olc->account->name );
    text_to_olc( olc, "Long description changed.\r\n" );
-
-   if( live_frame( frame ) )
-   {
-      quick_query( "UPDATE entity_frameworks SET long_descr='%s' WHERE entityFrameworkID=%d;", format_string_for_sql( frame->long_descr ), frame->tag->id );
-      update_tag( frame->tag, olc->account->name );
-   }
-
    return;
 }
 
@@ -447,9 +479,17 @@ void eFramework_description( void *passed, char *arg )
    INCEPTION *olc = (INCEPTION *)passed;
    ENTITY_FRAMEWORK *frame;
 
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Set the description to what?\r\n" );
+      olc_short_prompt( olc );
+      return;
+   }
+
    if( strlen( arg ) > MAX_BUFFER )
    {
       text_to_olc( olc, "%s is too long.\r\n", arg );
+      olc_short_prompt( olc );
       return;
    }
    if( ( frame = (ENTITY_FRAMEWORK*)olc->editing ) == NULL )
@@ -459,16 +499,74 @@ void eFramework_description( void *passed, char *arg )
       return;
    }
 
+<<<<<<< HEAD
    FREE( frame->description );
    frame->description = strdup( arg );
    text_to_olc( olc, "Description changed.\r\n" );
+=======
+   set_frame_description( frame, arg );
+   update_tag( frame->tag, olc->account->name );
+   text_to_olc( olc, "Long description changed.\r\n" );
+   return;
+}
+>>>>>>> 8e5a87e9cfc445dad5766928840f11bee65b4b08
 
-   if( live_frame( frame ) )
+void eFramework_set_tspeed( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_FRAMEWORK *frame = (ENTITY_FRAMEWORK *)olc->editing;
+   int value;
+
+   if( !arg || arg[0] == '\0' )
    {
-      quick_query( "UPDATE entity_frameworks SET description='%s' WHERE entityFrameworkID=%d;", format_string_for_sql( frame->description ), frame->tag->id );
-      update_tag( frame->tag, olc->account->name );
+      text_to_olc( olc, "Set the thought speed in quarter seconds. So, 4 = 1 second.\r\n" );
+      return;
    }
 
+   if( !is_number( arg ) )
+   {
+      text_to_olc( olc, "Thought speeds must be numbers.\r\n" );
+      return;
+   }
+   value = atoi( arg );
+   if( value <= 0 )
+   {
+      text_to_olc( olc, "Thought speeds must be positive numbers.\r\n" );
+      return;
+   }
+
+   set_frame_tspeed( frame, value );
+   update_tag( frame->tag, olc->account->name );
+   text_to_olc( olc, "Thought speed set.\r\n" );
+   return;
+}
+
+void eFramework_set_spawn_time( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_FRAMEWORK *frame = (ENTITY_FRAMEWORK *)olc->editing;
+   int value;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Set the respawn time in seconds. Zero means the instance does not respawn.\r\n" );
+      return;
+   }
+
+   if( !is_number( arg ) )
+   {
+      text_to_olc( olc, "Spawn timers must be numbers.\r\n" );
+      return;
+   }
+   value = atoi( arg );
+   if( value < 0 )
+   {
+      text_to_olc( olc, "Spawn timers must be 0 or greater.\r\n - Note: Zero means it won't respawn.\r\n" );
+      return;
+   }
+   set_frame_spawn_time( frame, value );
+   update_tag( frame->tag, olc->account->name );
+   text_to_olc( olc, "Spawn time set.\r\n" );
    return;
 }
 
@@ -678,6 +776,41 @@ void eFramework_addPak( void *passed, char *arg )
    }
    load_pak_on_framework( arg, frame );
    text_to_olc( olc, "You load the Pak.\r\n" );
+   return;
+}
+
+void eFramework_setPrimaryDmg( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_FRAMEWORK *frame = (ENTITY_FRAMEWORK *)olc->editing;
+   STAT_FRAMEWORK *fstat;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Set the Primary Damage Stat to what?\r\n" );
+      olc_short_prompt( olc );
+      return;
+   }
+   if( ( fstat = get_stat_framework_by_name( arg ) ) == NULL )
+   {
+      text_to_olc( olc, "%s not a Stat.\r\n", arg );
+      olc_short_prompt( olc );
+      return;
+   }
+   if( !fstat->pool )
+   {
+      text_to_olc( olc, "Registered Stats cannot be primary damage stats. Only Pool type stats allowed.\r\n" );
+      olc_short_prompt( olc );
+      return;
+   }
+   if( fstat == frame->f_primary_dmg_received_stat )
+   {
+      text_to_olc( olc, "Primary Damage Stat is already set to %s.\r\n", fstat->name );
+      return;
+   }
+
+   set_primary_dmg_stat_framework( frame, fstat );
+   text_to_olc( olc, "You set the Primary Damage Stat to %s.\r\n", frame->f_primary_dmg_received_stat->name );
    return;
 }
 
@@ -1065,6 +1198,13 @@ int editor_instance_prompt( D_SOCKET *dsock, bool commands )
    text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " This instance is contained by %s.", instance->contained_by ? instance_short_descr( instance->contained_by ) : "The Ether" ), space_after_border ), border );
    if( SizeOfList( instance->contents ) > 0 )
       text_to_olc( olc, "%s", return_instance_contents_string( instance, border, dsock->account->pagewidth ) );
+   if( instance->primary_dmg_received_stat )
+   {
+      text_to_olc( olc, "%s%s%s\r\n", border, print_bar( "-", space_after_border ), border );
+      text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " Primary Damage: %s %d/%d",
+         instance->primary_dmg_received_stat->framework->name, instance->primary_dmg_received_stat->mod_stat,
+         instance->primary_dmg_received_stat->perm_stat ), space_after_border ), border );
+   }
    text_to_olc( olc, "%s", return_instance_spec_and_stats( instance, border, dsock->account->pagewidth ) );
 
    bprintf( buf, "%s%s%s\r\n", border, print_bar( "-", space_after_border ), border ) ;
@@ -1146,7 +1286,7 @@ const char *return_instance_spec_and_stats( ENTITY_INSTANCE *instance, const cha
       if( x < MAX_SPEC )
          while( ( spec = has_spec_detailed_by_type( instance, x++, &spec_from ) ) == NULL && x < MAX_SPEC );
       if( y < MAX_STAT )
-         while( ( stat = get_stat_from_instance_by_id( instance, y++ ) ) == NULL && y < MAX_SPEC );
+         while( ( ( stat = get_stat_from_instance_by_id( instance, y++ ) ) == NULL && y < MAX_STAT ) || ( stat != NULL && stat == instance->primary_dmg_received_stat ));
 
       if( !spec && !stat )
          break;
@@ -1252,17 +1392,20 @@ void instance_autowrite( void *passed, char *arg )
    if( !f_script_exists( instance->framework ) )
    {
       text_to_olc( olc, "This instance's framework has no script generated.\r\n" );
+      olc_short_prompt( olc );
       return;
    }
 
    if( autowrite_init( instance ) )
    {
       text_to_olc( olc, "You write the init script for this instance's framework.\r\n" ) ;
+      olc_short_prompt( olc );
       return;
    }
    else
    {
       text_to_olc( olc, "Failed to write the init script for this instance's framework.\r\n" );
+      olc_short_prompt( olc );
       return;
    }
 }
@@ -1447,9 +1590,9 @@ void editor_sFramework_prompt( D_SOCKET *dsock, bool commands )
    space_after_border = dsock->account->pagewidth - ( strlen( border ) * 2 );
 
    if( !strcmp( fstat->tag->created_by, "null" ) )
-      mud_printf( tempstring, "Potential Stat ID: %d", get_potential_id( fstat->tag->type ) );
+      mud_printf( tempstring, "Potential %s Stat ID: %d", fstat->pool ? "Pool" : "Registed",  get_potential_id( fstat->tag->type ) );
    else
-      mud_printf( tempstring, "Stat ID: %d", fstat->tag->id );
+      mud_printf( tempstring, "%s Stat ID: %d", fstat->pool ? "Pool" : "Registed", fstat->tag->id );
 
    text_to_olc( olc, "/%s\\\r\n", print_header( tempstring, "-", dsock->account->pagewidth - 2 ) );
    text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " Name      : %s", fstat->name ), space_after_border ), border );
@@ -1565,7 +1708,7 @@ void sFramework_hardcap( void *passed, char *arg )
 
    set_hardcap( fstat, value );
    update_tag( fstat->tag, olc->account->name );
-   text_to_olc( olc, "You set the hardcap to ds.\r\n", fstat->hardcap );
+   text_to_olc( olc, "You set the hardcap to %d.\r\n", fstat->hardcap );
    return;
 
 }
@@ -1649,6 +1792,42 @@ void sFramework_hardfloor( void *passed, char *arg )
    set_hardfloor( fstat, value );
    update_tag( fstat->tag, olc->account->name );
    text_to_olc( olc, "You set the hardfloor to %d.\r\n", fstat->hardfloor );
+   return;
+}
+
+void sFramework_type( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   STAT_FRAMEWORK *fstat = (STAT_FRAMEWORK *)olc->editing;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Set the type to what?\r\n" );
+      olc_short_prompt( olc );
+      return;
+   }
+   if( !strcasecmp( arg, "pool" ) )
+   {
+      if( fstat->pool )
+      {
+         text_to_olc( olc, "It's already a pool style stat.\r\n" );
+         olc_short_prompt( olc );
+         return;
+      }
+      set_stat_style( fstat, TRUE );
+   }
+   else if( !strcasecmp( arg, "registered" ) )
+   {
+      if( !fstat->pool )
+      {
+         text_to_olc( olc, "It's already a registered style stat.\r\n" );
+         olc_short_prompt( olc );
+         return;
+      }
+      set_stat_style( fstat, FALSE );
+   }
+   update_tag( fstat->tag, olc->account->name );
+   text_to_olc( olc, "Stat style changed.\r\n" );
    return;
 }
 

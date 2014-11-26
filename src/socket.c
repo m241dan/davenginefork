@@ -1,4 +1,4 @@
-	/*
+/*
  * This file contains the socket code, used for accepting
  * new connections as well as reading and writing to
  * sockets, and closing down unused sockets.
@@ -33,12 +33,29 @@ LLIST    * active_frameworks = NULL;
 LLIST    * eInstances_list = NULL;
 LLIST    * global_variables = NULL;
 LLIST    * stat_frameworks = NULL;
+LLIST    * damage_queue = NULL;
+LLIST    * timer_queue = NULL;
+LLIST    * paused_timer_queue = NULL;
 
+/* server settings */
+int        MUDPORT = 0;
+
+/* database settings */
 const char *DB_NAME = NULL;
 const char *DB_ADDR = NULL;
 const char *DB_LOGIN = NULL;
 const char *DB_PASSWORD = NULL;
 const char *WIKI_NAME = NULL;
+
+/* combat settings */
+bool AUTOMELEE = FALSE;
+bool DODGE_ON = FALSE;
+bool PARRY_ON = FALSE;
+bool MISS_ON = FALSE;
+int  BASE_MELEE_DELAY = 10;
+
+/* corpse settings */
+int  CORPSE_DECAY = 480;
 
 MYSQL    * sql_handle = NULL;
 MYSQL    * help_handle = NULL;
@@ -78,6 +95,9 @@ int main(int argc, char **argv)
    eInstances_list = AllocList();
    global_variables = AllocList();
    stat_frameworks = AllocList();
+   damage_queue = AllocList();
+   timer_queue = AllocList();
+   paused_timer_queue = AllocList();
 
    builder_count = 0;
 
@@ -105,10 +125,22 @@ int main(int argc, char **argv)
    luaL_requiref( lua_handle, "Specification", luaopen_SpecificationLib, 1 );
    lua_pop( lua_handle, -1 );
 
+   luaL_requiref( lua_handle, "Damage", luaopen_DamageLib, 1 );
+   lua_pop( lua_handle, -1 );
+
+   luaL_requiref( lua_handle, "Timers", luaopen_TimersLib, 1 );
+   lua_pop( lua_handle, -1 );
+
    luaL_requiref( lua_handle, "mud", luaopen_mud, 1 );
    lua_pop( lua_handle, -1 );
 
-   lua_loadsql( ); /* loading the sql variables */
+   luaopen_IterLib( lua_handle );
+
+   load_server_script();
+   load_combat_vars_script();
+   lua_server_settings(); /* loading server stuff */
+   lua_database_settings(); /* loading the sql variables */
+   lua_combat_settings(); /* loading combat settings */
 
    log_string( "Connecting to Database" );
 
@@ -362,9 +394,10 @@ void GameLoop(int control)
     }
     DetachIterator(&Iter);
 
+    /* call the timer queue */
+    timer_monitor();
     /* call the event queue */
     heartbeat();
-
     /*
      * Here we sleep out the rest of the pulse, thus forcing
      * SocketMud(tm) to run at PULSES_PER_SECOND pulses each second.

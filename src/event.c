@@ -86,7 +86,7 @@ bool event_instance_lua_callback( EVENT_DATA *event )
    ENTITY_INSTANCE *arg_entity;
    void *content;
    ITERATOR Iter;
-   int counter = 0;
+   int ret, counter = 0;
 
    prep_stack( get_frame_script_path( instance->framework ), event->argument );
    if( SizeOfList( event->lua_args ) > 0 )
@@ -115,7 +115,113 @@ bool event_instance_lua_callback( EVENT_DATA *event )
       }
       DetachIterator( &Iter );
    }
-   lua_pcall( lua_handle, strlen( event->lua_cypher ), LUA_MULTRET, 0 );
+   if( ( ret = lua_pcall( lua_handle, strlen( event->lua_cypher ), LUA_MULTRET, 0 ) ) )
+      bug( "%s: ret %d: path: %s\r\n - error message: %s.", __FUNCTION__, ret, get_frame_script_path( instance->framework ), lua_tostring( lua_handle, -1 ) );
 
    return FALSE;
+}
+
+bool event_global_lua_callback( EVENT_DATA *event )
+{
+   ENTITY_INSTANCE *arg_entity;
+   void *content;
+   ITERATOR Iter;
+   int ret, counter = 0;
+
+   prep_stack( (char *)event->owner, event->argument );
+   if( SizeOfList( event->lua_args ) > 0 )
+   {
+      AttachIterator( &Iter, event->lua_args );
+      while( ( content = NextInList( &Iter ) ) != NULL )
+      {
+         switch( tolower( event->lua_cypher[counter++] ) )
+         {
+            case 's':
+               lua_pushstring( lua_handle, (const char *)content );
+               break;
+            case 'n':
+               lua_pushnumber( lua_handle, *((int *)content) );
+               break;
+            case 'i':
+               if( ( arg_entity = get_active_instance_by_id( *((int *)content ) ) ) == NULL )
+               {
+                  bug( "%s: instance with ID:%d is no longer active.", __FUNCTION__, *((int *)content ) );
+                  lua_pushnil( lua_handle );
+                  break;
+               }
+               push_instance( arg_entity, lua_handle );
+               break;
+         }
+      }
+      DetachIterator( &Iter );
+   }
+   if( ( ret = lua_pcall( lua_handle, strlen( event->lua_cypher ), LUA_MULTRET, 0 ) ) )
+      bug( "%s: ret %d: path: %s\r\n - error message: %s", __FUNCTION__, ret, (char *)event->owner, lua_tostring( lua_handle, -1 ) );
+   return FALSE;
+}
+
+bool event_auto_attack( EVENT_DATA *event )
+{
+   ENTITY_INSTANCE *mob;
+   int cd;
+
+   if( event->ownertype != EVENT_OWNER_INSTANCE )
+   {
+      bug( "%s: bad event owner.", __FUNCTION__ );
+      return FALSE;
+   }
+   if( ( mob = (ENTITY_INSTANCE *)event->owner ) == NULL )
+   {
+      bug( "%s: NULL event owner.", __FUNCTION__ );
+      return FALSE;
+   }
+
+   /* check auto delay timer, requeue if necessary */
+   if( ( cd = CHECK_MELEE( mob ) ) != 0 )
+   {
+      event = melee_event();
+      add_event_instance( event, mob, cd );
+      return FALSE;
+   }
+
+   /* otherwise, prep melee on target, if no target dequeue */
+   if( !NO_TARGET( mob ) && TARGET_TYPE( mob ) == TARGET_INSTANCE && can_melee( mob, GT_INSTANCE( mob ) ) )
+   {
+      if( !(GT_INSTANCE( mob ))->primary_dmg_received_stat )
+      {
+         text_to_entity( mob, "You cannot attack that.\r\n" );
+         goto short_melee;
+      }
+      prep_melee_atk( mob, GT_INSTANCE( mob ) );
+      set_melee_timer( mob, FALSE );
+      event = melee_event();
+      add_event_instance( event, mob, CHECK_MELEE( mob ) );
+      return FALSE;
+   }
+   text_to_entity( mob, "You aren't targetting anything.\r\n" );
+short_melee:
+   event = melee_event();
+   add_event_instance( event, mob, (int)( 1.5 * PULSES_PER_SECOND ) );
+   return FALSE;
+}
+
+bool event_instance_decay( EVENT_DATA *event )
+{
+   ENTITY_INSTANCE *corpse;
+
+   if( event->ownertype != EVENT_OWNER_INSTANCE )
+   {
+      bug( "%s: bad event owner.", __FUNCTION__ );
+      return FALSE;
+   }
+   if( ( corpse = (ENTITY_INSTANCE *)event->owner ) == NULL )
+   {
+      bug( "%s: event had a NULL owner.", __FUNCTION__ );
+      return FALSE;
+   }
+
+   text_around_entity( corpse->contained_by, 0, "%s decays into nothingness.\r\n", instance_long_descr( corpse ) );
+   dequeue_event( event );
+   delete_eInstance( corpse );
+   return TRUE;
 }

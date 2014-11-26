@@ -16,4 +16,6 @@ int getFrameDesc( lua_State *L );
 int getFrameSpec( lua_State *L );
 int getFrameInheritance( lua_State *L );
 
+/* actions */
+int luaInherits( lua_State *L );
 

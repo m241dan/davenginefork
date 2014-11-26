@@ -35,7 +35,7 @@ int clear_eFramework( ENTITY_FRAMEWORK *frame )
    frame->description = strdup( "none" );
 
    frame->inherits = NULL;
-
+   frame->f_primary_dmg_received_stat = NULL;
    return ret;
 }
 
@@ -75,6 +75,7 @@ int free_eFramework( ENTITY_FRAMEWORK *frame )
    frame->stats = NULL;
 
    frame->inherits = NULL;
+   frame->f_primary_dmg_received_stat = NULL;
 
    FREE( frame->name );
    FREE( frame->short_descr );
@@ -147,6 +148,7 @@ ENTITY_FRAMEWORK *load_eFramework_by_name( const char *name )
 
 int new_eFramework( ENTITY_FRAMEWORK *frame )
 {
+   ENTITY_FRAMEWORK *fixed_content;
    SPECIFICATION *spec;
    STAT_FRAMEWORK *fstat;
    ITERATOR Iter;
@@ -167,11 +169,19 @@ int new_eFramework( ENTITY_FRAMEWORK *frame )
       }
    }
 
-   if( !quick_query( "INSERT INTO entity_frameworks VALUES( %d, %d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d' );",
+   if( !quick_query( "INSERT INTO entity_frameworks VALUES( %d, %d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%d', '%d' );",
          frame->tag->id, frame->tag->type, frame->tag->created_by,
          frame->tag->created_on, frame->tag->modified_by, frame->tag->modified_on,
+<<<<<<< HEAD
          format_string_for_sql( frame->name ), format_string_for_sql( frame->short_descr ), format_string_for_sql( frame->long_descr ), format_string_for_sql( frame->description ),
          ( frame->inherits ? frame->inherits->tag->id : -1 ) ) )
+=======
+         format_string_for_sql( frame->name ), format_string_for_sql( frame->short_descr ),
+         format_string_for_sql( frame->long_descr ), format_string_for_sql( frame->description ),
+         ( frame->inherits ? frame->inherits->tag->id : -1 ),
+         ( frame->f_primary_dmg_received_stat ? frame->f_primary_dmg_received_stat->tag->id : -1 ),
+         (int)frame->tspeed, frame->spawn_time ) )
+>>>>>>> 8e5a87e9cfc445dad5766928840f11bee65b4b08
       return RET_FAILED_OTHER;
 
    AttachIterator( &Iter, frame->specifications );
@@ -180,6 +190,11 @@ int new_eFramework( ENTITY_FRAMEWORK *frame )
       mud_printf( spec->owner, "f%d", frame->tag->id );
       new_specification( spec );
    }
+   DetachIterator( &Iter );
+
+   AttachIterator( &Iter, frame->fixed_contents );
+   while( ( fixed_content = (ENTITY_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
+      new_fixed_content( frame, fixed_content );
    DetachIterator( &Iter );
 
    AttachIterator( &Iter, frame->stats );
@@ -201,6 +216,8 @@ void db_load_eFramework( ENTITY_FRAMEWORK *frame, MYSQL_ROW *row )
    frame->long_descr = strdup( (*row)[counter++] );
    frame->description = strdup( (*row)[counter++] );
    frame->inherits = get_framework_by_id( atoi( (*row)[counter++] ) );
+   frame->f_primary_dmg_received_stat = get_stat_framework_by_id( atoi( (*row)[counter++] ) );
+   frame->spawn_time = atoi( (*row)[counter++] );
    return;
 }
 
@@ -467,6 +484,8 @@ bool live_frame( ENTITY_FRAMEWORK *frame )
       return FALSE;
    if( !frame->tag )
       return FALSE;
+   if( !frame->tag->created_by )
+      return FALSE;
    if( !strcmp( frame->tag->created_by, "null" ) )
       return FALSE;
 
@@ -708,8 +727,71 @@ const char *chase_description( ENTITY_FRAMEWORK *frame )
    return frame->description;
 }
 
+inline void set_frame_name( ENTITY_FRAMEWORK *frame, const char *name )
+{
+   FREE( frame->name );
+   frame->name = strdup( name );
+   if( !strcmp( frame->tag->created_by, "null" ) )
+      return;
+   if( !quick_query( "UPDATE `entity_frameworks` SET name='%s' WHERE entityFrameworkID=%d;", format_string_for_sql( frame->name ), frame->tag->id ) )
+      bug( "%s: could not update database for frame %d with new name.", __FUNCTION__, frame->tag->id );
+}
+
+inline void set_frame_short_descr( ENTITY_FRAMEWORK *frame, const char *short_descr )
+{
+   FREE( frame->short_descr );
+   frame->short_descr = strdup( short_descr );
+   if( !strcmp( frame->tag->created_by, "null" ) )
+      return;
+   if( !quick_query( "UPDATE `entity_frameworks` SET short_descr='%s' WHERE entityFrameworkID=%d;", format_string_for_sql( frame->short_descr ), frame->tag->id ) )
+      bug( "%s: could no tupdate database for frame %d with new short_descr.", __FUNCTION__, frame->tag->id );
+}
+
+inline void set_frame_long_descr( ENTITY_FRAMEWORK *frame, const char *long_descr )
+{
+   FREE( frame->long_descr );
+   frame->long_descr = strdup( long_descr );
+   if( !strcmp( frame->tag->created_by, "null" ) )
+      return;
+   if( !quick_query( "UPDATE `entity_frameworks` SET long_descr='%s' WHERE entityFrameworkID=%d;", format_string_for_sql( frame->long_descr ), frame->tag->id ) )
+      bug( "%s: could not update database for frame %d with new long_descr.", __FUNCTION__, frame->tag->id );
+}
+
+inline void set_frame_description( ENTITY_FRAMEWORK *frame, const char *description )
+{
+   FREE( frame->description );
+   frame->description = strdup( description );
+   if( !strcmp( frame->tag->created_by, "null" ) )
+      return;
+   if( !quick_query( "UPDATE `entity_frameworks` SET description='%s' WHERE entityFrameworkID=%d;", format_string_for_sql( frame->description ), frame->tag->id ) )
+      bug( "%s: could not update databaes for frame %d with new description.", __FUNCTION__, frame->tag->id );
+}
+
+inline void set_frame_tspeed( ENTITY_FRAMEWORK *frame, int tspeed )
+{
+   if( tspeed <= 0 )
+   {
+      bug( "%s: tspeed value given not valid, must be greater than 0.", __FUNCTION__ );
+      return;
+   }
+   frame->tspeed = tspeed;
+   if( !strcmp( frame->tag->created_by, "null" ) )
+      return;
+   if( !quick_query( "UPDATE `entity_frameworks` SET tspeed=%d WHERE entityFrameworkID=%d;", (int)frame->tspeed, frame->tag->id ) )
+      bug( "%s: could not update database for frame %d with new thought speed.", __FUNCTION__, frame->tag->id );
+}
+
+inline void set_frame_spawn_time( ENTITY_FRAMEWORK *frame, int spawn_time )
+{
+   frame->spawn_time = spawn_time;
+   if( !strcmp( frame->tag->created_by, "null" ) )
+      return;
+   if( !quick_query( "UPDATE `entity_frameworks` SET spawn_time=%d WHERE entityFrameworkID=%d;", frame->spawn_time, frame->tag->id ) )
+      bug( "%s: could not update dtabase for frame %d with new spawn time.", __FUNCTION__, frame->tag->id );
+}
+
 void add_frame_to_fixed_contents( ENTITY_FRAMEWORK *frame_to_add, ENTITY_FRAMEWORK *container )
-	{
+{
    if( !frame_to_add || !container )
       return;
 
@@ -718,7 +800,7 @@ void add_frame_to_fixed_contents( ENTITY_FRAMEWORK *frame_to_add, ENTITY_FRAMEWO
 
    AttachToList( frame_to_add, container->fixed_contents );
 
-   quick_query( "INSERT INTO `framework_fixed_possessions` VALUES( %d, %d );", container->tag->id, frame_to_add->tag->id );
+   new_fixed_content( container, frame_to_add );
    return;
 }
 
@@ -732,8 +814,22 @@ void rem_frame_from_fixed_contents( ENTITY_FRAMEWORK *frame_to_rem, ENTITY_FRAME
 
    DetachFromList( frame_to_rem, container->fixed_contents );
 
-   quick_query( "DELETE FROM `framework_fixed_possessions` WHERE frameworkID=%d AND content_frameworkID=%d;", container->tag->id, frame_to_rem->tag->id );
+   if( !strcmp( container->tag->created_by, "null" ) )
+      return;
+
+   delete_fixed_content( container, frame_to_rem );
    return;
+}
+
+inline void set_primary_dmg_stat_framework( ENTITY_FRAMEWORK *frame, STAT_FRAMEWORK *fstat )
+{
+   int source;
+   frame->f_primary_dmg_received_stat = fstat;
+   if( !get_stat_from_framework_by_id( frame, fstat->tag->id, &source ) )
+      add_stat_to_frame( fstat, frame );
+   else if( source != 0 )
+      add_stat_to_frame( fstat, frame );
+   quick_query( "UPDATE `entity_frameworks` SET primary_dmg=%d WHERE entityFrameworkID=%d;", fstat->tag->id, frame->tag->id );
 }
 
 FILE *open_f_script( ENTITY_FRAMEWORK *frame, const char *permissions )
@@ -798,3 +894,17 @@ const char *print_f_script( ENTITY_FRAMEWORK *frame )
    return buf;
 }
 
+
+inline void new_fixed_content( ENTITY_FRAMEWORK *frame, ENTITY_FRAMEWORK *content )
+{
+   if( !strcmp( frame->tag->created_by, "null" ) )
+      return;
+   quick_query( "INSERT INTO `framework_fixed_possessions` VALUES( %d, %d );", frame->tag->id, content->tag->id );
+}
+
+inline void delete_fixed_content( ENTITY_FRAMEWORK *frame, ENTITY_FRAMEWORK *content )
+{
+   if( !strcmp( frame->tag->created_by, "null" ) )
+      return;
+   quick_query( "DELETE FROM `framework_fixed_possessions` WHERE frameworkID=%d AND content_frameworkID=%d;", frame->tag->id, content->tag->id );
+}

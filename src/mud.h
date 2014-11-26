@@ -53,7 +53,6 @@
 #define MAX_BUFFER         4096                   /* seems like a decent amount         */
 #define MAX_OUTPUT         4096                   /* well shoot me if it isn't enough   */
 #define MAX_HELP_ENTRY     4096                   /* roughly 40 lines of blocktext      */
-#define MUDPORT            6500                   /* just set whatever port you want    */
 #define FILE_TERMINATOR    "EOF"                  /* end of file marker                 */
 #define COPYOVER_FILE      "../txt/copyover.dat"  /* tempfile to store copyover data    */
 #define EXE_FILE           "../src/SocketMud"     /* the name of the mud binary         */
@@ -122,7 +121,7 @@ typedef enum
 {
    /* IS Specs */
    SPEC_ISROOM, SPEC_ISEXIT, SPEC_ISMOB, SPEC_ISOBJECT, SPEC_ISDOOR, SPEC_ISCONTAINER,
-   SPEC_ISPLAYER, SPEC_ISSILENCED, SPEC_ISDEAFENED,
+   SPEC_ISSILENCED, SPEC_ISDEAFENED,
    /* Can Specs */
    SPEC_CANGET, SPEC_CANGIVE, SPEC_CANDROP, SPEC_CANPUT, SPEC_CANMOVE,
    /* No Specs */
@@ -130,6 +129,11 @@ typedef enum
    /* Scripting Specs */
    SPEC_ONENTER, SPEC_ONLEAVE, SPEC_ONENTERING, SPEC_ONLEAVING,
    SPEC_ONGREET, SPEC_ONFAREWELL,
+   /* Combat Specs */
+   SPEC_DODGECHANCE, SPEC_PARRYCHANCE, SPEC_MISSCHANCE, SPEC_MELEECOOLDOWN, SPEC_MELEECHECK,
+   SPEC_PREPMELEETIMER, SPEC_PREPMELEEDAMAGE, SPEC_ONRECEIVEDAMAGE, SPEC_COMBATMESSAGE,
+   /* Corpse Specs */
+   SPEC_CORPSEDELAY, SPEC_INVENTORYTOCORPSE,
    /* Misc Specs */
    SPEC_MIRROREXIT, SPEC_TERRAIN,
 
@@ -306,6 +310,68 @@ do                                                                      \
    }                                                                    \
 } while(0)
 
+#define DAVLUACM_DAMAGE_NIL( dmg, L )					\
+do									\
+{									\
+   if( ( (dmg) = *(DAMAGE **)luaL_checkudata( (L), 1, "Damage.meta" ) ) == NULL ) \
+   {									\
+      bug( "%s: bad meta table.", __FUNCTION__ );			\
+      lua_pushnil( (L) );						\
+      return 1;								\
+   }									\
+} while(0)
+
+#define DAVLUACM_DAMAGE_BOOL( dmg, L )                                  \
+do                                                                      \
+{                                                                       \
+   if( ( (dmg) = *(DAMAGE **)luaL_checkudata( (L), 1, "Damage.meta" ) ) == NULL ) \
+   {                                                                    \
+      bug( "%s: bad meta table.", __FUNCTION__ );                       \
+      lua_pushboolean( (L), 0 );                                        \
+      return 1;                                                         \
+   }                                                                    \
+} while(0)
+
+#define DAVLUACM_DAMAGE_NONE( dmg, L )                                  \
+do                                                                      \
+{                                                                       \
+   if( ( (dmg) = *(DAMAGE **)luaL_checkudata( (L), 1, "Damage.meta" ) ) == NULL ) \
+   {                                                                    \
+      bug( "%s: bad meta table.", __FUNCTION__ );                       \
+      return 0;                                                         \
+   }                                                                    \
+} while(0)
+
+#define DAVLUACM_TIMER_NIL( timer, L )                                  \
+do                                                                      \
+{                                                                       \
+   if( ( (timer) = *(TIMER **)luaL_checkudata( (L), 1, "Timers.meta" ) ) == NULL ) \
+   {                                                                    \
+      bug( "%s: bad meta table.", __FUNCTION__ );                       \
+      lua_pushnil( (L) );                                               \
+      return 1;                                                         \
+   }                                                                    \
+} while(0)
+#define DAVLUACM_TIMER_BOOL( timer , L )                                \
+do                                                                      \
+{                                                                       \
+   if( ( (timer) = *(TIMER **)luaL_checkudata( (L), 1, "Timers.meta" ) ) == NULL ) \
+   {                                                                    \
+      bug( "%s: bad meta table.", __FUNCTION__ );                       \
+      lua_pushboolean( (L), 0 );                                        \
+      return 1;                                                         \
+   }                                                                    \
+} while(0)
+#define DAVLUACM_TIMER_NONE( timer, L )                                 \
+do                                                                      \
+{                                                                       \
+   if( ( (timer) = *(TIMER **)luaL_checkudata( (L), 1, "Timers.meta" ) ) == NULL ) \
+   {                                                                    \
+      bug( "%s: bad meta table.", __FUNCTION__ );                       \
+      return 0;                                                         \
+   }                                                                    \
+} while(0)
+
 
 #define UMIN(a, b)		((a) < (b) ? (a) : (b))
 #define UMAX(a, b)              ((a) < (b) ? (b) : (a))
@@ -365,6 +431,8 @@ typedef struct  target_data    TARGET_DATA;
 typedef struct  entity_variable EVAR;
 typedef struct  stat_framework  STAT_FRAMEWORK;
 typedef struct  stat_instance   STAT_INSTANCE;
+typedef struct  damage_data     DAMAGE;
+typedef struct  timer           TIMER;
 
 /* the actual structures */
 struct dSocket
@@ -443,6 +511,12 @@ typedef struct buffer_type
 #include "entity_variables.h"
 #include "entity_stats.h"
 #include "pak.h"
+#include "combat.h"
+#include "lua_damage.h"
+#include "timers.h"
+#include "lua_timers.h"
+#include "lua_iter.h"
+
 /******************************
  * End of new structures      *
  ******************************/
@@ -469,12 +543,26 @@ extern  char        *   motd;             /* the MOTD help file                 
 extern  int             control;          /* boot control socket thingy         */
 extern  time_t          current_time;     /* let's cut down on calls to time()  */
 
+
+/* server settings */
+extern int  MUDPORT;
+
+/* database settings */
 extern const char *DB_NAME;
 extern const char *DB_ADDR;
 extern const char *DB_LOGIN;
 extern const char *DB_PASSWORD;
 extern const char *WIKI_NAME;
 
+/* combat settings */
+extern bool AUTOMELEE;
+extern bool DODGE_ON;
+extern bool PARRY_ON;
+extern bool MISS_ON;
+extern int  BASE_MELEE_DELAY;
+
+/* corpse settings */
+extern int  CORPSE_DECAY;
 /***************************
  * End of Global Variables *
  ***************************/

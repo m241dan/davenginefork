@@ -452,12 +452,14 @@ int olc_prompt( D_SOCKET *dsock, bool commands )
          }
 
          if( frame )
-            text_to_olc( olc, "|%s|", fit_string_to_space( quick_format( " %-7d: %s", frame->tag->id, frame->name ), ( space_after_pipes - 1 ) / 2 ) );
+            text_to_olc( olc, "|%s|", fit_string_to_space( quick_format( " %s%-4d: %s",
+               frame->inherits ? quick_format( "(f%d) ", frame->inherits->tag->id ) : "",
+               frame->tag->id, chase_name( frame ) ), ( space_after_pipes - 1 ) / 2 ) );
          else
             text_to_olc( olc, "|%s|", print_header( " ", " ", ( space_after_pipes - 1 ) / 2 ) );
 
          if( instance )
-            text_to_olc( olc, " %s|\r\n", fit_string_to_space( quick_format( " %-7d: %s", instance->tag->id, instance_name( instance ) ), ( space_after_pipes - 1 ) / 2 ) );
+            text_to_olc( olc, " %s|\r\n", fit_string_to_space( quick_format( " (f%d) %-4d: %s", instance->framework->tag->id, instance->tag->id, instance_name( instance ) ), ( space_after_pipes - 1 ) / 2 ) );
          else
             text_to_olc( olc, " %s|\r\n", print_header( " ", " ", ( space_after_pipes - 1 ) / 2 ) );
       }
@@ -1643,7 +1645,7 @@ void workspace_unload( void *passed, char *arg )
 
    AttachIterator( &Iter, olc->wSpaces );
    while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
-      if( !strcmp( arg, wSpace->name ) )
+      if( !strcasecmp( wSpace->name, arg ) )
          break;
    DetachIterator( &Iter );
 
@@ -1909,13 +1911,6 @@ void olc_instantiate( void *passed, char *arg )
    if( ( instance = eInstantiate( frame ) ) == NULL )
    {
       text_to_olc( olc, "There's been a major problem, framework you are trying to instantiate from may not be live.\r\n" );
-      return;
-   }
-
-   if( new_eInstance( instance ) != RET_SUCCESS )
-   {
-      free_eInstance( instance );
-      text_to_olc( olc, "Could not add new instance to database, deleting it from live memory.\r\n" );
       return;
    }
 
@@ -2263,7 +2258,7 @@ void olc_pak( void *passed, char *arg )
 
    if( !strcasecmp( buf, "show"  ) )
    {
-      text_to_olc( olc, return_pak_contents( arg ) );
+      text_to_olc( olc, return_pak_contents( name ) );
       olc_short_prompt( olc );
       return;
    }
@@ -2313,7 +2308,7 @@ void olc_pak( void *passed, char *arg )
 
    if( !strcasecmp( buf, "rem" ) )
    {
-      if( !arg || arg[0] )
+      if( !arg || arg[0] == '\0' )
       {
          text_to_olc( olc, "Remove which stat or spec?\r\n" );
          olc_short_prompt( olc );
@@ -2327,4 +2322,44 @@ void olc_pak( void *passed, char *arg )
       return;
    }
    return;
+}
+
+void olc_delete( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_INSTANCE *instance;
+/*   ENTITY_FRAMEWORK *frame;
+   PROJECT *project;
+   WORKSPACE *wSpace; comment to avoid warnings for now */
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Delete what?\r\n" );
+      return;
+   }
+
+   if( !interpret_entity_selection( arg ) )
+   {
+      text_to_olc( olc, STD_SELECTION_ERRMSG_PTR_USED );
+      olc_short_prompt( olc );
+      return;
+   }
+
+   switch( input_selection_typing )
+   {
+      default:
+         clear_entity_selection();
+         text_to_olc( olc, "Invalid selection type, frame, instance, workspace and project only.\r\n" );
+         return;
+      case SEL_FRAME:
+      case SEL_WORKSPACE:
+      case SEL_PROJECT:
+         text_to_olc( olc, "Instances only for the moment.\r\n" );
+         return;
+      case SEL_INSTANCE:
+         instance = (ENTITY_INSTANCE *)retrieve_entity_selection();
+         text_to_olc( olc, "You delete %s from existence.\r\n", instance_name( instance ) );
+         delete_eInstance( instance );
+         return;
+   }
 }

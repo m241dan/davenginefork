@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS `stat_frameworks` (
    `hardcap`  int NOT NULL DEFAULT '0',
    `softfloor`  int NOT NULL DEFAULT '0',
    `hardfloor`  int NOT NULL DEFAULT '0',
+   `type` int NOT NULL DEFAULT '0',
    PRIMARY KEY (`statFrameworkID`),
    UNIQUE INDEX `name` ( `name` )
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

@@ -25,8 +25,13 @@
 
 typedef enum
 {
-   EVENT_LUA_CALLBACK = 1, MAX_INSTANCE_EVENT
+   EVENT_LUA_CALLBACK = 1, EVENT_AUTO_ATTACK, EVENT_DECAY, MAX_INSTANCE_EVENT
 } INSTANCE_EVENTS;
+
+typedef enum
+{
+   GLOBAL_EVENT_LUA_CALLBACK = 1, MAX_GLOBAL_EVENT
+} GLOBAL_EVENTS;
 
 /* Socket events are given a type value here.
  * Each value should be unique and explicit,
@@ -63,6 +68,7 @@ EVENT_DATA *alloc_event          ( void );
 void free_event                  ( EVENT_DATA *event );
 
 EVENT_DATA *event_isset_socket   ( D_SOCKET *dSock, int type );
+EVENT_DATA *event_isset_instance ( ENTITY_INSTANCE *instance, int type );
 void dequeue_event               ( EVENT_DATA *event );
 void init_event_queue            ( int section );
 void init_events_socket          ( D_SOCKET *dSock );
@@ -70,6 +76,7 @@ void heartbeat                   ( void );
 void add_event_socket            ( EVENT_DATA *event, D_SOCKET *dSock, int delay );
 void add_event_instance          ( EVENT_DATA *event, ENTITY_INSTANCE *instance, int delay );
 void add_event_game              ( EVENT_DATA *event, int delay );
+void add_event_lua               ( EVENT_DATA *event, const char *path, int delay );
 void strip_event_socket          ( D_SOCKET *dSock, int type );
 void strip_event_instance        ( ENTITY_INSTANCE *instance, int type );
 
@@ -79,3 +86,6 @@ bool event_mobile_save           ( EVENT_DATA *event );
 bool event_socket_idle           ( EVENT_DATA *event );
 bool event_game_tick             ( EVENT_DATA *event );
 bool event_instance_lua_callback ( EVENT_DATA *event );
+bool event_global_lua_callback   ( EVENT_DATA *event );
+bool event_auto_attack		 ( EVENT_DATA *event );
+bool event_instance_decay	 ( EVENT_DATA *event );

@@ -18,3 +18,12 @@ do
    fi
 done
 
+echo "Resetting Stat Scripts"
+
+for file in ../scripts/stats/*.lua
+do
+   if [ ! -z $file ]
+   then
+      rm $file
+   fi
+done
