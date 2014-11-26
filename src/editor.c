@@ -461,7 +461,7 @@ void eFramework_description( void *passed, char *arg )
 
    FREE( frame->description );
    frame->description = strdup( arg );
-   text_to_olc( olc, "Long description changed.\r\n" );
+   text_to_olc( olc, "Description changed.\r\n" );
 
    if( live_frame( frame ) )
    {

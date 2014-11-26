@@ -170,7 +170,7 @@ int new_eFramework( ENTITY_FRAMEWORK *frame )
    if( !quick_query( "INSERT INTO entity_frameworks VALUES( %d, %d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d' );",
          frame->tag->id, frame->tag->type, frame->tag->created_by,
          frame->tag->created_on, frame->tag->modified_by, frame->tag->modified_on,
-         frame->name, frame->short_descr, frame->long_descr, frame->description,
+         format_string_for_sql( frame->name ), format_string_for_sql( frame->short_descr ), format_string_for_sql( frame->long_descr ), format_string_for_sql( frame->description ),
          ( frame->inherits ? frame->inherits->tag->id : -1 ) ) )
       return RET_FAILED_OTHER;
 

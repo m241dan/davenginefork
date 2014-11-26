@@ -605,7 +605,7 @@ int add_instance_to_workspace( ENTITY_INSTANCE *instance, WORKSPACE *wSpace )
 void rem_frame_from_workspace( ENTITY_FRAMEWORK *frame, WORKSPACE *wSpace )
 {
    DetachFromList( frame, wSpace->frameworks );
-   quick_query( "DELTE FROM `workspace_entries` WHERE entry='f%d' AND workspaceID=%d;", frame->tag->id, wSpace->tag->id );
+   quick_query( "DELETE FROM `workspace_entries` WHERE entry='f%d' AND workspaceID=%d;", frame->tag->id, wSpace->tag->id );
    return;
 }
 
