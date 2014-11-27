@@ -18,7 +18,8 @@ const struct luaL_Reg EntityInstanceLib_m[] = {
    { "getStatMod", getStatMod },
    { "getStatPerm", getStatPerm },
    { "getStat", getStat },
-   { "getStatEffectiveValue", getStatEffectiveValue },
+   { "getStatValue", getStatEffectiveValue },
+   { "getHome", getHome },
    /* setters */
    { "setStatMod", setStatMod },
    { "setStatPerm", setStatPerm },
@@ -26,11 +27,13 @@ const struct luaL_Reg EntityInstanceLib_m[] = {
    { "addStatPerm", addStatPerm },
    { "setVar", setVar },
    { "addSpec", addSpec },
+   { "setHome", setHome },
    /* bools */
    { "isLive", isLive },
    { "isBuilder", isBuilder },
    { "hasItemInInventoryFramework", hasItemInInventoryFramework },
    { "isSameRoom", isSameRoom },
+   { "isPlayer", isPlayer },
    /* actions */
    { "callBack", luaCallBack },
    { "interp", luaEntityInstanceInterp },
@@ -416,6 +419,19 @@ int getStatEffectiveValue( lua_State *L )
    return 1;
 }
 
+int getHome( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+
+   DAVLUACM_INSTANCE_NIL( instance, L );
+   if( !instance->home )
+      lua_pushnil( L );
+   else
+      push_instance( instance->home, L );
+
+   return 1;
+}
+
 int setStatMod( lua_State *L )
 {
    ENTITY_INSTANCE *instance;
@@ -671,6 +687,20 @@ int addSpec( lua_State *L )
    return 0;
 }
 
+int setHome( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+
+   DAVLUACM_INSTANCE_NONE( instance, L );
+   if( !instance->contained_by )
+   {
+      bug( "%s: cannot set home on something that is not contained.", __FUNCTION__ );
+      return 0;
+   }
+   set_instance_home( instance );
+   return 0;
+}
+
 int isLive( lua_State *L )
 {
    ENTITY_INSTANCE *instance;
@@ -775,7 +805,15 @@ int hasItemInInventoryFramework( lua_State *L )
    else
       lua_pushboolean( L, 0 );
 
-   return 1; 
+   return 1;
+}
+
+int isPlayer( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+   DAVLUACM_INSTANCE_BOOL( instance, L );
+   lua_pushboolean( L, (int)instance->isPlayer );
+   return 1;
 }
 
 /* actions */
