@@ -6,6 +6,26 @@
 /* include main header file */
 #include "mud.h"
 
+
+/* quick event creation */
+inline EVENT_DATA *decay_event( void )
+{
+   EVENT_DATA *event;
+   event = alloc_event();
+   event->fun = &event_instance_decay;
+   event->type = EVENT_DECAY;
+   return event;
+}
+
+inline EVENT_DATA *respawn_event( void )
+{
+   EVENT_DATA *event;
+   event = alloc_event();
+   event->fun = &event_instance_respawn;
+   event->type = EVENT_RESPAWN;
+   return event;
+}
+
 /* event_game_tick is just to show how to make global events
  * which can be used to update the game.
  */

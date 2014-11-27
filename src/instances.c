@@ -34,6 +34,7 @@ ENTITY_INSTANCE *init_eInstance( void )
 
 int clear_eInstance( ENTITY_INSTANCE *eInstance )
 {
+   eInstance->home = NULL;
    eInstance->framework = NULL;
    eInstance->socket = NULL;
    eInstance->account = NULL;
@@ -46,6 +47,7 @@ int free_eInstance( ENTITY_INSTANCE *eInstance )
 {
    int x;
 
+   eInstance->home = NULL;
    eInstance->framework = NULL;
 
    for( x = 0; x < MAX_QUICK_SORT; x++ )
@@ -396,12 +398,14 @@ int new_eInstance( ENTITY_INSTANCE *eInstance )
       }
    }
 
-   if( !quick_query( "INSERT INTO entity_instances VALUES( %d, %d, '%s', '%s', '%s', '%s', %d, %d, %d, %d, %d, %d, %d, %d );",
+   if( !quick_query( "INSERT INTO entity_instances VALUES( %d, %d, '%s', '%s', '%s', '%s', %d, %d, %d, %d, %d, %d, %d, %d, %d );",
          eInstance->tag->id, eInstance->tag->type, eInstance->tag->created_by,
          eInstance->tag->created_on, eInstance->tag->modified_by, eInstance->tag->modified_on,
          eInstance->contained_by ? eInstance->contained_by->tag->id : -1, eInstance->framework->tag->id,
          (int)eInstance->live, eInstance->corpse_owner, (int)eInstance->state,
-         (int)eInstance->mind, (int)eInstance->tspeed, (int)eInstance->isPlayer ) )
+         (int)eInstance->mind, (int)eInstance->tspeed, (int)eInstance->isPlayer,
+         ( eInstance->home ? eInstance->home->tag->id : 0 )
+         ) )
       return RET_FAILED_OTHER;
 
    AttachIterator( &Iter, eInstance->specifications );
@@ -437,6 +441,7 @@ void db_load_eInstance( ENTITY_INSTANCE *eInstance, MYSQL_ROW *row )
    eInstance->mind = atoi( (*row)[counter++] );
    eInstance->tspeed = atoi( (*row)[counter++] );
    eInstance->isPlayer = atoi( (*row)[counter++] );
+   eInstance->home = get_instance_by_id( atoi( (*row)[counter++] ) );
    return;
 }
 
@@ -1424,17 +1429,6 @@ bool should_move_create( ENTITY_INSTANCE *entity, char *arg )
    return TRUE;
 }
 
-/* creation */
-inline EVENT_DATA *decay_event( void )
-{
-   EVENT_DATA *event;
-
-   event = alloc_event();
-   event->fun = &event_instance_decay;
-   event->type = EVENT_DECAY;
-   return event;
-}
-
 /* getters */
 
 const char *instance_name( ENTITY_INSTANCE *instance )
@@ -1537,6 +1531,13 @@ inline void set_instance_tspeed( ENTITY_INSTANCE *instance, int tspeed )
       bug( "%s: could not update database for instance %d with new state.", __FUNCTION__, instance->tag->id );
 }
 
+inline void set_instance_home( ENTITY_INSTANCE *instance )
+{
+   instance->home = instance->contained_by;
+   if( !quick_query( "UPDATE `entity_instances` SET home=%d WHERE entityInstanceID=%d;", instance->home ? instance->home->tag->id : 0, instance->tag->id ) )
+      bug( "%s: could not update database for instance %d with new home.", __FUNCTION__, instance->tag->id );
+}
+
 /* actions */
 
 /* do_damage on kill return TRUE */
@@ -1555,21 +1556,20 @@ bool do_damage( ENTITY_INSTANCE *entity, DAMAGE *dmg )
    return FALSE;
 }
 
-void death_instance( ENTITY_INSTANCE *instance )
-{
-   return;
-}
-
-void spawn_instance( ENTITY_INSTANCE *instance )
-{
-   return;
-}
-
 void set_for_decay( ENTITY_INSTANCE *corpse, int decay )
 {
    EVENT_DATA *event;
    event = decay_event();
    add_event_instance( event, corpse, decay );
+   return;
+}
+
+void set_for_respawn( ENTITY_INSTANCE *instance )
+{
+   EVENT_DATA *event;
+   event = respawn_event();
+   add_event_instance( event, instance, instance->framework->spawn_time * PULSES_PER_SECOND );
+   return;
 }
 
 void corpsify_inventory( ENTITY_INSTANCE *instance, ENTITY_INSTANCE *corpse )
@@ -2739,7 +2739,7 @@ void entity_target( void *passed, char *arg )
    ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
    INCEPTION *olc = entity->account->olc;
    void *to_target;
-   int type;
+   int type, number;
 
    if( !arg || arg[0] == '\0' )
    {
@@ -2773,9 +2773,11 @@ void entity_target( void *passed, char *arg )
 
    if( !input_format_is_selection_type( arg ) )
    {
+      if( ( number = number_arg_single( arg ) ) <= 0 )
+         number = 1;
       if( entity->contained_by )
-         to_target = instance_list_has_by_name_regex( entity->contained_by->contents, arg );
-      if( !to_target && ( to_target = instance_list_has_by_name_regex( entity->contents, arg ) ) == NULL )
+         to_target = instance_list_has_by_name_regex_specific( entity->contained_by->contents, arg, number );
+      if( !to_target && ( to_target = instance_list_has_by_name_regex_specific( entity->contents, arg, number ) ) == NULL )
       {
          text_to_entity( entity, "You see no %s.\r\n", arg );
          return;
@@ -2833,6 +2835,56 @@ void entity_show( void *passed, char *arg )
    return;
 }
 
+void entity_set_home( void *passed, char *arg )
+{
+   ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
+   ENTITY_INSTANCE *to_set;
+   ITERATOR Iter;
+   int number;
+
+   if( !entity->contained_by )
+   {
+      text_to_entity( entity, "You are in the ether, you can't set anythings home to the Ether.\r\n" );
+      return;
+   }
+
+   if( !arg || arg[0] == '\0' )
+   {
+      AttachIterator( &Iter, entity->contained_by->contents );
+      while( ( to_set = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
+         set_instance_home( to_set );
+      DetachIterator( &Iter );
+      text_to_entity( entity, "You set all instances in this room home to it.\r\n" );
+      return;
+   }
+
+   if( !strcmp( arg, "target" ) )
+   {
+      if( !NO_TARGET( entity ) || TARGET_TYPE( entity ) != TARGET_INSTANCE )
+      {
+         text_to_entity( entity, "You aren't targetting anything who's home is settable.\r\n" );
+         return;
+      }
+      set_instance_home( GT_INSTANCE( entity ) );
+      text_to_entity( entity, "You set %s home to its current room.\r\n", instance_short_descr( GT_INSTANCE( entity ) ) );
+      return;
+   }
+   if( ( number = number_arg_single( arg ) ) <= 0 )
+      number = 1;
+
+   if( ( to_set = find_specific_item( entity, arg, number ) ) == NULL )
+   {
+      text_to_entity( entity, "You cannot find %s.\r\n", arg );
+      return;
+   }
+
+   set_instance_home( to_set );
+   text_to_entity( entity, "You set %s's home to its current room.\r\n", instance_short_descr( to_set ) );
+   return;
+}
+
+
+/* mobile commands */
 void mobile_look( void *passed, char *arg )
 {
    return;
