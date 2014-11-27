@@ -16,6 +16,7 @@ int getDmgSrc( lua_State *L );
 int getAmount( lua_State *L );
 int getDuration( lua_State *L );
 int getDamageTimer( lua_State *L );
+int getDamageSrcType( lua_State *L );
 
 /* setters */
 int setAttacker( lua_State *L );

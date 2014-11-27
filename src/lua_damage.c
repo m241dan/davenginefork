@@ -9,6 +9,7 @@ const struct luaL_Reg DamageLib_m[] = {
    { "getDmgSrc", getDmgSrc },
    { "getAmount", getAmount },
    { "getTimer", getDamageTimer },
+   { "getDmgSrcType", getDamageSrcType },
    /* setters */
    { "setAttacker", setAttacker },
    { "setVictim", setVictim },
@@ -124,6 +125,14 @@ int getDamageTimer( lua_State *L )
    DAMAGE *dmg;
    DAVLUACM_DAMAGE_NIL( dmg, L );
    push_timer( dmg->timer, L );
+   return 1;
+}
+
+int getDamageSrcType( lua_State *L )
+{
+   DAMAGE *dmg;
+   DAVLUACM_DAMAGE_NIL( dmg, L );
+   lua_pushnumber( L, (int)dmg->type );
    return 1;
 }
 
