@@ -304,6 +304,8 @@ void make_dead( ENTITY_INSTANCE *dead_instance )
    corpse = corpsify( dead_instance );
    entity_to_world( corpse, dead_instance->contained_by );
    onDeath_trigger( dead_instance );
+   if( dead_instance->framework->spawn_time > 0 )
+      set_for_respawn( dead_instance );
    entity_to_world( dead_instance, NULL );
 
    return;

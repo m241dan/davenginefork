@@ -1568,6 +1568,8 @@ void set_for_respawn( ENTITY_INSTANCE *instance )
 {
    EVENT_DATA *event;
    event = respawn_event();
+   if( !instance->home && instance->contained_by )
+      set_instance_home( instance );
    add_event_instance( event, instance, instance->framework->spawn_time * PULSES_PER_SECOND );
    return;
 }
