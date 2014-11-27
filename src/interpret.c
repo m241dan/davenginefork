@@ -182,6 +182,7 @@ struct typCmd create_instance_commands[] = {
    { "done", instance_done, LEVEL_BASIC, NULL, FALSE, NULL, create_instance_commands },
    { "return", editor_global_return, LEVEL_BASIC, NULL, FALSE, editor_return_desc, create_instance_commands },
    { "switch", editor_switch, LEVEL_BASIC, NULL, FALSE, NULL, create_instance_commands },
+   { "reinit", instance_reinit, LEVEL_BASIC, NULL, FALSE, NULL, create_instance_commands },
    { "autowrite", instance_autowrite, LEVEL_BASIC, NULL, FALSE, NULL, create_instance_commands },
    { "setstat", instance_setStat, LEVEL_BASIC, NULL, FALSE, NULL, create_instance_commands },
    { "addspec", instance_addspec, LEVEL_BASIC, NULL, FALSE, NULL, create_instance_commands },
@@ -277,6 +278,7 @@ struct typCmd builder_commands[] = {
    { "up", entity_up, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
    { "down", entity_down, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
    { "kill", mobile_kill, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
+   { "sethome", entity_set_home, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
    { '\0', NULL, 0, NULL, FALSE, NULL }
 };
 

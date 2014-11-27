@@ -255,15 +255,19 @@ const char *return_framework_strings( ENTITY_FRAMEWORK *frame, const char *borde
       quick_format( " Thought Speed : %d", (int)frame->tspeed ),
       space_after_border ),
       border );
+
+      strcat( buf, tempstring );
    }
 
    if( frame->spawn_time > 0 )
    {
       mud_printf( tempstring, "%s%s%s\r\n", border,
       fit_string_to_space(
-      quick_format( " If killed, will respawn in %d seconds\r\n", frame->spawn_time ),
+      quick_format( " If killed, will respawn in %d seconds", frame->spawn_time ),
       space_after_border ),
       border );
+
+      strcat( buf, tempstring );
    }
 
 
@@ -1535,6 +1539,16 @@ void instance_addPak( void *passed, char *arg )
    text_to_olc( olc, "You load the Pak.\r\n" );
    return;
 
+}
+
+void instance_reinit( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_INSTANCE *instance = (ENTITY_INSTANCE *)olc->editing;
+
+   onInstanceInit_trigger( instance );
+   text_to_olc( olc, "You reinitialize %d : %s from the script.\r\n", instance->tag->id, instance_name( instance ) );
+   return;
 }
 
 int init_sFramework_editor( INCEPTION *olc, STAT_FRAMEWORK *fstat )

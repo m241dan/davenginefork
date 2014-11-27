@@ -131,6 +131,7 @@ extern inline void set_instance_state( ENTITY_INSTANCE *instance, INSTANCE_STATE
 extern inline void set_instance_mind( ENTITY_INSTANCE *instance, INSTANCE_MIND mind );
 extern inline void set_instance_tspeed( ENTITY_INSTANCE *instance, int tspeed );
 extern inline void set_instance_home( ENTITY_INSTANCE *instance );
+extern inline void set_instance_corpse_owner( ENTITY_INSTANCE *instance, int id );
 
 /* actions */
 bool do_damage( ENTITY_INSTANCE *entity, DAMAGE *dmg );

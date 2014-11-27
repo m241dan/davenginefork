@@ -36,23 +36,17 @@ end
 
 -- figure out the damage amount portion of the damage object
 function prepMeleeDamage( attacker, damage ) 
-   local source = damage:getDmgSrc()
-   local base = math.random( source:getStatValue( "MinDamage" ), source:getStatValue( "MaxDamage" )
-   base = base + attacker:getStatValue( "Strength" )
-   damage:setAmount( base )   
+   if( attacker:isBuilder() == true ) then
+      damage:setAmount( 100 )
+   else
+      damage:setAmount( 1 )
+   end
 end
 
 -- analyze the damage object sent to the defender
 -- calculator any the actual damage that the object does
 -- note that any elemental damage will be handled by C
 function onReceiveDamage( defender, damage )
-   source_type = damage:getDmgSrcType()
-   if( source_type == DMG_MELEE ) then
-      local base = damage:getAmount()
-      base = base - defender:getStatValue( "Vitality" )
-      damage:setAmount( base )
-      return
-   end
 end
 
 -- return order attacker -> defender -> room

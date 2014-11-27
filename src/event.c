@@ -263,6 +263,6 @@ bool event_instance_respawn( EVENT_DATA *event )
 
    entity_to_world( spawning_instance, spawning_instance->home );
    onSpawn_trigger( spawning_instance );
-   text_around_entity( spawning_instance->contained_by, 1, "%s fades into existence.", spawning_instance, instance_short_descr( spawning_instance ) );
+   text_around_entity( spawning_instance->contained_by, 1, "%s fades into existence.\r\n", spawning_instance, instance_short_descr( spawning_instance ) );
    return FALSE;
 }

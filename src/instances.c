@@ -352,6 +352,9 @@ void full_load_instance( ENTITY_INSTANCE *instance )
          stat_instantiate( instance, fstat );
    DetachIterator( &Iter );
 
+   if( instance->framework->f_primary_dmg_received_stat )
+      instance->primary_dmg_received_stat = get_stat_from_instance_by_id( instance, instance->framework->f_primary_dmg_received_stat->tag->id );
+
    list = AllocList();
    if( !db_query_list_row( list, quick_format( "SELECT content_instanceID FROM `entity_instance_possessions` WHERE %s=%d;", tag_table_whereID[ENTITY_INSTANCE_IDS], instance->tag->id ) ) )
    {
@@ -1208,7 +1211,6 @@ ENTITY_INSTANCE *eInstantiate( ENTITY_FRAMEWORK *frame )
    ENTITY_FRAMEWORK *fixed_content;
    ENTITY_INSTANCE *eInstance, *content;
    ITERATOR Iter;
-   int ret;
 
    if( !live_frame( frame ) )
       return NULL;
@@ -1228,11 +1230,7 @@ ENTITY_INSTANCE *eInstantiate( ENTITY_FRAMEWORK *frame )
       }
       DetachIterator( &Iter );
    }
-   prep_stack( get_frame_script_path( frame ), "onInstanceInit" );
-   push_framework( frame, lua_handle );
-   push_instance( eInstance, lua_handle );
-   if( ( ret = lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) ) )
-      bug( "%s: ret %d: path %s\r\n - error message: %s.", __FUNCTION__, ret, get_frame_script_path( frame ), lua_tostring( lua_handle, -1 ) );
+   onInstanceInit_trigger( eInstance );
    return eInstance;
 }
 
@@ -1284,6 +1282,7 @@ ENTITY_INSTANCE *corpsify( ENTITY_INSTANCE *instance )
    int decay;
 
    corpse = eInstantiate( instance->framework );
+   set_instance_corpse_owner( corpse, instance->tag->id );
    corpse->corpse_owner = instance->tag->id;
    corpsify_inventory( instance, corpse );
    decay = get_corpse_decay( instance );
@@ -1536,6 +1535,13 @@ inline void set_instance_home( ENTITY_INSTANCE *instance )
    instance->home = instance->contained_by;
    if( !quick_query( "UPDATE `entity_instances` SET home=%d WHERE entityInstanceID=%d;", instance->home ? instance->home->tag->id : 0, instance->tag->id ) )
       bug( "%s: could not update database for instance %d with new home.", __FUNCTION__, instance->tag->id );
+}
+
+inline void set_instance_corpse_owner( ENTITY_INSTANCE *instance, int id )
+{
+   instance->corpse_owner = id;
+   if( !quick_query( "UPDATE `entity_instances` SET corpse_owner=%d WHERE entityInstanceID=%d;", instance->corpse_owner, instance->tag->id ) )
+      bug( "%s: could not update dtabase for instance %d with new home.", __FUNCTION__, instance->tag->id );
 }
 
 /* actions */

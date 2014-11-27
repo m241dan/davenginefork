@@ -65,6 +65,7 @@ void instance_addspec( void *passed, char *arg );
 void instance_script( void *passed, char *arg );
 void instance_done( void *passed, char *arg );
 void instance_addPak( void *passed, char *arg );
+void instance_reinit( void *passed, char *arg );
 
 int init_sFramework_editor( INCEPTION *olc, STAT_FRAMEWORK *fstat );
 void boot_sFramework_editor( INCEPTION *olc, STAT_FRAMEWORK *fstat );
