@@ -27,7 +27,6 @@ const struct luaL_Reg EntityInstanceLib_m[] = {
    { "setVar", setVar },
    { "addSpec", addSpec },
    /* bools */
-   { "isLoaded", isLoaded },
    { "isLive", isLive },
    { "isBuilder", isBuilder },
    { "hasItemInInventoryFramework", hasItemInInventoryFramework },
@@ -39,6 +38,7 @@ const struct luaL_Reg EntityInstanceLib_m[] = {
    { "echo", luaEcho },
    { "echoAt", luaEchoAt },
    { "echoAround", luaEchoAround },
+   { "frameCall", luaFrameCall },
    /* iterators */
    { "eachInventory", luaEachInventory },
    { NULL, NULL } /* gandalf */
@@ -671,15 +671,6 @@ int addSpec( lua_State *L )
    return 0;
 }
 
-int isLoaded( lua_State *L )
-{
-   ENTITY_INSTANCE *instance;
-
-   DAVLUACM_INSTANCE_BOOL( instance, L );
-   lua_pushboolean( L, (int)instance->loaded );
-   return 1;
-}
-
 int isLive( lua_State *L )
 {
    ENTITY_INSTANCE *instance;
@@ -989,6 +980,80 @@ int luaEchoAround( lua_State *L )
       text_to_entity( instance, lua_tostring( L, -1 ) );
    }
    return 0;
+}
+
+int luaFrameCall( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+   const char *func_name;
+   const char *cypher;
+   int num_args;
+   int x, ret;
+
+   DAVLUACM_INSTANCE_NONE( instance, L );
+
+   if( ( func_name = luaL_checkstring( L, 2 ) ) == NULL )
+   {
+      bug( "%s: no function name passed.", __FUNCTION__ );
+      return 0;
+   }
+   if( ( cypher = luaL_checkstring( L, 3 ) ) == NULL )
+   {
+      bug( "%s: no cypher string passed.", __FUNCTION__ );
+      return 0;
+   }
+
+   prep_stack_handle( L, get_frame_script_path( instance->framework ), func_name );
+
+   for( x = 0, num_args = strlen( cypher ); x < num_args; x++ )
+   {
+      ENTITY_FRAMEWORK *arg_frame;
+      ENTITY_INSTANCE *arg_instance;
+
+      switch( cypher[x] )
+      {
+         case 's':
+            if( lua_type( L, ( 4 + x ) ) != LUA_TSTRING )
+            {
+               bug( "%s: bad/cypeer passed value, not a string at position %d.", __FUNCTION__, x );
+               lua_pushnil( L );
+               continue;
+            }
+            lua_pushstring( L, lua_tostring( L, ( 4 + x ) ) );
+            break;
+         case 'n':
+            if( lua_type( L, ( 4 + x ) ) != LUA_TNUMBER )
+            {
+               bug( "%s: bad/cypher passed value, not a number at position %d.", __FUNCTION__, x );
+               lua_pushnil( L );
+               continue;
+            }
+            lua_pushnumber( L, lua_tonumber( L, ( 4 + x ) ) );
+            break;
+         case 'i':
+            if( ( arg_instance = *(ENTITY_INSTANCE **)luaL_checkudata( L, ( 4 + x ), "EntityInstance.meta" ) ) == NULL )
+            {
+               bug( "%s: bad/cypher passed value, not an instance at position %d.", __FUNCTION__, x );
+               lua_pushnil( L );
+               continue;
+            }
+           push_instance( arg_instance, L );
+            break;
+         case 'f':
+            if( ( arg_frame = *(ENTITY_FRAMEWORK **)luaL_checkudata( L, ( 4 + x ), "EntityFramework.meta" ) ) == NULL )
+            {
+               bug( "%s: bad/cypher passed value, not a framework at position %d.", __FUNCTION__, x );
+               lua_pushnil( L );
+               continue;
+            }
+            push_framework( arg_frame, L );
+            break;
+      }
+   }
+   if( ( ret = lua_pcall( L, num_args, 0, 0 ) ) )
+      bug( "%s: ret %d: path: %s\r\n - error message: %s\r\n", __FUNCTION__, ret, get_frame_script_path( instance->framework ), lua_tostring( L, -1 ) );
+   return 0;
+
 }
 
 int luaEachInventory( lua_State *L )

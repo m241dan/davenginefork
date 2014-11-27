@@ -51,6 +51,7 @@ const char	*compose_dmg_key( DAMAGE *dmg );
 
 /* actions */
 void		handle_damage	( DAMAGE *dmg );
+void		make_dead	( ENTITY_INSTANCE *dead_person );
 void		combat_message	( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim, DAMAGE *dmg, cbt_ret status );
 void		start_killing_mode( ENTITY_INSTANCE *instance, bool message );
 void		end_killing_mode( ENTITY_INSTANCE *instance, bool message );

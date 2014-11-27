@@ -225,3 +225,21 @@ bool event_instance_decay( EVENT_DATA *event )
    delete_eInstance( corpse );
    return TRUE;
 }
+
+bool event_instance_respawn( EVENT_DATA *event )
+{
+   ENTITY_INSTANCE *spawning_instance;
+
+   if( event->ownertype != EVENT_OWNER_INSTANCE )
+   {
+      bug( "%s: bad event owner.", __FUNCTION__ );
+      return FALSE;
+   }
+   if( ( spawning_instance = (ENTITY_INSTANCE *)event->owner ) == NULL )
+   {
+      bug( "%s: event had a NULL owner.", __FUNCTION__ );
+      return FALSE;
+   }
+
+   return FALSE;
+}

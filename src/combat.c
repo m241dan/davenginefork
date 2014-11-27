@@ -290,10 +290,23 @@ void handle_damage( DAMAGE *dmg )
    combat_message( dmg->attacker, dmg->victim, dmg, status );
    if( kill )
    {
-      end_killing_mode( dmg->attacker, FALSE );
       text_to_entity( dmg->attacker, "You have killed %s.\r\n", downcase( instance_short_descr( dmg->victim ) ) );
+      make_dead( dmg->victim );
+      end_killing_mode( dmg->attacker, FALSE );
       dmg->attacker->socket->bust_prompt = TRUE;
    }
+}
+
+void make_dead( ENTITY_INSTANCE *dead_instance )
+{
+   ENTITY_INSTANCE *corpse;
+
+   corpse = corpsify( dead_instance );
+   entity_to_world( corpse, dead_instance->contained_by );
+   onDeath_trigger( dead_instance );
+   entity_to_world( dead_instance, NULL );
+
+   return;
 }
 
 void combat_message( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim, DAMAGE *dmg, cbt_ret status )

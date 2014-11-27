@@ -35,7 +35,6 @@ int setVar( lua_State *L );
 int addSpec( lua_State *L );
 
 /* bools */
-int isLoaded( lua_State *L );
 int isLive( lua_State *L );
 int isBuilder( lua_State *L );
 int isSameRoom( lua_State  *L );
@@ -48,6 +47,7 @@ int luaEntityInstanceTeleport( lua_State *L );
 int luaEcho( lua_State *L );
 int luaEchoAt( lua_State *L );
 int luaEchoAround( lua_State *L );
+int luaFrameCall( lua_State *L );
 
 /* iterators */
 int luaEachInventory( lua_State *L );

@@ -45,6 +45,8 @@ void new_stat_framework( STAT_FRAMEWORK *fstat )
       fstat->name, fstat->softcap, fstat->hardcap, fstat->softfloor, fstat->hardfloor, (int)fstat->pool ) )
       bug( "%s: could not add to database %s.", __FUNCTION__, fstat->name );
 
+   init_s_script( fstat, TRUE );
+
    return;
 }
 

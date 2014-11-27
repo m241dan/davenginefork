@@ -417,6 +417,8 @@ int new_eInstance( ENTITY_INSTANCE *eInstance )
       new_stat_instance( stat );
    DetachIterator( &Iter );
 
+   init_i_script( eInstance, TRUE );
+
    AttachToList( eInstance, eInstances_list );
    return ret;
 }
@@ -1540,23 +1542,17 @@ inline void set_instance_tspeed( ENTITY_INSTANCE *instance, int tspeed )
 /* do_damage on kill return TRUE */
 bool do_damage( ENTITY_INSTANCE *entity, DAMAGE *dmg )
 {
-   ENTITY_INSTANCE *corpse;
    STAT_INSTANCE *stat = entity->primary_dmg_received_stat;
-   bool dead = FALSE;
 
    if( !stat )
    {
       bug( "%s: cannot do damage to %s, no primary dmg stat.", __FUNCTION__, instance_name( entity ) );
-      return dead;
+      return FALSE;
    }
    dec_pool_stat( stat, dmg->amount );
    if( get_stat_current( stat ) <= 0 )
-   {
-      corpse = corpsify( entity );
-      entity_to_world( corpse, entity->contained_by );
-      dead = TRUE;
-   }
-   return dead;
+      return TRUE;
+   return FALSE;
 }
 
 void death_instance( ENTITY_INSTANCE *instance )
@@ -1904,9 +1900,7 @@ int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *exit )
 {
    int ret = RET_SUCCESS;
    ENTITY_INSTANCE *move_to, *content;
-   SPECIFICATION *script;
    ITERATOR Iter;
-   int lua_ret;
 
    if( !entity->builder )
    {
@@ -1922,95 +1916,102 @@ int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *exit )
       }
    }
 
+   if( !entity->contained_by )
+   {
+      text_to_entity( entity, "You cannot move in the Ether.\r\n" );
+      bug( "%s: trying to move something that is not contained, instance %d %s.", __FUNCTION__, entity->tag->id, instance_name( entity ) );
+      return ret;
+   }
+
    if( ( move_to = get_active_instance_by_id( get_spec_value( exit, "IsExit" ) ) ) == NULL )
    {
       text_to_entity( entity, "That exit goes to nowhere.\r\n" );
       return ret;
    }
 
-   if( ( script = has_spec( entity->contained_by, "onEntityLeave" ) ) != NULL && script->value > 0 )
-   {
-      if( prep_stack( get_script_path_from_spec( script ), "onEntityLeave" ) )
-      {
-         push_instance( entity->contained_by, lua_handle );
-         push_instance( entity, lua_handle );
-         if( ( lua_ret = lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) ) )
-            bug( "%s: ret %d: path: %s\r\n - error message: %s.", __FUNCTION__, ret, get_script_path_from_spec( script ), lua_tostring( lua_handle, -1 ) );
-      }
-   }
-
-   if( ( script = has_spec( entity, "onLeaving" ) ) != NULL && script->value > 0 )
-   {
-      if( prep_stack( get_script_path_from_spec( script ), "OnLeaving" ) )
-      {
-         push_instance( entity->contained_by, lua_handle);
-         push_instance( entity, lua_handle );
-         if( ( lua_ret = lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) ) )
-            bug( "%s: ret %d: path: %s\r\n - error message: %s.", __FUNCTION__, ret, get_script_path_from_spec( script ), lua_tostring( lua_handle, -1 ) );
-      }
-   }
+   onEntityLeave_trigger( entity );
+   onLeaving_trigger( entity );
 
    AttachIterator( &Iter, entity->contained_by->contents );
    while( ( content = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
-   {
-      if( ( script = has_spec( content, "onFarewellEntity" ) ) != NULL && script->value > 0 )
-      {
-         if( prep_stack( get_script_path_from_spec( script ), "onFarewellEntity" ) )
-         {
-            push_instance( content, lua_handle );
-            push_instance( entity, lua_handle );
-            if( ( lua_ret = lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) ) )
-               bug( "%s: ret %d: path: %s\r\n - error message: %s.", __FUNCTION__, ret, get_script_path_from_spec( script ), lua_tostring( lua_handle, -1 ) );
-         }
-      }
-   }
+      onFarewell_trigger( content, entity );
    DetachIterator( &Iter );
 
    entity_to_world( entity, move_to );
    text_to_entity( entity, "You move to the %s.\r\n\n", instance_short_descr( exit ) );
    entity_look( entity, "" );
 
-   if( ( script = has_spec( move_to, "onEntityEnter" ) ) != NULL && script->value > 0 )
-   {
-      if( prep_stack( get_script_path_from_spec( script ), "onEntityEnter" ) )
-      {
-         push_instance( move_to, lua_handle );
-         push_instance( entity, lua_handle );
-         if( ( lua_ret = lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) ) )
-            bug( "%s: ret %d: path: %s\r\n - error message: %s.", __FUNCTION__, ret, get_script_path_from_spec( script ), lua_tostring( lua_handle, -1 ) );
-      }
-   }
-
-   if( ( script = has_spec( entity, "onEntering" ) ) != NULL && script->value > 0 )
-   {
-      if( prep_stack( get_script_path_from_spec( script ), "onEntering" ) )
-      {
-         push_instance( entity->contained_by, lua_handle );
-         push_instance( entity, lua_handle );
-         if( ( lua_ret = lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) ) )
-            bug( "%s: ret %d: path: %s\r\n - error message: %s.", __FUNCTION__, ret, get_script_path_from_spec( script ), lua_tostring( lua_handle, -1 ) );
-      }
-   }
+   onEntityEnter_trigger( entity );
+   onEntering_trigger( entity );
 
    AttachIterator( &Iter, move_to->contents );
    while( ( content = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
    {
       if( content == entity )
          continue;
-      if( ( script = has_spec( content, "onGreetEntity" ) ) != NULL && script->value > 0 )
-      {
-         if( prep_stack( get_script_path_from_spec( script ), "onGreetEntity" ) )
-         {
-            push_instance( content, lua_handle );
-            push_instance( entity, lua_handle );
-            if( ( lua_ret = lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) ) )
-               bug( "%s: ret %d: path: %s\r\n - error message: %s.", __FUNCTION__, ret, get_script_path_from_spec( script ), lua_tostring( lua_handle, -1 ) );
-         }
-      }
+      onGreet_trigger( content, entity );
    }
    DetachIterator( &Iter );
 
    return ret;
+}
+
+FILE *open_i_script( ENTITY_INSTANCE *instance, const char *permissions )
+{
+   FILE *script;
+   script = fopen( get_instance_script_path( instance ), permissions );
+   return script;
+}
+
+bool i_script_exists( ENTITY_INSTANCE *instance )
+{
+   FILE *script;
+
+  if( ( script = open_i_script( instance, "r" ) ) == NULL )
+     return FALSE;
+
+   fclose( script );
+   return TRUE;
+}
+
+void init_i_script( ENTITY_INSTANCE *instance, bool force )
+{
+   FILE *temp, *dest;
+
+   if( i_script_exists( instance ) && !force )
+      return;
+
+   if( ( temp = fopen( "../scripts/templates/instance.lua", "r" ) ) == NULL )
+   {
+      bug( "%s: could not open the template.", __FUNCTION__ );
+      return;
+   }
+
+   if( ( dest = fopen( quick_format( "../scripts/instances/%d.lua", instance->tag->id ), "w" ) ) == NULL )
+   {
+      bug( "%s: could not open the script.", __FUNCTION__ );
+      return;
+   }
+
+   copy_flat_file( dest, temp );
+   fclose( dest );
+   fclose( temp );
+   return;
+}
+
+const char *print_i_script( ENTITY_INSTANCE *instance )
+{
+   const char *buf;
+   FILE *fp;
+
+   if( !i_script_exists( instance ) )
+      return "This framework has no script.";
+   if( ( fp = open_i_script( instance, "r" ) ) == NULL )
+      return "There was a pretty big error.";
+
+   buf = fread_file( fp );
+   fclose( fp );
+   return buf;
 }
 
 void entity_goto( void *passed, char *arg )

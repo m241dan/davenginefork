@@ -12,7 +12,7 @@ const char *const spec_table[] = {
    "NoGet", "NoGive", "NoDrop", "NoPut", "NoMove",
    /* Scripting Specs */
    "onEntityEnter", "onEntityLeave", "onEntering", "onLeaving",
-   "onGreetEntity", "onFarewellEntity",
+   "onGreet", "onFarewell",
    /* Combat Specs */
    "dodgeChance", "parryChance", "missChance", "meleeCooldown", "meleeCheck",
    "prepMeleeTimer", "prepMeleeDamage", "onReceiveDamage", "combatMessage",

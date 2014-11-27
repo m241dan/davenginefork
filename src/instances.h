@@ -152,6 +152,10 @@ int show_ent_mobiles_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing )
 int show_ent_objects_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing );
 int show_ent_rooms_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing );
 int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *move_to );
+FILE *open_i_script( ENTITY_INSTANCE *instance, const char *permissions );
+bool i_script_exists( ENTITY_INSTANCE *instance );
+void init_i_script( ENTITY_INSTANCE *instance, bool force );
+const char *print_i_script( ENTITY_INSTANCE *instance );
 
 /* builders commands */
 void entity_goto( void *passed, char *arg );

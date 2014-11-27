@@ -21,10 +21,10 @@ void eFramework_set_tspeed( void *passed, char *arg );
 void eFramework_set_spawn_time( void *passed, char *arg );
 void eFramework_addStat( void *passed, char *arg );
 void eFramework_addSpec( void *passed, char *arg );
+void eFramework_script( void *passed, char *arg );
 void eFramework_done( void *passed, char *arg );
 void eFramework_save( void *passed, char *arg );
 void eFramework_addContent( void *passed, char *arg );
-void eFramework_script( void *passed, char *arg );
 void eFramework_addPak( void *passed, char *arg );
 void eFramework_setPrimaryDmg( void *passed, char *arg );
 
@@ -62,6 +62,7 @@ void instance_setStat( void *passed, char *arg );
 void instance_autowrite( void *passed, char *arg );
 void instance_addcontent( void *passed, char *arg );
 void instance_addspec( void *passed, char *arg );
+void instance_script( void *passed, char *arg );
 void instance_done( void *passed, char *arg );
 void instance_addPak( void *passed, char *arg );
 
@@ -74,7 +75,7 @@ void sFramework_softcap( void *passed, char *arg );
 void sFramework_hardcap( void *passed, char *arg );
 void sFramework_softfloor( void *passed, char *arg );
 void sFramework_hardfloor( void *passed, char *arg );
-void sFramework_type( void *passed, char *arg );
 void sFramework_script( void *passed, char *arg );
+void sFramework_type( void *passed, char *arg );
 void sFramework_save( void *passed, char *arg );
 void sFramework_done( void *passed, char *arg );

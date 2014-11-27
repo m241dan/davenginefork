@@ -745,14 +745,6 @@ void eFramework_script( void *passed, char *arg )
       olc_short_prompt( olc );
       return;
    }
-
-   if( !f_script_exists( frame ) )
-   {
-      init_f_script( frame, FALSE );
-      update_tag( frame->tag, olc->account->name );
-      text_to_olc( olc, "You generate a script file for %s.\r\n", chase_name( frame ) );
-      return;
-   }
    text_to_olc( olc, "%s", print_f_script( frame ) );
    return;
 }
@@ -1834,14 +1826,6 @@ void sFramework_script( void *passed, char *arg )
    {
       text_to_olc( olc, "This stat framework must completely exist before you can start script it, save or done and reopen.\r\n" );
       olc_short_prompt( olc );
-      return;
-   }
-
-   if( !s_script_exists( fstat ) )
-   {
-      init_s_script( fstat, FALSE );
-      update_tag( fstat->tag, olc->account->name );
-      text_to_olc( olc, "You generate a script file for %s.\r\n", fstat->name );
       return;
    }
    text_to_olc( olc, "%s", print_s_script( fstat ) );

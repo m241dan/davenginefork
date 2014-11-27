@@ -654,11 +654,11 @@ void fread_instance_import( FILE *fp, int *instance_id_table, int *framework_id_
             if( !strcmp( word, "#END" ) )
             {
                found = FALSE;
-               quick_query( "INSERT INTO entity_instances VALUES( %d, %d, '%s', '%s', '%s', '%s', %d, %d, %d, %d );",
+               quick_query( "INSERT INTO entity_instances VALUES( %d, %d, '%s', '%s', '%s', '%s', %d, %d, %d, %d, %d, %d, %d, %d );",
                   instance->tag->id, instance->tag->type, instance->tag->created_by,
                   instance->tag->created_on, instance->tag->modified_by, instance->tag->modified_on,
                   contained_by, frame,
-                  (int)instance->live, (int)instance->loaded );
+                  (int)instance->live );
                   free_eInstance( instance );
                return;
             }
@@ -700,7 +700,6 @@ void fread_instance_import( FILE *fp, int *instance_id_table, int *framework_id_
             }
          case 'L':
             IREAD( "Level", instance->level );
-            IREAD( "Loaded", instance->loaded );
             break;
          case 'S':
             if( !strcmp( word, "Spec" ) )
@@ -823,7 +822,6 @@ void fwrite_instance_export( FILE *fp, ENTITY_INSTANCE *instance, int *instance_
    fwrite_id_tag_export( fp, instance->tag, instance_id_table);
    fprintf( fp, "#INSTANCE\n" );
    fprintf( fp, "Level        %d\n", instance->level );
-   fprintf( fp, "Loaded       %d\n", (int)instance->loaded );
    fwrite_instance_content_list_export( fp, instance->contents, instance_id_table );
    fwrite_specifications( fp, instance->specifications, instance_id_table );
 

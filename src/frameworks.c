@@ -197,6 +197,8 @@ int new_eFramework( ENTITY_FRAMEWORK *frame )
       new_stat_on_frame( fstat, frame );
    DetachIterator( &Iter );
 
+   init_f_script( frame, TRUE );
+
    AttachToList( frame, active_frameworks );
    return ret;
 }
