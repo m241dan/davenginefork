@@ -670,7 +670,10 @@ void move_item_messaging( ENTITY_INSTANCE *perspective, ENTITY_INSTANCE *to, voi
 
    if( !list_or_obj )
    {
-      text_to_entity( perspective, "You do not see %s%s.\r\n", orig_string, perspective->contained_by == from ? "" : quick_format( " in %s", instance_short_descr( from ) ) );
+      if( from == perspective )
+         text_to_entity( perspective, "You do not have %s.\r\n", orig_string );
+      else
+         text_to_entity( perspective, "You do not see %s%s.\r\n", orig_string, perspective->contained_by == from ? "" : quick_format( " in %s", instance_short_descr( from ) ) );
       return;
    }
 
@@ -831,7 +834,7 @@ ENTITY_INSTANCE *find_specific_item( ENTITY_INSTANCE *perspective, const char *i
    /* check the perspectives contents first */
    AttachIterator( &Iter, perspective->contents );
    while( ( found = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
-      if( is_prefix( item, instance_name( found ) ) )
+      if( string_contains( downcase( instance_name( found ) ), item ) )
          if( ++count == number )
             break;
    DetachIterator( &Iter );
@@ -845,7 +848,7 @@ ENTITY_INSTANCE *find_specific_item( ENTITY_INSTANCE *perspective, const char *i
    /* then check the perspectives containers contents */
    AttachIterator( &Iter, perspective->contained_by->contents );
    while( ( found = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
-      if( is_prefix( item, instance_name( found ) ) )
+      if( string_contains( downcase( instance_name( found ) ), item ) )
          if( ++count == number )
             break;
    DetachIterator( &Iter );
@@ -2189,9 +2192,6 @@ void entity_drop( void *passed, char *arg )
             default:
                obj_or_list = move_item_specific( entity, entity->contained_by, can_drop, item, number, FALSE );
                break;
-            case -1:
-               obj_or_list = move_item_single( entity, entity->contained_by, can_drop, item, FALSE );
-               break;
             case -2:
               obj_or_list = move_item_all( entity, entity->contained_by, can_drop, item );
               isList = TRUE;
@@ -2254,9 +2254,6 @@ void entity_get( void *passed, char *arg )
             default:
                obj_or_list = move_item_specific( container, entity, can_get, item, number, FALSE );
                break;
-            case -1:
-               obj_or_list = move_item_single( container, entity, can_get, item, FALSE);
-               break;
             case -2:
                obj_or_list = move_item_all( container, entity, can_get, item );
                isList = TRUE;
@@ -2310,9 +2307,6 @@ void entity_put( void *passed, char *arg )
             default:
                obj_or_list = move_item_specific( entity, container, can_get, item, number, FALSE );
                break;
-            case -1:
-               obj_or_list = move_item_single( entity, container, can_get, item, FALSE);
-               break;
             case -2:
                obj_or_list = move_item_all( entity, container, can_get, item );
                isList = TRUE;
@@ -2365,9 +2359,6 @@ void entity_give( void *passed, char *arg )
          {
             default:
                obj_or_list = move_item_specific( entity, give_to, can_give, item, number, FALSE );
-               break;
-            case -1:
-               obj_or_list = move_item_single( entity, give_to, can_give, item, FALSE );
                break;
             case -2:
                obj_or_list = move_item_all( entity, give_to, can_give, item );
@@ -2891,6 +2882,33 @@ void entity_set_home( void *passed, char *arg )
    return;
 }
 
+void entity_restore( void *passed, char *arg )
+{
+   ENTITY_INSTANCE *builder = (ENTITY_INSTANCE *)passed;
+   ENTITY_INSTANCE *mob;
+   int number;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      if( NO_TARGET( builder ) || TARGET_TYPE( builder ) != TARGET_INSTANCE )
+      {
+         text_to_entity( builder, "Restore what?\r\n" );
+         return;
+      }
+      mob = GT_INSTANCE( builder );
+   }
+   else
+   {
+      number = number_arg_single( arg );
+      if( ( mob = find_specific_item( builder, arg, number ) ) == NULL )
+      {
+         text_to_entity( builder, "There is no %s here.\r\n", arg );
+         return;
+      }
+   }
+   restore_pool_stats( mob );
+   text_to_entity( builder, "%s's pool stats restored.\r\n", instance_short_descr( mob ) );
+}
 
 /* mobile commands */
 void mobile_look( void *passed, char *arg )

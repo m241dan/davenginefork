@@ -52,6 +52,7 @@ int luaEcho( lua_State *L );
 int luaEchoAt( lua_State *L );
 int luaEchoAround( lua_State *L );
 int luaFrameCall( lua_State *L );
+int luaInstanceRestore( lua_State *L );
 
 /* iterators */
 int luaEachInventory( lua_State *L );

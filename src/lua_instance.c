@@ -42,6 +42,7 @@ const struct luaL_Reg EntityInstanceLib_m[] = {
    { "echoAt", luaEchoAt },
    { "echoAround", luaEchoAround },
    { "frameCall", luaFrameCall },
+   { "restore", luaInstanceRestore },
    /* iterators */
    { "eachInventory", luaEachInventory },
    { NULL, NULL } /* gandalf */
@@ -1092,6 +1093,14 @@ int luaFrameCall( lua_State *L )
       bug( "%s: ret %d: path: %s\r\n - error message: %s\r\n", __FUNCTION__, ret, get_frame_script_path( instance->framework ), lua_tostring( L, -1 ) );
    return 0;
 
+}
+
+int luaInstanceRestore( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+   DAVLUACM_INSTANCE_NONE( instance, L );
+   restore_pool_stats( instance );
+   return 0;
 }
 
 int luaEachInventory( lua_State *L )

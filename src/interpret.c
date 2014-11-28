@@ -281,6 +281,7 @@ struct typCmd builder_commands[] = {
    { "down", entity_down, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
    { "kill", mobile_kill, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
    { "sethome", entity_set_home, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
+   { "restore", entity_restore, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
    { '\0', NULL, 0, NULL, FALSE, NULL }
 };
 

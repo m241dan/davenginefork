@@ -9,7 +9,7 @@ end
 
 function onSpawn( spawning_person )
    -- the line below this is standard, delete if not wanted --
-   dead_person:frameCall( "onSpawn", "fi", dead_person:getFramework(), spawning_person )
+   spawning_person:frameCall( "onSpawn", "fi", dead_person:getFramework(), spawning_person )
    -- write specific for this frame under here --
 end
 
