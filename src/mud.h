@@ -452,8 +452,9 @@ struct dSocket
   z_stream      * out_compress;                /* MCCP support */
   unsigned char * out_compress_buf;            /* MCCP support */
 
-   NANNY_DATA    * nanny;
-   ACCOUNT_DATA *account;
+   NANNY_DATA   * nanny;
+   ACCOUNT_DATA * account;
+   STACK        * prev_control_stack;
    ENTITY_INSTANCE *controlling;
 };
 

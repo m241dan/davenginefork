@@ -188,6 +188,7 @@ void entity_target( void *passed, char *arg );
 void entity_show( void *passed, char *arg );
 void entity_set_home( void *passed, char *arg );
 void entity_restore( void *passed, char *arg );
+void entity_takeover( void *passed, char *arg );
 
 /* mobile commands */
 void mobile_look( void *passed, char *arg );

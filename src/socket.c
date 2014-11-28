@@ -504,6 +504,9 @@ bool new_socket(int sock)
    */
    CREATE( sock_new, D_SOCKET, 1 );
 
+   /* allocate a stack for using takeover type commands */
+   sock_new->prev_control_stack = AllocStack();
+
   /* attach the new connection to the socket LLIST*/
   FD_SET(sock, &fSet);
 
@@ -615,6 +618,9 @@ void close_socket(D_SOCKET *dsock, bool reconnect)
   while ((pEvent = (EVENT_DATA *) NextInList(&Iter)) != NULL)
     dequeue_event(pEvent);
   DetachIterator(&Iter);
+
+  while( StackSize( dsock->prev_control_stack ) > 0 )
+     PopStack( dsock->prev_control_stack );
 
   /* set the closed state */
   dsock->state = STATE_CLOSED;
