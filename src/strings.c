@@ -40,7 +40,7 @@ int number_arg( char *fStr, char *bStr )
    char buf[MAX_BUFFER];
 
    if( !string_contains( fStr, "\\." ) )
-      return 1;
+      return -1;
 
    fStr = one_arg_delim( fStr, buf, '.' );
 
@@ -49,7 +49,7 @@ int number_arg( char *fStr, char *bStr )
    if( !strcasecmp( buf, "all" ) && bStr[0] != '\0' )
       return -2;
    else if( !is_number( buf ) )
-      return 1;
+      return -1;
    else
       return atoi( buf );
 }
@@ -61,7 +61,7 @@ int number_arg_single( char *string )
    char *non_inc_orig_string = orig_string;
 
    if( !string_contains( string, "\\." ) )
-      return 1;
+      return -1;
 
    string = one_arg_delim( string, buf, '.' );
 
@@ -72,7 +72,7 @@ int number_arg_single( char *string )
    if( !strcasecmp( buf, "all" ) && non_inc_orig_string[0] != '\0' )
       return -2;
    else if( !is_number( buf ) )
-      return 1;
+      return -1;
    else
       return atoi( buf );
 }
@@ -83,7 +83,7 @@ char *one_arg(char *fStr, char *bStr)
 
   /* skip leading spaces */
   while (isspace(*fStr))
-    fStr++; 
+    fStr++;
 
    delim = ' ';
    if( *fStr == '"' )
