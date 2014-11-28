@@ -58,28 +58,37 @@ STAT_INSTANCE  *get_stat_from_instance_by_name( ENTITY_INSTANCE *entity, const c
 
 STAT_FRAMEWORK *get_primary_dmg_stat_from_framework( ENTITY_FRAMEWORK *frame, int *source );
 
+/* inlines */
+
+/* setters */
 extern inline void set_softcap( STAT_FRAMEWORK *fstat, int value );
 extern inline void set_hardcap( STAT_FRAMEWORK *fstat, int value );
 extern inline void set_softfloor( STAT_FRAMEWORK *fstat, int value );
 extern inline void set_hardfloor( STAT_FRAMEWORK *fstat, int value );
 extern inline void set_name( STAT_FRAMEWORK *fstat, const char *name );
 extern inline void set_stat_style( STAT_FRAMEWORK *fstat, bool value );
+extern inline void set_stat_current( STAT_INSTANCE *stat, int value );
+extern inline void set_stat_max( STAT_INSTANCE *stat, int value );
+extern inline void set_perm_stat( STAT_INSTANCE *stat, int value );
+extern inline void set_mod_stat( STAT_INSTANCE *stat, int value );
+extern inline void set_stat_owner( STAT_INSTANCE *stat, ENTITY_INSTANCE *owner );
 
+
+/* getters */
 extern inline int  get_stat_total( STAT_INSTANCE *stat );
 extern inline int  get_stat_effective_perm( STAT_INSTANCE *stat );
 extern inline int  get_stat_effective_mod( STAT_INSTANCE *stat );
 extern inline int  get_stat_value( STAT_INSTANCE *stat );
 extern inline int  get_stat_current( STAT_INSTANCE *stat );
 extern inline int  get_stat_max( STAT_INSTANCE *stat );
-extern inline void set_stat_current( STAT_INSTANCE *stat, int value );
-extern inline void set_stat_max( STAT_INSTANCE *stat, int value );
+
+/* utility */
 extern inline void inc_pool_stat( STAT_INSTANCE *stat, int value );
 extern inline void dec_pool_stat( STAT_INSTANCE *stat, int value );
-extern inline void set_perm_stat( STAT_INSTANCE *stat, int value );
 extern inline void add_perm_stat( STAT_INSTANCE *stat, int value );
-extern inline void set_mod_stat( STAT_INSTANCE *stat, int value );
 extern inline void add_mod_stat( STAT_INSTANCE *stat, int value );
-extern inline void set_stat_owner( STAT_INSTANCE *stat, ENTITY_INSTANCE *owner );
+extern inline void restore_pool_stats( ENTITY_INSTANCE *instance );
+
 
 void lua_set_stat( STAT_INSTANCE *stat, int change, int effective );
 FILE *open_s_script( STAT_FRAMEWORK *fstat, const char *permissions );

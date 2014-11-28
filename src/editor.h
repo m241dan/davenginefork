@@ -63,6 +63,7 @@ void instance_autowrite( void *passed, char *arg );
 void instance_addcontent( void *passed, char *arg );
 void instance_addspec( void *passed, char *arg );
 void instance_script( void *passed, char *arg );
+void instance_restore( void *passed, char *arg );
 void instance_done( void *passed, char *arg );
 void instance_addPak( void *passed, char *arg );
 void instance_reinit( void *passed, char *arg );

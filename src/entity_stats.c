@@ -563,6 +563,17 @@ inline void set_stat_owner( STAT_INSTANCE *stat, ENTITY_INSTANCE *owner )
    stat->owner = owner;
 }
 
+inline void restore_pool_stats( ENTITY_INSTANCE *instance )
+{
+   STAT_INSTANCE *stat;
+   ITERATOR Iter;
+   AttachIterator( &Iter, instance->stats );
+   while( ( stat = (STAT_INSTANCE *)NextInList( &Iter ) ) != NULL )
+      if( stat->framework->pool )
+         set_mod_stat( stat, stat->perm_stat);
+   DetachIterator( &Iter );
+}
+
 void lua_set_stat( STAT_INSTANCE *stat, int change, int effective )
 {
    int ret, difference, top = lua_gettop( lua_handle );

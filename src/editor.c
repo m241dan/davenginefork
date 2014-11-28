@@ -1504,6 +1504,26 @@ void instance_addspec( void *passed, char *arg )
    return;
 }
 
+void instance_script( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_INSTANCE *instance = (ENTITY_INSTANCE *)olc->editing;
+
+   text_to_olc( olc, "%s\r\n", print_i_script( instance ) );
+   olc_short_prompt( olc );
+   return;
+}
+
+void instance_restore( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_INSTANCE *instance = (ENTITY_INSTANCE *)olc->editing;
+
+   restore_pool_stats( instance );
+   text_to_olc( olc, "Pool stats restored.\r\n" );
+   return;
+}
+
 void instance_done( void *passed, char *arg )
 {
    INCEPTION *olc = (INCEPTION *)passed;

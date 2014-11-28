@@ -182,6 +182,8 @@ struct typCmd create_instance_commands[] = {
    { "done", instance_done, LEVEL_BASIC, NULL, FALSE, NULL, create_instance_commands },
    { "return", editor_global_return, LEVEL_BASIC, NULL, FALSE, editor_return_desc, create_instance_commands },
    { "switch", editor_switch, LEVEL_BASIC, NULL, FALSE, NULL, create_instance_commands },
+   { "script", instance_script, LEVEL_BASIC, NULL, FALSE, NULL, create_instance_commands },
+   { "restore", instance_restore, LEVEL_BASIC, NULL, FALSE, NULL, create_instance_commands },
    { "reinit", instance_reinit, LEVEL_BASIC, NULL, FALSE, NULL, create_instance_commands },
    { "autowrite", instance_autowrite, LEVEL_BASIC, NULL, FALSE, NULL, create_instance_commands },
    { "setstat", instance_setStat, LEVEL_BASIC, NULL, FALSE, NULL, create_instance_commands },
