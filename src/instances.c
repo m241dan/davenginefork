@@ -2908,6 +2908,7 @@ void entity_restore( void *passed, char *arg )
    }
    restore_pool_stats( mob );
    text_to_entity( builder, "%s's pool stats restored.\r\n", instance_short_descr( mob ) );
+   return;
 }
 
 /* mobile commands */
