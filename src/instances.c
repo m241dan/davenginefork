@@ -2899,7 +2899,9 @@ void entity_restore( void *passed, char *arg )
    }
    else
    {
-      number = number_arg_single( arg );
+      if( ( number = number_arg_single( arg ) ) <= 0 )
+         number = 1;
+
       if( ( mob = find_specific_item( builder, arg, number ) ) == NULL )
       {
          text_to_entity( builder, "There is no %s here.\r\n", arg );
