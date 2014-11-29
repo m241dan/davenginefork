@@ -1614,9 +1614,9 @@ void editor_sFramework_prompt( D_SOCKET *dsock, bool commands )
    space_after_border = dsock->account->pagewidth - ( strlen( border ) * 2 );
 
    if( !strcmp( fstat->tag->created_by, "null" ) )
-      mud_printf( tempstring, "Potential %s Stat ID: %d", fstat->pool ? "Pool" : "Registed",  get_potential_id( fstat->tag->type ) );
+      mud_printf( tempstring, "Potential %s Stat ID: %d", fstat->pool ? "Pool" : "Registered",  get_potential_id( fstat->tag->type ) );
    else
-      mud_printf( tempstring, "%s Stat ID: %d", fstat->pool ? "Pool" : "Registed", fstat->tag->id );
+      mud_printf( tempstring, "%s Stat ID: %d", fstat->pool ? "Pool" : "Registered", fstat->tag->id );
 
    text_to_olc( olc, "/%s\\\r\n", print_header( tempstring, "-", dsock->account->pagewidth - 2 ) );
    text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " Name      : %s", fstat->name ), space_after_border ), border );
@@ -1898,7 +1898,7 @@ void sFramework_done( void *passed, char *arg )
       clearlist( olc->chain );
    free_editor( olc );
    change_socket_state( olc->account->socket, olc->editor_launch_state );
-   text_to_olc( olc, "Exiting State Framework Editor.\r\n" );
+   text_to_olc( olc, "Exiting Stat Framework Editor.\r\n" );
    olc_show_prompt( olc );
    return;
 }
