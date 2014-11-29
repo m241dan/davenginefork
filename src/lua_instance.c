@@ -20,6 +20,7 @@ const struct luaL_Reg EntityInstanceLib_m[] = {
    { "getStat", getStat },
    { "getStatValue", getStatEffectiveValue },
    { "getHome", getHome },
+   { "getExitTo", getExitTo },
    /* setters */
    { "setStatMod", setStatMod },
    { "setStatPerm", setStatPerm },
@@ -34,6 +35,10 @@ const struct luaL_Reg EntityInstanceLib_m[] = {
    { "hasItemInInventoryFramework", hasItemInInventoryFramework },
    { "isSameRoom", isSameRoom },
    { "isPlayer", isPlayer },
+   { "isExit", isExit },
+   { "isRoom", isRoom },
+   { "isMob", isMob },
+   { "isObj", isObj },
    /* actions */
    { "callBack", luaCallBack },
    { "interp", luaEntityInstanceInterp },
@@ -433,6 +438,19 @@ int getHome( lua_State *L )
    return 1;
 }
 
+int getExitTo( lua_State * L)
+{
+   ENTITY_INSTANCE *exit;
+   ENTITY_INSTANCE *exit_to;
+
+   DAVLUACM_INSTANCE_NIL( exit, L );
+   if( ( exit_to = get_active_instance_by_id( get_spec_value( exit, "IsExit" ) ) ) == NULL )
+      lua_pushnil( L );
+   else
+      push_instance( exit_to, L );
+   return 1;
+}
+
 int setStatMod( lua_State *L )
 {
    ENTITY_INSTANCE *instance;
@@ -814,6 +832,52 @@ int isPlayer( lua_State *L )
    ENTITY_INSTANCE *instance;
    DAVLUACM_INSTANCE_BOOL( instance, L );
    lua_pushboolean( L, (int)instance->isPlayer );
+   return 1;
+}
+
+int isExit( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+   DAVLUACM_INSTANCE_BOOL( instance, L );
+   if( get_spec_value( instance, "IsExit" ) > 0 )
+      lua_pushboolean( L, 1 );
+   else
+      lua_pushboolean( L, 0 );
+   return 1;
+}
+
+int isRoom( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+   DAVLUACM_INSTANCE_BOOL( instance, L );
+   if( get_spec_value( instance, "IsRoom" ) > 0 )
+      lua_pushboolean( L, 1 );
+   else
+      lua_pushboolean( L, 0 );
+   return 1;
+
+}
+
+int isMob( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+   DAVLUACM_INSTANCE_BOOL( instance, L );
+   if( get_spec_value( instance, "IsMob" ) > 0 )
+      lua_pushboolean( L, 1 );
+   else
+      lua_pushboolean( L, 0 );
+   return 1;
+
+}
+
+int isObj( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+   DAVLUACM_INSTANCE_BOOL( instance, L );
+   if( get_spec_value( instance, "IsObject" ) > 0 )
+      lua_pushboolean( L, 1 );
+   else
+      lua_pushboolean( L, 0 );
    return 1;
 }
 

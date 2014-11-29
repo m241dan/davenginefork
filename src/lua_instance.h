@@ -27,6 +27,7 @@ int getStatPerm( lua_State *L );
 int getStat( lua_State *L );
 int getStatEffectiveValue( lua_State *L );
 int getHome( lua_State *L );
+int getExitTo( lua_State *L );
 
 /* setters */
 int setStatMod( lua_State *L );
@@ -43,6 +44,10 @@ int isBuilder( lua_State *L );
 int isSameRoom( lua_State  *L );
 int hasItemInInventoryFramework( lua_State *L );
 int isPlayer( lua_State *L );
+int isExit( lua_State *L );
+int isRoom( lua_State *L );
+int isMob( lua_State *L );
+int isObj( lua_State *L );
 
 /* actions */
 int luaCallBack( lua_State *L );
