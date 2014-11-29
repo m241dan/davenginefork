@@ -40,6 +40,7 @@ function uiInventory( entity )
 end
 
 function uiScore( entity )
+   entity:echoAt( "Your score is... nothing yet!\n" )
 end
 
 
