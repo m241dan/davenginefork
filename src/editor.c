@@ -255,15 +255,19 @@ const char *return_framework_strings( ENTITY_FRAMEWORK *frame, const char *borde
       quick_format( " Thought Speed : %d", (int)frame->tspeed ),
       space_after_border ),
       border );
+
+      strcat( buf, tempstring );
    }
 
    if( frame->spawn_time > 0 )
    {
       mud_printf( tempstring, "%s%s%s\r\n", border,
       fit_string_to_space(
-      quick_format( " If killed, will respawn in %d seconds\r\n", frame->spawn_time ),
+      quick_format( " If killed, will respawn in %d seconds", frame->spawn_time ),
       space_after_border ),
       border );
+
+      strcat( buf, tempstring );
    }
 
 
@@ -745,14 +749,6 @@ void eFramework_script( void *passed, char *arg )
       olc_short_prompt( olc );
       return;
    }
-
-   if( !f_script_exists( frame ) )
-   {
-      init_f_script( frame, FALSE );
-      update_tag( frame->tag, olc->account->name );
-      text_to_olc( olc, "You generate a script file for %s.\r\n", chase_name( frame ) );
-      return;
-   }
    text_to_olc( olc, "%s", print_f_script( frame ) );
    return;
 }
@@ -1190,6 +1186,10 @@ int editor_instance_prompt( D_SOCKET *dsock, bool commands )
    text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " This instance is %slive.", instance->live ? "" : "not" ), space_after_border ), border );
    text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " This instance's framework's ID %d", instance->framework->tag->id ), space_after_border ), border );
    text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " This instance is contained by %s.", instance->contained_by ? instance_short_descr( instance->contained_by ) : "The Ether" ), space_after_border ), border );
+   if( !instance->home )
+      text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( " This instace has no home.", space_after_border ), border );
+   else
+      text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( "This instance's home is (%d)%s.", instance->home->tag->id, instance_short_descr( instance->home ) ), space_after_border), border );
    if( SizeOfList( instance->contents ) > 0 )
       text_to_olc( olc, "%s", return_instance_contents_string( instance, border, dsock->account->pagewidth ) );
    if( instance->primary_dmg_received_stat )
@@ -1504,6 +1504,26 @@ void instance_addspec( void *passed, char *arg )
    return;
 }
 
+void instance_script( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_INSTANCE *instance = (ENTITY_INSTANCE *)olc->editing;
+
+   text_to_olc( olc, "%s\r\n", print_i_script( instance ) );
+   olc_short_prompt( olc );
+   return;
+}
+
+void instance_restore( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_INSTANCE *instance = (ENTITY_INSTANCE *)olc->editing;
+
+   restore_pool_stats( instance );
+   text_to_olc( olc, "Pool stats restored.\r\n" );
+   return;
+}
+
 void instance_done( void *passed, char *arg )
 {
    INCEPTION *olc = (INCEPTION *)passed;
@@ -1539,6 +1559,16 @@ void instance_addPak( void *passed, char *arg )
    text_to_olc( olc, "You load the Pak.\r\n" );
    return;
 
+}
+
+void instance_reinit( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_INSTANCE *instance = (ENTITY_INSTANCE *)olc->editing;
+
+   onInstanceInit_trigger( instance );
+   text_to_olc( olc, "You reinitialize %d : %s from the script.\r\n", instance->tag->id, instance_name( instance ) );
+   return;
 }
 
 int init_sFramework_editor( INCEPTION *olc, STAT_FRAMEWORK *fstat )
@@ -1834,14 +1864,6 @@ void sFramework_script( void *passed, char *arg )
    {
       text_to_olc( olc, "This stat framework must completely exist before you can start script it, save or done and reopen.\r\n" );
       olc_short_prompt( olc );
-      return;
-   }
-
-   if( !s_script_exists( fstat ) )
-   {
-      init_s_script( fstat, FALSE );
-      update_tag( fstat->tag, olc->account->name );
-      text_to_olc( olc, "You generate a script file for %s.\r\n", fstat->name );
       return;
    }
    text_to_olc( olc, "%s", print_s_script( fstat ) );

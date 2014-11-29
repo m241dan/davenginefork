@@ -35,6 +35,7 @@ struct entity_instance
    LLIST *timers;
    STAT_INSTANCE *primary_dmg_received_stat;
 
+   ENTITY_INSTANCE *home;
    ENTITY_FRAMEWORK *framework;
 
    ENTITY_INSTANCE *contained_by;
@@ -116,9 +117,6 @@ ENTITY_INSTANCE *corpsify( ENTITY_INSTANCE *instance );
 void move_create( ENTITY_INSTANCE *entity, ENTITY_FRAMEWORK *exit_frame, char *arg );
 bool should_move_create( ENTITY_INSTANCE *entity, char *arg );
 
-/* creation */
-extern inline EVENT_DATA *decay_event( void );
-
 /* getters */
 const char *instance_name( ENTITY_INSTANCE *instance );
 const char *instance_short_descr( ENTITY_INSTANCE *instance );
@@ -132,19 +130,25 @@ extern inline void set_instance_level( ENTITY_INSTANCE *instance, int level );
 extern inline void set_instance_state( ENTITY_INSTANCE *instance, INSTANCE_STATE state );
 extern inline void set_instance_mind( ENTITY_INSTANCE *instance, INSTANCE_MIND mind );
 extern inline void set_instance_tspeed( ENTITY_INSTANCE *instance, int tspeed );
+extern inline void set_instance_home( ENTITY_INSTANCE *instance );
+extern inline void set_instance_corpse_owner( ENTITY_INSTANCE *instance, int id );
 
 /* actions */
 bool do_damage( ENTITY_INSTANCE *entity, DAMAGE *dmg );
 void death_instance( ENTITY_INSTANCE *instance );
 void spawn_instance( ENTITY_INSTANCE *instance );
 void set_for_decay( ENTITY_INSTANCE *corpse, int delay );
+void set_for_respawn( ENTITY_INSTANCE *instance );
 void corpsify_inventory( ENTITY_INSTANCE *instance, ENTITY_INSTANCE *corpse );
+void builder_takeover( ENTITY_INSTANCE *builder, ENTITY_INSTANCE *mob );
+void return_entity( ENTITY_INSTANCE *entity );
 
 /* utility */
 int text_to_entity( ENTITY_INSTANCE *entity, const char *fmt, ... );
 void text_around_entity( ENTITY_INSTANCE *perspective, int num_around, const char *fmt, ... );
 void echo_to_room( ENTITY_INSTANCE *room, const char *msg );
 int builder_prompt( D_SOCKET *dsock );
+void player_prompt( D_SOCKET *dsock );
 int show_ent_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing );
 int show_ent_contents_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing );
 int show_ent_exits_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing );
@@ -152,6 +156,10 @@ int show_ent_mobiles_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing )
 int show_ent_objects_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing );
 int show_ent_rooms_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing );
 int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *move_to );
+FILE *open_i_script( ENTITY_INSTANCE *instance, const char *permissions );
+bool i_script_exists( ENTITY_INSTANCE *instance );
+void init_i_script( ENTITY_INSTANCE *instance, bool force );
+const char *print_i_script( ENTITY_INSTANCE *instance );
 
 /* builders commands */
 void entity_goto( void *passed, char *arg );
@@ -181,10 +189,15 @@ void entity_using( void *passed, char *arg );
 void entity_olc( void *passed, char *arg );
 void entity_target( void *passed, char *arg );
 void entity_show( void *passed, char *arg );
+void entity_set_home( void *passed, char *arg );
+void entity_restore( void *passed, char *arg );
+void entity_takeover( void *passed, char *arg );
 
 /* mobile commands */
+void mobile_return( void *passed, char *arg );
 void mobile_look( void *passed, char *arg );
 void mobile_inventory( void *passed, char *arg );
+void mobile_score( void *passed, char *arg );
 void mobile_say( void *passed, char *arg );
 void mobile_attack( void *passed, char *arg );
 void mobile_kill( void *passed, char *arg );

@@ -172,8 +172,8 @@ int new_eFramework( ENTITY_FRAMEWORK *frame )
    if( !quick_query( "INSERT INTO entity_frameworks VALUES( %d, %d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%d', '%d' );",
          frame->tag->id, frame->tag->type, frame->tag->created_by,
          frame->tag->created_on, frame->tag->modified_by, frame->tag->modified_on,
-         format_string_for_sql( frame->name ), format_string_for_sql( frame->short_descr ),
-         format_string_for_sql( frame->long_descr ), format_string_for_sql( frame->description ),
+         frame->name, frame->short_descr,
+         frame->long_descr, frame->description,
          ( frame->inherits ? frame->inherits->tag->id : -1 ),
          ( frame->f_primary_dmg_received_stat ? frame->f_primary_dmg_received_stat->tag->id : -1 ),
          (int)frame->tspeed, frame->spawn_time ) )
@@ -197,6 +197,8 @@ int new_eFramework( ENTITY_FRAMEWORK *frame )
       new_stat_on_frame( fstat, frame );
    DetachIterator( &Iter );
 
+   init_f_script( frame, TRUE );
+
    AttachToList( frame, active_frameworks );
    return ret;
 }
@@ -212,6 +214,7 @@ void db_load_eFramework( ENTITY_FRAMEWORK *frame, MYSQL_ROW *row )
    frame->description = strdup( (*row)[counter++] );
    frame->inherits = get_framework_by_id( atoi( (*row)[counter++] ) );
    frame->f_primary_dmg_received_stat = get_stat_framework_by_id( atoi( (*row)[counter++] ) );
+   frame->tspeed = atoi( (*row)[counter++] );
    frame->spawn_time = atoi( (*row)[counter++] );
    return;
 }

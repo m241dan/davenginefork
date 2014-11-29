@@ -19,6 +19,13 @@ function meleeCooldown( attacker )
    return automelee_delay
 end
 
+-- design the duration/frequency parts of the damage object
+function prepMeleeTimer( attacker, timer )
+   timer:setDuration( 1 )
+   timer:setFrequency( 1 )
+   timer:setCounter( 0 )
+end
+
 -- check to see if the attacker can atk the victim, ie same room? can see? etc etc --
 -- return anything other than a string if you can attack, otherwise return the reason --
 -- for example "%s is not out of range" or "%s is not here" whatever you want chummy --
@@ -31,13 +38,6 @@ function meleeCheck( attacker, victim )
    end
 end
 
--- design the duration/frequency parts of the damage object
-function prepMeleeTimer( attacker, timer )
-   timer:setDuration( 1 )
-   timer:setFrequency( 1 )
-   timer:setCounter( 0 )
-end
-
 -- figure out the damage amount portion of the damage object
 function prepMeleeDamage( attacker, damage ) 
 --    okay so for melee i need a tier system. will "hard" script it here, but should maybe have it as a player stat too.
@@ -46,13 +46,13 @@ function prepMeleeDamage( attacker, damage )
 --    want to keep everything, "slightly random", but evenly for everyone, so need to make sure we have random rolls on everything.
    if( attacker:isBuilder() ) then damage:setAmount( 100 ) return end
    damage:setAmount( 1 )
+>>>>>>> 76ac59ca8752767f68a8812dc40aba1be90a5620
 end
 
 -- analyze the damage object sent to the defender
 -- calculator any the actual damage that the object does
 -- note that any elemental damage will be handled by C
 function onReceiveDamage( defender, damage )
-   if( defender:isBuilder() ) then damage:setAmount( 1 ) return end
 end
 
 -- return order attacker -> defender -> room

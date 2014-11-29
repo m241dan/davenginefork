@@ -83,7 +83,7 @@ char *one_arg(char *fStr, char *bStr)
 
   /* skip leading spaces */
   while (isspace(*fStr))
-    fStr++; 
+    fStr++;
 
    delim = ' ';
    if( *fStr == '"' )

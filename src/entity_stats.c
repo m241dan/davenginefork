@@ -45,6 +45,8 @@ void new_stat_framework( STAT_FRAMEWORK *fstat )
       fstat->name, fstat->softcap, fstat->hardcap, fstat->softfloor, fstat->hardfloor, (int)fstat->pool ) )
       bug( "%s: could not add to database %s.", __FUNCTION__, fstat->name );
 
+   init_s_script( fstat, TRUE );
+
    return;
 }
 
@@ -559,6 +561,17 @@ inline void set_stat_owner( STAT_INSTANCE *stat, ENTITY_INSTANCE *owner )
    if( !quick_query( "UPDATE `entity_stats` SET owner=%d WHERE statFrameworkID=%d and owner=%d;", owner->tag->id, stat->framework->tag->id, stat->owner->tag->id ) )
       bug( "%s: could not update databse with new owner.", __FUNCTION__ );
    stat->owner = owner;
+}
+
+inline void restore_pool_stats( ENTITY_INSTANCE *instance )
+{
+   STAT_INSTANCE *stat;
+   ITERATOR Iter;
+   AttachIterator( &Iter, instance->stats );
+   while( ( stat = (STAT_INSTANCE *)NextInList( &Iter ) ) != NULL )
+      if( stat->framework->pool )
+         set_mod_stat( stat, stat->perm_stat);
+   DetachIterator( &Iter );
 }
 
 void lua_set_stat( STAT_INSTANCE *stat, int change, int effective )

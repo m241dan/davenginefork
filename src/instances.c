@@ -34,6 +34,7 @@ ENTITY_INSTANCE *init_eInstance( void )
 
 int clear_eInstance( ENTITY_INSTANCE *eInstance )
 {
+   eInstance->home = NULL;
    eInstance->framework = NULL;
    eInstance->socket = NULL;
    eInstance->account = NULL;
@@ -46,6 +47,7 @@ int free_eInstance( ENTITY_INSTANCE *eInstance )
 {
    int x;
 
+   eInstance->home = NULL;
    eInstance->framework = NULL;
 
    for( x = 0; x < MAX_QUICK_SORT; x++ )
@@ -231,6 +233,7 @@ ENTITY_INSTANCE *init_builder( void )
    builder->framework->description = strdup( "none" );
    builder->live = TRUE;
    builder->builder = TRUE;
+   builder->level = LEVEL_DEVELOPER;
    return builder;
 }
 
@@ -350,6 +353,9 @@ void full_load_instance( ENTITY_INSTANCE *instance )
          stat_instantiate( instance, fstat );
    DetachIterator( &Iter );
 
+   if( instance->framework->f_primary_dmg_received_stat )
+      instance->primary_dmg_received_stat = get_stat_from_instance_by_id( instance, instance->framework->f_primary_dmg_received_stat->tag->id );
+
    list = AllocList();
    if( !db_query_list_row( list, quick_format( "SELECT content_instanceID FROM `entity_instance_possessions` WHERE %s=%d;", tag_table_whereID[ENTITY_INSTANCE_IDS], instance->tag->id ) ) )
    {
@@ -396,12 +402,14 @@ int new_eInstance( ENTITY_INSTANCE *eInstance )
       }
    }
 
-   if( !quick_query( "INSERT INTO entity_instances VALUES( %d, %d, '%s', '%s', '%s', '%s', %d, %d, %d, %d, %d, %d, %d, %d );",
+   if( !quick_query( "INSERT INTO entity_instances VALUES( %d, %d, '%s', '%s', '%s', '%s', %d, %d, %d, %d, %d, %d, %d, %d, %d );",
          eInstance->tag->id, eInstance->tag->type, eInstance->tag->created_by,
          eInstance->tag->created_on, eInstance->tag->modified_by, eInstance->tag->modified_on,
          eInstance->contained_by ? eInstance->contained_by->tag->id : -1, eInstance->framework->tag->id,
          (int)eInstance->live, eInstance->corpse_owner, (int)eInstance->state,
-         (int)eInstance->mind, (int)eInstance->tspeed, (int)eInstance->isPlayer ) )
+         (int)eInstance->mind, (int)eInstance->tspeed, (int)eInstance->isPlayer,
+         ( eInstance->home ? eInstance->home->tag->id : 0 )
+         ) )
       return RET_FAILED_OTHER;
 
    AttachIterator( &Iter, eInstance->specifications );
@@ -416,6 +424,8 @@ int new_eInstance( ENTITY_INSTANCE *eInstance )
    while( ( stat = (STAT_INSTANCE *)NextInList( &Iter ) ) != NULL )
       new_stat_instance( stat );
    DetachIterator( &Iter );
+
+   init_i_script( eInstance, TRUE );
 
    AttachToList( eInstance, eInstances_list );
    return ret;
@@ -435,6 +445,7 @@ void db_load_eInstance( ENTITY_INSTANCE *eInstance, MYSQL_ROW *row )
    eInstance->mind = atoi( (*row)[counter++] );
    eInstance->tspeed = atoi( (*row)[counter++] );
    eInstance->isPlayer = atoi( (*row)[counter++] );
+   eInstance->home = get_instance_by_id( atoi( (*row)[counter++] ) );
    return;
 }
 
@@ -660,7 +671,10 @@ void move_item_messaging( ENTITY_INSTANCE *perspective, ENTITY_INSTANCE *to, voi
 
    if( !list_or_obj )
    {
-      text_to_entity( perspective, "You do not see %s%s.\r\n", orig_string, perspective->contained_by == from ? "" : quick_format( " in %s", instance_short_descr( from ) ) );
+      if( from == perspective )
+         text_to_entity( perspective, "You do not have %s.\r\n", orig_string );
+      else
+         text_to_entity( perspective, "You do not see %s%s.\r\n", orig_string, perspective->contained_by == from ? "" : quick_format( " in %s", instance_short_descr( from ) ) );
       return;
    }
 
@@ -821,7 +835,7 @@ ENTITY_INSTANCE *find_specific_item( ENTITY_INSTANCE *perspective, const char *i
    /* check the perspectives contents first */
    AttachIterator( &Iter, perspective->contents );
    while( ( found = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
-      if( is_prefix( item, instance_name( found ) ) )
+      if( string_contains( downcase( instance_name( found ) ), item ) )
          if( ++count == number )
             break;
    DetachIterator( &Iter );
@@ -835,7 +849,7 @@ ENTITY_INSTANCE *find_specific_item( ENTITY_INSTANCE *perspective, const char *i
    /* then check the perspectives containers contents */
    AttachIterator( &Iter, perspective->contained_by->contents );
    while( ( found = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
-      if( is_prefix( item, instance_name( found ) ) )
+      if( string_contains( downcase( instance_name( found ) ), item ) )
          if( ++count == number )
             break;
    DetachIterator( &Iter );
@@ -1201,7 +1215,6 @@ ENTITY_INSTANCE *eInstantiate( ENTITY_FRAMEWORK *frame )
    ENTITY_FRAMEWORK *fixed_content;
    ENTITY_INSTANCE *eInstance, *content;
    ITERATOR Iter;
-   int ret;
 
    if( !live_frame( frame ) )
       return NULL;
@@ -1221,11 +1234,7 @@ ENTITY_INSTANCE *eInstantiate( ENTITY_FRAMEWORK *frame )
       }
       DetachIterator( &Iter );
    }
-   prep_stack( get_frame_script_path( frame ), "onInstanceInit" );
-   push_framework( frame, lua_handle );
-   push_instance( eInstance, lua_handle );
-   if( ( ret = lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) ) )
-      bug( "%s: ret %d: path %s\r\n - error message: %s.", __FUNCTION__, ret, get_frame_script_path( frame ), lua_tostring( lua_handle, -1 ) );
+   onInstanceInit_trigger( eInstance );
    return eInstance;
 }
 
@@ -1277,11 +1286,65 @@ ENTITY_INSTANCE *corpsify( ENTITY_INSTANCE *instance )
    int decay;
 
    corpse = eInstantiate( instance->framework );
+   set_instance_corpse_owner( corpse, instance->tag->id );
    corpse->corpse_owner = instance->tag->id;
    corpsify_inventory( instance, corpse );
    decay = get_corpse_decay( instance );
    set_for_decay( corpse, decay );
    return corpse;
+}
+
+void builder_takeover( ENTITY_INSTANCE *builder, ENTITY_INSTANCE *mob )
+{
+   D_SOCKET *dsock = builder->socket;
+
+   if( mob->socket )
+      /* double check, not ready for this */
+      return;
+
+   PushStack( builder, dsock->prev_control_stack );
+   socket_uncontrol_entity( builder );
+   socket_control_entity( dsock, mob );
+   switch( mob->level )
+   {
+      default:
+         change_socket_state( dsock, STATE_PLAYING );
+         break;
+      case LEVEL_ADMIN:
+         break;
+      case LEVEL_DEVELOPER:
+         change_socket_state( dsock, STATE_BUILDER);
+         break;
+   }
+   return;
+}
+
+void return_entity( ENTITY_INSTANCE *entity )
+{
+   D_SOCKET *dsock = entity->socket;
+   ENTITY_INSTANCE *return_to;
+
+   if( StackSize( dsock->prev_control_stack ) < 1 )
+      return;
+   if( ( return_to = (ENTITY_INSTANCE *)PopStack( dsock->prev_control_stack ) ) == NULL )
+   {
+      bug( "%s: something is seriously fucked.", __FUNCTION__ );
+      return;
+   }
+   socket_uncontrol_entity( entity );
+   socket_control_entity( dsock, return_to );
+   switch( return_to->level )
+   {
+      default:
+         change_socket_state( dsock, STATE_PLAYING );
+         break;
+      case LEVEL_ADMIN:
+         break;
+      case LEVEL_DEVELOPER:
+         change_socket_state( dsock, STATE_BUILDER);
+         break;
+   }
+   return;
 }
 
 /* factor me PLEASE */
@@ -1422,17 +1485,6 @@ bool should_move_create( ENTITY_INSTANCE *entity, char *arg )
    return TRUE;
 }
 
-/* creation */
-inline EVENT_DATA *decay_event( void )
-{
-   EVENT_DATA *event;
-
-   event = alloc_event();
-   event->fun = &event_instance_decay;
-   event->type = EVENT_DECAY;
-   return event;
-}
-
 /* getters */
 
 const char *instance_name( ENTITY_INSTANCE *instance )
@@ -1535,38 +1587,36 @@ inline void set_instance_tspeed( ENTITY_INSTANCE *instance, int tspeed )
       bug( "%s: could not update database for instance %d with new state.", __FUNCTION__, instance->tag->id );
 }
 
+inline void set_instance_home( ENTITY_INSTANCE *instance )
+{
+   instance->home = instance->contained_by;
+   if( !quick_query( "UPDATE `entity_instances` SET home=%d WHERE entityInstanceID=%d;", instance->home ? instance->home->tag->id : 0, instance->tag->id ) )
+      bug( "%s: could not update database for instance %d with new home.", __FUNCTION__, instance->tag->id );
+}
+
+inline void set_instance_corpse_owner( ENTITY_INSTANCE *instance, int id )
+{
+   instance->corpse_owner = id;
+   if( !quick_query( "UPDATE `entity_instances` SET corpse_owner=%d WHERE entityInstanceID=%d;", instance->corpse_owner, instance->tag->id ) )
+      bug( "%s: could not update dtabase for instance %d with new home.", __FUNCTION__, instance->tag->id );
+}
+
 /* actions */
 
 /* do_damage on kill return TRUE */
 bool do_damage( ENTITY_INSTANCE *entity, DAMAGE *dmg )
 {
-   ENTITY_INSTANCE *corpse;
    STAT_INSTANCE *stat = entity->primary_dmg_received_stat;
-   bool dead = FALSE;
 
    if( !stat )
    {
       bug( "%s: cannot do damage to %s, no primary dmg stat.", __FUNCTION__, instance_name( entity ) );
-      return dead;
+      return FALSE;
    }
    dec_pool_stat( stat, dmg->amount );
    if( get_stat_current( stat ) <= 0 )
-   {
-      corpse = corpsify( entity );
-      entity_to_world( corpse, entity->contained_by );
-      dead = TRUE;
-   }
-   return dead;
-}
-
-void death_instance( ENTITY_INSTANCE *instance )
-{
-   return;
-}
-
-void spawn_instance( ENTITY_INSTANCE *instance )
-{
-   return;
+      return TRUE;
+   return FALSE;
 }
 
 void set_for_decay( ENTITY_INSTANCE *corpse, int decay )
@@ -1574,6 +1624,17 @@ void set_for_decay( ENTITY_INSTANCE *corpse, int decay )
    EVENT_DATA *event;
    event = decay_event();
    add_event_instance( event, corpse, decay );
+   return;
+}
+
+void set_for_respawn( ENTITY_INSTANCE *instance )
+{
+   EVENT_DATA *event;
+   event = respawn_event();
+   if( !instance->home && instance->contained_by )
+      set_instance_home( instance );
+   add_event_instance( event, instance, instance->framework->spawn_time * PULSES_PER_SECOND );
+   return;
 }
 
 void corpsify_inventory( ENTITY_INSTANCE *instance, ENTITY_INSTANCE *corpse )
@@ -1711,6 +1772,17 @@ int builder_prompt( D_SOCKET *dsock )
 
    text_to_buffer( dsock, buf->data );
    return ret;
+}
+
+void player_prompt( D_SOCKET *dsock )
+{
+   if( !dsock->controlling )
+   {
+      bug( "%s: NULL controlling.", __FUNCTION__ );
+      return;
+   }
+   lua_ui_general( dsock->controlling, "uiPrompt" );
+   return;
 }
 
 int show_ent_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing )
@@ -1904,9 +1976,7 @@ int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *exit )
 {
    int ret = RET_SUCCESS;
    ENTITY_INSTANCE *move_to, *content;
-   SPECIFICATION *script;
    ITERATOR Iter;
-   int lua_ret;
 
    if( !entity->builder )
    {
@@ -1922,95 +1992,102 @@ int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *exit )
       }
    }
 
+   if( !entity->contained_by )
+   {
+      text_to_entity( entity, "You cannot move in the Ether.\r\n" );
+      bug( "%s: trying to move something that is not contained, instance %d %s.", __FUNCTION__, entity->tag->id, instance_name( entity ) );
+      return ret;
+   }
+
    if( ( move_to = get_active_instance_by_id( get_spec_value( exit, "IsExit" ) ) ) == NULL )
    {
       text_to_entity( entity, "That exit goes to nowhere.\r\n" );
       return ret;
    }
 
-   if( ( script = has_spec( entity->contained_by, "onEntityLeave" ) ) != NULL && script->value > 0 )
-   {
-      if( prep_stack( get_script_path_from_spec( script ), "onEntityLeave" ) )
-      {
-         push_instance( entity->contained_by, lua_handle );
-         push_instance( entity, lua_handle );
-         if( ( lua_ret = lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) ) )
-            bug( "%s: ret %d: path: %s\r\n - error message: %s.", __FUNCTION__, ret, get_script_path_from_spec( script ), lua_tostring( lua_handle, -1 ) );
-      }
-   }
-
-   if( ( script = has_spec( entity, "onLeaving" ) ) != NULL && script->value > 0 )
-   {
-      if( prep_stack( get_script_path_from_spec( script ), "OnLeaving" ) )
-      {
-         push_instance( entity->contained_by, lua_handle);
-         push_instance( entity, lua_handle );
-         if( ( lua_ret = lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) ) )
-            bug( "%s: ret %d: path: %s\r\n - error message: %s.", __FUNCTION__, ret, get_script_path_from_spec( script ), lua_tostring( lua_handle, -1 ) );
-      }
-   }
+   onEntityLeave_trigger( entity );
+   onLeaving_trigger( entity );
 
    AttachIterator( &Iter, entity->contained_by->contents );
    while( ( content = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
-   {
-      if( ( script = has_spec( content, "onFarewellEntity" ) ) != NULL && script->value > 0 )
-      {
-         if( prep_stack( get_script_path_from_spec( script ), "onFarewellEntity" ) )
-         {
-            push_instance( content, lua_handle );
-            push_instance( entity, lua_handle );
-            if( ( lua_ret = lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) ) )
-               bug( "%s: ret %d: path: %s\r\n - error message: %s.", __FUNCTION__, ret, get_script_path_from_spec( script ), lua_tostring( lua_handle, -1 ) );
-         }
-      }
-   }
+      onFarewell_trigger( content, entity );
    DetachIterator( &Iter );
 
    entity_to_world( entity, move_to );
    text_to_entity( entity, "You move to the %s.\r\n\n", instance_short_descr( exit ) );
    entity_look( entity, "" );
 
-   if( ( script = has_spec( move_to, "onEntityEnter" ) ) != NULL && script->value > 0 )
-   {
-      if( prep_stack( get_script_path_from_spec( script ), "onEntityEnter" ) )
-      {
-         push_instance( move_to, lua_handle );
-         push_instance( entity, lua_handle );
-         if( ( lua_ret = lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) ) )
-            bug( "%s: ret %d: path: %s\r\n - error message: %s.", __FUNCTION__, ret, get_script_path_from_spec( script ), lua_tostring( lua_handle, -1 ) );
-      }
-   }
-
-   if( ( script = has_spec( entity, "onEntering" ) ) != NULL && script->value > 0 )
-   {
-      if( prep_stack( get_script_path_from_spec( script ), "onEntering" ) )
-      {
-         push_instance( entity->contained_by, lua_handle );
-         push_instance( entity, lua_handle );
-         if( ( lua_ret = lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) ) )
-            bug( "%s: ret %d: path: %s\r\n - error message: %s.", __FUNCTION__, ret, get_script_path_from_spec( script ), lua_tostring( lua_handle, -1 ) );
-      }
-   }
+   onEntityEnter_trigger( entity );
+   onEntering_trigger( entity );
 
    AttachIterator( &Iter, move_to->contents );
    while( ( content = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
    {
       if( content == entity )
          continue;
-      if( ( script = has_spec( content, "onGreetEntity" ) ) != NULL && script->value > 0 )
-      {
-         if( prep_stack( get_script_path_from_spec( script ), "onGreetEntity" ) )
-         {
-            push_instance( content, lua_handle );
-            push_instance( entity, lua_handle );
-            if( ( lua_ret = lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) ) )
-               bug( "%s: ret %d: path: %s\r\n - error message: %s.", __FUNCTION__, ret, get_script_path_from_spec( script ), lua_tostring( lua_handle, -1 ) );
-         }
-      }
+      onGreet_trigger( content, entity );
    }
    DetachIterator( &Iter );
 
    return ret;
+}
+
+FILE *open_i_script( ENTITY_INSTANCE *instance, const char *permissions )
+{
+   FILE *script;
+   script = fopen( get_instance_script_path( instance ), permissions );
+   return script;
+}
+
+bool i_script_exists( ENTITY_INSTANCE *instance )
+{
+   FILE *script;
+
+  if( ( script = open_i_script( instance, "r" ) ) == NULL )
+     return FALSE;
+
+   fclose( script );
+   return TRUE;
+}
+
+void init_i_script( ENTITY_INSTANCE *instance, bool force )
+{
+   FILE *temp, *dest;
+
+   if( i_script_exists( instance ) && !force )
+      return;
+
+   if( ( temp = fopen( "../scripts/templates/instance.lua", "r" ) ) == NULL )
+   {
+      bug( "%s: could not open the template.", __FUNCTION__ );
+      return;
+   }
+
+   if( ( dest = fopen( quick_format( "../scripts/instances/%d.lua", instance->tag->id ), "w" ) ) == NULL )
+   {
+      bug( "%s: could not open the script.", __FUNCTION__ );
+      return;
+   }
+
+   copy_flat_file( dest, temp );
+   fclose( dest );
+   fclose( temp );
+   return;
+}
+
+const char *print_i_script( ENTITY_INSTANCE *instance )
+{
+   const char *buf;
+   FILE *fp;
+
+   if( !i_script_exists( instance ) )
+      return "This framework has no script.";
+   if( ( fp = open_i_script( instance, "r" ) ) == NULL )
+      return "There was a pretty big error.";
+
+   buf = fread_file( fp );
+   fclose( fp );
+   return buf;
 }
 
 void entity_goto( void *passed, char *arg )
@@ -2180,9 +2257,6 @@ void entity_drop( void *passed, char *arg )
             default:
                obj_or_list = move_item_specific( entity, entity->contained_by, can_drop, item, number, FALSE );
                break;
-            case -1:
-               obj_or_list = move_item_single( entity, entity->contained_by, can_drop, item, FALSE );
-               break;
             case -2:
               obj_or_list = move_item_all( entity, entity->contained_by, can_drop, item );
               isList = TRUE;
@@ -2245,9 +2319,6 @@ void entity_get( void *passed, char *arg )
             default:
                obj_or_list = move_item_specific( container, entity, can_get, item, number, FALSE );
                break;
-            case -1:
-               obj_or_list = move_item_single( container, entity, can_get, item, FALSE);
-               break;
             case -2:
                obj_or_list = move_item_all( container, entity, can_get, item );
                isList = TRUE;
@@ -2301,9 +2372,6 @@ void entity_put( void *passed, char *arg )
             default:
                obj_or_list = move_item_specific( entity, container, can_get, item, number, FALSE );
                break;
-            case -1:
-               obj_or_list = move_item_single( entity, container, can_get, item, FALSE);
-               break;
             case -2:
                obj_or_list = move_item_all( entity, container, can_get, item );
                isList = TRUE;
@@ -2356,9 +2424,6 @@ void entity_give( void *passed, char *arg )
          {
             default:
                obj_or_list = move_item_specific( entity, give_to, can_give, item, number, FALSE );
-               break;
-            case -1:
-               obj_or_list = move_item_single( entity, give_to, can_give, item, FALSE );
                break;
             case -2:
                obj_or_list = move_item_all( entity, give_to, can_give, item );
@@ -2738,7 +2803,7 @@ void entity_target( void *passed, char *arg )
    ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
    INCEPTION *olc = entity->account->olc;
    void *to_target;
-   int type;
+   int type, number;
 
    if( !arg || arg[0] == '\0' )
    {
@@ -2772,9 +2837,11 @@ void entity_target( void *passed, char *arg )
 
    if( !input_format_is_selection_type( arg ) )
    {
+      if( ( number = number_arg_single( arg ) ) <= 0 )
+         number = 1;
       if( entity->contained_by )
-         to_target = instance_list_has_by_name_regex( entity->contained_by->contents, arg );
-      if( !to_target && ( to_target = instance_list_has_by_name_regex( entity->contents, arg ) ) == NULL )
+         to_target = instance_list_has_by_name_regex_specific( entity->contained_by->contents, arg, number );
+      if( !to_target && ( to_target = instance_list_has_by_name_regex_specific( entity->contents, arg, number ) ) == NULL )
       {
          text_to_entity( entity, "You see no %s.\r\n", arg );
          return;
@@ -2832,13 +2899,169 @@ void entity_show( void *passed, char *arg )
    return;
 }
 
+void entity_set_home( void *passed, char *arg )
+{
+   ENTITY_INSTANCE *entity = (ENTITY_INSTANCE *)passed;
+   ENTITY_INSTANCE *to_set;
+   ITERATOR Iter;
+   int number;
+
+   if( !entity->contained_by )
+   {
+      text_to_entity( entity, "You are in the ether, you can't set anythings home to the Ether.\r\n" );
+      return;
+   }
+
+   if( !arg || arg[0] == '\0' )
+   {
+      AttachIterator( &Iter, entity->contained_by->contents );
+      while( ( to_set = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
+         set_instance_home( to_set );
+      DetachIterator( &Iter );
+      text_to_entity( entity, "You set all instances in this room home to it.\r\n" );
+      return;
+   }
+
+   if( !strcmp( arg, "target" ) )
+   {
+      if( !NO_TARGET( entity ) || TARGET_TYPE( entity ) != TARGET_INSTANCE )
+      {
+         text_to_entity( entity, "You aren't targetting anything who's home is settable.\r\n" );
+         return;
+      }
+      set_instance_home( GT_INSTANCE( entity ) );
+      text_to_entity( entity, "You set %s home to its current room.\r\n", instance_short_descr( GT_INSTANCE( entity ) ) );
+      return;
+   }
+   if( ( number = number_arg_single( arg ) ) <= 0 )
+      number = 1;
+
+   if( ( to_set = find_specific_item( entity, arg, number ) ) == NULL )
+   {
+      text_to_entity( entity, "You cannot find %s.\r\n", arg );
+      return;
+   }
+
+   set_instance_home( to_set );
+   text_to_entity( entity, "You set %s's home to its current room.\r\n", instance_short_descr( to_set ) );
+   return;
+}
+
+void entity_restore( void *passed, char *arg )
+{
+   ENTITY_INSTANCE *builder = (ENTITY_INSTANCE *)passed;
+   ENTITY_INSTANCE *mob;
+   int number;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      if( NO_TARGET( builder ) || TARGET_TYPE( builder ) != TARGET_INSTANCE )
+      {
+         text_to_entity( builder, "Restore what?\r\n" );
+         return;
+      }
+      mob = GT_INSTANCE( builder );
+   }
+   else
+   {
+      if( ( number = number_arg_single( arg ) ) <= 0 )
+         number = 1;
+
+      if( ( mob = find_specific_item( builder, arg, number ) ) == NULL )
+      {
+         text_to_entity( builder, "There is no %s here.\r\n", arg );
+         return;
+      }
+   }
+   restore_pool_stats( mob );
+   text_to_entity( builder, "%s's pool stats restored.\r\n", instance_short_descr( mob ) );
+   return;
+}
+
+void entity_takeover( void *passed, char *arg )
+{
+   ENTITY_INSTANCE *builder = (ENTITY_INSTANCE *)passed;
+   ENTITY_INSTANCE *mob;
+   int number;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      if( NO_TARGET( builder ) || TARGET_TYPE( builder ) != TARGET_INSTANCE )
+      {
+         text_to_entity( builder, "Take over what?\r\n" );
+         return;
+      }
+      mob = GT_INSTANCE( builder );
+   }
+   else
+   {
+      if( ( number = number_arg_single( arg ) ) <= 0 )
+         number = 1;
+      if( ( mob = find_specific_item( builder, arg, number ) ) == NULL )
+      {
+         text_to_entity( builder, "Theere is no %s here.\r\n", arg );
+         return;
+      }
+   }
+   if( mob->socket )
+   {
+      text_to_entity( builder, "You can't take over anything thats being controlled by another human... yet!\r\n" );
+      return;
+   }
+   text_to_entity( builder, "You assume control of %s. Use \"return\" to get back.\r\n", instance_short_descr( mob ) );
+   builder_takeover( builder, mob );
+   return;
+}
+
+/* mobile commands */
+void mobile_return( void *passed, char *arg )
+{
+   ENTITY_INSTANCE *mob = (ENTITY_INSTANCE *)passed;
+   D_SOCKET *dsock = mob->socket;
+
+   if( !dsock )
+      return;
+   if( StackSize( dsock->prev_control_stack ) < 1 )
+   {
+      text_to_entity( mob, "Return to what form?\r\n" );
+      return;
+   }
+
+   text_to_entity( mob, "You return...\r\n" );
+   return_entity( mob );
+   return;
+}
 void mobile_look( void *passed, char *arg )
 {
+   ENTITY_INSTANCE *mobile = (ENTITY_INSTANCE *)passed;
+   ENTITY_INSTANCE *looking_at = NULL;
+   int number;
+
+   if( arg && arg[0] != '\0' )
+   {
+      if( ( number = number_arg_single( arg ) ) < 1 )
+         number = 1;
+      if( ( looking_at = find_specific_item( mobile, arg, number ) ) == NULL )
+      {
+         text_to_entity( mobile, "You don't see %s.\r\n", arg );
+         return;
+      }
+   }
+   lua_look( mobile, looking_at );
    return;
 }
 
 void mobile_inventory( void *passed, char *arg )
 {
+   ENTITY_INSTANCE *mobile = (ENTITY_INSTANCE *)passed;
+   lua_ui_general( mobile, "uiInventory" );
+   return;
+}
+
+void mobile_score( void *passed, char *arg )
+{
+   ENTITY_INSTANCE *mobile = (ENTITY_INSTANCE *)passed;
+   lua_ui_general( mobile, "uiScore" );
    return;
 }
 

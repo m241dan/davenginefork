@@ -16,5 +16,6 @@ CREATE TABLE IF NOT EXISTS `entity_instances` (
    `mind` int NOT NULL DEFAULT '0',
    `tspeed` int NOT NULL DEFAULT '0',
    `isPlayer` int NOT NULL DEFAULT '0',
+   `home` int NOT NULL DEFAULT '0',
    PRIMARY KEY (`entityInstanceID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

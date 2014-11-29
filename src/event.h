@@ -25,7 +25,7 @@
 
 typedef enum
 {
-   EVENT_LUA_CALLBACK = 1, EVENT_AUTO_ATTACK, EVENT_DECAY, MAX_INSTANCE_EVENT
+   EVENT_LUA_CALLBACK = 1, EVENT_AUTO_ATTACK, EVENT_DECAY, EVENT_RESPAWN, MAX_INSTANCE_EVENT
 } INSTANCE_EVENTS;
 
 typedef enum
@@ -80,6 +80,9 @@ void add_event_lua               ( EVENT_DATA *event, const char *path, int dela
 void strip_event_socket          ( D_SOCKET *dSock, int type );
 void strip_event_instance        ( ENTITY_INSTANCE *instance, int type );
 
+/* quick event creation */
+extern inline EVENT_DATA *decay_event	( void );
+extern inline EVENT_DATA *respawn_event	( void );
 
 /* all events should be defined here */
 bool event_mobile_save           ( EVENT_DATA *event );
@@ -89,3 +92,5 @@ bool event_instance_lua_callback ( EVENT_DATA *event );
 bool event_global_lua_callback   ( EVENT_DATA *event );
 bool event_auto_attack		 ( EVENT_DATA *event );
 bool event_instance_decay	 ( EVENT_DATA *event );
+bool event_instance_respawn	 ( EVENT_DATA *event );
+

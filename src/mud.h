@@ -134,6 +134,8 @@ typedef enum
    SPEC_PREPMELEETIMER, SPEC_PREPMELEEDAMAGE, SPEC_ONRECEIVEDAMAGE, SPEC_COMBATMESSAGE,
    /* Corpse Specs */
    SPEC_CORPSEDELAY, SPEC_INVENTORYTOCORPSE,
+   /* UI Specs */
+   SPEC_UIPROMPT, SPEC_UILOOK, SPEC_UIINVENTORY, SPEC_UISCORE,
    /* Misc Specs */
    SPEC_MIRROREXIT, SPEC_TERRAIN,
 
@@ -452,8 +454,9 @@ struct dSocket
   z_stream      * out_compress;                /* MCCP support */
   unsigned char * out_compress_buf;            /* MCCP support */
 
-   NANNY_DATA    * nanny;
-   ACCOUNT_DATA *account;
+   NANNY_DATA   * nanny;
+   ACCOUNT_DATA * account;
+   STACK        * prev_control_stack;
    ENTITY_INSTANCE *controlling;
 };
 
@@ -516,6 +519,8 @@ typedef struct buffer_type
 #include "timers.h"
 #include "lua_timers.h"
 #include "lua_iter.h"
+#include "lua_triggers.h"
+#include "lua_ui.h"
 
 /******************************
  * End of new structures      *

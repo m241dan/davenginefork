@@ -18,7 +18,9 @@ const struct luaL_Reg EntityInstanceLib_m[] = {
    { "getStatMod", getStatMod },
    { "getStatPerm", getStatPerm },
    { "getStat", getStat },
-   { "getStatEffectiveValue", getStatEffectiveValue },
+   { "getStatValue", getStatEffectiveValue },
+   { "getHome", getHome },
+   { "getExitTo", getExitTo },
    /* setters */
    { "setStatMod", setStatMod },
    { "setStatPerm", setStatPerm },
@@ -26,11 +28,17 @@ const struct luaL_Reg EntityInstanceLib_m[] = {
    { "addStatPerm", addStatPerm },
    { "setVar", setVar },
    { "addSpec", addSpec },
+   { "setHome", setHome },
    /* bools */
    { "isLive", isLive },
    { "isBuilder", isBuilder },
    { "hasItemInInventoryFramework", hasItemInInventoryFramework },
    { "isSameRoom", isSameRoom },
+   { "isPlayer", isPlayer },
+   { "isExit", isExit },
+   { "isRoom", isRoom },
+   { "isMob", isMob },
+   { "isObj", isObj },
    /* actions */
    { "callBack", luaCallBack },
    { "interp", luaEntityInstanceInterp },
@@ -38,6 +46,8 @@ const struct luaL_Reg EntityInstanceLib_m[] = {
    { "echo", luaEcho },
    { "echoAt", luaEchoAt },
    { "echoAround", luaEchoAround },
+   { "frameCall", luaFrameCall },
+   { "restore", luaInstanceRestore },
    /* iterators */
    { "eachInventory", luaEachInventory },
    { NULL, NULL } /* gandalf */
@@ -415,6 +425,32 @@ int getStatEffectiveValue( lua_State *L )
    return 1;
 }
 
+int getHome( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+
+   DAVLUACM_INSTANCE_NIL( instance, L );
+   if( !instance->home )
+      lua_pushnil( L );
+   else
+      push_instance( instance->home, L );
+
+   return 1;
+}
+
+int getExitTo( lua_State * L)
+{
+   ENTITY_INSTANCE *exit;
+   ENTITY_INSTANCE *exit_to;
+
+   DAVLUACM_INSTANCE_NIL( exit, L );
+   if( ( exit_to = get_active_instance_by_id( get_spec_value( exit, "IsExit" ) ) ) == NULL )
+      lua_pushnil( L );
+   else
+      push_instance( exit_to, L );
+   return 1;
+}
+
 int setStatMod( lua_State *L )
 {
    ENTITY_INSTANCE *instance;
@@ -670,6 +706,20 @@ int addSpec( lua_State *L )
    return 0;
 }
 
+int setHome( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+
+   DAVLUACM_INSTANCE_NONE( instance, L );
+   if( !instance->contained_by )
+   {
+      bug( "%s: cannot set home on something that is not contained.", __FUNCTION__ );
+      return 0;
+   }
+   set_instance_home( instance );
+   return 0;
+}
+
 int isLive( lua_State *L )
 {
    ENTITY_INSTANCE *instance;
@@ -774,7 +824,61 @@ int hasItemInInventoryFramework( lua_State *L )
    else
       lua_pushboolean( L, 0 );
 
-   return 1; 
+   return 1;
+}
+
+int isPlayer( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+   DAVLUACM_INSTANCE_BOOL( instance, L );
+   lua_pushboolean( L, (int)instance->isPlayer );
+   return 1;
+}
+
+int isExit( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+   DAVLUACM_INSTANCE_BOOL( instance, L );
+   if( get_spec_value( instance, "IsExit" ) > 0 )
+      lua_pushboolean( L, 1 );
+   else
+      lua_pushboolean( L, 0 );
+   return 1;
+}
+
+int isRoom( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+   DAVLUACM_INSTANCE_BOOL( instance, L );
+   if( get_spec_value( instance, "IsRoom" ) > 0 )
+      lua_pushboolean( L, 1 );
+   else
+      lua_pushboolean( L, 0 );
+   return 1;
+
+}
+
+int isMob( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+   DAVLUACM_INSTANCE_BOOL( instance, L );
+   if( get_spec_value( instance, "IsMob" ) > 0 )
+      lua_pushboolean( L, 1 );
+   else
+      lua_pushboolean( L, 0 );
+   return 1;
+
+}
+
+int isObj( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+   DAVLUACM_INSTANCE_BOOL( instance, L );
+   if( get_spec_value( instance, "IsObject" ) > 0 )
+      lua_pushboolean( L, 1 );
+   else
+      lua_pushboolean( L, 0 );
+   return 1;
 }
 
 /* actions */
@@ -978,6 +1082,88 @@ int luaEchoAround( lua_State *L )
          continue;
       text_to_entity( instance, lua_tostring( L, -1 ) );
    }
+   return 0;
+}
+
+int luaFrameCall( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+   const char *func_name;
+   const char *cypher;
+   int num_args;
+   int x, ret;
+
+   DAVLUACM_INSTANCE_NONE( instance, L );
+
+   if( ( func_name = luaL_checkstring( L, 2 ) ) == NULL )
+   {
+      bug( "%s: no function name passed.", __FUNCTION__ );
+      return 0;
+   }
+   if( ( cypher = luaL_checkstring( L, 3 ) ) == NULL )
+   {
+      bug( "%s: no cypher string passed.", __FUNCTION__ );
+      return 0;
+   }
+
+   prep_stack_handle( L, get_frame_script_path( instance->framework ), func_name );
+
+   for( x = 0, num_args = strlen( cypher ); x < num_args; x++ )
+   {
+      ENTITY_FRAMEWORK *arg_frame;
+      ENTITY_INSTANCE *arg_instance;
+
+      switch( cypher[x] )
+      {
+         case 's':
+            if( lua_type( L, ( 4 + x ) ) != LUA_TSTRING )
+            {
+               bug( "%s: bad/cypeer passed value, not a string at position %d.", __FUNCTION__, x );
+               lua_pushnil( L );
+               continue;
+            }
+            lua_pushstring( L, lua_tostring( L, ( 4 + x ) ) );
+            break;
+         case 'n':
+            if( lua_type( L, ( 4 + x ) ) != LUA_TNUMBER )
+            {
+               bug( "%s: bad/cypher passed value, not a number at position %d.", __FUNCTION__, x );
+               lua_pushnil( L );
+               continue;
+            }
+            lua_pushnumber( L, lua_tonumber( L, ( 4 + x ) ) );
+            break;
+         case 'i':
+            if( ( arg_instance = *(ENTITY_INSTANCE **)luaL_checkudata( L, ( 4 + x ), "EntityInstance.meta" ) ) == NULL )
+            {
+               bug( "%s: bad/cypher passed value, not an instance at position %d.", __FUNCTION__, x );
+               lua_pushnil( L );
+               continue;
+            }
+           push_instance( arg_instance, L );
+            break;
+         case 'f':
+            if( ( arg_frame = *(ENTITY_FRAMEWORK **)luaL_checkudata( L, ( 4 + x ), "EntityFramework.meta" ) ) == NULL )
+            {
+               bug( "%s: bad/cypher passed value, not a framework at position %d.", __FUNCTION__, x );
+               lua_pushnil( L );
+               continue;
+            }
+            push_framework( arg_frame, L );
+            break;
+      }
+   }
+   if( ( ret = lua_pcall( L, num_args, 0, 0 ) ) )
+      bug( "%s: ret %d: path: %s\r\n - error message: %s\r\n", __FUNCTION__, ret, get_frame_script_path( instance->framework ), lua_tostring( L, -1 ) );
+   return 0;
+
+}
+
+int luaInstanceRestore( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+   DAVLUACM_INSTANCE_NONE( instance, L );
+   restore_pool_stats( instance );
    return 0;
 }
 

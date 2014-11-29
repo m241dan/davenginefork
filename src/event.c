@@ -6,6 +6,26 @@
 /* include main header file */
 #include "mud.h"
 
+
+/* quick event creation */
+inline EVENT_DATA *decay_event( void )
+{
+   EVENT_DATA *event;
+   event = alloc_event();
+   event->fun = &event_instance_decay;
+   event->type = EVENT_DECAY;
+   return event;
+}
+
+inline EVENT_DATA *respawn_event( void )
+{
+   EVENT_DATA *event;
+   event = alloc_event();
+   event->fun = &event_instance_respawn;
+   event->type = EVENT_RESPAWN;
+   return event;
+}
+
 /* event_game_tick is just to show how to make global events
  * which can be used to update the game.
  */
@@ -224,4 +244,25 @@ bool event_instance_decay( EVENT_DATA *event )
    dequeue_event( event );
    delete_eInstance( corpse );
    return TRUE;
+}
+
+bool event_instance_respawn( EVENT_DATA *event )
+{
+   ENTITY_INSTANCE *spawning_instance;
+
+   if( event->ownertype != EVENT_OWNER_INSTANCE )
+   {
+      bug( "%s: bad event owner.", __FUNCTION__ );
+      return FALSE;
+   }
+   if( ( spawning_instance = (ENTITY_INSTANCE *)event->owner ) == NULL )
+   {
+      bug( "%s: event had a NULL owner.", __FUNCTION__ );
+      return FALSE;
+   }
+
+   entity_to_world( spawning_instance, spawning_instance->home );
+   onSpawn_trigger( spawning_instance );
+   text_around_entity( spawning_instance->contained_by, 1, "%s fades into existence.\r\n", spawning_instance, instance_short_descr( spawning_instance ) );
+   return FALSE;
 }
