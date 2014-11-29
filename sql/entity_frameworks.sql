@@ -16,13 +16,16 @@ CREATE TABLE IF NOT EXISTS `entity_frameworks` (
    `primary_dmg` int NOT NULL DEFAULT '-1',
    `tspeed` int NOT NULL DEFAULT '0',
    `spawn_time` int NOT NULL DEFAULT '0',
+   `height` int NOT NULL DEFAULT '0',
+   `weight` int NOT NULL DEFAULT '0',
+   `width` int NOT NULL DEFAULT '0',
    PRIMARY KEY (`entityFrameworkID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-INSERT INTO `entity_frameworks` VALUES ( '0', '2', 'Davenge', 'initscript', 'Davenge', 'initscript', 'North', 'North', 'Northern exit is here.', 'An exit to the north.', '-1', '-1', '0', '0' );
-INSERT INTO `entity_frameworks` VALUES ( '1', '2', 'Davenge', 'initscript', 'Davenge', 'initscript', 'South', 'South', 'Southern exit is here.', 'An exit to the south.', '-1', '-1', '0', '0' );
-INSERT INTO `entity_frameworks` VALUES ( '2', '2', 'Davenge', 'initscript', 'Davenge', 'initscript', 'East', 'East', 'Easthern exit is here.', 'An exit to the east.', '-1', '-1', '0', '0' );
-INSERT INTO `entity_frameworks` VALUES ( '3', '2', 'Davenge', 'initscript', 'Davenge', 'initscript', 'West', 'West', 'Westhern exit is here.', 'An exit to the west.', '-1', '-1', '0', '0' );
-INSERT INTO `entity_frameworks` VALUES ( '4', '2', 'Davenge', 'initscript', 'Davenge', 'initscript', 'Up', 'Up', 'Up exit is here.', 'An exit leading up.', '-1', '-1', '0', '0' );
-INSERT INTO `entity_frameworks` VALUES ( '5', '2', 'Davenge', 'initscript', 'Davenge', 'initscript', 'Down', 'Down', 'Down exit is here.', 'An exit leaded down.', '-1', '-1', '0', '0' );
+INSERT INTO `entity_frameworks` VALUES ( '0', '2', 'Davenge', 'initscript', 'Davenge', 'initscript', 'North', 'North', 'Northern exit is here.', 'An exit to the north.', '-1', '-1', '0', '0', '10', '200', '10' );
+INSERT INTO `entity_frameworks` VALUES ( '1', '2', 'Davenge', 'initscript', 'Davenge', 'initscript', 'South', 'South', 'Southern exit is here.', 'An exit to the south.', '-1', '-1', '0', '0', '10', '200', '10' );
+INSERT INTO `entity_frameworks` VALUES ( '2', '2', 'Davenge', 'initscript', 'Davenge', 'initscript', 'East', 'East', 'Easthern exit is here.', 'An exit to the east.', '-1', '-1', '0', '0', '10', '200', '10' );
+INSERT INTO `entity_frameworks` VALUES ( '3', '2', 'Davenge', 'initscript', 'Davenge', 'initscript', 'West', 'West', 'Westhern exit is here.', 'An exit to the west.', '-1', '-1', '0', '0', '10', '200', '10' );
+INSERT INTO `entity_frameworks` VALUES ( '4', '2', 'Davenge', 'initscript', 'Davenge', 'initscript', 'Up', 'Up', 'Up exit is here.', 'An exit leading up.', '-1', '-1', '0', '0', '10', '200', '10' );
+INSERT INTO `entity_frameworks` VALUES ( '5', '2', 'Davenge', 'initscript', 'Davenge', 'initscript', 'Down', 'Down', 'Down exit is here.', 'An exit leaded down.', '-1', '-1', '0', '0', '10', '200', '10' );
 

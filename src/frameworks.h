@@ -9,6 +9,9 @@ struct entity_framework
    char *description;
    unsigned short int tspeed;
    int spawn_time;
+   int height;
+   int weight;
+   int width;
 
    LLIST *fixed_contents; /* frameworks structs */
    LLIST *specifications;
@@ -72,6 +75,9 @@ extern inline void set_frame_long_descr( ENTITY_FRAMEWORK *frame, const char *lo
 extern inline void set_frame_description( ENTITY_FRAMEWORK *frame, const char *description );
 extern inline void set_frame_tspeed( ENTITY_FRAMEWORK *frame, int tspeed );
 extern inline void set_frame_spawn_time( ENTITY_FRAMEWORK *frame, int spawn_time );
+extern inline void set_frame_height( ENTITY_FRAMEWORK *frame, int height );
+extern inline void set_frame_weight( ENTITY_FRAMEWORK *frame, int weight );
+extern inline void set_frame_width( ENTITY_FRAMEWORK *frame, int width );
 
 void add_frame_to_fixed_contents( ENTITY_FRAMEWORK *frame_to_add, ENTITY_FRAMEWORK *container );
 void rem_frame_from_fixed_contents( ENTITY_FRAMEWORK *frame_to_rem, ENTITY_FRAMEWORK *container );

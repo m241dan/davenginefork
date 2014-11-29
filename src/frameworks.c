@@ -169,14 +169,14 @@ int new_eFramework( ENTITY_FRAMEWORK *frame )
       }
    }
 
-   if( !quick_query( "INSERT INTO entity_frameworks VALUES( %d, %d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%d', '%d' );",
+   if( !quick_query( "INSERT INTO entity_frameworks VALUES( %d, %d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%d', '%d', '%d', '%d', '%d' );",
          frame->tag->id, frame->tag->type, frame->tag->created_by,
          frame->tag->created_on, frame->tag->modified_by, frame->tag->modified_on,
          frame->name, frame->short_descr,
          frame->long_descr, frame->description,
          ( frame->inherits ? frame->inherits->tag->id : -1 ),
          ( frame->f_primary_dmg_received_stat ? frame->f_primary_dmg_received_stat->tag->id : -1 ),
-         (int)frame->tspeed, frame->spawn_time ) )
+         (int)frame->tspeed, frame->spawn_time, frame->height, frame->weight, frame->width ) )
       return RET_FAILED_OTHER;
 
    AttachIterator( &Iter, frame->specifications );
@@ -216,6 +216,9 @@ void db_load_eFramework( ENTITY_FRAMEWORK *frame, MYSQL_ROW *row )
    frame->f_primary_dmg_received_stat = get_stat_framework_by_id( atoi( (*row)[counter++] ) );
    frame->tspeed = atoi( (*row)[counter++] );
    frame->spawn_time = atoi( (*row)[counter++] );
+   frame->height = atoi( (*row)[counter++] );
+   frame->weight = atoi( (*row)[counter++] );
+   frame->width = atoi( (*row)[counter++] );
    return;
 }
 
@@ -786,6 +789,35 @@ inline void set_frame_spawn_time( ENTITY_FRAMEWORK *frame, int spawn_time )
       return;
    if( !quick_query( "UPDATE `entity_frameworks` SET spawn_time=%d WHERE entityFrameworkID=%d;", frame->spawn_time, frame->tag->id ) )
       bug( "%s: could not update dtabase for frame %d with new spawn time.", __FUNCTION__, frame->tag->id );
+}
+
+inline void set_frame_height( ENTITY_FRAMEWORK *frame, int height )
+{
+   frame->height = height;
+   if( !strcmp( frame->tag->created_by, "null" ) )
+      return;
+   if( !quick_query( "UPDATE `entity_frameworks` SET height=%d WHERE entityFrameworkID=%d;", frame->height, frame->tag->id ) )
+      bug( "%s: could not update database for frame %d with new height.", __FUNCTION__, frame->tag->id );
+}
+
+inline void set_frame_weight( ENTITY_FRAMEWORK *frame, int weight )
+{
+   frame->weight = weight;
+   if( !strcmp( frame->tag->created_by, "null" ) )
+      return;
+   if( !quick_query( "UPDATE `entity_frameworks` SET weight=%d WHERE entityFrameworkID=%d;", frame->weight, frame->tag->id ) )
+      bug( "%s: could not update database for frame %d with new weight.", __FUNCTION__, frame->tag->id );
+
+}
+
+inline void set_frame_width( ENTITY_FRAMEWORK *frame, int width )
+{
+   frame->width = width;
+   if( !strcmp( frame->tag->created_by, "null" ) )
+      return;
+   if( !quick_query( "UPDATE `entity_frameworks` SET width=%d WHERE entityFrameworkID=%d;", frame->width, frame->tag->id ) )
+      bug( "%s: could not update database for frame %d with new width.", __FUNCTION__, frame->tag->id );
+
 }
 
 void add_frame_to_fixed_contents( ENTITY_FRAMEWORK *frame_to_add, ENTITY_FRAMEWORK *container )

@@ -568,6 +568,90 @@ void eFramework_set_spawn_time( void *passed, char *arg )
    return;
 }
 
+void eFramework_set_height( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_FRAMEWORK *frame = (ENTITY_FRAMEWORK *)olc->editing;
+   int value;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Set the height to what?\r\n" );
+      return;
+   }
+   if( !is_number( arg ) )
+   {
+      text_to_olc( olc, "Height must be a number.\r\n" );
+      return;
+   }
+   value = atoi( arg );
+   if( value < 0 )
+   {
+      text_to_olc( olc, "Height cannot be negative.\r\n" );
+      return;
+   }
+   set_frame_height( frame, value );
+   update_tag( frame->tag, olc->account->name );
+   text_to_olc( olc, "Height set.\r\n" );
+   return;
+}
+
+void eFramework_set_weight( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_FRAMEWORK *frame = (ENTITY_FRAMEWORK *)olc->editing;
+   int value;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Set the weight to what?\r\n" );
+      return;
+   }
+   if( !is_number( arg ) )
+   {
+      text_to_olc( olc, "Weight must be a number.\r\n" );
+      return;
+   }
+   value = atoi( arg );
+   if( value < 0 )
+   {
+      text_to_olc( olc, "Weight cannot be negative.\r\n" );
+      return;
+   }
+   set_frame_weight( frame, value );
+   update_tag( frame->tag, olc->account->name );
+   text_to_olc( olc, "Weight set.\r\n" );
+   return;
+}
+
+void eFramework_set_width( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_FRAMEWORK *frame = (ENTITY_FRAMEWORK *)olc->editing;
+   int value;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Set the width to what?\r\n" );
+      return;
+   }
+   if( !is_number( arg ) )
+   {
+      text_to_olc( olc, "Width must be a number.\r\n" );
+      return;
+   }
+   value = atoi( arg );
+   if( value < 0 )
+   {
+      text_to_olc( olc, "Width cannot be negative.\r\n" );
+      return;
+   }
+   set_frame_width( frame, value );
+   update_tag( frame->tag, olc->account->name );
+   text_to_olc( olc, "Width set.\r\n" );
+   return;
+}
+
 void eFramework_addStat( void *passed, char *arg )
 {
    INCEPTION *olc = (INCEPTION *)passed;
