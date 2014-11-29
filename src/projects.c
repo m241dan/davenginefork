@@ -211,6 +211,9 @@ void add_workspace_to_project( WORKSPACE *wSpace, PROJECT *project )
 
 void rem_workspace_from_project( WORKSPACE *wSpace, PROJECT *project )
 {
+   DetachFromList( wSpace, project->workspaces );
+   if( !quick_query( "DELETE FROM `project_entires` WHERE projectID=%d AND entry=%d;", project->tag->id, wSpace->tag->id ) )
+      bug( "%s: could not delete from the database the removed entry.", __FUNCTION__ );
    return;
 }
 

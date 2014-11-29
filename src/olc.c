@@ -1657,7 +1657,7 @@ void workspace_unload( void *passed, char *arg )
    }
 
    if( olc->project )
-      DetachFromList( wSpace, olc->project->workspaces );
+      rem_workspace_from_project( wSpace, olc->project );
    DetachFromList( wSpace, olc->wSpaces );
    unuse_workspace( wSpace, olc->account );
    text_to_olc( olc, "Workspace unloaded.\r\n" );
