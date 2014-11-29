@@ -1402,6 +1402,27 @@ void show_all_projects_to_olc( INCEPTION *olc )
    return;
 }
 
+void show_all_stats_to_olc( INCEPTION *olc )
+{
+   LLIST *list = AllocList();
+   MYSQL_ROW row;
+   ITERATOR Iter;
+
+   if( !db_query_list_row( list, "SELECT statFrameworkID, name FROM `stat_frameworks`;" ) )
+   {
+      FreeList( list );
+      return;
+   }
+
+   AttachIterator( &Iter, list );
+   while( ( row = (MYSQL_ROW)NextInList( &Iter ) ) != NULL )
+      text_to_olc( olc, "Stat %d: %s\r\n", atoi( row[0] ), row[1] );
+   DetachIterator( &Iter );
+
+   FreeList( list );
+   return;
+}
+
 void show_range_frameworks_to_olc( INCEPTION *olc, int start, int end )
 {
    LLIST *list = AllocList();
@@ -2174,9 +2195,11 @@ void olc_list( void *passed, char *arg )
       text_to_olc( olc, " To List All Frameworks: list f\r\n" );
       text_to_olc( olc, " To List All Instances:  list i\r\n" );
       text_to_olc( olc, " To List All Workspaces: list w\r\n" );
-      text_to_olc( olc, " To List all projects:   list p\r\n" );
+      text_to_olc( olc, " To List All Projects:   list p\r\n" );
+      text_to_olc( olc, " To List All Stat:       list s\r\n" );
       text_to_olc( olc, " List also takes ranges: (example)list i5-10\r\n" );
       text_to_olc( olc, " List also takes comma lists and no_spec flags.\r\n" );
+      text_to_olc( olc, " (Note: Only Frameworks, Instances and Workspaces take range.\r\n" );
       olc_short_prompt( olc );
       return;
    }
@@ -2186,9 +2209,9 @@ void olc_list( void *passed, char *arg )
       arg = one_arg_delim( arg, buf, ',' );
 
       type = tolower( buf[0] );
-      if( type != 'f' && type != 'i' && type != 'w' && type != 'p' )
+      if( type != 'f' && type != 'i' && type != 'w' && type != 'p' && type != 's' )
       {
-         text_to_olc( olc, "%c not valid, (f)rameworks, (i)nstances and (w)orkspaces only.\r\n", type );
+         text_to_olc( olc, "%c not valid, (f)rameworks, (i)nstances, (w)orkspaces, (p)rojects and (s)tats only.\r\n", type );
          continue;
       }
 
@@ -2207,6 +2230,9 @@ void olc_list( void *passed, char *arg )
                return;
             case 'p':
                show_all_projects_to_olc( olc );
+               return;
+            case 's':
+               show_all_stats_to_olc( olc );
                return;
          }
       }

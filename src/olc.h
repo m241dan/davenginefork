@@ -136,6 +136,7 @@ void show_all_frameworks_to_olc( INCEPTION *olc );
 void show_all_instances_to_olc( INCEPTION *olc );
 void show_all_workspaces_to_olc( INCEPTION *olc );
 void show_all_projects_to_olc( INCEPTION *olc );
+void show_all_stats_to_olc( INCEPTION *olc );
 void show_range_frameworks_to_olc( INCEPTION *olc, int start, int end );
 void show_range_instances_to_olc( INCEPTION *olc, int start, int end );
 void show_range_workspaces_to_olc( INCEPTION *olc, int start, int end );
