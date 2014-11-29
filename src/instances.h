@@ -140,12 +140,15 @@ void spawn_instance( ENTITY_INSTANCE *instance );
 void set_for_decay( ENTITY_INSTANCE *corpse, int delay );
 void set_for_respawn( ENTITY_INSTANCE *instance );
 void corpsify_inventory( ENTITY_INSTANCE *instance, ENTITY_INSTANCE *corpse );
+void builder_takeover( ENTITY_INSTANCE *builder, ENTITY_INSTANCE *mob );
+void return_entity( ENTITY_INSTANCE *entity );
 
 /* utility */
 int text_to_entity( ENTITY_INSTANCE *entity, const char *fmt, ... );
 void text_around_entity( ENTITY_INSTANCE *perspective, int num_around, const char *fmt, ... );
 void echo_to_room( ENTITY_INSTANCE *room, const char *msg );
 int builder_prompt( D_SOCKET *dsock );
+void player_prompt( D_SOCKET *dsock );
 int show_ent_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing );
 int show_ent_contents_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing );
 int show_ent_exits_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing );
@@ -191,8 +194,10 @@ void entity_restore( void *passed, char *arg );
 void entity_takeover( void *passed, char *arg );
 
 /* mobile commands */
+void mobile_return( void *passed, char *arg );
 void mobile_look( void *passed, char *arg );
 void mobile_inventory( void *passed, char *arg );
+void mobile_score( void *passed, char *arg );
 void mobile_say( void *passed, char *arg );
 void mobile_attack( void *passed, char *arg );
 void mobile_kill( void *passed, char *arg );

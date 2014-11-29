@@ -233,6 +233,7 @@ ENTITY_INSTANCE *init_builder( void )
    builder->framework->description = strdup( "none" );
    builder->live = TRUE;
    builder->builder = TRUE;
+   builder->level = LEVEL_DEVELOPER;
    return builder;
 }
 
@@ -1293,6 +1294,59 @@ ENTITY_INSTANCE *corpsify( ENTITY_INSTANCE *instance )
    return corpse;
 }
 
+void builder_takeover( ENTITY_INSTANCE *builder, ENTITY_INSTANCE *mob )
+{
+   D_SOCKET *dsock = builder->socket;
+
+   if( mob->socket )
+      /* double check, not ready for this */
+      return;
+
+   PushStack( builder, dsock->prev_control_stack );
+   socket_uncontrol_entity( builder );
+   socket_control_entity( dsock, mob );
+   switch( mob->level )
+   {
+      default:
+         change_socket_state( dsock, STATE_PLAYING );
+         break;
+      case LEVEL_ADMIN:
+         break;
+      case LEVEL_DEVELOPER:
+         change_socket_state( dsock, STATE_BUILDER);
+         break;
+   }
+   return;
+}
+
+void return_entity( ENTITY_INSTANCE *entity )
+{
+   D_SOCKET *dsock = entity->socket;
+   ENTITY_INSTANCE *return_to;
+
+   if( StackSize( dsock->prev_control_stack ) < 1 )
+      return;
+   if( ( return_to = (ENTITY_INSTANCE *)PopStack( dsock->prev_control_stack ) ) == NULL )
+   {
+      bug( "%s: something is seriously fucked.", __FUNCTION__ );
+      return;
+   }
+   socket_uncontrol_entity( entity );
+   socket_control_entity( dsock, return_to );
+   switch( return_to->level )
+   {
+      default:
+         change_socket_state( dsock, STATE_PLAYING );
+         break;
+      case LEVEL_ADMIN:
+         break;
+      case LEVEL_DEVELOPER:
+         change_socket_state( dsock, STATE_BUILDER);
+         break;
+   }
+   return;
+}
+
 /* factor me PLEASE */
 void move_create( ENTITY_INSTANCE *entity, ENTITY_FRAMEWORK *exit_frame, char *arg )
 {
@@ -1718,6 +1772,17 @@ int builder_prompt( D_SOCKET *dsock )
 
    text_to_buffer( dsock, buf->data );
    return ret;
+}
+
+void player_prompt( D_SOCKET *dsock )
+{
+   if( !dsock->controlling )
+   {
+      bug( "%s: NULL controlling.", __FUNCTION__ );
+      return;
+   }
+   lua_ui_general( dsock->controlling, "uiPrompt" );
+   return;
 }
 
 int show_ent_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing )
@@ -2913,14 +2978,90 @@ void entity_restore( void *passed, char *arg )
    return;
 }
 
+void entity_takeover( void *passed, char *arg )
+{
+   ENTITY_INSTANCE *builder = (ENTITY_INSTANCE *)passed;
+   ENTITY_INSTANCE *mob;
+   int number;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      if( NO_TARGET( builder ) || TARGET_TYPE( builder ) != TARGET_INSTANCE )
+      {
+         text_to_entity( builder, "Take over what?\r\n" );
+         return;
+      }
+      mob = GT_INSTANCE( builder );
+   }
+   else
+   {
+      if( ( number = number_arg_single( arg ) ) <= 0 )
+         number = 1;
+      if( ( mob = find_specific_item( builder, arg, number ) ) == NULL )
+      {
+         text_to_entity( builder, "Theere is no %s here.\r\n", arg );
+         return;
+      }
+   }
+   if( mob->socket )
+   {
+      text_to_entity( builder, "You can't take over anything thats being controlled by another human... yet!\r\n" );
+      return;
+   }
+   text_to_entity( builder, "You assume control of %s. Use \"return\" to get back.\r\n", instance_short_descr( mob ) );
+   builder_takeover( builder, mob );
+   return;
+}
+
 /* mobile commands */
+void mobile_return( void *passed, char *arg )
+{
+   ENTITY_INSTANCE *mob = (ENTITY_INSTANCE *)passed;
+   D_SOCKET *dsock = mob->socket;
+
+   if( !dsock )
+      return;
+   if( StackSize( dsock->prev_control_stack ) < 1 )
+   {
+      text_to_entity( mob, "Return to what form?\r\n" );
+      return;
+   }
+
+   text_to_entity( mob, "You return...\r\n" );
+   return_entity( mob );
+   return;
+}
 void mobile_look( void *passed, char *arg )
 {
+   ENTITY_INSTANCE *mobile = (ENTITY_INSTANCE *)passed;
+   ENTITY_INSTANCE *looking_at = NULL;
+   int number;
+
+   if( arg && arg[0] != '\0' )
+   {
+      if( ( number = number_arg_single( arg ) ) < 1 )
+         number = 1;
+      if( ( looking_at = find_specific_item( mobile, arg, number ) ) == NULL )
+      {
+         text_to_entity( mobile, "You don't see %s.\r\n", arg );
+         return;
+      }
+   }
+   lua_look( mobile, looking_at );
    return;
 }
 
 void mobile_inventory( void *passed, char *arg )
 {
+   ENTITY_INSTANCE *mobile = (ENTITY_INSTANCE *)passed;
+   lua_ui_general( mobile, "uiInventory" );
+   return;
+}
+
+void mobile_score( void *passed, char *arg )
+{
+   ENTITY_INSTANCE *mobile = (ENTITY_INSTANCE *)passed;
+   lua_ui_general( mobile, "uiScore" );
    return;
 }
 

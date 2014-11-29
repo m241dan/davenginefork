@@ -505,7 +505,6 @@ bool new_socket(int sock)
    CREATE( sock_new, D_SOCKET, 1 );
 
    /* allocate a stack for using takeover type commands */
-   sock_new->prev_control_stack = AllocStack();
 
   /* attach the new connection to the socket LLIST*/
   FD_SET(sock, &fSet);
@@ -559,6 +558,8 @@ bool new_socket(int sock)
 
   /* initialize socket events */
   init_events_socket(sock_new);
+
+   sock_new->prev_control_stack = AllocStack();
 
   {
      NANNY_DATA *nanny = init_nanny();
@@ -1087,6 +1088,9 @@ bool flush_output(D_SOCKET *dsock)
         case STATE_BUILDER:
            builder_prompt( dsock );
            break;
+        case STATE_PLAYING:
+           player_prompt( dsock );
+           break;
         case STATE_SFRAME_EDITOR:
            editor_sFramework_prompt( dsock, TRUE );
            break;
@@ -1235,6 +1239,8 @@ int change_socket_state( D_SOCKET *dsock, int state )
             load_commands( dsock->account->olc->editor_commands, create_sFramework_commands, dsock->account->level );
          break;
       case STATE_PLAYING:
+         if( SizeOfList( dsock->controlling->commands ) < 1 )
+            load_commands( dsock->controlling->commands, builder_commands, dsock->controlling->level );
          break;
    }
    return ret;

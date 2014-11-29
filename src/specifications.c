@@ -18,6 +18,8 @@ const char *const spec_table[] = {
    "prepMeleeTimer", "prepMeleeDamage", "onReceiveDamage", "combatMessage",
    /* Corpse Specs */
    "corpseDecay", "inventoryToCorpse",
+   /* UI Specs */
+   "uiPrompt", "uiLook", "uiInventory", "uiScore",
    /* Misc Specs */
    "MirrorExit", "Terrain",
 

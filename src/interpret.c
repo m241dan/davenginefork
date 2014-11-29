@@ -282,12 +282,15 @@ struct typCmd builder_commands[] = {
    { "kill", mobile_kill, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
    { "sethome", entity_set_home, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
    { "restore", entity_restore, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
+   { "takeover", entity_takeover, LEVEL_BASIC, NULL, FALSE, NULL, builder_commands },
    { '\0', NULL, 0, NULL, FALSE, NULL }
 };
 
 struct typCmd mobile_commands[] = {
-   { "look", mobile_look, LEVEL_PLAYER, NULL, FALSE, NULL, mobile_commands },
-   { "inventory", mobile_inventory, LEVEL_PLAYER, NULL, FALSE, NULL, mobile_commands },
+   { "return", mobile_return, LEVEL_BASIC, NULL, FALSE, NULL, mobile_commands },
+   { "look", mobile_look, LEVEL_BASIC, NULL, FALSE, NULL, mobile_commands },
+   { "inventory", mobile_inventory, LEVEL_BASIC, NULL, FALSE, NULL, mobile_commands },
+   { "score", mobile_score, LEVEL_BASIC, NULL, FALSE, NULL, mobile_commands },
    { "get", entity_get, LEVEL_BASIC, NULL, FALSE, NULL, mobile_commands },
    { "drop", entity_drop, LEVEL_BASIC, NULL, FALSE, NULL, mobile_commands },
    { "give", entity_give, LEVEL_BASIC, NULL, FALSE, NULL, mobile_commands },

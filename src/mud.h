@@ -134,6 +134,8 @@ typedef enum
    SPEC_PREPMELEETIMER, SPEC_PREPMELEEDAMAGE, SPEC_ONRECEIVEDAMAGE, SPEC_COMBATMESSAGE,
    /* Corpse Specs */
    SPEC_CORPSEDELAY, SPEC_INVENTORYTOCORPSE,
+   /* UI Specs */
+   SPEC_UIPROMPT, SPEC_UILOOK, SPEC_UIINVENTORY, SPEC_UISCORE,
    /* Misc Specs */
    SPEC_MIRROREXIT, SPEC_TERRAIN,
 
@@ -518,6 +520,7 @@ typedef struct buffer_type
 #include "lua_timers.h"
 #include "lua_iter.h"
 #include "lua_triggers.h"
+#include "lua_ui.h"
 
 /******************************
  * End of new structures      *
