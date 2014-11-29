@@ -35,7 +35,6 @@ int setVar( lua_State *L );
 int addSpec( lua_State *L );
 
 /* bools */
-int isLoaded( lua_State *L );
 int isLive( lua_State *L );
 int isBuilder( lua_State *L );
 int isSameRoom( lua_State  *L );

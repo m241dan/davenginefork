@@ -499,17 +499,11 @@ void eFramework_description( void *passed, char *arg )
       return;
    }
 
-<<<<<<< HEAD
-   FREE( frame->description );
-   frame->description = strdup( arg );
-   text_to_olc( olc, "Description changed.\r\n" );
-=======
    set_frame_description( frame, arg );
    update_tag( frame->tag, olc->account->name );
    text_to_olc( olc, "Long description changed.\r\n" );
    return;
 }
->>>>>>> 8e5a87e9cfc445dad5766928840f11bee65b4b08
 
 void eFramework_set_tspeed( void *passed, char *arg )
 {

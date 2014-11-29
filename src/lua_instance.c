@@ -27,7 +27,6 @@ const struct luaL_Reg EntityInstanceLib_m[] = {
    { "setVar", setVar },
    { "addSpec", addSpec },
    /* bools */
-   { "isLoaded", isLoaded },
    { "isLive", isLive },
    { "isBuilder", isBuilder },
    { "hasItemInInventoryFramework", hasItemInInventoryFramework },
@@ -669,15 +668,6 @@ int addSpec( lua_State *L )
    }
    add_spec_to_instance( spec, instance );
    return 0;
-}
-
-int isLoaded( lua_State *L )
-{
-   ENTITY_INSTANCE *instance;
-
-   DAVLUACM_INSTANCE_BOOL( instance, L );
-   lua_pushboolean( L, (int)instance->loaded );
-   return 1;
 }
 
 int isLive( lua_State *L )
