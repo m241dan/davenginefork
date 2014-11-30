@@ -198,7 +198,7 @@ const char *return_framework_strings( ENTITY_FRAMEWORK *frame, const char *borde
    static char buf[MAX_BUFFER];
    char tempstring[MAX_BUFFER];
    int space_after_border;
-   int source = 0;
+   int value, source;
 
    memset( &buf[0], 0, sizeof( buf ) );
    space_after_border = width - ( strlen( border ) * 2 );
@@ -236,7 +236,7 @@ const char *return_framework_strings( ENTITY_FRAMEWORK *frame, const char *borde
 
    strcat( buf, tempstring );
 
-
+   source = 0;
    if( ( fstat = get_primary_dmg_stat_from_framework( frame, &source ) ) != NULL )
    {
       mud_printf( tempstring, "%s%s%s\r\n", border,
@@ -248,28 +248,59 @@ const char *return_framework_strings( ENTITY_FRAMEWORK *frame, const char *borde
       strcat( buf, tempstring );
    }
 
-   if( frame->tspeed > 0 )
+   source = 0;
+   if( ( value = get_frame_tspeed( frame, &source ) ) != 0 )
    {
       mud_printf( tempstring, "%s%s%s\r\n", border,
       fit_string_to_space(
-      quick_format( " Thought Speed : %d", (int)frame->tspeed ),
+      quick_format( " Thought Speed : %d%s", value, source == 1 ? "( inherited )" : "" ),
       space_after_border ),
       border );
 
       strcat( buf, tempstring );
    }
 
-   if( frame->spawn_time > 0 )
+   source = 0;
+   if( ( value = get_frame_height( frame, &source ) ) != 0 )
    {
       mud_printf( tempstring, "%s%s%s\r\n", border,
       fit_string_to_space(
-      quick_format( " If killed, will respawn in %d seconds", frame->spawn_time ),
+      quick_format( " Height : %d%s", value, source == 1 ? "( inherited )" : "" ),
+      space_after_border ),
+      border );
+   }
+
+   source = 0;
+   if( ( value = get_frame_weight( frame, &source ) ) != 0 )
+   {
+      mud_printf( tempstring, "%s%s%s\r\n", border,
+      fit_string_to_space(
+      quick_format( " Weight : %d%s", value, source == 1 ? "( inherited )" : "" ),
+      space_after_border ),
+      border );
+   }
+
+   source = 0;
+   if( ( value = get_frame_width( frame, &source ) ) != 0 )
+   {
+      mud_printf( tempstring, "%s%s%s\r\n", border,
+      fit_string_to_space(
+      quick_format( " Width : %d%s", value, source == 1 ? "( inherited )" : "" ),
+      space_after_border ),
+      border );
+   }
+
+   source = 0;
+   if( ( value = get_frame_spawn_time( frame, &source ) ) != 0 )
+   {
+      mud_printf( tempstring, "%s%s%s\r\n", border,
+      fit_string_to_space(
+      quick_format( " If killed, will respawn in %d%s seconds", value, source == 1 ? "( inherited )": "" ),
       space_after_border ),
       border );
 
       strcat( buf, tempstring );
    }
-
 
    buf[strlen( buf )] = '\0';
    return buf;
@@ -527,9 +558,9 @@ void eFramework_set_tspeed( void *passed, char *arg )
       return;
    }
    value = atoi( arg );
-   if( value <= 0 )
+   if( value < -1 || value == 0 )
    {
-      text_to_olc( olc, "Thought speeds must be positive numbers.\r\n" );
+      text_to_olc( olc, "Thought speeds must be greater than zero or negative one for inheritance.\r\n" );
       return;
    }
 
@@ -557,9 +588,9 @@ void eFramework_set_spawn_time( void *passed, char *arg )
       return;
    }
    value = atoi( arg );
-   if( value < 0 )
+   if( value < -1 )
    {
-      text_to_olc( olc, "Spawn timers must be 0 or greater.\r\n - Note: Zero means it won't respawn.\r\n" );
+      text_to_olc( olc, "Spawn timers must be 0 or greater.\r\n - Note: Zero means it won't respawn.\r\n - Note: negative one for inheritance" );
       return;
    }
    set_frame_spawn_time( frame, value );
@@ -585,9 +616,9 @@ void eFramework_set_height( void *passed, char *arg )
       return;
    }
    value = atoi( arg );
-   if( value < 0 )
+   if( value < -1 )
    {
-      text_to_olc( olc, "Height cannot be negative.\r\n" );
+      text_to_olc( olc, "Height must be zero or greater. Negative one denotes inheritance.\r\n" );
       return;
    }
    set_frame_height( frame, value );
@@ -613,9 +644,9 @@ void eFramework_set_weight( void *passed, char *arg )
       return;
    }
    value = atoi( arg );
-   if( value < 0 )
+   if( value < -1 )
    {
-      text_to_olc( olc, "Weight cannot be negative.\r\n" );
+      text_to_olc( olc, "Height must be zero or greater. Negative one denotes inheritance.\r\n" );
       return;
    }
    set_frame_weight( frame, value );
@@ -643,7 +674,7 @@ void eFramework_set_width( void *passed, char *arg )
    value = atoi( arg );
    if( value < 0 )
    {
-      text_to_olc( olc, "Width cannot be negative.\r\n" );
+      text_to_olc( olc, "Width must be zero or greater, Negative one denotes inheritance.\r\n" );
       return;
    }
    set_frame_width( frame, value );

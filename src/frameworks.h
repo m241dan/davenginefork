@@ -7,7 +7,7 @@ struct entity_framework
    char *short_descr;
    char *long_descr;
    char *description;
-   unsigned short int tspeed;
+   sh_int tspeed;
    int spawn_time;
    int height;
    int weight;
@@ -63,10 +63,18 @@ ENTITY_FRAMEWORK *create_inherited_framework( ENTITY_FRAMEWORK *inherit_from );
 ENTITY_FRAMEWORK *entity_edit_selection( ENTITY_INSTANCE *entity, const char *arg );
 ENTITY_FRAMEWORK *olc_edit_selection( INCEPTION *olc, const char *arg );
 
+/* getters */
+
 const char *chase_name( ENTITY_FRAMEWORK *frame );
 const char *chase_short_descr( ENTITY_FRAMEWORK *frame );
 const char *chase_long_descr( ENTITY_FRAMEWORK *frame );
 const char *chase_description( ENTITY_FRAMEWORK *frame );
+int get_frame_tspeed( ENTITY_FRAMEWORK *frame, int *source );
+int get_frame_spawn_time( ENTITY_FRAMEWORK *frame, int *source );
+int get_frame_height( ENTITY_FRAMEWORK *frame, int *source );
+int get_frame_weight( ENTITY_FRAMEWORK *frame, int *source );
+int get_frame_width( ENTITY_FRAMEWORK *frame, int *source );
+
 
 /* setters */
 extern inline void set_frame_name( ENTITY_FRAMEWORK *frame, const char *name );

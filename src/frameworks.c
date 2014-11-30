@@ -728,6 +728,84 @@ const char *chase_description( ENTITY_FRAMEWORK *frame )
    return frame->description;
 }
 
+int get_frame_tspeed( ENTITY_FRAMEWORK *frame, int *source )
+{
+   if( frame->tspeed != -1 && frame->tspeed > -1 )
+      return frame->tspeed;
+   else if( frame->tspeed < -1 )
+      return 0;
+   else if( !frame->inherits )
+      return 0;
+   else
+   {
+      if( source )
+         *source = 1;
+      return get_frame_tspeed( frame->inherits, source );
+   }
+}
+
+int get_frame_spawn_time( ENTITY_FRAMEWORK *frame, int *source )
+{
+   if( frame->spawn_time != -1 && frame->spawn_time > -1 )
+      return frame->spawn_time;
+   else if( frame->spawn_time < -1 )
+      return 0;
+   else if( !frame->inherits )
+      return 0;
+   else
+   {
+      if( source )
+         *source = 1;
+      return get_frame_spawn_time( frame->inherits, source );
+   }
+}
+
+int get_frame_height( ENTITY_FRAMEWORK *frame, int *source )
+{
+   if( frame->height != -1 && frame->height > -1 )
+      return frame->height;
+   else if( frame->height < -1 )
+      return 0;
+   else if( !frame->inherits )
+      return 0;
+   else
+   {
+      if( source )
+         *source = 1;
+      return get_frame_height( frame->inherits, source );
+   }
+}
+int get_frame_weight( ENTITY_FRAMEWORK *frame, int *source )
+{
+   if( frame->weight != -1 && frame->weight > -1 )
+      return frame->weight;
+   else if( frame->weight < -1 )
+      return 0;
+   else if( !frame->inherits )
+      return 0;
+   else
+   {
+      if( source )
+         *source = 1;
+      return get_frame_weight( frame->inherits, source );
+   }
+}
+
+int get_frame_width( ENTITY_FRAMEWORK *frame, int *source )
+{
+   if( frame->width != -1 && frame->width > -1 )
+      return frame->width;
+   else if( frame->weight < -1 )
+      return 0;
+   else if( !frame->inherits )
+      return 0;
+   else
+   {
+      if( source )
+         *source = 1;
+      return get_frame_width( frame->inherits, source );
+   }
+}
 inline void set_frame_name( ENTITY_FRAMEWORK *frame, const char *name )
 {
    FREE( frame->name );
