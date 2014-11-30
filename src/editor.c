@@ -1305,6 +1305,10 @@ int editor_instance_prompt( D_SOCKET *dsock, bool commands )
       text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( " This instace has no home.", space_after_border ), border );
    else
       text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( "This instance's home is (%d)%s.", instance->home->tag->id, instance_short_descr( instance->home ) ), space_after_border), border );
+   text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " Height : %d.", get_height( instance ) ), space_after_border ), border );
+   text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " Weight : %d.", get_weight( instance ) ), space_after_border ), border );
+   text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " Width  : %d.", get_width( instance ) ), space_after_border ), border );
+
    if( SizeOfList( instance->contents ) > 0 )
       text_to_olc( olc, "%s", return_instance_contents_string( instance, border, dsock->account->pagewidth ) );
    if( instance->primary_dmg_received_stat )

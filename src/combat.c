@@ -300,11 +300,12 @@ void handle_damage( DAMAGE *dmg )
 void make_dead( ENTITY_INSTANCE *dead_instance )
 {
    ENTITY_INSTANCE *corpse;
+   int respawn_time;
 
    corpse = corpsify( dead_instance );
    entity_to_world( corpse, dead_instance->contained_by );
    onDeath_trigger( dead_instance );
-   if( dead_instance->framework->spawn_time > 0 )
+   if( ( respawn_time = get_frame_spawn_time( dead_instance->framework, NULL ) ) > 0 )
       set_for_respawn( dead_instance );
    entity_to_world( dead_instance, NULL );
 
