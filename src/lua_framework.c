@@ -11,6 +11,9 @@ const struct luaL_Reg EntityFrameworkLib_m[] = {
    { "getDesc", getFrameDesc },
    { "getSpec", getFrameSpec },
    { "getInheritance", getFrameInheritance },
+   { "getHeight", getFrameHeight },
+   { "getWeight", getFrameWeight },
+   { "getWidth", getFrameWidth },
    /* actions */
    { "inherits", luaInherits },
    { NULL, NULL }
@@ -171,6 +174,32 @@ int getFrameInheritance( lua_State *L )
    return 1;
 }
 
+int getFrameHeight( lua_State *L )
+{
+   ENTITY_FRAMEWORK *frame;
+
+   DAVLUACM_FRAME_NIL( frame, L );
+   lua_pushnumber( L, get_frame_height( frame, NULL ) );
+   return 1;
+}
+
+int getFrameWeight( lua_State *L )
+{
+   ENTITY_FRAMEWORK *frame;
+
+   DAVLUACM_FRAME_NIL( frame, L );
+   lua_pushnumber( L, get_frame_weight( frame, NULL ) );
+   return 1;
+}
+
+int getFrameWidth( lua_State *L )
+{
+   ENTITY_FRAMEWORK *frame;
+
+   DAVLUACM_FRAME_NIL( frame, L );
+   lua_pushnumber( L, get_frame_width( frame, NULL ) );
+   return 1;
+}
 
 int luaInherits( lua_State *L )
 {
