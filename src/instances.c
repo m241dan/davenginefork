@@ -402,13 +402,14 @@ int new_eInstance( ENTITY_INSTANCE *eInstance )
       }
    }
 
-   if( !quick_query( "INSERT INTO entity_instances VALUES( %d, %d, '%s', '%s', '%s', '%s', %d, %d, %d, %d, %d, %d, %d, %d, %d );",
+   if( !quick_query( "INSERT INTO entity_instances VALUES( %d, %d, '%s', '%s', '%s', '%s', %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d );",
          eInstance->tag->id, eInstance->tag->type, eInstance->tag->created_by,
          eInstance->tag->created_on, eInstance->tag->modified_by, eInstance->tag->modified_on,
          eInstance->contained_by ? eInstance->contained_by->tag->id : -1, eInstance->framework->tag->id,
          (int)eInstance->live, eInstance->corpse_owner, (int)eInstance->state,
          (int)eInstance->mind, (int)eInstance->tspeed, (int)eInstance->isPlayer,
-         ( eInstance->home ? eInstance->home->tag->id : 0 )
+         ( eInstance->home ? eInstance->home->tag->id : 0 ),
+         eInstance->height_mod, eInstance->weight_mod, eInstance->width_mod
          ) )
       return RET_FAILED_OTHER;
 
@@ -553,6 +554,9 @@ bool move_item( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *item, ENTITY_INSTANCE 
 ENTITY_INSTANCE *move_item_specific( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *target, bool (*test_method)( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *to_test ), char *item, int number, bool look_beyond_contents )
 {
    ENTITY_INSTANCE *to_move;
+
+   if( number < 1 )
+      number = 1;
 
    if( look_beyond_contents )
       to_move = find_specific_item( entity, item, number );
@@ -1221,7 +1225,7 @@ ENTITY_INSTANCE *eInstantiate( ENTITY_FRAMEWORK *frame )
 
    eInstance = init_eInstance();
    eInstance->framework = frame;
-   eInstance->tspeed = frame->tspeed;
+   eInstance->tspeed = get_frame_tspeed( frame, NULL );
    new_eInstance( eInstance );
    instantiate_entity_stats_from_framework( eInstance );
    if( SizeOfList( frame->fixed_contents ) > 0 )
@@ -1539,6 +1543,21 @@ int get_corpse_decay( ENTITY_INSTANCE *instance )
    return decay;
 }
 
+inline int get_height( ENTITY_INSTANCE *instance )
+{
+   return ( instance->height_mod + get_frame_height( instance->framework, NULL ) );
+}
+
+inline int get_weight( ENTITY_INSTANCE *instance )
+{
+   return ( instance->weight_mod + get_frame_weight( instance->framework, NULL ) );
+}
+
+inline int get_width( ENTITY_INSTANCE *instance )
+{
+   return ( instance->width_mod + get_frame_width( instance->framework, NULL ) );
+}
+
 /* setters */
 
 inline void instance_toggle_live( ENTITY_INSTANCE *instance )
@@ -1601,6 +1620,26 @@ inline void set_instance_corpse_owner( ENTITY_INSTANCE *instance, int id )
       bug( "%s: could not update dtabase for instance %d with new home.", __FUNCTION__, instance->tag->id );
 }
 
+inline void set_instance_height_mod( ENTITY_INSTANCE *instance, int height_mod )
+{
+   instance->height_mod = height_mod;
+   if( !quick_query( "UPDATE `entity_instances` SET height_mod=%d WHERE entityInstanceID=%d;", instance->height_mod, instance->tag->id ) )
+      bug( "%s: could not update database for instance %d with new height_mod.", __FUNCTION__, instance->tag->id );
+}
+
+inline void set_instance_weight_mod( ENTITY_INSTANCE *instance, int weight_mod )
+{
+   instance->weight_mod = weight_mod;
+   if( !quick_query( "UPDATE `entity_instances` SET weight_mod=%d WHERE entityInstanceID=%d;", instance->weight_mod, instance->tag->id ) )
+      bug( "%s: could not  update database for instance %d with new weight_mod.", __FUNCTION__, instance->tag->id );
+}
+inline void set_instance_width_mod( ENTITY_INSTANCE *instance, int width_mod )
+{
+   instance->width_mod = width_mod;
+   if( !quick_query( "UPDATE `entity_instances` SET width_mod=%d WHERE entityInstanceID=%d;", instance->width_mod, instance->tag->id ) )
+      bug( "%s: could no tupdate database with instance %d with new weight_mod.", __FUNCTION__, instance->tag->id );
+}
+
 /* actions */
 
 /* do_damage on kill return TRUE */
@@ -1633,7 +1672,7 @@ void set_for_respawn( ENTITY_INSTANCE *instance )
    event = respawn_event();
    if( !instance->home && instance->contained_by )
       set_instance_home( instance );
-   add_event_instance( event, instance, instance->framework->spawn_time * PULSES_PER_SECOND );
+   add_event_instance( event, instance, get_frame_spawn_time( instance->framework, NULL ) * PULSES_PER_SECOND );
    return;
 }
 

@@ -198,7 +198,7 @@ const char *return_framework_strings( ENTITY_FRAMEWORK *frame, const char *borde
    static char buf[MAX_BUFFER];
    char tempstring[MAX_BUFFER];
    int space_after_border;
-   int source = 0;
+   int value, source;
 
    memset( &buf[0], 0, sizeof( buf ) );
    space_after_border = width - ( strlen( border ) * 2 );
@@ -236,7 +236,7 @@ const char *return_framework_strings( ENTITY_FRAMEWORK *frame, const char *borde
 
    strcat( buf, tempstring );
 
-
+   source = 0;
    if( ( fstat = get_primary_dmg_stat_from_framework( frame, &source ) ) != NULL )
    {
       mud_printf( tempstring, "%s%s%s\r\n", border,
@@ -248,28 +248,59 @@ const char *return_framework_strings( ENTITY_FRAMEWORK *frame, const char *borde
       strcat( buf, tempstring );
    }
 
-   if( frame->tspeed > 0 )
+   source = 0;
+   if( ( value = get_frame_tspeed( frame, &source ) ) != 0 )
    {
       mud_printf( tempstring, "%s%s%s\r\n", border,
       fit_string_to_space(
-      quick_format( " Thought Speed : %d", (int)frame->tspeed ),
+      quick_format( " Thought Speed : %d%s", value, source == 1 ? "( inherited )" : "" ),
       space_after_border ),
       border );
 
       strcat( buf, tempstring );
    }
 
-   if( frame->spawn_time > 0 )
+   source = 0;
+   if( ( value = get_frame_height( frame, &source ) ) != 0 )
    {
       mud_printf( tempstring, "%s%s%s\r\n", border,
       fit_string_to_space(
-      quick_format( " If killed, will respawn in %d seconds", frame->spawn_time ),
+      quick_format( " Height : %d%s", value, source == 1 ? "( inherited )" : "" ),
+      space_after_border ),
+      border );
+   }
+
+   source = 0;
+   if( ( value = get_frame_weight( frame, &source ) ) != 0 )
+   {
+      mud_printf( tempstring, "%s%s%s\r\n", border,
+      fit_string_to_space(
+      quick_format( " Weight : %d%s", value, source == 1 ? "( inherited )" : "" ),
+      space_after_border ),
+      border );
+   }
+
+   source = 0;
+   if( ( value = get_frame_width( frame, &source ) ) != 0 )
+   {
+      mud_printf( tempstring, "%s%s%s\r\n", border,
+      fit_string_to_space(
+      quick_format( " Width : %d%s", value, source == 1 ? "( inherited )" : "" ),
+      space_after_border ),
+      border );
+   }
+
+   source = 0;
+   if( ( value = get_frame_spawn_time( frame, &source ) ) != 0 )
+   {
+      mud_printf( tempstring, "%s%s%s\r\n", border,
+      fit_string_to_space(
+      quick_format( " If killed, will respawn in %d%s seconds", value, source == 1 ? "( inherited )": "" ),
       space_after_border ),
       border );
 
       strcat( buf, tempstring );
    }
-
 
    buf[strlen( buf )] = '\0';
    return buf;
@@ -527,9 +558,9 @@ void eFramework_set_tspeed( void *passed, char *arg )
       return;
    }
    value = atoi( arg );
-   if( value <= 0 )
+   if( value < -1 || value == 0 )
    {
-      text_to_olc( olc, "Thought speeds must be positive numbers.\r\n" );
+      text_to_olc( olc, "Thought speeds must be greater than zero or negative one for inheritance.\r\n" );
       return;
    }
 
@@ -557,14 +588,98 @@ void eFramework_set_spawn_time( void *passed, char *arg )
       return;
    }
    value = atoi( arg );
-   if( value < 0 )
+   if( value < -1 )
    {
-      text_to_olc( olc, "Spawn timers must be 0 or greater.\r\n - Note: Zero means it won't respawn.\r\n" );
+      text_to_olc( olc, "Spawn timers must be 0 or greater.\r\n - Note: Zero means it won't respawn.\r\n - Note: negative one for inheritance" );
       return;
    }
    set_frame_spawn_time( frame, value );
    update_tag( frame->tag, olc->account->name );
    text_to_olc( olc, "Spawn time set.\r\n" );
+   return;
+}
+
+void eFramework_set_height( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_FRAMEWORK *frame = (ENTITY_FRAMEWORK *)olc->editing;
+   int value;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Set the height to what?\r\n" );
+      return;
+   }
+   if( !is_number( arg ) )
+   {
+      text_to_olc( olc, "Height must be a number.\r\n" );
+      return;
+   }
+   value = atoi( arg );
+   if( value < -1 )
+   {
+      text_to_olc( olc, "Height must be zero or greater. Negative one denotes inheritance.\r\n" );
+      return;
+   }
+   set_frame_height( frame, value );
+   update_tag( frame->tag, olc->account->name );
+   text_to_olc( olc, "Height set.\r\n" );
+   return;
+}
+
+void eFramework_set_weight( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_FRAMEWORK *frame = (ENTITY_FRAMEWORK *)olc->editing;
+   int value;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Set the weight to what?\r\n" );
+      return;
+   }
+   if( !is_number( arg ) )
+   {
+      text_to_olc( olc, "Weight must be a number.\r\n" );
+      return;
+   }
+   value = atoi( arg );
+   if( value < -1 )
+   {
+      text_to_olc( olc, "Height must be zero or greater. Negative one denotes inheritance.\r\n" );
+      return;
+   }
+   set_frame_weight( frame, value );
+   update_tag( frame->tag, olc->account->name );
+   text_to_olc( olc, "Weight set.\r\n" );
+   return;
+}
+
+void eFramework_set_width( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_FRAMEWORK *frame = (ENTITY_FRAMEWORK *)olc->editing;
+   int value;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "Set the width to what?\r\n" );
+      return;
+   }
+   if( !is_number( arg ) )
+   {
+      text_to_olc( olc, "Width must be a number.\r\n" );
+      return;
+   }
+   value = atoi( arg );
+   if( value < 0 )
+   {
+      text_to_olc( olc, "Width must be zero or greater, Negative one denotes inheritance.\r\n" );
+      return;
+   }
+   set_frame_width( frame, value );
+   update_tag( frame->tag, olc->account->name );
+   text_to_olc( olc, "Width set.\r\n" );
    return;
 }
 
@@ -1190,6 +1305,10 @@ int editor_instance_prompt( D_SOCKET *dsock, bool commands )
       text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( " This instace has no home.", space_after_border ), border );
    else
       text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( "This instance's home is (%d)%s.", instance->home->tag->id, instance_short_descr( instance->home ) ), space_after_border), border );
+   text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " Height : %d.", get_height( instance ) ), space_after_border ), border );
+   text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " Weight : %d.", get_weight( instance ) ), space_after_border ), border );
+   text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " Width  : %d.", get_width( instance ) ), space_after_border ), border );
+
    if( SizeOfList( instance->contents ) > 0 )
       text_to_olc( olc, "%s", return_instance_contents_string( instance, border, dsock->account->pagewidth ) );
    if( instance->primary_dmg_received_stat )

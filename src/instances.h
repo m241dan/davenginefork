@@ -21,6 +21,9 @@ struct entity_instance
    bool isPlayer;
    sh_int level;
    sh_int tspeed;
+   int height_mod;
+   int weight_mod;
+   int width_mod;
    INSTANCE_STATE state;
    INSTANCE_MIND mind;
 
@@ -118,11 +121,14 @@ void move_create( ENTITY_INSTANCE *entity, ENTITY_FRAMEWORK *exit_frame, char *a
 bool should_move_create( ENTITY_INSTANCE *entity, char *arg );
 
 /* getters */
-const char *instance_name( ENTITY_INSTANCE *instance );
-const char *instance_short_descr( ENTITY_INSTANCE *instance );
-const char *instance_long_descr( ENTITY_INSTANCE *instance );
-const char *instance_description( ENTITY_INSTANCE *instance );
-int	    get_corpse_decay( ENTITY_INSTANCE *instance );
+const char *instance_name		( ENTITY_INSTANCE *instance );
+const char *instance_short_descr	( ENTITY_INSTANCE *instance );
+const char *instance_long_descr		( ENTITY_INSTANCE *instance );
+const char *instance_description	( ENTITY_INSTANCE *instance );
+int	    get_corpse_decay		( ENTITY_INSTANCE *instance );
+extern inline int  get_height		( ENTITY_INSTANCE *instance );
+extern inline int  get_weight		( ENTITY_INSTANCE *instance );
+extern inline int  get_width		( ENTITY_INSTANCE *instance );
 
 /* setters */
 void instance_toggle_live( ENTITY_INSTANCE *instance );
@@ -132,6 +138,9 @@ extern inline void set_instance_mind( ENTITY_INSTANCE *instance, INSTANCE_MIND m
 extern inline void set_instance_tspeed( ENTITY_INSTANCE *instance, int tspeed );
 extern inline void set_instance_home( ENTITY_INSTANCE *instance );
 extern inline void set_instance_corpse_owner( ENTITY_INSTANCE *instance, int id );
+extern inline void set_instance_height_mod( ENTITY_INSTANCE *instance, int height_mod );
+extern inline void set_instance_weight_mod( ENTITY_INSTANCE *instance, int weight_mod );
+extern inline void set_instance_width_mod( ENTITY_INSTANCE *instance, int width_mod );
 
 /* actions */
 bool do_damage( ENTITY_INSTANCE *entity, DAMAGE *dmg );
