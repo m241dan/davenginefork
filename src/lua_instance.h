@@ -31,6 +31,7 @@ int getExitTo( lua_State *L );
 int getHeight( lua_State *L );
 int getWeight( lua_State *L );
 int getWidth( lua_State *L );
+int getTarget( lua_State *L );
 
 /* setters */
 int setStatMod( lua_State *L );
@@ -46,6 +47,7 @@ int setWeightMod( lua_State *L );
 int addWeightMod( lua_State *L );
 int setWidthMod( lua_State *L );
 int addWidthMod( lua_State *L );
+int setTarget( lua_State *L );
 
 
 /* bools */

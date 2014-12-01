@@ -24,6 +24,7 @@ const struct luaL_Reg EntityInstanceLib_m[] = {
    { "getHeight", getHeight },
    { "getWeight", getWeight },
    { "getWidth", getWidth },
+   { "getTarget", getTarget },
    /* setters */
    { "setStatMod", setStatMod },
    { "setStatPerm", setStatPerm },
@@ -38,6 +39,7 @@ const struct luaL_Reg EntityInstanceLib_m[] = {
    { "addWeightMod", addHeightMod },
    { "setWidthMod", setWeightMod },
    { "addWidthMod", addWidthMod },
+   { "setTarget", setTarget },
    /* bools */
    { "isLive", isLive },
    { "isBuilder", isBuilder },
@@ -487,7 +489,18 @@ int getWidth( lua_State *L )
    return 1;
 }
 
+int getTarget( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
 
+   DAVLUACM_INSTANCE_NIL( instance, L );
+   if( !NO_TARGET( instance ) && TARGET_TYPE( instance ) == TARGET_INSTANCE )
+      push_instance( GT_INSTANCE( instance ), L );
+   else
+      lua_pushnil( L );
+
+   return 1;
+}
 int setStatMod( lua_State *L )
 {
    ENTITY_INSTANCE *instance;
@@ -872,6 +885,21 @@ int addWidthMod( lua_State *L )
    return 0;
 }
 
+int setTarget( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+   ENTITY_INSTANCE *new_target;
+
+   DAVLUACM_INSTANCE_NONE( instance, L );
+
+   if( ( new_target = luaL_checkudata( L, -1, "EntityInstance.meta" ) ) == NULL )
+   {
+      bug( "%s: bad new target passed.", __FUNCTION__ );
+      return 0;
+   }
+   set_target_i( instance->target, new_target );
+   return 0;
+}
 
 int isLive( lua_State *L )
 {
