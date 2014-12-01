@@ -28,6 +28,9 @@ int getStat( lua_State *L );
 int getStatEffectiveValue( lua_State *L );
 int getHome( lua_State *L );
 int getExitTo( lua_State *L );
+int getHeight( lua_State *L );
+int getWeight( lua_State *L );
+int getWidth( lua_State *L );
 
 /* setters */
 int setStatMod( lua_State *L );
@@ -37,6 +40,13 @@ int addStatPerm( lua_State *L );
 int setVar( lua_State *L );
 int addSpec( lua_State *L );
 int setHome( lua_State *L );
+int setHeightMod( lua_State *L );
+int addHeightMod( lua_State *L );
+int setWeightMod( lua_State *L );
+int addWeightMod( lua_State *L );
+int setWidthMod( lua_State *L );
+int addWidthMod( lua_State *L );
+
 
 /* bools */
 int isLive( lua_State *L );

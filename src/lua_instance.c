@@ -21,6 +21,9 @@ const struct luaL_Reg EntityInstanceLib_m[] = {
    { "getStatValue", getStatEffectiveValue },
    { "getHome", getHome },
    { "getExitTo", getExitTo },
+   { "getHeight", getHeight },
+   { "getWeight", getWeight },
+   { "getWidth", getWidth },
    /* setters */
    { "setStatMod", setStatMod },
    { "setStatPerm", setStatPerm },
@@ -29,6 +32,12 @@ const struct luaL_Reg EntityInstanceLib_m[] = {
    { "setVar", setVar },
    { "addSpec", addSpec },
    { "setHome", setHome },
+   { "setHeightMod", setHeightMod },
+   { "addHeightMod", addHeightMod },
+   { "setWeightMod", setWeightMod },
+   { "addWeightMod", addHeightMod },
+   { "setWidthMod", setWeightMod },
+   { "addWidthMod", addWidthMod },
    /* bools */
    { "isLive", isLive },
    { "isBuilder", isBuilder },
@@ -451,6 +460,34 @@ int getExitTo( lua_State * L)
    return 1;
 }
 
+int getHeight( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+
+   DAVLUACM_INSTANCE_NIL( instance, L );
+   lua_pushnumber( L, get_height( instance ) );
+   return 1;
+}
+
+int getWeight( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+
+   DAVLUACM_INSTANCE_NIL( instance, L );
+   lua_pushnumber( L, get_weight( instance ) );
+   return 1;
+}
+
+int getWidth( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+
+   DAVLUACM_INSTANCE_NIL( instance, L );
+   lua_pushnumber( L, get_width( instance ) );
+   return 1;
+}
+
+
 int setStatMod( lua_State *L )
 {
    ENTITY_INSTANCE *instance;
@@ -719,6 +756,122 @@ int setHome( lua_State *L )
    set_instance_home( instance );
    return 0;
 }
+
+int setHeightMod( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+   int value;
+
+   DAVLUACM_INSTANCE_NONE( instance, L );
+
+   if( lua_type( L, -1 ) != LUA_TNUMBER )
+   {
+      bug( "%s: non-number passed as argument.", __FUNCTION__ );
+      return 0;
+   }
+   if( ( value = lua_tonumber( L, -1 ) ) < 0 )
+      value = 0;
+   set_instance_height_mod( instance, value );
+   return 0;
+}
+
+int addHeightMod( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+   int value;
+
+   DAVLUACM_INSTANCE_NONE( instance, L );
+
+   if( lua_type( L, -1 ) != LUA_TNUMBER )
+   {
+      bug( "%s: non-number passed as argument.", __FUNCTION__ );
+      return 0;
+   }
+   value = lua_tonumber( L, -1 );
+   if( ( value + get_height( instance ) ) < 0 )
+      set_instance_height_mod( instance, 0 );
+   else
+      set_instance_height_mod( instance, value + instance->height_mod );
+   return 0;
+}
+
+int setWeightMod( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+   int value;
+
+   DAVLUACM_INSTANCE_NONE( instance, L );
+
+   if( lua_type( L, -1 ) != LUA_TNUMBER )
+   {
+      bug( "%s: non-number passed as argument.", __FUNCTION__ );
+      return 0;
+   }
+   if( ( value = lua_tonumber( L, -1 ) ) < 0 )
+      value = 0;
+   set_instance_weight_mod( instance, value );
+   return 0;
+}
+
+int addWeightMod( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+   int value;
+
+   DAVLUACM_INSTANCE_NONE( instance, L );
+
+   if( lua_type( L, -1 ) != LUA_TNUMBER )
+   {
+      bug( "%s: non-number passed as argument.", __FUNCTION__ );
+      return 0;
+   }
+   value = lua_tonumber( L, -1 );
+   if( ( value + get_weight( instance ) ) < 0 )
+      set_instance_weight_mod( instance, 0 );
+   else
+      set_instance_weight_mod( instance, value + instance->weight_mod );
+   return 0;
+}
+
+int setWidthMod( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+   int value;
+
+   DAVLUACM_INSTANCE_NONE( instance, L );
+
+   if( lua_type( L, -1 ) != LUA_TNUMBER )
+   {
+      bug( "%s: non-number passed as argument.", __FUNCTION__ );
+      return 0;
+   }
+   if( ( value = lua_tonumber( L, -1 ) ) < 0 )
+      value = 0;
+   set_instance_width_mod( instance, value );
+   return 0;
+
+}
+
+int addWidthMod( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+   int value;
+
+   DAVLUACM_INSTANCE_NONE( instance, L );
+
+   if( lua_type( L, -1 ) != LUA_TNUMBER )
+   {
+      bug( "%s: non-number passed as argument.", __FUNCTION__ );
+      return 0;
+   }
+   value = lua_tonumber( L, -1 );
+   if( ( value + get_width( instance ) ) < 0 )
+      set_instance_width_mod( instance, 0 );
+   else
+      set_instance_width_mod( instance, value + instance->width_mod );
+   return 0;
+}
+
 
 int isLive( lua_State *L )
 {
