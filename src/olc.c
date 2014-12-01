@@ -373,7 +373,7 @@ int olc_prompt( D_SOCKET *dsock, bool commands )
    ENTITY_FRAMEWORK *frame;
    ENTITY_INSTANCE *instance;
    ACCOUNT_DATA *account = dsock->account;
-   BUFFER *buf = buffer_new( MAX_BUFFER );
+   BUFFER *buf = buffer_new( MAX_OUTPUT );
    INCEPTION *olc;
    WORKSPACE *wSpace;
    ITERATOR Iter, IterF, IterI;

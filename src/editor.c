@@ -142,7 +142,7 @@ void boot_eFramework_editor( INCEPTION *olc, ENTITY_FRAMEWORK *frame )
 int editor_eFramework_prompt( D_SOCKET *dsock, bool commands )
 {
    ENTITY_FRAMEWORK *frame;
-   BUFFER *buf = buffer_new( MAX_BUFFER );
+   BUFFER *buf = buffer_new( MAX_OUTPUT );
    char tempstring[MAX_BUFFER];
    int space_after_pipes;
    int ret = RET_SUCCESS;
@@ -1109,7 +1109,7 @@ void boot_workspace_editor( INCEPTION *olc, WORKSPACE *wSpace )
 int editor_workspace_prompt( D_SOCKET *dsock, bool commands )
 {
    INCEPTION *olc;
-   BUFFER *buf = buffer_new( MAX_BUFFER );
+   BUFFER *buf = buffer_new( MAX_OUTPUT );
    WORKSPACE *wSpace;
    const char *border = "|";
    char tempstring[MAX_BUFFER];
@@ -1274,7 +1274,7 @@ int editor_instance_prompt( D_SOCKET *dsock, bool commands )
 {
    INCEPTION *olc;
    ENTITY_INSTANCE *instance;
-   BUFFER *buf = buffer_new( MAX_BUFFER );
+   BUFFER *buf = buffer_new( MAX_OUTPUT );
    const char *border = "|";
    char tempstring[MAX_BUFFER];
    int space_after_border;
