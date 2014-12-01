@@ -51,7 +51,7 @@
 #define PULSES_PER_SECOND     4                   /* must divide 1000 : 4, 5 or 8 works */
 #define MAX_FRAMEWORK_NSL   255                   /* max for non-text string sql entrees */
 #define MAX_BUFFER         4096                   /* seems like a decent amount         */
-#define MAX_OUTPUT         4096                   /* well shoot me if it isn't enough   */
+#define MAX_OUTPUT       100000                   /* well shoot me if it isn't enough   */
 #define MAX_HELP_ENTRY     4096                   /* roughly 40 lines of blocktext      */
 #define FILE_TERMINATOR    "EOF"                  /* end of file marker                 */
 #define COPYOVER_FILE      "../txt/copyover.dat"  /* tempfile to store copyover data    */
