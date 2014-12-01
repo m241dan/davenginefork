@@ -555,6 +555,9 @@ ENTITY_INSTANCE *move_item_specific( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *t
 {
    ENTITY_INSTANCE *to_move;
 
+   if( number < 1 )
+      number = 1;
+
    if( look_beyond_contents )
       to_move = find_specific_item( entity, item, number );
    else
