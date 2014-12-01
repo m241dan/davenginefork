@@ -167,7 +167,7 @@ int editor_eFramework_prompt( D_SOCKET *dsock, bool commands )
       mud_printf( tempstring, "Framework ID: %d", frame->tag->id );
 
    if( frame->inherits )
-      strcat( tempstring, quick_format( " | Inherits from %s ID: %d", chase_name( frame->inherits ), frame->inherits->tag->id ) );
+      strcat( tempstring, fit_string_to_space( quick_format( " | Inherits from %s ID: %d", chase_name( frame->inherits ), frame->inherits->tag->id ), space_after_pipes ) );
 
    bprintf( buf, "/%s\\\r\n", print_header( tempstring, "-", space_after_pipes ) );
 
