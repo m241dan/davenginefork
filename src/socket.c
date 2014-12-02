@@ -1247,7 +1247,10 @@ int change_socket_state( D_SOCKET *dsock, int state )
          break;
       case STATE_PLAYING:
          if( SizeOfList( dsock->controlling->commands ) < 1 )
+         {
             load_commands( dsock->controlling->commands, builder_commands, dsock->controlling->level );
+            load_lua_commands( dsock->controlling->commands, STATE_PLAYING, dsock->controlling->level );
+         }
          break;
    }
    return ret;

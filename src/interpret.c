@@ -319,6 +319,8 @@ int account_handle_cmd( ACCOUNT_DATA *account, char *arg )
 
    if( ( com = find_loaded_command( account->commands, command ) ) == NULL )
       text_to_account( account, "No such command.\r\n" );
+   else if( com->lua_cmd )
+      execute_lua_command( account, com, account, arg );
    else
       execute_command( account, com, account, arg );
 
@@ -463,6 +465,7 @@ int sFrame_editor_handle_command( INCEPTION *olc, char *arg )
 
 int entity_handle_cmd( ENTITY_INSTANCE *entity, char *arg )
 {
+   ACCOUNT_DATA *account;
    ENTITY_INSTANCE *exit;
    COMMAND *com;
    char command[MAX_BUFFER];
@@ -478,10 +481,12 @@ int entity_handle_cmd( ENTITY_INSTANCE *entity, char *arg )
 
    if( ( com = find_loaded_command( entity->commands, command ) ) != NULL )
    {
-      if( entity->socket )
-         execute_command( entity->socket->account, com, entity, arg );
+      account = entity->socket ? entity->socket->account : NULL;
+
+      if( com->lua_cmd )
+         execute_lua_command( account, com, entity, arg );
       else
-         (*com->cmd_funct)( entity, arg );
+         execute_command( account, com, entity, arg );
    }
    else if( entity->contained_by && ( exit = instance_list_has_by_short_prefix( entity->contained_by->contents_sorted[SPEC_ISEXIT], command ) ) != NULL )
       move_entity( entity, exit );
@@ -493,26 +498,64 @@ int entity_handle_cmd( ENTITY_INSTANCE *entity, char *arg )
 
 void execute_command( ACCOUNT_DATA *account, COMMAND *com, void *passed, char *arg )
 {
-   char *last_command; /* using this pointer is fixing a crash where the command was being cleared ont he function call and was then NULL when strduped */
+   char *last_command;
 
-   account->executing_command = com;
-   last_command = strdup( account->executing_command->cmd_name );
-   if( !com->lua_cmd )
-      (*com->cmd_funct)( passed, arg );
-   else
+   if( account )
    {
-      int ret;
-      prep_stack( com->path, "onCall" );
-      push_account( account, lua_handle );
-      lua_pushstring( lua_handle, arg );
-      if( ( ret = lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) ) )
-         bug( "%s: ret %d: path: %s\r\n - error message: %s.", __FUNCTION__, ret, com->path, lua_tostring( lua_handle, -1 ) );
+      account->executing_command = com;
+      last_command = strdup( account->executing_command->cmd_name );
    }
-   FREE( account->last_command );
-   account->last_command = last_command;
-   account->executing_command = NULL;
+   (*com->cmd_funct)( passed, arg );
+   if( account )
+   {
+      FREE( account->last_command );
+      account->last_command = strdup( last_command );
+      account->executing_command = NULL;
+   }
 }
 
+void execute_lua_command( ACCOUNT_DATA *account, COMMAND  *com, void *passed, char *arg )
+{
+   char *last_command;
+   int ret;
+   int state;
+
+   if( account )
+   {
+      account->executing_command = com;
+      last_command = strdup( account->executing_command->cmd_name );
+      state = account->socket->state;
+   }
+   else
+      state = STATE_PLAYING;
+
+   prep_stack( com->path, "onCall" );
+   switch( state )
+   {
+      default:
+         FREE( account->last_command );
+         account->last_command = last_command;
+         account->executing_command = NULL;
+         return;
+      case STATE_PLAYING:
+         push_instance( (ENTITY_INSTANCE *)passed, lua_handle );
+         break;
+      case STATE_ACCOUNT:
+         push_account( (ACCOUNT_DATA *)passed, lua_handle );
+         break;
+   }
+   lua_pushstring( lua_handle, arg );
+   if( ( ret = lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) ) )
+      bug( "%s: ret %d: path: %s\r\n - error message: %s.", __FUNCTION__, ret, com->path, lua_tostring( lua_handle, -1 ) );
+
+   if( account )
+   {
+      FREE( account->last_command );
+      account->last_command = last_command;
+      account->executing_command = NULL;
+   }
+
+}
 
 COMMAND *find_loaded_command( LLIST *loaded_list, const char *command )
 {

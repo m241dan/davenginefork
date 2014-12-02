@@ -256,7 +256,10 @@ ENTITY_INSTANCE *load_eInstance_by_query( const char *query )
    if( instance->framework->f_primary_dmg_received_stat )
       instance->primary_dmg_received_stat = get_stat_from_instance_by_id( instance, instance->framework->f_primary_dmg_received_stat->tag->id );
    if( !instance->isPlayer )
+   {
       load_commands( instance->commands, mobile_commands, LEVEL_BASIC );
+      load_lua_commands( instance->commands, STATE_PLAYING, LEVEL_BASIC );
+   }
    full_load_instance( instance );
    free( row );
 

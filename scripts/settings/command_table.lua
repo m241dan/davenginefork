@@ -3,11 +3,9 @@ command_table = {}
 -- name, path, level --
 
 -- account commands --
-account_commands = { { "test", "../scripts/commands/test.lua", 1 },
-                        { "another test", "../scripts/commands/anothertest.lua", 1 }
-                      }
+account_commands = {}
 -- mobile commands --
-mobile_commands = {}
+mobile_commands = { { "test", "../scripts/commands/test.lua", 0 } }
 
 
 -- assigning tables to appropriate state indexes --
