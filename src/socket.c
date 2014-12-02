@@ -131,6 +131,9 @@ int main(int argc, char **argv)
    luaL_requiref( lua_handle, "Timers", luaopen_TimersLib, 1 );
    lua_pop( lua_handle, -1 );
 
+   luaL_requiref( lua_handle, "Account", luaopen_AccountLib, 1 );
+   lua_pop( lua_handle, -1 );
+
    luaL_requiref( lua_handle, "mud", luaopen_mud, 1 );
    lua_pop( lua_handle, -1 );
 

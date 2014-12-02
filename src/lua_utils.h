@@ -45,6 +45,7 @@ void push_framework( ENTITY_FRAMEWORK *frame, lua_State *L );
 void push_specification( SPECIFICATION *spec, lua_State *L );
 void push_damage( DAMAGE *dmg, lua_State *L );
 void push_timer( TIMER *timer, lua_State *L );
+void push_account( ACCOUNT_DATA *account, lua_State *L );
 
 int lua_bug( lua_State *L );
 int lua_getGlobalVar( lua_State *L );

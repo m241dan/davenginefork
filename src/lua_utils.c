@@ -457,6 +457,32 @@ void push_timer( TIMER *timer, lua_State *L )
    return;
 }
 
+void push_account( ACCOUNT_DATA *account, lua_State *L )
+{
+   ACCOUNT_DATA **box;
+
+   if( !account )
+   {
+      bug( "%s: tryin gto push a NULL account.", __FUNCTION__ );
+      lua_pushnil( L );
+      return;
+   }
+
+   box = (ACCOUNT_DATA **)lua_newuserdata( L, sizeof( ACCOUNT_DATA * ) );
+   luaL_getmetatable( L, "Account.meta" );
+   if( lua_isnil( L, -1 ) )
+   {
+      bug( "%s: Account.meta is missing.", __FUNCTION__ );
+      lua_pop( L, -1 );
+      lua_pop( L, -1 );
+      lua_pushnil( L );
+      return;
+   }
+   lua_setmetatable( L, -2 );
+   *box = account;
+   return;
+}
+
 int lua_bug( lua_State *L )
 {
    switch( lua_type( L, -1 ) )

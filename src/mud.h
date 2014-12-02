@@ -374,6 +374,38 @@ do                                                                      \
    }                                                                    \
 } while(0)
 
+#define DAVLUACM_ACCOUNT_NIL( account, L )                              \
+do                                                                      \
+{                                                                       \
+   if( ( (account) = *(ACCOUNT_DATA **)luaL_checkudata( (L), 1, "Account.meta" ) ) == NULL ) \
+   {                                                                    \
+      bug( "%s: bad meta table.", __FUNCTION__ );                       \
+      lua_pushnil( (L) );                                               \
+      return 1;                                                         \
+   }                                                                    \
+} while(0)
+
+#define DAVLUACM_ACCOUNT_BOOL( account, L )                             \
+do                                                                      \
+{                                                                       \
+   if( ( (account) = *(ACCOUNT_DATA **)luaL_checkudata( (L), 1, "Account.meta" ) ) == NULL ) \
+   {                                                                    \
+      bug( "%s: bad meta table.", __FUNCTION__ );                       \
+      lua_pushboolean( (L), 0 );                                        \
+      return 1;                                                         \
+   }                                                                    \
+} while(0)
+
+#define DAVLUACM_ACCOUNT_NONE( account, L )                             \
+do                                                                      \
+{                                                                       \
+   if( ( (account) = *(ACCOUNT_DATA **)luaL_checkudata( (L), 1, "Account.meta" ) ) == NULL ) \
+   {                                                                    \
+      bug( "%s: bad meta table.", __FUNCTION__ );                       \
+      return 0;                                                         \
+   }                                                                    \
+} while(0)
+
 
 #define UMIN(a, b)		((a) < (b) ? (a) : (b))
 #define UMAX(a, b)              ((a) < (b) ? (b) : (a))

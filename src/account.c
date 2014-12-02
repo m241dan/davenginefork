@@ -165,6 +165,39 @@ int account_prompt( D_SOCKET *dsock )
    return RET_SUCCESS; 
 }
 
+/* utility */
+ACCOUNT_DATA *get_active_account_by_id( int id )
+{
+   ACCOUNT_DATA *account;
+   ITERATOR Iter;
+
+   if( SizeOfList( account_list ) < 1 )
+      return NULL;
+   AttachIterator( &Iter, account_list );
+   while( ( account = (ACCOUNT_DATA *)NextInList( &Iter ) ) != NULL )
+      if( account->idtag->id == id )
+         break;
+   DetachIterator( &Iter );
+
+   return account;
+}
+
+ACCOUNT_DATA *get_active_account_by_name( const char *name )
+{
+   ACCOUNT_DATA *account;
+   ITERATOR Iter;
+
+   if( SizeOfList( account_list ) < 1 )
+      return NULL;
+   AttachIterator( &Iter, account_list );
+   while( ( account = (ACCOUNT_DATA *)NextInList( &Iter ) ) != NULL )
+      if( !strcmp( account->name, name ) )
+         break;
+   DetachIterator( &Iter );
+
+   return account;
+}
+
 ACCOUNT_DATA *check_account_reconnect(const char *act_name)
 {
   ACCOUNT_DATA *account;
@@ -280,9 +313,7 @@ void set_pagewidth( void *passed, char *arg )
       return;
    }
 
-   account->pagewidth = value;
-
-   quick_query( "UPDATE `accounts` SET pagewidth='%d' WHERE accountID='%d';", value, account->idtag->id );
+   set_account_pagewidth( account, value );
    update_tag( account->idtag, "%s-pagewidthCommand", account->name );
 
    text_to_account( account, "Pagewidth set to %d.\r\n", value );
@@ -318,8 +349,27 @@ void account_chatas( void *passed, char *arg )
    while( isspace( arg[0] ) )
       arg++;
 
-   account->chatting_as = strdup( arg );
-   quick_query( "UPDATE `accounts` SET chatting_as='%s' WHERE accountID='%d';", account->chatting_as, account->idtag->id );
+   set_account_chatas( account, arg );
    text_to_account( account, "New name set.\r\n" );
    return;
 }
+
+/* setters */
+inline void set_account_pagewidth( ACCOUNT_DATA *account, int pagewidth )
+{
+   account->pagewidth = pagewidth;
+   if( !strcmp( account->idtag->created_by, "null" ) )
+      return;
+   if( !quick_query( "UPDATE `accounts` SET pagewidth='%d' WHERE accountID='%d';", pagewidth, account->idtag->id ) )
+      bug( "%s: unable to update database for account %s with new pagewidth.", __FUNCTION__, account->name );
+}
+
+inline void set_account_chatas( ACCOUNT_DATA *account, const char *chatas )
+{
+   account->chatting_as = strdup( chatas );
+   if( !strcmp( account->idtag->created_by, "null" ) )
+      return;
+   if( !quick_query( "UPDATE `accounts` SET chatting_as='%s' WHERE accountID='%d';", account->chatting_as, account->idtag->id ) )
+      bug( "%s: unable to update data for account %s with new chatting_as.", __FUNCTION__, account->name );
+}
+
