@@ -255,6 +255,15 @@ inline void load_combat_vars_script( void )
    }
 }
 
+inline void load_lua_command_tables( void )
+{
+   if( luaL_loadfile( lua_handle, "../scripts/settings/command_table.lua" ) || lua_pcall( lua_handle, 0, 0, 0 ) )
+   {
+      bug( "%s: could not load combat variables\r\n - %s", __FUNCTION__, lua_tostring( lua_handle, -1 ) );
+      return;
+   }
+}
+
 void lua_server_settings( void )
 {
    int top = lua_gettop( lua_handle );
@@ -454,6 +463,32 @@ void push_timer( TIMER *timer, lua_State *L )
    }
    lua_setmetatable( L, -2 );
    *box = timer;
+   return;
+}
+
+void push_account( ACCOUNT_DATA *account, lua_State *L )
+{
+   ACCOUNT_DATA **box;
+
+   if( !account )
+   {
+      bug( "%s: tryin gto push a NULL account.", __FUNCTION__ );
+      lua_pushnil( L );
+      return;
+   }
+
+   box = (ACCOUNT_DATA **)lua_newuserdata( L, sizeof( ACCOUNT_DATA * ) );
+   luaL_getmetatable( L, "Account.meta" );
+   if( lua_isnil( L, -1 ) )
+   {
+      bug( "%s: Account.meta is missing.", __FUNCTION__ );
+      lua_pop( L, -1 );
+      lua_pop( L, -1 );
+      lua_pushnil( L );
+      return;
+   }
+   lua_setmetatable( L, -2 );
+   *box = account;
    return;
 }
 

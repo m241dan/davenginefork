@@ -374,6 +374,38 @@ do                                                                      \
    }                                                                    \
 } while(0)
 
+#define DAVLUACM_ACCOUNT_NIL( account, L )                              \
+do                                                                      \
+{                                                                       \
+   if( ( (account) = *(ACCOUNT_DATA **)luaL_checkudata( (L), 1, "Account.meta" ) ) == NULL ) \
+   {                                                                    \
+      bug( "%s: bad meta table.", __FUNCTION__ );                       \
+      lua_pushnil( (L) );                                               \
+      return 1;                                                         \
+   }                                                                    \
+} while(0)
+
+#define DAVLUACM_ACCOUNT_BOOL( account, L )                             \
+do                                                                      \
+{                                                                       \
+   if( ( (account) = *(ACCOUNT_DATA **)luaL_checkudata( (L), 1, "Account.meta" ) ) == NULL ) \
+   {                                                                    \
+      bug( "%s: bad meta table.", __FUNCTION__ );                       \
+      lua_pushboolean( (L), 0 );                                        \
+      return 1;                                                         \
+   }                                                                    \
+} while(0)
+
+#define DAVLUACM_ACCOUNT_NONE( account, L )                             \
+do                                                                      \
+{                                                                       \
+   if( ( (account) = *(ACCOUNT_DATA **)luaL_checkudata( (L), 1, "Account.meta" ) ) == NULL ) \
+   {                                                                    \
+      bug( "%s: bad meta table.", __FUNCTION__ );                       \
+      return 0;                                                         \
+   }                                                                    \
+} while(0)
+
 
 #define UMIN(a, b)		((a) < (b) ? (a) : (b))
 #define UMAX(a, b)              ((a) < (b) ? (b) : (a))
@@ -475,13 +507,15 @@ struct lookup_data
 
 struct typCmd
 {
-   char      * cmd_name;
-   void     (* cmd_funct)(void *passed, char *arg);
-   sh_int      level;
-   LLIST     *sub_commands;
-   bool      can_sub;
+   char        * cmd_name;
+   void       (* cmd_funct)(void *passed, char *arg);
+   sh_int       level;
+   LLIST       *sub_commands;
+   bool      	can_sub;
    const char *(*desc_func)( void *extra );
-   COMMAND   *from_table;
+   COMMAND     *from_table;
+   const char *path;
+   bool		lua_cmd;
 };
 
 typedef struct buffer_type
@@ -521,6 +555,7 @@ typedef struct buffer_type
 #include "lua_iter.h"
 #include "lua_triggers.h"
 #include "lua_ui.h"
+#include "lua_account.h"
 
 /******************************
  * End of new structures      *

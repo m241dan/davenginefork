@@ -319,6 +319,8 @@ int account_handle_cmd( ACCOUNT_DATA *account, char *arg )
 
    if( ( com = find_loaded_command( account->commands, command ) ) == NULL )
       text_to_account( account, "No such command.\r\n" );
+   else if( com->lua_cmd )
+      execute_lua_command( account, com, account, arg );
    else
       execute_command( account, com, account, arg );
 
@@ -463,6 +465,7 @@ int sFrame_editor_handle_command( INCEPTION *olc, char *arg )
 
 int entity_handle_cmd( ENTITY_INSTANCE *entity, char *arg )
 {
+   ACCOUNT_DATA *account;
    ENTITY_INSTANCE *exit;
    COMMAND *com;
    char command[MAX_BUFFER];
@@ -478,10 +481,12 @@ int entity_handle_cmd( ENTITY_INSTANCE *entity, char *arg )
 
    if( ( com = find_loaded_command( entity->commands, command ) ) != NULL )
    {
-      if( entity->socket )
-         execute_command( entity->socket->account, com, entity, arg );
+      account = entity->socket ? entity->socket->account : NULL;
+
+      if( com->lua_cmd )
+         execute_lua_command( account, com, entity, arg );
       else
-         (*com->cmd_funct)( entity, arg );
+         execute_command( account, com, entity, arg );
    }
    else if( entity->contained_by && ( exit = instance_list_has_by_short_prefix( entity->contained_by->contents_sorted[SPEC_ISEXIT], command ) ) != NULL )
       move_entity( entity, exit );
@@ -493,16 +498,64 @@ int entity_handle_cmd( ENTITY_INSTANCE *entity, char *arg )
 
 void execute_command( ACCOUNT_DATA *account, COMMAND *com, void *passed, char *arg )
 {
-   char *last_command; /* using this pointer is fixing a crash where the command was being cleared ont he function call and was then NULL when strduped */
+   char *last_command;
 
-   account->executing_command = com;
-   last_command = strdup( account->executing_command->cmd_name );
+   if( account )
+   {
+      account->executing_command = com;
+      last_command = strdup( account->executing_command->cmd_name );
+   }
    (*com->cmd_funct)( passed, arg );
-   FREE( account->last_command );
-   account->last_command = last_command;
-   account->executing_command = NULL;
+   if( account )
+   {
+      FREE( account->last_command );
+      account->last_command = strdup( last_command );
+      account->executing_command = NULL;
+   }
 }
 
+void execute_lua_command( ACCOUNT_DATA *account, COMMAND  *com, void *passed, char *arg )
+{
+   char *last_command;
+   int ret;
+   int state;
+
+   if( account )
+   {
+      account->executing_command = com;
+      last_command = strdup( account->executing_command->cmd_name );
+      state = account->socket->state;
+   }
+   else
+      state = STATE_PLAYING;
+
+   prep_stack( com->path, "onCall" );
+   switch( state )
+   {
+      default:
+         FREE( account->last_command );
+         account->last_command = last_command;
+         account->executing_command = NULL;
+         return;
+      case STATE_PLAYING:
+         push_instance( (ENTITY_INSTANCE *)passed, lua_handle );
+         break;
+      case STATE_ACCOUNT:
+         push_account( (ACCOUNT_DATA *)passed, lua_handle );
+         break;
+   }
+   lua_pushstring( lua_handle, arg );
+   if( ( ret = lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) ) )
+      bug( "%s: ret %d: path: %s\r\n - error message: %s.", __FUNCTION__, ret, com->path, lua_tostring( lua_handle, -1 ) );
+
+   if( account )
+   {
+      FREE( account->last_command );
+      account->last_command = last_command;
+      account->executing_command = NULL;
+   }
+
+}
 
 COMMAND *find_loaded_command( LLIST *loaded_list, const char *command )
 {
@@ -549,6 +602,69 @@ int load_commands( LLIST *command_list, COMMAND command_table[], int level_compa
       }
    }
    return ret;
+}
+
+void load_lua_commands( LLIST *command_list, int state, int level_compare )
+{
+   COMMAND *command;
+   int top = lua_gettop( lua_handle );
+   int x, table_size, level;
+
+   lua_getglobal( lua_handle, "command_table" );
+   if( lua_isnil( lua_handle, -1 ) || lua_type( lua_handle, -1 ) != LUA_TTABLE )
+   {
+      bug( "%s: missing command table.", __FUNCTION__ );
+      return;
+   }
+   lua_pushnumber( lua_handle, state );
+   lua_gettable( lua_handle, -2 );
+   if( lua_isnil( lua_handle, -1 ) || lua_type( lua_handle, -1 ) != LUA_TTABLE )
+   {
+      bug( "%s: missing command table at state %d.", __FUNCTION__, state );
+      return;
+   }
+
+   lua_len( lua_handle, -1 );
+   table_size = lua_tonumber( lua_handle, -1 );
+   lua_pop( lua_handle, 1 );
+   for( x = 1; x < (table_size+1); x++ )
+   {
+      /* get the command table */
+      lua_pushnumber( lua_handle, x );
+      lua_gettable( lua_handle, -2 );
+      /* check level first */
+      lua_pushnumber( lua_handle, 3 );
+      lua_gettable( lua_handle, -2 );
+      level = lua_tonumber( lua_handle, -1 );
+      lua_pop( lua_handle, 1 );
+      if( level > level_compare )
+      {
+         lua_pop( lua_handle, 1 );
+         continue;
+      }
+
+      CREATE( command, COMMAND, 1 );
+      command->level = level;
+      command->lua_cmd = TRUE;
+      command->can_sub = FALSE;
+      /* name */
+      lua_pushnumber( lua_handle, 1 );
+      lua_gettable( lua_handle, -2 );
+      command->cmd_name = strdup( lua_tostring( lua_handle, -1 ) );
+      lua_pop( lua_handle, 1 );
+
+      /* path */
+      lua_pushnumber( lua_handle, 2 );
+      lua_gettable( lua_handle, -2 );
+      command->path = strdup( lua_tostring( lua_handle, -1 ) );
+      lua_pop( lua_handle, 1 );
+
+      /* remove the table for the specific command, not needed anymore. */
+      lua_pop( lua_handle, 1 );
+      AttachToList( command, command_list );
+   }
+   lua_settop( lua_handle, top );
+   return;
 }
 
 int copy_command( COMMAND *to_copy, COMMAND *command )
