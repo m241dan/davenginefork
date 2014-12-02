@@ -551,6 +551,69 @@ int load_commands( LLIST *command_list, COMMAND command_table[], int level_compa
    return ret;
 }
 
+void load_lua_commands( LLIST *command_list, int state, int level_compare )
+{
+   COMMAND *command;
+   int top = lua_gettop( lua_handle );
+   int x, table_size, level;
+
+   lua_getglobal( lua_handle, "command_table" );
+   if( lua_isnil( lua_handle, -1 ) || lua_type( lua_handle, -1 ) != LUA_TTABLE )
+   {
+      bug( "%s: missing command table.", __FUNCTION__ );
+      return;
+   }
+   lua_pushnumber( lua_handle, state );
+   lua_gettable( lua_handle, -2 );
+   if( lua_isnil( lua_handle, -1 ) || lua_type( lua_handle, -1 ) != LUA_TTABLE )
+   {
+      bug( "%s: missing command table at state %d.", __FUNCTION__, state );
+      return;
+   }
+
+   lua_len( lua_handle, -1 );
+   table_size = lua_tonumber( lua_handle, -1 );
+   lua_pop( lua_handle, 1 );
+   for( x = 1; x < (table_size+1); x++ )
+   {
+      /* get the command table */
+      lua_pushnumber( lua_handle, x );
+      lua_gettable( lua_handle, -2 );
+      /* check level first */
+      lua_pushnumber( lua_handle, 3 );
+      lua_gettable( lua_handle, -2 );
+      level = lua_tonumber( lua_handle, -1 );
+      lua_pop( lua_handle, 1 );
+      if( level > level_compare )
+      {
+         lua_pop( lua_handle, 1 );
+         continue;
+      }
+
+      CREATE( command, COMMAND, 1 );
+      command->level = level;
+      command->lua_cmd = TRUE;
+      command->can_sub = FALSE;
+      /* name */
+      lua_pushnumber( lua_handle, 1 );
+      lua_gettable( lua_handle, -2 );
+      command->cmd_name = strdup( lua_tostring( lua_handle, -1 ) );
+      lua_pop( lua_handle, 1 );
+
+      /* path */
+      lua_pushnumber( lua_handle, 2 );
+      lua_gettable( lua_handle, -2 );
+      command->path = strdup( lua_tostring( lua_handle, -1 ) );
+      lua_pop( lua_handle, 1 );
+
+      /* remove the table for the specific command, not needed anymore. */
+      lua_pop( lua_handle, 1 );
+      AttachToList( command, command_list );
+   }
+   lua_settop( lua_handle, top );
+   return;
+}
+
 int copy_command( COMMAND *to_copy, COMMAND *command )
 {
    int ret = RET_SUCCESS;

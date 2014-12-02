@@ -255,6 +255,15 @@ inline void load_combat_vars_script( void )
    }
 }
 
+inline void load_lua_command_tables( void )
+{
+   if( luaL_loadfile( lua_handle, "../scripts/settings/command_table.lua" ) || lua_pcall( lua_handle, 0, 0, 0 ) )
+   {
+      bug( "%s: could not load combat variables\r\n - %s", __FUNCTION__, lua_tostring( lua_handle, -1 ) );
+      return;
+   }
+}
+
 void lua_server_settings( void )
 {
    int top = lua_gettop( lua_handle );

@@ -514,6 +514,7 @@ struct typCmd
    bool      	can_sub;
    const char *(*desc_func)( void *extra );
    COMMAND     *from_table;
+   const char *path;
    bool		lua_cmd;
 };
 

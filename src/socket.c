@@ -141,6 +141,7 @@ int main(int argc, char **argv)
 
    load_server_script();
    load_combat_vars_script();
+   load_lua_command_tables();
    lua_server_settings(); /* loading server stuff */
    lua_database_settings(); /* loading the sql variables */
    lua_combat_settings(); /* loading combat settings */
@@ -1211,7 +1212,10 @@ int change_socket_state( D_SOCKET *dsock, int state )
          break;
       case STATE_ACCOUNT:
          if( SizeOfList( dsock->account->commands ) < 1 )
+         {
             load_commands( dsock->account->commands, account_commands, dsock->account->level );
+            load_lua_commands( dsock->account->commands, STATE_ACCOUNT, dsock->account->level );
+         }
          break;
       case STATE_OLC:
          if( SizeOfList( dsock->account->olc->commands ) < 1 )
