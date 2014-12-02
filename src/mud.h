@@ -475,13 +475,14 @@ struct lookup_data
 
 struct typCmd
 {
-   char      * cmd_name;
-   void     (* cmd_funct)(void *passed, char *arg);
-   sh_int      level;
-   LLIST     *sub_commands;
-   bool      can_sub;
+   char        * cmd_name;
+   void       (* cmd_funct)(void *passed, char *arg);
+   sh_int       level;
+   LLIST       *sub_commands;
+   bool      	can_sub;
    const char *(*desc_func)( void *extra );
-   COMMAND   *from_table;
+   COMMAND     *from_table;
+   bool		lua_cmd;
 };
 
 typedef struct buffer_type
@@ -521,6 +522,7 @@ typedef struct buffer_type
 #include "lua_iter.h"
 #include "lua_triggers.h"
 #include "lua_ui.h"
+#include "lua_account.h"
 
 /******************************
  * End of new structures      *
