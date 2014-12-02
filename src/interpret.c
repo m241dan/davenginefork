@@ -497,7 +497,17 @@ void execute_command( ACCOUNT_DATA *account, COMMAND *com, void *passed, char *a
 
    account->executing_command = com;
    last_command = strdup( account->executing_command->cmd_name );
-   (*com->cmd_funct)( passed, arg );
+   if( !com->lua_cmd )
+      (*com->cmd_funct)( passed, arg );
+   else
+   {
+      int ret;
+      prep_stack( com->path, "onCall" );
+      push_account( account, lua_handle );
+      lua_pushstring( lua_handle, arg );
+      if( ( ret = lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) ) )
+         bug( "%s: ret %d: path: %s\r\n - error message: %s.", __FUNCTION__, ret, com->path, lua_tostring( lua_handle, -1 ) );
+   }
    FREE( account->last_command );
    account->last_command = last_command;
    account->executing_command = NULL;

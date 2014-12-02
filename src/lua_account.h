@@ -18,3 +18,5 @@ int getAccountControlling( lua_State *L );
 /* setters */
 int setAccountPagewidth( lua_State *L );
 int setAccountChatAs( lua_State *L );
+/* actions */
+int luaAccountEchoAt( lua_State * L );

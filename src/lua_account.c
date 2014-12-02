@@ -13,6 +13,8 @@ const struct luaL_Reg AccountLib_m[] = {
    /* setters */
    { "setPagewidth", setAccountPagewidth },
    { "setChatAs", setAccountChatAs },
+   /* actions */
+   { "echoAt", luaAccountEchoAt },
    { NULL, NULL }
 };
 
@@ -188,5 +190,20 @@ int setAccountChatAs( lua_State *L )
       return 0;
    }
    set_account_chatas( account, lua_tostring( L, -1 ) );
+   return 0;
+}
+
+/* actions */
+int luaAccountEchoAt( lua_State *L )
+{
+   ACCOUNT_DATA *account;
+
+   DAVLUACM_ACCOUNT_NONE( account, L );
+   if( lua_type( L, -1 ) != LUA_TSTRING )
+   {
+      bug( "%s: only takes a string.\r\n", __FUNCTION__ );
+      return 0;
+   }
+   text_to_account( account, "%s", lua_tostring( L, -1 ) );
    return 0;
 }
