@@ -5,7 +5,8 @@ int EntityFrameworkGC( lua_State *L );
 
 /* lib functions */
 
-int getFramework( lua_State *l );
+int getFramework( lua_State *L );
+int newInheritedFramework( lua_State *L );
 
 /* getters */
 int getFrameID( lua_State *L );
