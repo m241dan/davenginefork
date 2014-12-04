@@ -236,7 +236,7 @@ int handle_nanny_input( D_SOCKET *dsock, char *arg )
       return ret;
    }
 
-   if( !nanny->info )
+   if( !nanny->info && !nanny->lua_nanny )
    {
       BAD_POINTER( "info" );
       return ret;
@@ -261,6 +261,7 @@ int handle_nanny_input( D_SOCKET *dsock, char *arg )
          lua_settop( lua_handle, top );
          return RET_FAILED_OTHER;
       }
+      return RET_SUCCESS;
    }
 
    if( !strcmp( arg, "/back" ) )

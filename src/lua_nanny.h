@@ -20,4 +20,5 @@ int setNannyState( lua_State *L );
 
 /* actions */
 int nannyStart( lua_State *L );
-
+int nannyFinish( lua_State *L );
+int nannyEchoAt( lua_State *L );

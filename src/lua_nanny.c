@@ -12,6 +12,8 @@ const struct luaL_Reg NannyLib_m[] = {
    { "setState", setNannyState },
    /* actions */
    { "start", nannyStart },
+   { "finish", nannyFinish },
+   { "echoAt", nannyEchoAt },
    { NULL, NULL }
 };
 
@@ -118,10 +120,10 @@ int setNannyControl( lua_State *L )
          return 0;
       }
       else
-         nanny->socket = entity->socket;
+         control_nanny( entity->socket, nanny );
    }
    else
-      nanny->socket = account->socket;
+      control_nanny( account->socket, nanny );
    return 0;
 }
 
@@ -180,7 +182,36 @@ int nannyStart( lua_State *L )
       bug( "%s: can't start a nanny without a socket on the nanny.", __FUNCTION__ );
       return 0;
    }
+   if( !nanny->socket->nanny )
+   {
+      bug( "%s: can't start a nanny if the socket controlling it doesnt contain the nanny.", __FUNCTION__ );
+      return 0;
+   }
    change_socket_state( nanny->socket, STATE_NANNY );
    return 0;
 }
 
+int nannyFinish( lua_State *L )
+{
+   NANNY_DATA *nanny;
+
+   DAVLUACM_NANNY_NONE( nanny, L );
+   change_socket_state( nanny->socket, nanny->socket->prev_state );
+   uncontrol_nanny( nanny->socket );
+   free_nanny( nanny );
+   return 0;
+}
+
+int nannyEchoAt( lua_State *L )
+{
+   NANNY_DATA *nanny;
+
+   DAVLUACM_NANNY_NONE( nanny, L );
+   if( lua_type( L, -1 ) != LUA_TSTRING )
+   {
+      bug( "%s: can only echo a string, non-string value passed to echoat.", __FUNCTION__ );
+      return 0;
+   }
+   text_to_nanny( nanny, lua_tostring( L, -1 ) );
+   return 0;
+}
