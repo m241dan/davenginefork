@@ -248,6 +248,12 @@ int handle_nanny_input( D_SOCKET *dsock, char *arg )
       return RET_FAILED_OTHER;
    }
 
+   if( nanny->lua_nanny )
+   {
+      prep_stack( nanny->path, "onCall" );
+      
+   }
+
    if( !strcmp( arg, "/back" ) )
    {
       if( !nanny->info->back_allowed )

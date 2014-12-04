@@ -1,11 +1,15 @@
 /* header file for nanny.c written by Davenge */
 
+
 struct nanny_data
 {
    D_SOCKET *socket;
    void *content;
+   int content_type;
    const struct nanny_lib_entry *info;
    int state;
+   bool lua_nanny;
+   const char *path;
 };
 
 struct nanny_lib_entry
