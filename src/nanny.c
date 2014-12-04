@@ -250,8 +250,17 @@ int handle_nanny_input( D_SOCKET *dsock, char *arg )
 
    if( nanny->lua_nanny )
    {
-      prep_stack( nanny->path, "onCall" );
-      
+      int top = lua_gettop( lua_handle );
+
+      prep_stack( nanny->path, "nannyInterp" );
+      push_nanny( nanny, lua_handle );
+      lua_pushstring( lua_handle, arg );
+      if( ( ret = lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) ) )
+      {
+         bug( "%s: ret: %d path: %s\r\n - error message %s.", __FUNCTION__, ret, nanny->path, lua_tostring( lua_handle, -1 ) );
+         lua_settop( lua_handle, top );
+         return RET_FAILED_OTHER;
+      }
    }
 
    if( !strcmp( arg, "/back" ) )
