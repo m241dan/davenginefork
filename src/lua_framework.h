@@ -19,6 +19,11 @@ int getFrameInheritance( lua_State *L );
 int getFrameHeight( lua_State *L );
 int getFrameWeight( lua_State *L );
 int getFrameWidth( lua_State *L );
+/* setters */
+int setFrameName( lua_State *L );
+int setFrameShort( lua_State *L );
+int setFrameLong( lua_State *L );
+int setFrameDesc( lua_State *L );
 /* actions */
 int luaInherits( lua_State *L );
 

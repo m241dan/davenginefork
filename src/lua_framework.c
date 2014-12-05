@@ -14,6 +14,11 @@ const struct luaL_Reg EntityFrameworkLib_m[] = {
    { "getHeight", getFrameHeight },
    { "getWeight", getFrameWeight },
    { "getWidth", getFrameWidth },
+   /* setters */
+   { "setName", setFrameName },
+   { "setShort", setFrameShort },
+   { "setLong", setFrameLong },
+   { "setDesc", setFrameDesc },
    /* actions */
    { "inherits", luaInherits },
    { NULL, NULL }
@@ -60,7 +65,7 @@ int getFramework( lua_State *L )
    switch( lua_type( L, -1 ) )
    {
       default:
-         bug( "5s: passed a bad argument.", __FUNCTION__ );
+         bug( "%s: passed a bad argument.", __FUNCTION__ );
           lua_pushnil( L );
          return 1;
       case LUA_TUSERDATA:
@@ -216,6 +221,65 @@ int getFrameWidth( lua_State *L )
    lua_pushnumber( L, get_frame_width( frame, NULL ) );
    return 1;
 }
+
+int setFrameName( lua_State *L )
+{
+   ENTITY_FRAMEWORK *frame;
+
+   DAVLUACM_FRAME_NONE( frame, L );
+   if( lua_type( L, -1 ) != LUA_TSTRING )
+   {
+      bug( "%s: non-string value passed.", __FUNCTION__ );
+      return 0;
+   }
+   set_frame_name( frame, lua_tostring( L, -1 ) );
+   return 0;
+}
+
+int setFrameShort( lua_State *L )
+{
+   ENTITY_FRAMEWORK *frame;
+
+   DAVLUACM_FRAME_NONE( frame, L );
+   if( lua_type( L, -1 ) != LUA_TSTRING )
+   {
+      bug( "%s: non-string value passed.", __FUNCTION__ );
+      return 0;
+   }
+   set_frame_short_descr( frame, lua_tostring( L, -1 ) );
+   return 0;
+
+}
+
+int setFrameLong( lua_State *L )
+{
+   ENTITY_FRAMEWORK *frame;
+
+   DAVLUACM_FRAME_NONE( frame, L );
+   if( lua_type( L, -1 ) != LUA_TSTRING )
+   {
+      bug( "%s: non-string value passed.", __FUNCTION__ );
+      return 0;
+   }
+   set_frame_long_descr( frame, lua_tostring( L, -1 ) );
+   return 0;
+
+}
+
+int setFrameDesc( lua_State *L )
+{
+   ENTITY_FRAMEWORK *frame;
+
+   DAVLUACM_FRAME_NONE( frame, L );
+   if( lua_type( L, -1 ) != LUA_TSTRING )
+   {
+      bug( "%s: non-string value passed.", __FUNCTION__ );
+      return 0;
+   }
+   set_frame_description( frame, lua_tostring( L, -1 ) );
+   return 0;
+}
+
 
 int luaInherits( lua_State *L )
 {

@@ -87,6 +87,9 @@ int getNannyContent( lua_State *L )
       case NANNY_MOBILE:
          push_instance( (ENTITY_INSTANCE *)nanny->content, L );
          return 1;
+      case NANNY_FRAMEWORK:
+         push_framework( (ENTITY_FRAMEWORK *)nanny->content, L );
+         return 1;
    }
    bug( "%s: should not have gotten here.", __FUNCTION__ );
    lua_pushnil( L );
@@ -131,16 +134,27 @@ int setNannyContent( lua_State *L )
 {
    NANNY_DATA *nanny;
    ACCOUNT_DATA *account;
+   ENTITY_FRAMEWORK *frame;
    ENTITY_INSTANCE *entity;
+   const char *metafield;
 
    DAVLUACM_NANNY_NONE( nanny, L );
+
 
    if( ( account = *(ACCOUNT_DATA **)luaL_checkudata( L, -1, "Account.meta" ) ) == NULL )
    {
       if( ( entity = *(ENTITY_INSTANCE **)luaL_checkudata( L, -1, "EntityInstance.meta" ) ) == NULL )
       {
-         bug( "%s: bad userdata passed.", __FUNCTION__ );
-         return 0;
+         if( ( frame = *(ENTITY_FRAMEWORK **)luaL_checkudata( L, -1, "EntityFramework.meta" ) ) == NULL )
+         {
+            bug( "%s: bad userdata passed.", __FUNCTION__ );
+            return 0;
+         }
+         else
+         {
+            nanny->content = frame;
+            nanny->content_type = NANNY_FRAMEWORK;
+         }
       }
       else
       {
@@ -153,6 +167,7 @@ int setNannyContent( lua_State *L )
       nanny->content = account;
       nanny->content_type = NANNY_ACCOUNT;
    }
+   bug( "%s: returning here.", __FUNCTION__ );
    return 0;
 
 }

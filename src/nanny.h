@@ -1,7 +1,8 @@
 /* header file for nanny.c written by Davenge */
 
-#define NANNY_ACCOUNT 0
-#define NANNY_MOBILE  1
+#define NANNY_ACCOUNT   0
+#define NANNY_MOBILE    1
+#define NANNY_FRAMEWORK 2
 
 struct nanny_data
 {
