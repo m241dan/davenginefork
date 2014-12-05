@@ -406,6 +406,38 @@ do                                                                      \
    }                                                                    \
 } while(0)
 
+#define DAVLUACM_NANNY_NIL( nanny, L )                              \
+do                                                                      \
+{                                                                       \
+   if( ( (nanny) = *(NANNY_DATA **)luaL_checkudata( (L), 1, "Nanny.meta" ) ) == NULL ) \
+   {                                                                    \
+      bug( "%s: bad meta table.", __FUNCTION__ );                       \
+      lua_pushnil( (L) );                                               \
+      return 1;                                                         \
+   }                                                                    \
+} while(0)
+
+#define DAVLUACM_NANNY_BOOL( nanny, L )                             \
+do                                                                      \
+{                                                                       \
+   if( ( (nanny) = *(NANNY_DATA **)luaL_checkudata( (L), 1, "Nanny.meta" ) ) == NULL ) \
+   {                                                                    \
+      bug( "%s: bad meta table.", __FUNCTION__ );                       \
+      lua_pushboolean( (L), 0 );                                        \
+      return 1;                                                         \
+   }                                                                    \
+} while(0)
+
+#define DAVLUACM_NANNY_NONE( nanny, L )                             \
+do                                                                      \
+{                                                                       \
+   if( ( (nanny) = *(NANNY_DATA **)luaL_checkudata( (L), 1, "Nanny.meta" ) ) == NULL ) \
+   {                                                                    \
+      bug( "%s: bad meta table.", __FUNCTION__ );                       \
+      return 0;                                                         \
+   }                                                                    \
+} while(0)
+
 
 #define UMIN(a, b)		((a) < (b) ? (a) : (b))
 #define UMAX(a, b)              ((a) < (b) ? (b) : (a))
@@ -556,6 +588,7 @@ typedef struct buffer_type
 #include "lua_triggers.h"
 #include "lua_ui.h"
 #include "lua_account.h"
+#include "lua_nanny.h"
 
 /******************************
  * End of new structures      *

@@ -21,6 +21,7 @@ const struct luaL_Reg EntityFrameworkLib_m[] = {
 
 const struct luaL_Reg EntityFrameworkLib_f[] = {
    { "getFramework", getFramework },
+   { "newInheritedFrame", newInheritedFramework },
    { NULL, NULL }
 };
 
@@ -89,6 +90,21 @@ int getFramework( lua_State *L )
          break;
    }
    push_framework( framework, L );
+   return 1;
+}
+
+int newInheritedFramework( lua_State *L )
+{
+   ENTITY_FRAMEWORK *frame;
+   ENTITY_FRAMEWORK *iFrame;
+
+   DAVLUACM_FRAME_NIL( frame, L );
+
+   iFrame = init_eFramework();
+   set_to_inherited( iFrame );
+   iFrame->inherits = frame;
+   new_eFramework( iFrame );
+   push_framework( iFrame, L );
    return 1;
 }
 
