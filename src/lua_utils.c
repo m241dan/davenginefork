@@ -526,24 +526,23 @@ void push_nanny( NANNY_DATA *account, lua_State *L )
    return;
 }
 
-bool check_meta( lua_State *L, int index, const char *meta_name )
+void *check_meta( lua_State *L, int index, const char *meta_name )
 {
    void *object = lua_touserdata( L, index );
-   bool same = FALSE;
 
    if( !object )
-      return same;
+      return NULL;
 
    if( lua_getmetatable( L, index ) )
    {
       luaL_getmetatable( L, meta_name );
-      if( lua_rawequal( L, -1, -2 ) )
-         same = TRUE;
+      if( !lua_rawequal( L, -1, -2 ) )
+         object = NULL;
       lua_pop( L, 2 );
-      return same;
+      return object;
    }
    else
-      return same;
+      return NULL;
 }
 
 int lua_bug( lua_State *L )

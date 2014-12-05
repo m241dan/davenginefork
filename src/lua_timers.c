@@ -91,8 +91,8 @@ int getTimer( lua_State *L )
 
    if( type != TIMER_MUD )
    {
-      if( ( owner = luaL_checkudata( L, -2, "EntityInstance.meta" ) ) == NULL || !( type = TIMER_INSTANCE ) )
-         if( ( owner = luaL_checkudata( L, -2, "Damage.meta" ) ) == NULL || !( type = TIMER_DAMAGE ) )
+      if( ( owner = check_meta( L, -2, "EntityInstance.meta" ) ) == NULL || !( type = TIMER_INSTANCE ) )
+         if( ( owner = check_meta( L, -2, "Damage.meta" ) ) == NULL || !( type = TIMER_DAMAGE ) )
          {
             bug( "%s: bad user data passed.", __FUNCTION__ );
             lua_pushnil( L );
@@ -215,8 +215,8 @@ int setOwner( lua_State *L )
 
    DAVLUACM_TIMER_NONE( timer, L );
 
-   if( ( owner = luaL_checkudata( L, -1, "EntityInstance.meta" ) ) == NULL || !( type = TIMER_INSTANCE ) )
-      if( ( owner = luaL_checkudata( L, -1, "Damage.meta" ) ) == NULL || !( type = TIMER_DAMAGE ) )
+   if( ( owner = check_meta( L, -1, "EntityInstance.meta" ) ) == NULL || !( type = TIMER_INSTANCE ) )
+      if( ( owner = check_meta( L, -1, "Damage.meta" ) ) == NULL || !( type = TIMER_DAMAGE ) )
       {
          owner = NULL;
          type = TIMER_MUD;

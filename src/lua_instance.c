@@ -964,9 +964,9 @@ int hasItemInInventoryFramework( lua_State *L )
          lua_pushboolean( L, 0 );
          return 1;
       case LUA_TUSERDATA:
-         if( ( frame = *(ENTITY_FRAMEWORK **)luaL_checkudata( L, 2, "EntityFramework.meta" ) ) == NULL )
+         if( ( frame = *(ENTITY_FRAMEWORK **)check_meta( L, 2, "EntityFramework.meta" ) ) == NULL )
          {
-            if( ( instance = *(ENTITY_INSTANCE **)luaL_checkudata( L, 2, "EntityInstance.meta" ) ) == NULL )
+            if( ( instance = *(ENTITY_INSTANCE **)check_meta( L, 2, "EntityInstance.meta" ) ) == NULL )
             {
                bug( "%s: bad userdata passed.", __FUNCTION__ );
                lua_pushboolean( L, 0 );

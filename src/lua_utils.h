@@ -50,7 +50,7 @@ void push_timer( TIMER *timer, lua_State *L );
 void push_account( ACCOUNT_DATA *account, lua_State *L );
 void push_nanny( NANNY_DATA *nanny, lua_State *L );
 
-bool check_meta( lua_State *L, int index, const char *meta_name );
+void *check_meta( lua_State *L, int index, const char *meta_name );
 
 int lua_bug( lua_State *L );
 int lua_getGlobalVar( lua_State *L );

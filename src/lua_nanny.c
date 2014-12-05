@@ -115,9 +115,9 @@ int setNannyControl( lua_State *L )
 
    DAVLUACM_NANNY_NONE( nanny, L );
 
-   if( ( account = *(ACCOUNT_DATA **)luaL_checkudata( L, -1, "Account.meta" ) ) == NULL )
+   if( ( account = *(ACCOUNT_DATA **)check_meta( L, -1, "Account.meta" ) ) == NULL )
    {
-      if( ( entity = *(ENTITY_INSTANCE **)luaL_checkudata( L, -1, "EntityInstance.meta" ) ) == NULL )
+      if( ( entity = *(ENTITY_INSTANCE **)check_meta( L, -1, "EntityInstance.meta" ) ) == NULL )
       {
          bug( "%s: bad userdata passed.", __FUNCTION__ );
          return 0;
@@ -136,16 +136,15 @@ int setNannyContent( lua_State *L )
    ACCOUNT_DATA *account;
    ENTITY_FRAMEWORK *frame;
    ENTITY_INSTANCE *entity;
-   const char *metafield;
 
    DAVLUACM_NANNY_NONE( nanny, L );
 
 
-   if( ( account = *(ACCOUNT_DATA **)luaL_checkudata( L, -1, "Account.meta" ) ) == NULL )
+   if( ( account = *(ACCOUNT_DATA **)check_meta( L, -1, "Account.meta" ) ) == NULL )
    {
-      if( ( entity = *(ENTITY_INSTANCE **)luaL_checkudata( L, -1, "EntityInstance.meta" ) ) == NULL )
+      if( ( entity = *(ENTITY_INSTANCE **)check_meta( L, -1, "EntityInstance.meta" ) ) == NULL )
       {
-         if( ( frame = *(ENTITY_FRAMEWORK **)luaL_checkudata( L, -1, "EntityFramework.meta" ) ) == NULL )
+         if( ( frame = *(ENTITY_FRAMEWORK **)check_meta( L, -1, "EntityFramework.meta" ) ) == NULL )
          {
             bug( "%s: bad userdata passed.", __FUNCTION__ );
             return 0;
