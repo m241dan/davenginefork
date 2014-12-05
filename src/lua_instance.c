@@ -941,9 +941,9 @@ int isSameRoom( lua_State *L )
 
 int hasItemInInventoryFramework( lua_State *L )
 {
-   ENTITY_INSTANCE *instance;
+   ENTITY_INSTANCE **instance_ref, *instance;
    ENTITY_INSTANCE *item;
-   ENTITY_FRAMEWORK *frame;
+   ENTITY_FRAMEWORK **frame_ref, *frame;
    ITERATOR Iter;
    int top = lua_gettop( L );
    bool found = FALSE;
@@ -964,16 +964,18 @@ int hasItemInInventoryFramework( lua_State *L )
          lua_pushboolean( L, 0 );
          return 1;
       case LUA_TUSERDATA:
-         if( ( frame = *(ENTITY_FRAMEWORK **)check_meta( L, 2, "EntityFramework.meta" ) ) == NULL )
+         if( ( frame_ref = (ENTITY_FRAMEWORK **)check_meta( L, 2, "EntityFramework.meta" ) ) == NULL )
          {
-            if( ( instance = *(ENTITY_INSTANCE **)check_meta( L, 2, "EntityInstance.meta" ) ) == NULL )
+            if( ( instance_ref = (ENTITY_INSTANCE **)check_meta( L, 2, "EntityInstance.meta" ) ) == NULL )
             {
                bug( "%s: bad userdata passed.", __FUNCTION__ );
                lua_pushboolean( L, 0 );
                return 1;
             }
-            frame = instance->framework;
+            frame = (*instance_ref)->framework;
+            break;
          }
+         frame = *frame_ref;
          break;
       case LUA_TNUMBER:
          if( ( frame = get_framework_by_id( lua_tonumber( L, 2 ) ) ) == NULL )

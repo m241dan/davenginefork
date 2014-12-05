@@ -73,7 +73,7 @@ int newTimer( lua_State *L )
 int getTimer( lua_State *L )
 {
    TIMER *timer;
-   void *owner;
+   void **owner;
    const char *key;
    int top = lua_gettop( L );
    TIMER_OWNER_TYPES type;
@@ -109,10 +109,10 @@ int getTimer( lua_State *L )
          timer = get_mud_timer( key );
          break;
       case TIMER_INSTANCE:
-         timer = get_timer_from_instance( owner, key );
+         timer = get_timer_from_instance( *owner, key );
          break;
       case TIMER_DAMAGE:
-         timer = get_timer_from_damage( owner );
+         timer = get_timer_from_damage( *owner );
          break;
    }
    if( !timer )

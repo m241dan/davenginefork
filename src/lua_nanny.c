@@ -110,23 +110,23 @@ int getNannyState( lua_State *L )
 int setNannyControl( lua_State *L )
 {
    NANNY_DATA *nanny;
-   ACCOUNT_DATA *account;
-   ENTITY_INSTANCE *entity;
+   ACCOUNT_DATA **account;
+   ENTITY_INSTANCE **entity;
 
    DAVLUACM_NANNY_NONE( nanny, L );
 
-   if( ( account = *(ACCOUNT_DATA **)check_meta( L, -1, "Account.meta" ) ) == NULL )
+   if( ( account = (ACCOUNT_DATA **)check_meta( L, -1, "Account.meta" ) ) == NULL )
    {
-      if( ( entity = *(ENTITY_INSTANCE **)check_meta( L, -1, "EntityInstance.meta" ) ) == NULL )
+      if( ( entity = (ENTITY_INSTANCE **)check_meta( L, -1, "EntityInstance.meta" ) ) == NULL )
       {
          bug( "%s: bad userdata passed.", __FUNCTION__ );
          return 0;
       }
       else
-         control_nanny( entity->socket, nanny );
+         control_nanny( (*entity)->socket, nanny );
    }
    else
-      control_nanny( account->socket, nanny );
+      control_nanny( (*account)->socket, nanny );
    return 0;
 }
 
