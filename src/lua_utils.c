@@ -263,6 +263,14 @@ inline void load_lua_command_tables( void )
       return;
    }
 }
+inline void load_lua_misc_vars( void )
+{
+   if( luaL_loadfile( lua_handle, "../scripts/settings/misc_variables.lua" ) || lua_pcall( lua_handle, 0, 0, 0 ) )
+   {
+      bug( "%s: could not laod combat variables\r\n - %s", __FUNCTION__, lua_tostring( lua_handle, -1 ) );
+      return;
+   }
+}
 
 void lua_server_settings( void )
 {

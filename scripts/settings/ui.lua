@@ -6,6 +6,7 @@ end
 function uiLook( looker, looking_at )
    if( looking_at == nil ) then
       local room = looker:getContainer()
+      if( room == nil ) then return end
       looker:echoAt( string.format( "%s\n", room:getShort() ) )
       looker:echoAt( string.format( "%s\n\n", room:getDesc() ) )
 
