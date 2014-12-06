@@ -3,8 +3,11 @@
 #include "mud.h"
 
 const struct luaL_Reg SocketLib_m[] = {
+   /* getters */
    { "getAccount", getSocketAccount },
    { "getControlling", getSocketControlling },
+   /* setters */
+   { "setControlling", setSocketControlling },
    { NULL, NULL }
 };
 
@@ -92,6 +95,26 @@ int getSocketControlling( lua_State *L )
    DAVLUACM_SOCKET_NIL( socket, L );
    push_instance( socket->controlling, L );
    return 1;
+}
+
+/* setters */
+int setSocketControlling( lua_State *L )
+{
+   D_SOCKET *socket;
+   ENTITY_INSTANCE **instance_ref, *instance;
+
+   DAVLUACM_SOCKET_NONE( socket, L );
+   if( ( instance_ref = (ENTITY_INSTANCE **)check_meta( L, -1, "EntityInstance.meta" ) ) == NULL )
+   {
+      bug( "%s: expecting a EntityInstance userdata, did not get.\r\n", __FUNCTION__ );
+      return 0;
+   }
+   instance = *instance_ref;
+
+   if( socket->controlling )
+      socket_uncontrol_entity( socket->controlling );
+   socket_control_entity( socket, instance );
+   return 0;
 }
 
 /* actions */

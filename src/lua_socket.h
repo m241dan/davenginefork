@@ -13,6 +13,9 @@ int getSocket( lua_State *L );
 int getSocketAccount( lua_State *L );
 int getSocketControlling( lua_State *L );
 
+/* setters */
+int setSocketControlling( lua_State *L );
+
 /* actions */
 int changeSocketState( lua_State *L );
 
