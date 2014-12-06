@@ -438,6 +438,38 @@ do                                                                      \
    }                                                                    \
 } while(0)
 
+#define DAVLUACM_SOCKET_NIL( socket, L )                              \
+do                                                                      \
+{                                                                       \
+   if( ( (socket) = *(D_SOCKET **)luaL_checkudata( (L), 1, "Socket.meta" ) ) == NULL ) \
+   {                                                                    \
+      bug( "%s: bad meta table.", __FUNCTION__ );                       \
+      lua_pushnil( (L) );                                               \
+      return 1;                                                         \
+   }                                                                    \
+} while(0)
+
+#define DAVLUACM_SOCKET_BOOL( socket, L )                             \
+do                                                                      \
+{                                                                       \
+   if( ( (socket) = *(D_SOCKET **)luaL_checkudata( (L), 1, "Socket.meta" ) ) == NULL ) \
+   {                                                                    \
+      bug( "%s: bad meta table.", __FUNCTION__ );                       \
+      lua_pushboolean( (L), 0 );                                        \
+      return 1;                                                         \
+   }                                                                    \
+} while(0)
+
+#define DAVLUACM_SOCKET_NONE( socket, L )                             \
+do                                                                      \
+{                                                                       \
+   if( ( (socket) = *(D_SOCKET **)luaL_checkudata( (L), 1, "Socket.meta" ) ) == NULL ) \
+   {                                                                    \
+      bug( "%s: bad meta table.", __FUNCTION__ );                       \
+      return 0;                                                         \
+   }                                                                    \
+} while(0)
+
 
 #define UMIN(a, b)		((a) < (b) ? (a) : (b))
 #define UMAX(a, b)              ((a) < (b) ? (b) : (a))
@@ -590,6 +622,7 @@ typedef struct buffer_type
 #include "lua_ui.h"
 #include "lua_account.h"
 #include "lua_nanny.h"
+#include "lua_socket.h"
 
 /******************************
  * End of new structures      *
