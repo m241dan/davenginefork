@@ -499,6 +499,7 @@ typedef struct  stat_framework  STAT_FRAMEWORK;
 typedef struct  stat_instance   STAT_INSTANCE;
 typedef struct  damage_data     DAMAGE;
 typedef struct  timer           TIMER;
+typedef struct  character_sheet CHAR_SHEET;
 
 /* the actual structures */
 struct dSocket

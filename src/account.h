@@ -23,9 +23,16 @@ struct game_account
    ENTITY_INSTANCE *controlling;
 };
 
+struct character_sheet
+{
+   char *name;
+   int id;
+};
+
 /* creation */
 ACCOUNT_DATA *init_account( void );
 int clear_account( ACCOUNT_DATA *account );
+CHAR_SHEET *make_character_sheet( ENTITY_INSTANCE *instance );
 
 /* deletion */
 int free_account( ACCOUNT_DATA *account );
@@ -34,6 +41,7 @@ int free_account( ACCOUNT_DATA *account );
 int load_account( ACCOUNT_DATA *account, const char *name );
 int new_account( ACCOUNT_DATA *account );
 void db_load_account( ACCOUNT_DATA *account, MYSQL_ROW *row );
+void load_character_sheets( ACCOUNT_DATA *account );
 
 /* utility */
 ACCOUNT_DATA *get_active_account_by_id( int id );
@@ -54,3 +62,6 @@ void account_chatas( void *passed, char *arg );
 /* setters */
 extern inline void set_account_pagewidth( ACCOUNT_DATA *account, int pagewidth );
 extern inline void set_account_chatas( ACCOUNT_DATA *account, const char *chatas );
+
+/* actions */
+extern inline void add_character_to_account( ENTITY_INSTANCE *character, ACCOUNT_DATA *account );

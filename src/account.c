@@ -44,6 +44,16 @@ int clear_account( ACCOUNT_DATA *account )
    return ret;
 }
 
+CHAR_SHEET *make_character_sheet( ENTITY_INSTANCE *instance )
+{
+   CHAR_SHEET *sheet;
+
+   CREATE( sheet, CHAR_SHEET, 1 );
+   sheet->name = strdup( instance_name( instance ) );
+   sheet->id = instance->tag->id;
+   return sheet;
+}
+
 /* deletion */
 int free_account( ACCOUNT_DATA *account )
 {
@@ -108,6 +118,7 @@ int load_account( ACCOUNT_DATA *account, const char *name )
 
    row = mysql_fetch_row( result );
    db_load_account( account, &row );
+   load_character_sheets( account );
 
    mysql_free_result( result );
    return RET_SUCCESS;
@@ -123,6 +134,33 @@ void db_load_account( ACCOUNT_DATA *account, MYSQL_ROW *row )
    account->level = atoi( (*row)[counter++] );
    account->pagewidth = atoi( (*row)[counter++] );
    account->chatting_as = strdup( (*row)[counter++] );
+}
+
+void load_character_sheets( ACCOUNT_DATA *account )
+{
+   CHAR_SHEET *sheet;
+   LLIST *list;
+   MYSQL_ROW row;
+   ITERATOR Iter;
+
+   list = AllocList();
+   if( !db_query_list_row( list, quick_format( "SELECT entityInstanceID, name from `account_characters` WHERE accountID=%d LIMIT 3;", account->idtag->id ) ) )
+   {
+      FreeList( list );
+      return;
+   }
+
+   AttachIterator( &Iter, list );
+   while( ( row = (MYSQL_ROW)NextInList( &Iter ) ) != NULL )
+   {
+      CREATE( sheet, CHAR_SHEET, 1 );
+      sheet->id = atoi( row[0] );
+      sheet->name = strdup( row[1] );
+      AttachToList( sheet, account->characters );
+   }
+   DetachIterator( &Iter );
+   FreeList( list );
+   return;
 }
 
 int new_account( ACCOUNT_DATA *account )
@@ -373,3 +411,12 @@ inline void set_account_chatas( ACCOUNT_DATA *account, const char *chatas )
       bug( "%s: unable to update data for account %s with new chatting_as.", __FUNCTION__, account->name );
 }
 
+/* actions */
+inline void add_character_to_account( ENTITY_INSTANCE *character, ACCOUNT_DATA *account )
+{
+   CHAR_SHEET *sheet;
+   sheet = make_character_sheet( character );
+   AttachToList( sheet, account->characters );
+   if( !quick_query( "INSERT INTO `account_characters` VALUES ( '%d', '%d', '%s' );", account->idtag->id, sheet->id, sheet->name ) )
+      bug( "%s: could not add character with id %d to account with id %d.", __FUNCTION__, character->tag->id, account->idtag->id );
+}

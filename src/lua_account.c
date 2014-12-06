@@ -10,11 +10,14 @@ const struct luaL_Reg AccountLib_m[] = {
    { "getPagewidth", getAccountPagewidth },
    { "getChatAs", getAccountChatAs },
    { "getControlling", getAccountControlling },
+   { "getCharacter", getCharacter },
+   { "getCharacters", getCharacters },
    /* setters */
    { "setPagewidth", setAccountPagewidth },
    { "setChatAs", setAccountChatAs },
    /* actions */
    { "echoAt", luaAccountEchoAt },
+   { "addCharacter", addCharacter },
    { NULL, NULL }
 };
 
@@ -103,6 +106,7 @@ int getAccount( lua_State *L )
    return 1;
 }
 
+
 /* meta methods */
 /* getters */
 int getAccountID( lua_State *L )
@@ -164,6 +168,61 @@ int getAccountControlling( lua_State *L )
    return 1;
 }
 
+int getCharacter( lua_State *L )
+{
+   ACCOUNT_DATA *account;
+   ENTITY_INSTANCE *character;
+   CHAR_SHEET *sheet;
+   ITERATOR Iter;
+   const char *name;
+
+   DAVLUACM_ACCOUNT_NIL( account, L );
+   if( lua_type( L, -1 ) != LUA_TSTRING )
+   {
+      bug( "%s: expecting a string, didn't get it.", __FUNCTION__ );
+      lua_pushnil( L );
+      return 1;
+   }
+   name = lua_tostring( L, -1 );
+
+   AttachIterator( &Iter, account->characters );
+   while( ( sheet = (CHAR_SHEET *)NextInList( &Iter ) ) != NULL )
+      if( !strcasecmp( sheet->name, name ) )
+         break;
+   DetachIterator( &Iter );
+
+   if( !sheet )
+   {
+      lua_pushnil( L );
+      return 1;
+   }
+   if( ( character = get_instance_by_id( sheet->id ) ) == NULL )
+   {
+      lua_pushnil( L );
+      return 1;
+   }
+   push_instance( character, L );
+   return 1;
+}
+
+int getCharacters( lua_State *L )
+{
+   ACCOUNT_DATA *account;
+   ITERATOR *Iter;
+
+   DAVLUACM_ACCOUNT_NIL( account, L );
+
+   Iter = (ITERATOR *)lua_newuserdata( L, sizeof( ITERATOR ) );
+
+   luaL_getmetatable( L, "Iter.meta" );
+   lua_setmetatable( L, -2 );
+
+   AttachIterator( Iter, account->characters );
+
+   lua_pushcclosure( L, char_iter, 1 );
+   return 1;
+}
+
 /* setters */
 int setAccountPagewidth( lua_State *L )
 {
@@ -206,4 +265,43 @@ int luaAccountEchoAt( lua_State *L )
    }
    text_to_account( account, "%s", lua_tostring( L, -1 ) );
    return 0;
+}
+
+int addCharacter( lua_State *L )
+{
+   ACCOUNT_DATA *account;
+   ENTITY_INSTANCE **character_box, *character;
+
+   DAVLUACM_ACCOUNT_NONE( account, L );
+   if( SizeOfList( account->characters ) > MAX_CHARACTER )
+   {
+      bug( "%s: account at max characters arleady.", __FUNCTION__ );
+      return 0;
+   }
+   if( ( character_box = (ENTITY_INSTANCE **)luaL_checkudata( L, -1, "EntityInstance.meta" ) ) == NULL )
+      return 0;
+
+   if( ( character = *character_box ) == NULL )
+   {
+      bug( "%s: NULL box.", __FUNCTION__ );
+      return 0;
+   }
+   add_character_to_account( character, account );
+   return 0;
+}
+
+/* Iterators */
+
+int char_iter( lua_State *L )
+{
+   CHAR_SHEET *sheet;
+   ITERATOR *Iter = (ITERATOR *)lua_touserdata( L, lua_upvalueindex(1) );
+
+   if( ( sheet = (CHAR_SHEET *)NextInList( Iter ) ) == NULL )
+   {
+      DetachIterator( Iter );
+      return 0;
+   }
+   lua_pushstring( L, sheet->name );
+   return 1;
 }

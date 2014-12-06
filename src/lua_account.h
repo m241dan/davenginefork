@@ -15,8 +15,15 @@ int getAccountLevel( lua_State *L );
 int getAccountPagewidth( lua_State *L );
 int getAccountChatAs( lua_State *L );
 int getAccountControlling( lua_State *L );
+int getCharacter( lua_State *L );
+int getCharacters( lua_State *L );
+
 /* setters */
 int setAccountPagewidth( lua_State *L );
 int setAccountChatAs( lua_State *L );
 /* actions */
 int luaAccountEchoAt( lua_State * L );
+int addCharacter( lua_State *L );
+
+/* iters */
+int char_iter( lua_State *L );
