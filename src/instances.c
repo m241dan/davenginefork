@@ -1598,7 +1598,7 @@ void instance_toggle_player( ENTITY_INSTANCE *instance )
    else
       instance->isPlayer = TRUE;
 
-   quick_query( "UPDATE `entity_instances` SET player=%d WHERE %s=%d;", (int)instance->isPlayer, tag_table_whereID[ENTITY_INSTANCE_IDS], instance->tag->id );
+   quick_query( "UPDATE `entity_instances` SET isPlayer=%d WHERE %s=%d;", (int)instance->isPlayer, tag_table_whereID[ENTITY_INSTANCE_IDS], instance->tag->id );
    return;
 }
 
