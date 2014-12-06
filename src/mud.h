@@ -461,6 +461,7 @@ do                                                                      \
     break;                            \
   }                                   \
 }
+/* " */
 
 /***********************
  * End of Macros       *
@@ -531,7 +532,6 @@ struct help_data
   char          * keyword;
   char          * text;
 };
-
 struct lookup_data
 {
   D_SOCKET       * dsock;   /* the socket we wish to do a hostlookup on */
