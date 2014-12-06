@@ -414,14 +414,15 @@ int new_eInstance( ENTITY_INSTANCE *eInstance )
       }
    }
 
-   if( !quick_query( "INSERT INTO entity_instances VALUES( %d, %d, '%s', '%s', '%s', '%s', %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d );",
+   if( !quick_query( "INSERT INTO entity_instances VALUES( %d, %d, '%s', '%s', '%s', '%s', %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d );",
          eInstance->tag->id, eInstance->tag->type, eInstance->tag->created_by,
          eInstance->tag->created_on, eInstance->tag->modified_by, eInstance->tag->modified_on,
          eInstance->contained_by ? eInstance->contained_by->tag->id : -1, eInstance->framework->tag->id,
          (int)eInstance->live, eInstance->corpse_owner, (int)eInstance->state,
          (int)eInstance->mind, (int)eInstance->tspeed, (int)eInstance->isPlayer,
          ( eInstance->home ? eInstance->home->tag->id : 0 ),
-         eInstance->height_mod, eInstance->weight_mod, eInstance->width_mod
+         eInstance->height_mod, eInstance->weight_mod, eInstance->width_mod,
+         (int)eInstance->level
          ) )
       return RET_FAILED_OTHER;
 
@@ -459,6 +460,7 @@ void db_load_eInstance( ENTITY_INSTANCE *eInstance, MYSQL_ROW *row )
    eInstance->tspeed = atoi( (*row)[counter++] );
    eInstance->isPlayer = atoi( (*row)[counter++] );
    eInstance->home = get_instance_by_id( atoi( (*row)[counter++] ) );
+   eInstance->level = atoi( (*row)[counter++] );
    return;
 }
 

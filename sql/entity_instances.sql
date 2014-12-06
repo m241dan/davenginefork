@@ -20,5 +20,6 @@ CREATE TABLE IF NOT EXISTS `entity_instances` (
    `height_mod` int NOT NULL DEFAULT '0',
    `weight_mod` int NOT NULL DEFAULT '0',
    `width_mod` int NOT NULL DEFAULT '0',
+   `level` int NOT NULL DEFAULT '0',
    PRIMARY KEY (`entityInstanceID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
