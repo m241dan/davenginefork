@@ -2100,6 +2100,23 @@ int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *exit )
    return ret;
 }
 
+void mobile_move( ENTITY_INSTANCE *entity, const char *direction )
+{
+   ENTITY_INSTANCE *exit;
+
+   if( !entity->contained_by )
+   {
+      text_to_entity( entity, "You float around meanginlessly in a world of nothingness.\r\n" );
+      return;
+   }
+
+   if( ( exit = instance_list_has_by_short_prefix( entity->contained_by->contents_sorted[SPEC_ISEXIT], direction ) ) != NULL )
+      move_entity( entity, exit );
+   else
+      text_to_entity( entity, "There is no exit to the %s.\r\n", direction );
+   return;
+}
+
 FILE *open_i_script( ENTITY_INSTANCE *instance, const char *permissions )
 {
    FILE *script;
@@ -3081,6 +3098,36 @@ void entity_takeover( void *passed, char *arg )
 }
 
 /* mobile commands */
+void mobile_north( void *passed, char *arg )
+{
+   mobile_move( (ENTITY_INSTANCE *)passed, "north" );
+}
+
+void mobile_south( void *passed, char *arg )
+{
+   mobile_move( (ENTITY_INSTANCE *)passed, "south" );
+}
+
+void mobile_east( void *passed, char *arg )
+{
+   mobile_move( (ENTITY_INSTANCE *)passed, "east" );
+}
+
+void mobile_west( void *passed, char *arg )
+{
+   mobile_move( (ENTITY_INSTANCE *)passed, "west" );
+}
+
+void mobile_up( void *passed, char *arg )
+{
+   mobile_move( (ENTITY_INSTANCE *)passed, "up" );
+}
+
+void mobile_down( void *passed, char *arg )
+{
+   mobile_move( (ENTITY_INSTANCE *)passed, "down" );
+}
+
 void mobile_return( void *passed, char *arg )
 {
    ENTITY_INSTANCE *mob = (ENTITY_INSTANCE *)passed;

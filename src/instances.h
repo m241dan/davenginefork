@@ -167,7 +167,8 @@ int show_ent_exits_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing );
 int show_ent_mobiles_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing );
 int show_ent_objects_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing );
 int show_ent_rooms_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing );
-int move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *move_to );
+int  move_entity( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *move_to );
+void mobile_move( ENTITY_INSTANCE *entity, const char *direction );
 FILE *open_i_script( ENTITY_INSTANCE *instance, const char *permissions );
 bool i_script_exists( ENTITY_INSTANCE *instance );
 void init_i_script( ENTITY_INSTANCE *instance, bool force );
@@ -206,6 +207,12 @@ void entity_restore( void *passed, char *arg );
 void entity_takeover( void *passed, char *arg );
 
 /* mobile commands */
+void mobile_north( void *passed, char *arg );
+void mobile_south( void *passed, char *arg );
+void mobile_east( void *passed, char *arg );
+void mobile_west( void *passed, char *arg );
+void mobile_up( void *passed, char *arg );
+void mobile_down( void *passed, char *arg );
 void mobile_return( void *passed, char *arg );
 void mobile_look( void *passed, char *arg );
 void mobile_inventory( void *passed, char *arg );
