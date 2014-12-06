@@ -52,6 +52,7 @@ const struct luaL_Reg EntityInstanceLib_m[] = {
    { "isMob", isMob },
    { "isObj", isObj },
    /* actions */
+   { "togglePlayer", luaTogglePlayer },
    { "callBack", luaCallBack },
    { "interp", luaEntityInstanceInterp },
    { "to", luaEntityInstanceTeleport },
@@ -1081,6 +1082,13 @@ int isObj( lua_State *L )
 }
 
 /* actions */
+int luaTogglePlayer( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+   DAVLUACM_INSTANCE_NONE( instance, L );
+   instance_toggle_player( instance );
+   return 0;
+}
 int luaCallBack( lua_State *L )
 {
    ENTITY_INSTANCE *instance;

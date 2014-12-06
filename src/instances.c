@@ -471,11 +471,14 @@ void entity_from_container( ENTITY_INSTANCE *entity )
 {
    if( entity->contained_by )
    {
-      if( !quick_query( "UPDATE `entity_instances` SET containedBy=-1 WHERE entityInstanceId=%d;", entity->tag->id ) )
-         bug( "%s: could not update entity's containedBy variable for %d.", __FUNCTION__, entity->tag->id );
       if( !entity->builder )
-         if( !quick_query( "DELETE FROM `entity_instance_possessions` WHERE entityInstanceID=%d AND content_instanceID=%d;", entity->contained_by->tag->id, entity->tag->id ) )
-            bug( "%s: could not delete from database possession entry for %d.", __FUNCTION__, entity->contained_by->tag->id );
+      {
+         if( !entity->isPlayer )
+            if( !quick_query( "DELETE FROM `entity_instance_possessions` WHERE entityInstanceID=%d AND content_instanceID=%d;", entity->contained_by->tag->id, entity->tag->id ) )
+               bug( "%s: could not delete from database possession entry for %d.", __FUNCTION__, entity->contained_by->tag->id );
+         if( !quick_query( "UPDATE `entity_instances` SET containedBy=-1 WHERE entityInstanceId=%d;", entity->tag->id ) )
+            bug( "%s: could not update entity's containedBy variable for %d.", __FUNCTION__, entity->tag->id );
+      }
       detach_entity_from_contents( entity, entity->contained_by );
    }
    return;
@@ -496,7 +499,7 @@ void entity_to_world( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container )
 
 void entity_to_contents( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container )
 {
-   if( !container )
+   if( !container && !entity->builder )
    {
       entity->contained_by = NULL;
       if( !quick_query( "UPDATE `entity_instances` SET containedBy='-1' WHERE entityInstanceID=%d;", entity->tag->id ) )
@@ -506,8 +509,9 @@ void entity_to_contents( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container )
    attach_entity_to_contents( entity, container );
    if( !entity->builder )
    {
-      if( !quick_query( "INSERT INTO `entity_instance_possessions` VALUES ( %d, %d );", entity->contained_by->tag->id, entity->tag->id ) )
-         bug( "%s: could not insert into database with %d's new location in the world.", __FUNCTION__, entity->tag->id );
+      if( !entity->isPlayer )
+         if( !quick_query( "INSERT INTO `entity_instance_possessions` VALUES ( %d, %d );", entity->contained_by->tag->id, entity->tag->id ) )
+            bug( "%s: could not insert into database with %d's new location in the world.", __FUNCTION__, entity->tag->id );
       if( !quick_query( "UPDATE `entity_instances` SET containedBy=%d WHERE entityInstanceID=%d;", container->tag->id, entity->tag->id ) )
          bug( "%s: could not update entity %d with new containedBy.", __FUNCTION__, entity->tag->id );
    }
@@ -1577,16 +1581,24 @@ inline int get_width( ENTITY_INSTANCE *instance )
 
 /* setters */
 
-inline void instance_toggle_live( ENTITY_INSTANCE *instance )
+void instance_toggle_live( ENTITY_INSTANCE *instance )
 {
    if( instance->live )
       instance->live = FALSE;
    else
       instance->live = TRUE;
-
-   if( !strcmp( instance->tag->created_by, "null" ) )
-      return;
    quick_query( "UPDATE `entity_instances` SET live=%d WHERE %s=%d;", (int)instance->live, tag_table_whereID[ENTITY_INSTANCE_IDS], instance->tag->id );
+   return;
+}
+
+void instance_toggle_player( ENTITY_INSTANCE *instance )
+{
+   if( instance->isPlayer )
+      instance->isPlayer = FALSE;
+   else
+      instance->isPlayer = TRUE;
+
+   quick_query( "UPDATE `entity_instances` SET player=%d WHERE %s=%d;", (int)instance->isPlayer, tag_table_whereID[ENTITY_INSTANCE_IDS], instance->tag->id );
    return;
 }
 

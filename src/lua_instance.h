@@ -34,6 +34,7 @@ int getWidth( lua_State *L );
 int getTarget( lua_State *L );
 
 /* setters */
+int setPlayer( lua_State *L );
 int setLevel( lua_State *L );
 int setStatMod( lua_State *L );
 int setStatPerm( lua_State *L );
@@ -63,6 +64,7 @@ int isMob( lua_State *L );
 int isObj( lua_State *L );
 
 /* actions */
+int luaTogglePlayer( lua_State *L );
 int luaCallBack( lua_State *L );
 int luaEntityInstanceInterp( lua_State *L );
 int luaEntityInstanceTeleport( lua_State *L );
