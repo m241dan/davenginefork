@@ -10,6 +10,7 @@ int luaNewNanny( lua_State *L );
 /* meta methods */
 
 /* getters */
+int getNannyControl( lua_State *L );
 int getNannyContent( lua_State *L );
 int getNannyState( lua_State *L );
 

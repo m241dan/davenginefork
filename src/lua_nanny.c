@@ -4,6 +4,7 @@
 
 const struct luaL_Reg NannyLib_m[] = {
    /* getters */
+   { "getControl", getNannyControl },
    { "getContent", getNannyContent },
    { "getState", getNannyState },
    /* setters */
@@ -69,6 +70,15 @@ int luaNewNanny( lua_State *L )
 /* meta methods */
 
 /* getters */
+int getNannyControl( lua_State *L )
+{
+   NANNY_DATA *nanny;
+
+   DAVLUACM_NANNY_NIL( nanny, L );
+   push_socket( nanny->socket, L );
+   return 1;
+}
+
 int getNannyContent( lua_State *L )
 {
    NANNY_DATA *nanny;
