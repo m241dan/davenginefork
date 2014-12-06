@@ -460,6 +460,9 @@ void db_load_eInstance( ENTITY_INSTANCE *eInstance, MYSQL_ROW *row )
    eInstance->tspeed = atoi( (*row)[counter++] );
    eInstance->isPlayer = atoi( (*row)[counter++] );
    eInstance->home = get_instance_by_id( atoi( (*row)[counter++] ) );
+   eInstance->height_mod = atoi( (*row)[counter++] );
+   eInstance->weight_mod = atoi( (*row)[counter++] );
+   eInstance->width_mod = atoi( (*row)[counter++] );
    eInstance->level = atoi( (*row)[counter++] );
    return;
 }

@@ -1245,6 +1245,9 @@ int luaEntityInstanceTeleport( lua_State *L )
          break;
    }
 
+   if( destination == instance->contained_by )
+      return 0;
+
    entity_to_world( instance, destination );
 
    lua_pushboolean( L, 1 );
