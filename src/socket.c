@@ -137,6 +137,9 @@ int main(int argc, char **argv)
    luaL_requiref( lua_handle, "Nanny", luaopen_NannyLib, 1 );
    lua_pop( lua_handle, -1 );
 
+   luaL_requiref( lua_handle, "Socket", luaopen_SocketLib, 1 );
+   lua_pop( lua_handle, -1 );
+
    luaL_requiref( lua_handle, "mud", luaopen_mud, 1 );
    lua_pop( lua_handle, -1 );
 
