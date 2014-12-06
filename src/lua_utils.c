@@ -240,36 +240,30 @@ inline const char *get_stat_instance_script_path( STAT_INSTANCE *stat )
 inline void load_server_script( void )
 {
    if( luaL_loadfile( lua_handle, "../scripts/settings/server.lua" ) || lua_pcall( lua_handle, 0, 0, 0 ) )
-   {
-      bug( "%s: could not load server variables.", __FUNCTION__ );
       return;
-   }
 }
 
 inline void load_combat_vars_script( void )
 {
    if( luaL_loadfile( lua_handle, "../scripts/settings/combat_vars.lua" ) || lua_pcall( lua_handle, 0, 0, 0 ) )
-   {
-      bug( "%s: could not load combat variables.", __FUNCTION__ );
       return;
-   }
 }
 
 inline void load_lua_command_tables( void )
 {
    if( luaL_loadfile( lua_handle, "../scripts/settings/command_table.lua" ) || lua_pcall( lua_handle, 0, 0, 0 ) )
-   {
-      bug( "%s: could not load combat variables\r\n - %s", __FUNCTION__, lua_tostring( lua_handle, -1 ) );
       return;
-   }
 }
 inline void load_lua_misc_vars( void )
 {
    if( luaL_loadfile( lua_handle, "../scripts/settings/misc_variables.lua" ) || lua_pcall( lua_handle, 0, 0, 0 ) )
-   {
-      bug( "%s: could not laod combat variables\r\n - %s", __FUNCTION__, lua_tostring( lua_handle, -1 ) );
-      return;
-   }
+      bug( "%s: could not load misc variables\r\n - %s", __FUNCTION__, lua_tostring( lua_handle, -1 ) );
+}
+
+inline void load_lua_misc_funcs( void )
+{
+   if( luaL_loadfile( lua_handle, "../scripts/settings/misc_functions.lua" ) || lua_pcall( lua_handle, 0, 0, 0 ) )
+      bug( "%s: could not load musc functions\r\n - %s", __FUNCTION__, lua_tostring( lua_handle, -1 ) );
 }
 
 void lua_server_settings( void )

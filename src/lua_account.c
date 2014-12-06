@@ -13,6 +13,7 @@ const struct luaL_Reg AccountLib_m[] = {
    { "getCharacter", getCharacter },
    { "getCharacters", getCharacters },
    /* setters */
+   { "setControlling", setAccountControlling },
    { "setPagewidth", setAccountPagewidth },
    { "setChatAs", setAccountChatAs },
    /* actions */
@@ -224,6 +225,23 @@ int getCharacters( lua_State *L )
 }
 
 /* setters */
+int setAccountControlling( lua_State *L )
+{
+   ACCOUNT_DATA *account;
+   ENTITY_INSTANCE **instance_ref, *instance;
+
+   DAVLUACM_ACCOUNT_NONE( account, L );
+
+   if( ( instance_ref = (ENTITY_INSTANCE **)check_meta( L, -1, "EntityInstance.meta" ) ) == NULL )
+   {
+      bug( "%s: passed userdata has bad meta table, expecting EntityInstance.meta", __FUNCTION__ );
+      return 0;
+   }
+   instance = *instance_ref;
+   account->controlling = instance;
+   return 0;
+
+}
 int setAccountPagewidth( lua_State *L )
 {
    ACCOUNT_DATA *account;

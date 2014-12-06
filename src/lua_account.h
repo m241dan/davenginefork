@@ -19,6 +19,7 @@ int getCharacter( lua_State *L );
 int getCharacters( lua_State *L );
 
 /* setters */
+int setAccountControlling( lua_State *L );
 int setAccountPagewidth( lua_State *L );
 int setAccountChatAs( lua_State *L );
 /* actions */

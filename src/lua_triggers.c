@@ -61,7 +61,7 @@ inline void onEntering_trigger( ENTITY_INSTANCE *entity )
 {
    SPECIFICATION *script;
    int ret;
-   if( ( script = has_spec( entity, "onEntering" ) ) != NULL && ( script != NULL && script->value == 0 ) )
+   if( ( script = has_spec( entity, "onEntering" ) ) == NULL || ( script != NULL && script->value == 0 ) )
       return;
    prep_stack( get_script_path_from_spec( script ), "onEntering" );
    push_instance( entity->contained_by, lua_handle );

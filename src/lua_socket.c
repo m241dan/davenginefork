@@ -8,6 +8,8 @@ const struct luaL_Reg SocketLib_m[] = {
    { "getControlling", getSocketControlling },
    /* setters */
    { "setControlling", setSocketControlling },
+   /* actions */
+   { "changeState", changeSocketState },
    { NULL, NULL }
 };
 
