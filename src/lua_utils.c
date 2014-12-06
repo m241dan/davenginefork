@@ -500,11 +500,11 @@ void push_account( ACCOUNT_DATA *account, lua_State *L )
    return;
 }
 
-void push_nanny( NANNY_DATA *account, lua_State *L )
+void push_nanny( NANNY_DATA *nanny, lua_State *L )
 {
    NANNY_DATA **box;
 
-   if( !account )
+   if( !nanny )
    {
       bug( "%s: tryin gto push a NULL account.", __FUNCTION__ );
       lua_pushnil( L );
@@ -515,15 +515,42 @@ void push_nanny( NANNY_DATA *account, lua_State *L )
    luaL_getmetatable( L, "Nanny.meta" );
    if( lua_isnil( L, -1 ) )
    {
-      bug( "%s: Account.meta is missing.", __FUNCTION__ );
+      bug( "%s: Nanny.meta is missing.", __FUNCTION__ );
       lua_pop( L, -1 );
       lua_pop( L, -1 );
       lua_pushnil( L );
       return;
    }
    lua_setmetatable( L, -2 );
-   *box = account;
+   *box = nanny;
    return;
+}
+
+void push_socket( D_SOCKET *socket, lua_State *L )
+{
+   D_SOCKET **box;
+
+   if( !socket )
+   {
+      bug( "%s: tryin gto push a NULL socket.", __FUNCTION__ );
+      lua_pushnil( L );
+      return;
+   }
+
+   box = (D_SOCKET **)lua_newuserdata( L, sizeof( D_SOCKET * ) );
+   luaL_getmetatable( L, "Socket.meta" );
+   if( lua_isnil( L, -1 ) )
+   {
+      bug( "%s: Socket.meta is missing.", __FUNCTION__ );
+      lua_pop( L, -1 );
+      lua_pop( L, -1 );
+      lua_pushnil( L );
+      return;
+   }
+   lua_setmetatable( L, -2 );
+   *box = socket;
+   return;
+
 }
 
 void *check_meta( lua_State *L, int index, const char *meta_name )

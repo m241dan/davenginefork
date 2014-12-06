@@ -49,6 +49,7 @@ void push_damage( DAMAGE *dmg, lua_State *L );
 void push_timer( TIMER *timer, lua_State *L );
 void push_account( ACCOUNT_DATA *account, lua_State *L );
 void push_nanny( NANNY_DATA *nanny, lua_State *L );
+void push_socket( D_SOCKET *socket, lua_State *L );
 
 void *check_meta( lua_State *L, int index, const char *meta_name );
 
