@@ -301,6 +301,12 @@ struct typCmd mobile_commands[] = {
    { "put", entity_put, LEVEL_BASIC, NULL, FALSE, NULL, mobile_commands },
    { "say", mobile_say, LEVEL_BASIC, NULL, FALSE, NULL, mobile_commands },
    { "kill", mobile_kill, LEVEL_BASIC, NULL, FALSE, NULL, mobile_commands },
+   { "north", mobile_north, LEVEL_BASIC, NULL, FALSE, NULL, mobile_commands },
+   { "south", mobile_south, LEVEL_BASIC, NULL, FALSE, NULL, mobile_commands },
+   { "east", mobile_east, LEVEL_BASIC, NULL, FALSE, NULL, mobile_commands },
+   { "west", mobile_west, LEVEL_BASIC, NULL, FALSE, NULL, mobile_commands },
+   { "up", mobile_up, LEVEL_BASIC, NULL, FALSE, NULL, mobile_commands },
+   { "down", mobile_down, LEVEL_BASIC, NULL, FALSE, NULL, mobile_commands },
    { '\0', NULL, 0, NULL, FALSE, NULL }
 };
 
