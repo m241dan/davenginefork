@@ -238,7 +238,7 @@ int setAccountControlling( lua_State *L )
       return 0;
    }
    instance = *instance_ref;
-   account->controlling = instance;
+   account_control_entity( account, instance );
    return 0;
 
 }

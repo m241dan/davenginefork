@@ -1266,12 +1266,8 @@ int change_socket_state( D_SOCKET *dsock, int state )
 
 void socket_control_entity( D_SOCKET *socket, ENTITY_INSTANCE *entity )
 {
-   if( !socket || !entity )
-      return;
-
-   if( socket->account )
-      socket->account->controlling = entity;
-
+   if( socket->controlling )
+      socket_uncontrol_entity( socket->controlling );
    socket->controlling = entity;
    entity->socket = socket;
 
@@ -1280,14 +1276,11 @@ void socket_control_entity( D_SOCKET *socket, ENTITY_INSTANCE *entity )
 
 void socket_uncontrol_entity( ENTITY_INSTANCE *entity )
 {
-   if( !entity )
+   D_SOCKET *socket;
+   if( ( socket = entity->socket ) == NULL )
       return;
 
-   if( entity->account )
-      entity->account->controlling = NULL;
-
-   entity->socket->controlling = NULL;
+   socket->controlling = NULL;
    entity->socket = NULL;
-
    return;
 }

@@ -73,6 +73,8 @@ extern inline void full_load_workspace( WORKSPACE *wSpace );
 extern inline void full_load_project( PROJECT *project );
 void full_load_instance( ENTITY_INSTANCE *instance );
 
+void unload_instance( ENTITY_INSTANCE *instance );
+
 int new_eInstance( ENTITY_INSTANCE *eInstance );
 void db_load_eInstance( ENTITY_INSTANCE *eInstance, MYSQL_ROW *row );
 void entity_from_container( ENTITY_INSTANCE *entity );
@@ -210,3 +212,6 @@ void mobile_score( void *passed, char *arg );
 void mobile_say( void *passed, char *arg );
 void mobile_attack( void *passed, char *arg );
 void mobile_kill( void *passed, char *arg );
+
+/* player commands */
+void player_quit( void *passed, char *arg );

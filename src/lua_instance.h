@@ -34,6 +34,7 @@ int getWidth( lua_State *L );
 int getTarget( lua_State *L );
 
 /* setters */
+int setLevel( lua_State *L );
 int setStatMod( lua_State *L );
 int setStatPerm( lua_State *L );
 int addStatMod( lua_State *L );

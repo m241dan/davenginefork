@@ -1972,6 +1972,7 @@ void olc_builder( void *passed, char *arg )
    builder->account = olc->account;
    text_to_olc( olc, "You enter builder mode.\r\n" );
    socket_control_entity( olc->account->socket, builder );
+   account_control_entity( olc->account, builder );
    change_socket_state( olc->account->socket, STATE_BUILDER );
    AttachToList( builder, eInstances_list );
    if( olc->builder_location != 0 )

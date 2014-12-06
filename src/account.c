@@ -420,3 +420,21 @@ inline void add_character_to_account( ENTITY_INSTANCE *character, ACCOUNT_DATA *
    if( !quick_query( "INSERT INTO `account_characters` VALUES ( '%d', '%d', '%s' );", account->idtag->id, sheet->id, sheet->name ) )
       bug( "%s: could not add character with id %d to account with id %d.", __FUNCTION__, character->tag->id, account->idtag->id );
 }
+
+void account_control_entity( ACCOUNT_DATA *account, ENTITY_INSTANCE *entity )
+{
+   if( account->controlling )
+      account_uncontrol_entity( account->controlling );
+   account->controlling = entity;
+   entity->account = account;
+}
+
+void account_uncontrol_entity( ENTITY_INSTANCE *entity )
+{
+   ACCOUNT_DATA *account;
+   if( ( account = entity->account ) == NULL )
+      return;
+
+   account->controlling = NULL;
+   entity->account = NULL;
+}

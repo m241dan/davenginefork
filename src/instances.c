@@ -93,9 +93,9 @@ int free_eInstance( ENTITY_INSTANCE *eInstance )
 
    FreeList( eInstance->events );
 
-   eInstance->socket = NULL;
+   socket_uncontrol_entity( eInstance );
+   account_uncontrol_entity( eInstance );
    eInstance->contained_by = NULL;
-   eInstance->account = NULL;
    eInstance->primary_dmg_received_stat = NULL;
 
    FREE( eInstance );
@@ -380,6 +380,15 @@ void full_load_instance( ENTITY_INSTANCE *instance )
    }
    DetachIterator( &Iter );
    FreeList( list );
+   return;
+}
+
+void unload_instance( ENTITY_INSTANCE *instance )
+{
+   if( instance->contained_by )
+      detach_entity_from_contents( instance, instance->contained_by );
+   DetachFromList( instance, eInstances_list );
+   free_eInstance( instance );
    return;
 }
 
@@ -2488,7 +2497,6 @@ void entity_quit( void *passed, char *arg )
 
    text_to_entity( entity, "You quit builder-mode.\r\n" );
    change_socket_state( entity->socket, STATE_OLC );
-   socket_uncontrol_entity( entity );
    entity_to_world( entity, NULL );
    DetachFromList( entity, eInstances_list );
    free_eInstance( entity );
@@ -3235,5 +3243,19 @@ void mobile_kill( void *passed, char *arg )
    }
    else
       text_to_entity(  mob, "There is no %s here.\r\n" );
+   return;
+}
+
+/* player commands */
+void player_quit( void *passed, char *arg )
+{
+   D_SOCKET *socket;
+   ENTITY_INSTANCE *player = (ENTITY_INSTANCE *)passed;
+
+   socket = player->socket;
+   text_to_entity( player, "You quit.\r\n" );
+   unload_instance( player );
+   change_socket_state( socket, STATE_ACCOUNT );
+   socket->bust_prompt = TRUE;
    return;
 }

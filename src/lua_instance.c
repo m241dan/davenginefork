@@ -26,6 +26,7 @@ const struct luaL_Reg EntityInstanceLib_m[] = {
    { "getWidth", getWidth },
    { "getTarget", getTarget },
    /* setters */
+   { "setLevel", setLevel },
    { "setStatMod", setStatMod },
    { "setStatPerm", setStatPerm },
    { "addStatMod", addStatMod },
@@ -501,6 +502,21 @@ int getTarget( lua_State *L )
 
    return 1;
 }
+
+int setLevel( lua_State *L )
+{
+   ENTITY_INSTANCE *instance;
+
+   DAVLUACM_INSTANCE_NONE( instance, L );
+   if( lua_type( L, -1 ) != LUA_TNUMBER )
+   {
+      bug( "%s: expecting integer, did not get.", __FUNCTION__ );
+      return 0;
+   }
+   set_instance_level( instance, lua_tonumber( L, -1 ) );
+   return 0;
+}
+
 int setStatMod( lua_State *L )
 {
    ENTITY_INSTANCE *instance;

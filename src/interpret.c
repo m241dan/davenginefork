@@ -290,6 +290,7 @@ struct typCmd builder_commands[] = {
 };
 
 struct typCmd mobile_commands[] = {
+   { "quit", player_quit, LEVEL_PLAYER, NULL, FALSE, NULL, mobile_commands },
    { "return", mobile_return, LEVEL_BASIC, NULL, FALSE, NULL, mobile_commands },
    { "look", mobile_look, LEVEL_BASIC, NULL, FALSE, NULL, mobile_commands },
    { "inventory", mobile_inventory, LEVEL_BASIC, NULL, FALSE, NULL, mobile_commands },
@@ -544,7 +545,13 @@ void execute_lua_command( ACCOUNT_DATA *account, COMMAND  *com, void *passed, ch
          push_account( (ACCOUNT_DATA *)passed, lua_handle );
          break;
    }
-   lua_pushstring( lua_handle, arg );
+
+   while( isspace( *arg ) )
+      arg++;
+   if( !arg || arg[0] == '\0' )
+      lua_pushnil( lua_handle );
+   else
+      lua_pushstring( lua_handle, arg );
    if( ( ret = lua_pcall( lua_handle, 2, LUA_MULTRET, 0 ) ) )
       bug( "%s: ret %d: path: %s\r\n - error message: %s.", __FUNCTION__, ret, com->path, lua_tostring( lua_handle, -1 ) );
 

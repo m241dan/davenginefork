@@ -65,3 +65,5 @@ extern inline void set_account_chatas( ACCOUNT_DATA *account, const char *chatas
 
 /* actions */
 extern inline void add_character_to_account( ENTITY_INSTANCE *character, ACCOUNT_DATA *account );
+void account_control_entity( ACCOUNT_DATA *account, ENTITY_INSTANCE *entity );
+void account_uncontrol_entity( ENTITY_INSTANCE *entity );
