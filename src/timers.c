@@ -84,6 +84,7 @@ void end_timer( TIMER *timer )
    {
       default: bug( "%s: bad owner.", __FUNCTION__ ); break;
       case TIMER_MUD:
+         delete_timer( timer );
          break;
       case TIMER_INSTANCE:
          if( timer->end_message && timer->end_message[0] != '\0' )
@@ -91,6 +92,7 @@ void end_timer( TIMER *timer )
             text_to_entity( (ENTITY_INSTANCE *)timer->owner, "%s\r\n", timer->end_message );
             ((ENTITY_INSTANCE *)timer->owner)->socket->bust_prompt = TRUE;
          }
+         delete_timer( timer );
          break;
       case TIMER_DAMAGE:
       {
@@ -108,6 +110,106 @@ void end_timer( TIMER *timer )
 
    }
    free_timer( timer );
+}
+
+void new_timer( TIMER *timer )
+{
+   time_t now;
+   int id = -1;
+   int expire_time;
+
+   if( timer->owner_type == TIMER_INSTANCE )
+      id = ((ENTITY_INSTANCE *)timer->owner)->tag->id;
+
+   time(&now);
+   expire_time = now + ( timer->duration * 4 );
+
+   if( !quick_query( "INSERT INTO `timers` VALUES( '%d', '%d', '%s', '%d', '%d', '%d', '%s', '%s', '%d', '%d' );",
+      id, timer->owner_type, timer->key, expire_time, timer->frequency, timer->counter, timer->update_message, timer->end_message, timer->timer_type, timer->active ) )
+      bug( "%s: could not add timer to the database.", __FUNCTION__ );
+}
+
+void load_instance_timers( ENTITY_INSTANCE *instance )
+{
+   TIMER *timer;
+   LLIST *list;
+   MYSQL_ROW row;
+   ITERATOR Iter;
+
+   list = AllocList();
+   if( !db_query_list_row( list, quick_format( "SELECT * FROM `timers` WHERE owner_type=1 && owner=%d;", instance->tag->id ) ) )
+   {
+      FreeList( list );
+      return;
+   }
+
+   AttachIterator( &Iter, list );
+   while( ( row = (MYSQL_ROW)NextInList( &Iter ) ) != NULL )
+   {
+      timer = init_timer();
+      db_load_timer( timer, &row );
+      loaded_timer_check( timer );
+   }
+   DetachIterator( &Iter );
+
+}
+
+void db_load_timer( TIMER *timer, MYSQL_ROW *row )
+{
+   int id, duration, counter = 0;
+   time_t now, expiration;
+
+   id = atoi( (*row)[counter++] );
+   timer->owner_type = atoi( (*row)[counter++] );
+   switch( timer->owner_type )
+   {
+      default: break;
+      case TIMER_INSTANCE:
+         timer->owner = get_instance_by_id( id );
+         break;
+   }
+   time(&now);
+   expiration = atoi( (*row)[counter++] );
+   if( ( duration = expiration - now ) <= 0 )
+      timer->duration = 0;
+   else
+      duration *= 4;
+   timer->frequency = atoi( (*row)[counter++] );
+   timer->counter = atoi( (*row)[counter++] );
+   timer->update_message = strdup( (*row)[counter++] );
+   timer->end_message = strdup( (*row)[counter++] );
+   timer->timer_type = atoi( (*row)[counter++] );
+   timer->active = (bool)atoi( (*row)[counter++] );
+}
+
+void loaded_timer_check( TIMER *timer )
+{
+   if( timer->duration < 1 )
+   {
+      end_timer( timer );
+      return;
+   }
+   own_timer( timer );
+   if( timer->active )
+      start_timer( timer );
+   else
+      pause_timer( timer );
+   return;
+}
+
+void delete_timer( TIMER *timer )
+{
+   int owner = -1;
+   switch( timer->owner_type )
+   {
+      default: break;
+      case TIMER_INSTANCE:
+         owner = ((ENTITY_INSTANCE *)timer->owner)->tag->id;
+         break;
+   }
+
+   if( !quick_query( "DELETE FROM `timers` WHERE owner_type=%d AND owner=%d AND key='%s';", timer->owner_type, owner, timer->key ) )
+      bug( "%s: could not delete timer from database.", __FUNCTION__ );
 }
 
 /* setters */
@@ -139,10 +241,12 @@ void own_timer( TIMER *timer )
    {
       default: bug( "%s: bad owner type.", __FUNCTION__ ); return;
       case TIMER_MUD:
+         new_timer( timer );
       case TIMER_DAMAGE:
          break;
       case TIMER_INSTANCE:
          AttachToList( timer, ((ENTITY_INSTANCE *)timer->owner)->timers );
+         new_timer( timer );
          break;
    }
    return;

@@ -33,9 +33,16 @@ struct timer
 TIMER *init_timer( void );
 void free_timer( TIMER *timer );
 
+/* utility */
 void start_timer( TIMER *timer );
 void pause_timer( TIMER *timer );
 void end_timer( TIMER *timer );
+void new_timer( TIMER *timer );
+void load_instance_timers( ENTITY_INSTANCE *instance );
+void db_load_timer( TIMER *timer, MYSQL_ROW *row );
+void loaded_timer_check( TIMER *timer );
+void delete_timer( TIMER *timer );
+
 
 /* setter */
 void set_melee_timer( ENTITY_INSTANCE *instance, bool message );

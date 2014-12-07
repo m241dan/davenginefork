@@ -5,7 +5,6 @@
  */
 
 #include <mysql.h>
-#include <sys/time.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/socket.h>
@@ -14,7 +13,6 @@
 #include <string.h>
 #include <netdb.h>
 #include <unistd.h>
-#include <time.h>
 #include <sys/ioctl.h>
 #include <errno.h>
 #include <ctype.h>
