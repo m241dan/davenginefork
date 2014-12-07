@@ -229,6 +229,9 @@ int main(int argc, char **argv)
       mysql_close( sql_handle );
       exit(1);
    }
+
+   log_string( "Loading Mud Timers" );
+   load_mud_timers();
 /*
    log_string( "Loading Workspaces" );
    if( load_workspaces() != RET_SUCCESS )

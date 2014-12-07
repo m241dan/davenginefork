@@ -230,10 +230,7 @@ int setKey( lua_State *L )
 {
    TIMER *timer;
    DAVLUACM_TIMER_NONE( timer, L );
-   pause_timer( timer );
-   FREE( timer->key );
-   timer->key = strdup( lua_tostring( L, -1 ) );
-   start_timer( timer );
+   set_timer_key( timer, lua_tostring( L, -1 ) );
    return 0;
 }
 
@@ -241,9 +238,7 @@ int setDuration( lua_State *L )
 {
    TIMER *timer;
    DAVLUACM_TIMER_NONE( timer, L );
-   pause_timer( timer );
-   timer->duration = lua_tonumber( L, - 1 );
-   start_timer( timer );
+   set_timer_duration( timer, lua_tonumber( L, -1 ) );
    return 0;
 }
 
@@ -251,7 +246,7 @@ int setFrequency( lua_State *L )
 {
    TIMER *timer;
    DAVLUACM_TIMER_NONE( timer, L );
-   timer->frequency = lua_tonumber( L, -1 );
+   set_timer_frequency( timer, lua_tonumber( L, -1 ) );
    return 0;
 }
 
@@ -259,15 +254,14 @@ int setCounter( lua_State *L )
 {
    TIMER *timer;
    DAVLUACM_TIMER_NONE( timer, L );
-   timer->counter = lua_tonumber( L, -1 );
+   set_timer_counter( timer, lua_tonumber( L, -1 ) );
    return 0;
 }
 int setUpdateMessage( lua_State *L )
 {
    TIMER *timer;
    DAVLUACM_TIMER_NONE( timer, L );
-   FREE( timer->update_message );
-   timer->update_message = strdup( lua_tostring( L, -1 ) );
+   set_timer_update_message( timer, lua_tostring( L, -1 ) );
    return 0;
 }
 
@@ -275,8 +269,7 @@ int setEndMessage( lua_State *L )
 {
    TIMER *timer;
    DAVLUACM_TIMER_NONE( timer, L );
-   FREE( timer->end_message );
-   timer->end_message = strdup( lua_tostring( L, -1 ) );
+   set_timer_end_message( timer, lua_tostring( L, -1 ) );
    return 0;
 }
 
@@ -284,9 +277,7 @@ int setTimerType( lua_State *L )
 {
    TIMER *timer;
    DAVLUACM_TIMER_NONE( timer, L );
-   pause_timer( timer );
-   timer->timer_type = (char)lua_tonumber( L, -1 );
-   start_timer( timer );
+   set_timer_type( timer, (char)lua_tonumber( L, -1 ) );
    return 0;
 }
 
