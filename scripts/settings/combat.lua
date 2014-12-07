@@ -46,7 +46,6 @@ function prepMeleeDamage( attacker, damage )
 --    want to keep everything, "slightly random", but evenly for everyone, so need to make sure we have random rolls on everything.
    if( attacker:isBuilder() ) then damage:setAmount( 100 ) return end
    damage:setAmount( 1 )
->>>>>>> 76ac59ca8752767f68a8812dc40aba1be90a5620
 end
 
 -- analyze the damage object sent to the defender
@@ -62,21 +61,21 @@ function combatMessage( attacker, defender, damage, status )
    local room_msg
 
    if( status == HIT_SUCCESS ) then
-      atk_msg = string.format( "You attack %s doing %d %s damage.", defender:getShort(), damage:getAmount(), attacker:getDamType() )
-      def_msg = string.format( "%s attacks you doing %d %s damage.", attacker:getShort(), damage:getAmount(), attacker:getDamType() )
+      atk_msg = string.format( "You attack %s doing %d damage.", defender:getShort(), damage:getAmount() )
+      def_msg = string.format( "%s attacks you doing %d damage.", attacker:getShort(), damage:getAmount() )
       room_msg = string.format( "%s attacks %s.", attacker:getShort(), defender:getShort() )
    elseif( status == HIT_DODGED ) then
-      atk_msg = string.format( "You miss %s with your %s attack.", defender:getShort(), damage:getDamType() )
-      def_msg = string.format( "%s misses you with their %s attack.", attacker:getShort(), damage:getDamType() )
-      room_msg = string.format( "%s dodges %s's %s attack.", attacker:getShort(), defender:getShort(), attacker:getDamType() )
+      atk_msg = string.format( "You miss %s with your attack.", defender:getShort() )
+      def_msg = string.format( "%s misses you with their attack.", attacker:getShort() )
+      room_msg = string.format( "%s dodges %s's attack.", attacker:getShort(), defender:getShort() )
    elseif( status == HIT_PARRIED ) then
-      atk_msg = string.format( "%s parries your %s attack.", defender:getShort(), attacker:getDamType() )
-      def_msg = string.format( "You parry %s's %s attack.", attacker:getShort(), attacker:getDamType() )
-      room_msg = string.format( "%s parries %s's %s attack.", defender:getShort(), attacker:getShort(), attacker:getDamType() )
+      atk_msg = string.format( "%s parries your attack.", defender:getShort()  )
+      def_msg = string.format( "You parry %s's attack.", attacker:getShort() )
+      room_msg = string.format( "%s parries %s's attack.", defender:getShort(), attacker:getShort() )
    elseif( status == HIT_MISSED ) then
-      atk_msg = string.format( "You miss %s with your %s attack.", defender:getShort(), attacker:getDamType() )
-      def_msg = string.format( "%s misses you with their %s attack.", attacker:getShort(), attacker:getDamType() )
-      room_msg = string.format( "%s misses %s with their %s attack.", attacker:getShort(), defender:getShort(), attacker:getDamType() )
+      atk_msg = string.format( "You miss %s with your attack.", defender:getShort() )
+      def_msg = string.format( "%s misses you with their attack.", attacker:getShort() )
+      room_msg = string.format( "%s misses %s with their attack.", attacker:getShort(), defender:getShort() )
    end
    return atk_msg, def_msg, room_msg
 end

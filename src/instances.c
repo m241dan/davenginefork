@@ -253,6 +253,7 @@ ENTITY_INSTANCE *load_eInstance_by_query( const char *query )
    load_specifications_to_list( instance->specifications, quick_format( "%d", instance->tag->id ) );
    load_entity_vars( instance );
    load_entity_stats( instance );
+   load_instance_timers( instance );
    if( instance->framework->f_primary_dmg_received_stat )
       instance->primary_dmg_received_stat = get_stat_from_instance_by_id( instance, instance->framework->f_primary_dmg_received_stat->tag->id );
    if( !instance->isPlayer )
@@ -499,11 +500,12 @@ void entity_to_world( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container )
 
 void entity_to_contents( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *container )
 {
-   if( !container && !entity->builder )
+   if( !container )
    {
       entity->contained_by = NULL;
-      if( !quick_query( "UPDATE `entity_instances` SET containedBy='-1' WHERE entityInstanceID=%d;", entity->tag->id ) )
-         bug( "%s: could not update entity %d with new containedBy.", __FUNCTION__, entity->tag->id );
+      if( !entity->builder )
+         if( !quick_query( "UPDATE `entity_instances` SET containedBy='-1' WHERE entityInstanceID=%d;", entity->tag->id ) )
+            bug( "%s: could not update entity %d with new containedBy.", __FUNCTION__, entity->tag->id );
       return;
    }
    attach_entity_to_contents( entity, container );

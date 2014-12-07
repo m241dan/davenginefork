@@ -5,7 +5,6 @@
  */
 
 #include <mysql.h>
-#include <sys/time.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/socket.h>
@@ -14,7 +13,6 @@
 #include <string.h>
 #include <netdb.h>
 #include <unistd.h>
-#include <time.h>
 #include <sys/ioctl.h>
 #include <errno.h>
 #include <ctype.h>
@@ -231,6 +229,9 @@ int main(int argc, char **argv)
       mysql_close( sql_handle );
       exit(1);
    }
+
+   log_string( "Loading Mud Timers" );
+   load_mud_timers();
 /*
    log_string( "Loading Workspaces" );
    if( load_workspaces() != RET_SUCCESS )

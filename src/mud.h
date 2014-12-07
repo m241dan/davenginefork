@@ -19,6 +19,8 @@
 #include <ctype.h>
 #include <mysql.h>
 #include <regex.h>
+#include <sys/time.h>
+#include <time.h>
 
 #include "llist.h"
 #include "stack.h"
