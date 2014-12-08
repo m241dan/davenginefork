@@ -60,6 +60,7 @@ void prep_melee_atk( ENTITY_INSTANCE *attacker, ENTITY_INSTANCE *victim )
       lua_settop( lua_handle, top );
       return;
    }
+   bug( "%s: timer - duration %d | frequency %d.", __FUNCTION__, dmg->timer->duration, dmg->timer->frequency );
    lua_settop( lua_handle, top );
    send_damage( dmg );
    return;
@@ -139,6 +140,7 @@ bool send_damage( DAMAGE *dmg )
       return FALSE;
    }
    add_damage( dmg );
+   start_timer( dmg->timer );
    return TRUE;
 }
 
