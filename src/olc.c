@@ -1969,12 +1969,13 @@ void olc_builder( void *passed, char *arg )
       olc_short_prompt( olc );
       return;
    }
+   AttachToList( builder, eInstances_list );
    builder->account = olc->account;
    text_to_olc( olc, "You enter builder mode.\r\n" );
    socket_control_entity( olc->account->socket, builder );
    account_control_entity( olc->account, builder );
    change_socket_state( olc->account->socket, STATE_BUILDER );
-   AttachToList( builder, eInstances_list );
+   load_instance_timers( builder );
    if( olc->builder_location != 0 )
    {
       entity_to_world( builder, get_instance_by_id( olc->builder_location ) );

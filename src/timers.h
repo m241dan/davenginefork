@@ -33,6 +33,7 @@ struct timer
 /* creation */
 TIMER *init_timer( void );
 void free_timer( TIMER *timer );
+void clear_timers_list( LLIST *list );
 
 /* utility */
 void start_timer( TIMER *timer );
@@ -71,9 +72,9 @@ extern inline TIMER *get_timer_from_list_by_key_and_type( const char *key, TIMER
 /* setters */
 extern inline void set_timer_owner( TIMER *timer, void *owner, TIMER_OWNER_TYPES type );
 extern inline void set_timer_key( TIMER *timer, const char *key );
-extern inline void set_timer_duration( TIMER *timer, sh_int duration );
-extern inline void set_timer_frequency( TIMER *timer, sh_int frequency );
-extern inline void set_timer_counter( TIMER *timer, sh_int counter );
+extern inline void set_timer_duration( TIMER *timer, int duration );
+extern inline void set_timer_frequency( TIMER *timer, int frequency );
+extern inline void set_timer_counter( TIMER *timer, int counter );
 extern inline void set_timer_update_message( TIMER *timer, const char *update_message );
 extern inline void set_timer_end_message( TIMER *timer, const char *end_message );
 extern inline void set_timer_type( TIMER *timer, char timer_type );

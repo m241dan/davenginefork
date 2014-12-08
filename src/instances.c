@@ -77,7 +77,7 @@ int free_eInstance( ENTITY_INSTANCE *eInstance )
    FreeList( eInstance->evars );
    eInstance->evars = NULL;
 
-   clearlist( eInstance->timers );
+   clear_timers_list( eInstance->timers );
    FreeList( eInstance->timers );
    eInstance->timers = NULL;
 
@@ -2536,6 +2536,7 @@ void entity_quit( void *passed, char *arg )
    entity_to_world( entity, NULL );
    DetachFromList( entity, eInstances_list );
    free_eInstance( entity );
+   builder_count--;
    return;
 }
 
@@ -3219,6 +3220,12 @@ void mobile_attack( void *passed, char *arg )
    ENTITY_INSTANCE *mob = (ENTITY_INSTANCE *)passed;
    ENTITY_INSTANCE *victim;
    int cd;
+
+   if( !mob->contained_by )
+   {
+     text_to_entity( mob, "You cannot attack anything in the ether.\r\n" );
+     return;
+   }
 
    if( !arg || arg[0] == '\0' )
    {
