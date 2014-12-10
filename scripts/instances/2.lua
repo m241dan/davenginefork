@@ -8,15 +8,15 @@ function onDeath( dead_person )
 end
 
 function onSpawn( spawning_person )
-   -- the line below this is standard, delete if not wanted --
    spawning_person:frameCall( "onSpawn", "fi", dead_person:getFramework(), spawning_person )
+   -- the line below this is standard, delete if not wanted --
+   spawning_person:frameCall( "onSpawn", "fi", spawning_person:getFramework(), spawning_person )
    -- write specific for this frame under here --
 end
 
 -- NOT NOISE --
 -- ONLY SPEC SCRIPTS AFTER THIS POINT --
 -- END NOT NOISE --
-
 function onEntityEnter( room, enterer )
 end
 
@@ -106,5 +106,3 @@ end
 function uiScore( entity )
 end
 
-
--- instance specific methods --

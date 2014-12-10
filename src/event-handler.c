@@ -45,6 +45,13 @@ bool enqueue_event(EVENT_DATA *event, int game_pulses)
   event->passes = passes;
   event->bucket = bucket;
 
+   {
+      time_t now;
+      time( &now );
+      event->time_key = now + ( game_pulses / PULSES_PER_SECOND );
+   }
+   new_event( event );
+
   /* attach the event in the queue */
   AttachToList(event, eventqueue[bucket]);
 
@@ -110,6 +117,7 @@ EVENT_DATA *alloc_event()
    event->type       = EVENT_NONE;
    event->lua_cypher = NULL;
    event->lua_args   = AllocList();
+   event->time_key   = -1;
 
    /* return the allocated and cleared event */
    return event;
@@ -127,6 +135,222 @@ void free_event( EVENT_DATA *event )
    FREE( event );
 }
 
+
+bool (*get_event_func( sh_int ownertype, sh_int type ))( EVENT_DATA *event )
+{
+   switch( ownertype )
+   {
+      default:
+         bug( "%s: no functions for ownertype %d.", __FUNCTION__, ownertype );
+         return NULL;
+      case EVENT_OWNER_INSTANCE:
+         switch( type )
+         {
+            default:
+               bug( "%s: no functions for type %d.", __FUNCTION__, type );
+               return NULL;
+            case EVENT_LUA_CALLBACK:
+               return event_instance_lua_callback;
+            case EVENT_AUTO_ATTACK:
+               return event_auto_attack;
+            case EVENT_DECAY:
+               return event_instance_decay;
+            case EVENT_RESPAWN:
+               return event_instance_respawn;
+         }
+         break;
+      case EVENT_OWNER_LUA:
+         switch( type )
+         {
+            default:
+               bug( "%s: no functions for type %d.", __FUNCTION__, type );
+               return NULL;
+            case GLOBAL_EVENT_LUA_CALLBACK:
+               return event_global_lua_callback;
+         }
+         break;
+   }
+   return NULL;
+}
+
+void new_event( EVENT_DATA *event )
+{
+   char cypher_string[MAX_BUFFER];
+   int id;
+
+   if( event->ownertype != EVENT_OWNER_INSTANCE && event->ownertype != EVENT_OWNER_LUA )
+      return;
+
+   id = get_event_owner_id( event );
+   mud_printf( cypher_string, "%s", stringify_cypher( event->lua_cypher, event->lua_args ) );
+
+   if( !quick_query( "INSERT INTO `events` VALUES( '%s', '%d', '%d', '%d', '%d', '%s' );",
+      ( event->argument || event->argument == '\0' ) ? "null" : event->argument,
+      event->time_key, id, event->ownertype, event->type, cypher_string ) ) /* endif */
+      bug( "%s: could not add event to the database.", __FUNCTION__ );
+
+   return;
+}
+
+void delete_event( EVENT_DATA *event )
+{
+   if( event->ownertype != EVENT_OWNER_INSTANCE && event->ownertype != EVENT_OWNER_LUA )
+      return;
+   if( !quick_query( "DELETE FROM `events` WHERE time=%d AND owner=%d AND ownertype=%d AND type=%d", event->time_key,
+      get_event_owner_id( event ), event->ownertype, event->type ) ) /* endif */
+      bug( "%s: could not delete event from database.", __FUNCTION__ );
+}
+
+void load_game_events( void )
+{
+
+}
+
+void load_instance_events( ENTITY_INSTANCE *instance )
+{
+   EVENT_DATA *event;
+   LLIST *list;
+   MYSQL_ROW row;
+   ITERATOR Iter;
+   int pulses;
+
+   list = AllocList();
+   if( !db_query_list_row( list, quick_format( "SELECT * FROM `events` WHERE ownertype=%d AND owner=%d;", EVENT_OWNER_INSTANCE, instance->tag->id ) ) )
+   {
+      FreeList( list );
+      return;
+   }
+
+   AttachIterator( &Iter, list );
+   while( ( row = (MYSQL_ROW)NextInList( &Iter ) ) != NULL )
+   {
+      event = alloc_event();
+      pulses = db_load_event( event, &row );
+      enqueue_event( event, pulses );
+   }
+   DetachIterator( &Iter );
+   return;
+}
+
+int db_load_event( EVENT_DATA *event, MYSQL_ROW *row )
+{
+   time_t now;
+   char temp_string[MAX_BUFFER], reversed_cypher[MAX_BUFFER], cypher[MAX_BUFFER];
+   char *cypher_ptr = cypher;
+   int id, time_key, counter = 0;
+   if( !strcmp( (*row)[counter], "null" ) )
+      counter++;
+   else
+      event->argument = strdup( (*row)[counter++] );
+   time_key = atoi( (*row)[counter++] );
+   id = atoi( (*row)[counter++] );
+   event->ownertype = atoi( (*row)[counter++] );
+   event->type = atoi( (*row)[counter++] );
+   event->fun = get_event_func( event->ownertype, event->type );
+
+   if( event->ownertype == EVENT_OWNER_INSTANCE )
+      event->owner = get_instance_by_id( id );
+
+   if( strcmp( (*row)[counter], "null" ) )
+   {
+      mud_printf( cypher, "%s", (*row)[counter++] );
+      while( cypher_ptr && cypher_ptr[0] != '\0' )
+      {
+         cypher_ptr = one_arg_delim( cypher_ptr, temp_string, ' ' );
+         strcat( temp_string, reversed_cypher );
+         memcpy( reversed_cypher, temp_string, MAX_BUFFER );
+      }
+      cypher_ptr = reversed_cypher;
+      CREATE( event->lua_cypher, char, MAX_BUFFER );
+      while( cypher_ptr && cypher_ptr[0] != '\0' )
+      {
+         char *String;
+         int *Integer;
+
+         cypher_ptr = one_arg_delim( cypher_ptr, temp_string, ' ' );
+         switch( tolower( temp_string[0] ) )
+         {
+            default:
+               bug( "%s: bad cypher.", __FUNCTION__ );
+               continue;
+            case 's':
+               String = strdup( temp_string+1 );
+               AttachToList( String, event->lua_args );
+               strcat( event->lua_cypher, "s" );
+               break;
+            case 'i':
+               CREATE( Integer, int, 1 );
+               *Integer = atoi( temp_string+1 );
+               AttachToList( Integer, event->lua_args );
+               strcat( event->lua_cypher, "i" );
+               break;
+            case 'n':
+               CREATE( Integer, int, 1 );
+               *Integer = atoi( temp_string+1 );
+               AttachToList( Integer, event->lua_args );
+               strcat( event->lua_cypher, "n" );
+               break;
+         }
+      }
+
+   }
+   time(&now);
+   return ( ( time_key - now ) * PULSES_PER_SECOND );
+}
+
+/* utility functions */
+int get_event_owner_id( EVENT_DATA *event )
+{
+   switch( event->ownertype )
+   {
+      default:
+         return -1;
+      case EVENT_OWNER_INSTANCE:
+         if( !event->owner )
+         {
+            bug( "%s: null owner but ownertype is instance.", __FUNCTION__ );
+            return -1;
+         }
+         return ((ENTITY_INSTANCE *)event->owner)->tag->id;
+   }
+}
+
+const char *stringify_cypher( const char *lua_cypher, LLIST *list )
+{
+   void *content;
+   ITERATOR Iter;
+   static char buf[MAX_BUFFER];
+   int size, counter = 0;
+
+   if( ( size = SizeOfList( list ) ) < 1 )
+      return "null";
+
+   memset( &buf[0], 0, sizeof( buf ) );
+
+   AttachIterator( &Iter, list );
+   while( ( content = NextInList( &Iter ) ) != NULL )
+   {
+      switch( tolower( lua_cypher[counter++] ) )
+      {
+         default:
+            bug( "%s: bad cypher.", __FUNCTION__ );
+            continue;
+         case 's':
+            strcat( buf, quick_format( "s%s", (const char *)content ) );
+            break;
+         case 'i':
+            strcat( buf, quick_format( "i%d", *((int *)content) ) );
+            break;
+         case 'n':
+            strcat( buf, quick_format( "n%d", *((int *)content) ) );
+            break;
+      }
+      if( counter < size )
+         strcat( buf, " " );
+   }
+   DetachIterator( &Iter );
+   return buf;
+}
 
 /* function   :: init_event_queue()
  * arguments  :: what section to initialize.
@@ -194,6 +418,7 @@ void heartbeat()
      * Any event returning TRUE is not dequeued, it is assumed
      * that the event has dequeued itself.
      */
+    delete_event( event );
     if (!((*event->fun)(event)))
       dequeue_event(event);
   }

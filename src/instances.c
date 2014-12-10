@@ -77,7 +77,7 @@ int free_eInstance( ENTITY_INSTANCE *eInstance )
    FreeList( eInstance->evars );
    eInstance->evars = NULL;
 
-   clearlist( eInstance->timers );
+   clear_timers_list( eInstance->timers );
    FreeList( eInstance->timers );
    eInstance->timers = NULL;
 
@@ -87,11 +87,11 @@ int free_eInstance( ENTITY_INSTANCE *eInstance )
 
    for( x = 0; x < MAX_INSTANCE_EVENT; x++ )
       strip_event_instance( eInstance, x );
+   FreeList( eInstance->events );
 
    free_damage_list( eInstance->damages_sent );
    free_damage_list( eInstance->damages_received );
 
-   FreeList( eInstance->events );
 
    socket_uncontrol_entity( eInstance );
    account_uncontrol_entity( eInstance );
@@ -254,6 +254,7 @@ ENTITY_INSTANCE *load_eInstance_by_query( const char *query )
    load_entity_vars( instance );
    load_entity_stats( instance );
    load_instance_timers( instance );
+   load_instance_events( instance );
    if( instance->framework->f_primary_dmg_received_stat )
       instance->primary_dmg_received_stat = get_stat_from_instance_by_id( instance, instance->framework->f_primary_dmg_received_stat->tag->id );
    if( !instance->isPlayer )
@@ -2536,6 +2537,7 @@ void entity_quit( void *passed, char *arg )
    entity_to_world( entity, NULL );
    DetachFromList( entity, eInstances_list );
    free_eInstance( entity );
+   builder_count--;
    return;
 }
 
@@ -3219,6 +3221,12 @@ void mobile_attack( void *passed, char *arg )
    ENTITY_INSTANCE *mob = (ENTITY_INSTANCE *)passed;
    ENTITY_INSTANCE *victim;
    int cd;
+
+   if( !mob->contained_by )
+   {
+     text_to_entity( mob, "You cannot attack anything in the ether.\r\n" );
+     return;
+   }
 
    if( !arg || arg[0] == '\0' )
    {

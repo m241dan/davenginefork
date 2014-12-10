@@ -1,15 +1,43 @@
 -- NOT NOISE ---
 -- ONLY HARD SCRIPTS IN THIS SPACE --
 -- END NOT NOISE --
-function onDeath( dead_person )
-   -- the line below this is standard, delete if not wanted --
-   dead_person:frameCall( "onDeath", "fi", dead_person:getFramework(), dead_person )
+function onInstanceInit( frame, instance )
+   frame:inherits( "onInstanceInit", "fi", frame:getInheritance(), instance )
+   --- autowrite init ---
+   instance:setStatPerm( "Stamina_Regen", 30 )
+   instance:setStatPerm( "Mana_Regen", 50 )
+   instance:setStatPerm( "HP_Regen", 15 )
+   instance:setStatPerm( "Experience", 1 )
+   instance:setStatPerm( "Hitroll", 1 )
+   instance:setStatPerm( "Damroll", 1 )
+   instance:setStatPerm( "PowerLevel", 10 )
+   instance:setStatPerm( "Stamina", 200 )
+   instance:setStatMod( "Stamina", 200 )
+   instance:setStatPerm( "Spirit", 7 )
+   instance:setStatMod( "Spirit", 7 )
+   instance:setStatPerm( "Energy", 1000 )
+   instance:setStatMod( "Energy", 1000 )
+   instance:setStatPerm( "Accuracy", 0 )
+   instance:setStatPerm( "Evasiveness", 5 )
+   instance:setStatPerm( "Luck", 7 )
+   instance:setStatPerm( "Health", 100 )
+   instance:setStatMod( "Health", 100 )
+   instance:setStatPerm( "Charisma", 7 )
+   instance:setStatPerm( "Wisdom", 7 )
+   instance:setStatPerm( "Constitution", 7 )
+   instance:setStatPerm( "Intelligence", 7 )
+   instance:setStatPerm( "Dexterity", 7 )
+   instance:setStatPerm( "Strength", 7 )
+   --- end autowrite init ---
+end
+
+function onDeath( frame, dead_person )
+   frame:inherits( "onDeath", "fi", frame:getInheritance(), dead_person )
    -- write specific for this frame under here --
 end
 
-function onSpawn( spawning_person )
-   -- the line below this is standard, delete if not wanted --
-   spawning_person:frameCall( "onSpawn", "fi", dead_person:getFramework(), spawning_person )
+function onSpawn( frame, spawning_person )
+   frame:inherits( "onSpawn", "fi", frame:getInheritance(), spawning_person )
    -- write specific for this frame under here --
 end
 
@@ -107,4 +135,5 @@ function uiScore( entity )
 end
 
 
--- instance specific methods --
+
+

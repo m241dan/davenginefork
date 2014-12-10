@@ -1103,7 +1103,7 @@ int luaCallBack( lua_State *L )
 
    if( ( callbackwhen = luaL_checknumber( L, 2 ) ) == 0 )
    {
-      bug( "%s: having a callback with 0 seconds is not possible.", __FUNCTION__ );
+      bug( "%s: having a callback with 0 pulses is not possible.", __FUNCTION__ );
       return 0;
    }
 

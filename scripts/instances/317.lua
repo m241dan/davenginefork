@@ -107,4 +107,3 @@ function uiScore( entity )
 end
 
 
--- instance specific methods --

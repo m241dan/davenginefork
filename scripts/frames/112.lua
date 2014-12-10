@@ -4,6 +4,30 @@
 function onInstanceInit( frame, instance )
    frame:inherits( "onInstanceInit", "fi", frame:getInheritance(), instance )
    --- autowrite init ---
+   instance:setStatPerm( "Stamina_Regen", 1 )
+   instance:setStatPerm( "Mana_Regen", 1 )
+   instance:setStatPerm( "HP_Regen", 1 )
+   instance:setStatPerm( "Experience", 1 )
+   instance:setStatPerm( "Hitroll", 1 )
+   instance:setStatPerm( "Damroll", 1 )
+   instance:setStatPerm( "PowerLevel", 10 )
+   instance:setStatPerm( "Stamina", 200 )
+   instance:setStatMod( "Stamina", 200 )
+   instance:setStatPerm( "Spirit", 5 )
+   instance:setStatMod( "Spirit", 5 )
+   instance:setStatPerm( "Energy", 1000 )
+   instance:setStatMod( "Energy", 1000 )
+   instance:setStatPerm( "Accuracy", 5 )
+   instance:setStatPerm( "Evasiveness", 5 )
+   instance:setStatPerm( "Luck", 7 )
+   instance:setStatPerm( "Health", 100 )
+   instance:setStatMod( "Health", 100 )
+   instance:setStatPerm( "Charisma", 7 )
+   instance:setStatPerm( "Wisdom", 7 )
+   instance:setStatPerm( "Constitution", 7 )
+   instance:setStatPerm( "Intelligence", 7 )
+   instance:setStatPerm( "Dexterity", 7 )
+   instance:setStatPerm( "Strength", 7 )
    --- end autowrite init ---
 end
 
@@ -104,112 +128,4 @@ end
 
 -- UI Stuff --
 function uiPrompt( entity )
-   entity:echoAt( string.format( "<HP: %d/%d KI: %d/%d MV: %d/%d\nPL: %d/%d>\n", entity:getStatMod( "Health" ), entity:getStatPerm( "Health" ), entity:getStatMod( "Energy" ), entity:getStatPerm( "Energy" ), entity:getStatMod( "Stamina" ), entity:getStatPerm( "Stamina" ), entity:getStatPerm ( "PowerLevel" ), entity:getStatValue ( "PowerLevel" ) ) )
-   local target = entity:getTarget()
-
-   if( target ~= nil ) then
-      entity:echoAt( string.format( "Target: %s\n", target:getName() ) )
-   end
-end
-
-
-
-function uiLook( looker, looking_at )
-   local account = Account.getAccount( looker ) -- get the account, so we can get the pagewidth
-   local room = looker:getContainer() -- get the container of the looker
-   if account == nil then -- if the account is nil (mob) default to 80 pagewidth
-      pagewidth = 80 
-   else
-      pagewidth = account:getPagewidth() -- otherwise get the pagewidth from account
-   end
-
-   local bar = string.rep( "-=", ( pagewidth / 2 ) ) -- so, "-" x 80 equals 80 spaces, however, "-=" x 80 = 160 spaces. so pagewidth / number_of_character, -= is two characters... NAILED IT
-
-   looker:echoAt( string.format( "%s\n", room:getShort() ) ) 
-   looker:echoAt( string.format( "%s\n", bar ) )
-   looker:echoAt( string.format( "%s\n", room:getDesc() ) )
-   looker:echoAt( string.format( "%s\n", bar )  )
-   looker:echoAt( " \tExits: \n#n" )
-   for exit in room:eachInventory() do 
-      if( exit:isExit() == true) then 
-         looker:echoAt( string.format( "%s :", exit:getShort() ) )
-         local exit_to = exit:getExitTo()
-         if( exit_to ~= nil ) then
-            looker:echoAt( string.format( " %s\n", exit_to:getShort() ) )
-         else
-         looker:echoAt( " nowhere... \n" )
-         end
-      end
-   end
-
-   for stuff in room:eachInventory() do
-      if( stuff:isExit() == false ) then
-        looker:echoAt( string.format( "%s\n", stuff:getLong() ) )
-      end
-   end
-   looker:echoAt( "\n" )
-end
-
-function uiInventory( entity )
-   local exits = "" 
-   local mobs = ""
-   local items = ""
-
-   entity:echoAt( " - Your Inventory -\n" )
-   for item in entity:eachInventory() do
-      if( item:isExit() == true ) then
-         exits = exits .. item:getShort() .. "\n"
-      elseif( item:isObj() == true ) then
-         items = items .. item:getShort() .. "\n"
-      elseif( item:isMob() == true ) then
-         mobs = mobs .. item:getShort() .. "\n"
-      end
-   end
-   entity:echoAt( string.format( "Exits:\n %s", exits ) )
-   entity:echoAt( string.format( "Mobs:\n %s", mobs ) )
-   entity:echoAt( string.format( "Items:\n %s", items ) )
-end
-
-function uiScore( entity )
-   local firstspacing = entity:getStatMod( "Spirit" )
-   local secondspacing = entity:getStatPerm( "Luck" )
-   local thirdspacing = entity:getStatPerm( "Damroll" )
-   local fourthspacing = entity:getStatPerm( "Hitroll" )
-   local fifthspacing = entity:getStatPerm( "Evasiveness" )
-   local sixthspacing = entity:getStatPerm( "Accuracy" )
-
-   entity:echoAt( string.format( "You currently have %d/%d health, %d/%d energy, and %d/%d stamina.\n", entity:getStatMod( "Health" ), entity:getStatPerm( "Health" ), entity:getStatMod( "Energy" ), entity:getStatPerm( "Energy" ), entity:getStatMod( "Stamina" ), entity:getStatPerm( "Stamina" ) ) )
-   entity:echoAt( string.format( "Str: %d#y (#w%d) \t Dex: %d#y (#w%d) \t Con: %d#y (#w%d) \n", entity:getStatPerm( "Strength" ), entity:getStatValue( "Strength" ), entity:getStatPerm( "Dexterity" ), entity:getStatValue( "Dexterity" ), entity:getStatPerm( "Constitution" ), entity:getStatValue( "Constitution") ) )
-   entity:echoAt( string.format( "Int: %d#y (#w%d) \t Wis: %d#y (#w%d) \t Chr: %d#y (#w%d) \n", entity:getStatPerm( "Intelligence" ), entity:getStatValue( "Intelligence" ), entity:getStatPerm( "Wisdom" ), entity:getStatValue( "Wisdom" ), entity:getStatPerm( "Charisma" ), entity:getStatValue( "Charisma" ) ) )
-
-   if firstspacing <= 9 and secondspacing <= 9 then
-      entity:echoAt( string.format( "Spi: %d#y  (#w%d) \t Lck: %d#y  (#w%d) \t\n", entity:getStatMod( "Spirit" ), entity:getStatPerm( "Spirit" ), entity:getStatPerm( "Luck" ), entity:getStatValue( "Luck" ) ) )  
-   elseif secondspacing <= 9 and firstspacing >= 10 then
-      entity:echoAt( string.format( "Spi: %d#y (#w%d) \t Lck: %d#y  (#w%d) \t\n", entity:getStatPerm( "Spirit" ), entity:getStatValue( "Spirit" ), entity:getStatPerm( "Luck" ), entity:getStatValue( "Luck" ) ) )  
-   elseif firstspacing <= 9 and secondspacing >= 10 then
-      entity:echoAt( string.format( "Spi: %d#y  (#w%d) \t Lck: %d#y (#w%d) \t\n", entity:getStatPerm( "Spirit" ), entity:getStatValue( "Spirit" ), entity:getStatPerm( "Luck" ), entity:getStatValue( "Luck" ) ) )  
-   else
-      entity:echoAt( string.format( "Spi: %d#y (#w%d) \t Lck: %d#y (#w%d) \t\n", entity:getStatPerm( "Spirit" ), entity:getStatValue( "Spirit" ), entity:getStatPerm( "Luck" ), entity:getStatValue( "Luck" ) ) )  
-   end
-
-   if thirdspacing <= 9 and fourthspacing <= 9 then
-      entity:echoAt( string.format( "Dam: %d#y  (#w%d) \t Hit: %d#y  (#w%d) \t\n", entity:getStatPerm( "Damroll" ), entity:getStatValue( "Damroll" ), entity:getStatPerm( "Hitroll" ), entity:getStatValue( "Hitroll" ) ) )
-   elseif fourthspacing <= 9 and thirdspacing >= 10 then
-      entity:echoAt( string.format( "Dam: %d#y (#w%d) \t Hit: %d#y  (#w%d) \t\n", entity:getStatPerm( "Damroll" ), entity:getStatValue( "Damroll" ), entity:getStatPerm( "Hitroll" ), entity:getStatValue( "Hitroll" ) ) )
-   elseif thirdspacing <= 9 and fourthspacing >= 10 then
-      entity:echoAt( string.format( "Dam: %d#y  (#w%d) \t Hit: %d#y (#w%d) \t\n", entity:getStatPerm( "Damroll" ), entity:getStatValue( "Damroll" ), entity:getStatPerm( "Hitroll" ), entity:getStatValue( "Hitroll" ) ) )
-   else
-      entity:echoAt( string.format( "Dam: %d#y (#w%d) \t Hit: %d#y (#w%d) \t\n", entity:getStatPerm( "Damroll" ), entity:getStatValue( "Damroll" ), entity:getStatPerm( "Hitroll" ), entity:getStatValue( "Hitroll" ) ) )
-   end
-
-   if fifthspacing <= 9 and sixthspacing <= 9 then
-      entity:echoAt( string.format( "Eva: %d#y  (#w%d) \t Acc: %d#y  (#w%d) \t\n\n", entity:getStatPerm( "Evasiveness" ), entity:getStatValue( "Evasiveness" ), entity:getStatPerm( "Accuracy" ), entity:getStatValue( "Accuracy" ) ) )
-   elseif sixthspacing <= 9 and fifthspacing >= 10 then
-      entity:echoAt( string.format( "Eva: %d#y (#w%d) \t Acc: %d#y  #w%d) \t\n\n", entity:getStatPerm( "Evasiveness" ), entity:getStatValue( "Evasiveness" ), entity:getStatPerm( "Accuracy" ), entity:getStatValue( "Accuracy" ) ) )
-   elseif fifthspacing <= 9 and sixthspacing >= 10 then
-      entity:echoAt( string.format( "Eva: %d#y  (#w%d) \t Acc: %d#y (#w%d) \t\n\n", entity:getStatPerm( "Evasiveness" ), entity:getStatValue( "Evasiveness" ), entity:getStatPerm( "Accuracy" ), entity:getStatValue( "Accuracy" ) ) )
-   else
-      entity:echoAt( string.format( "Eva: %d#y (#w%d) \t Acc: %d#y (#w%d) \t\n\n", entity:getStatPerm( "Evasiveness" ), entity:getStatValue( "Evasiveness" ), entity:getStatPerm( "Accuracy" ), entity:getStatValue( "Accuracy" ) ) )
-   end
-end
-
+   entity:echoAt( string.format( "<HP: %d/%d KI: %d/%d MV: %d/%d\nPL: %d/%d>\n", entity:getStatMod( "Health" ), entity:getStatPerm( "Health" ), entity:getStatMod( "Energy" ), entity

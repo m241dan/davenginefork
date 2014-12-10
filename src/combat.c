@@ -139,6 +139,7 @@ bool send_damage( DAMAGE *dmg )
       return FALSE;
    }
    add_damage( dmg );
+   start_timer( dmg->timer );
    return TRUE;
 }
 

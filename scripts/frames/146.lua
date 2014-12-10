@@ -1,15 +1,19 @@
 -- NOT NOISE ---
 -- ONLY HARD SCRIPTS IN THIS SPACE --
 -- END NOT NOISE --
-function onDeath( dead_person )
-   -- the line below this is standard, delete if not wanted --
-   dead_person:frameCall( "onDeath", "fi", dead_person:getFramework(), dead_person )
+function onInstanceInit( frame, instance )
+   frame:inherits( "onInstanceInit", "fi", frame:getInheritance(), instance )
+   --- autowrite init ---
+   --- end autowrite init ---
+end
+
+function onDeath( frame, dead_person )
+   frame:inherits( "onDeath", "fi", frame:getInheritance(), dead_person )
    -- write specific for this frame under here --
 end
 
-function onSpawn( spawning_person )
-   -- the line below this is standard, delete if not wanted --
-   spawning_person:frameCall( "onSpawn", "fi", dead_person:getFramework(), spawning_person )
+function onSpawn( frame, spawning_person )
+   frame:inherits( "onSpawn", "fi", frame:getInheritance(), spawning_person )
    -- write specific for this frame under here --
 end
 
@@ -107,4 +111,3 @@ function uiScore( entity )
 end
 
 
--- instance specific methods --

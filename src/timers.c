@@ -31,6 +31,19 @@ void free_timer( TIMER *timer )
    FREE( timer );
 }
 
+void clear_timers_list( LLIST *list )
+{
+   TIMER *timer;
+   ITERATOR Iter;
+
+   AttachIterator( &Iter, list );
+   while( ( timer = (TIMER *)NextInList( &Iter ) ) != NULL )
+      free_timer( timer );
+   DetachIterator( &Iter );
+
+   return;
+}
+
 void start_timer( TIMER *timer )
 {
    if( timer->owner_type == TIMER_NO_OWNER )
@@ -83,6 +96,9 @@ void end_timer( TIMER *timer )
    switch( timer->owner_type )
    {
       default: bug( "%s: bad owner.", __FUNCTION__ ); break;
+      case TIMER_NO_OWNER:
+         bug( "%s: a new owner timer is expiring.", __FUNCTION__ );
+         break;
       case TIMER_MUD:
          delete_timer( timer );
          break;
@@ -118,11 +134,14 @@ void new_timer( TIMER *timer )
    time_t now;
    int id = get_owner_id( timer );
    int expire_time;
-
+/*
+   if( id < -3 )
+      return;
+*/
    if( timer->active )
    {
       time(&now);
-      expire_time = now + ( timer->duration * 4 );
+      expire_time = now + ( timer->duration / PULSES_PER_SECOND );
    }
    else
       expire_time = timer->duration;
@@ -209,6 +228,7 @@ void db_load_timer( TIMER *timer, MYSQL_ROW *row )
          timer->owner = get_instance_by_id( id );
          break;
    }
+   timer->key = strdup( (*row)[counter++] );
    time(&now);
    expiration = atoi( (*row)[counter++] );
    timer->frequency = atoi( (*row)[counter++] );
@@ -219,10 +239,10 @@ void db_load_timer( TIMER *timer, MYSQL_ROW *row )
    timer->active = (bool)atoi( (*row)[counter++] );
    if( timer->active )
    {
-      if( ( duration = expiration - now ) <= 0 )
+      if( ( duration = expiration - now ) < 1 )
          timer->duration = 0;
       else
-         duration *= 4;
+         timer->duration = duration * PULSES_PER_SECOND;
    }
    else
       timer->duration = expiration;
@@ -232,11 +252,6 @@ void db_load_timer( TIMER *timer, MYSQL_ROW *row )
 
 void loaded_timer_check( TIMER *timer )
 {
-   if( timer->duration < 1 )
-   {
-      end_timer( timer );
-      return;
-   }
    own_timer( timer );
    if( timer->active )
       AttachToList( timer, timer_queue );
@@ -247,17 +262,10 @@ void loaded_timer_check( TIMER *timer )
 
 void delete_timer( TIMER *timer )
 {
-   int owner = -1;
-   switch( timer->owner_type )
-   {
-      default: break;
-      case TIMER_INSTANCE:
-         owner = ((ENTITY_INSTANCE *)timer->owner)->tag->id;
-         break;
-   }
-
-   if( !quick_query( "DELETE FROM `timers` WHERE owner_type=%d AND owner=%d AND key='%s';", timer->owner_type, owner, format_string_for_sql( timer->key ) ) )
+   int owner = get_owner_id( timer );
+   if( !quick_query( "DELETE FROM `timers` WHERE owner_type=%d AND owner=%d AND timerkey='%s';", timer->owner_type, owner, format_string_for_sql( timer->key ) ) )
       bug( "%s: could not delete timer from database.", __FUNCTION__ );
+   timer->db_loaded = FALSE;
 }
 
 /* setters */
@@ -275,8 +283,8 @@ void set_melee_timer( ENTITY_INSTANCE *instance, bool message )
    set_timer_owner( timer, instance, TIMER_INSTANCE );
    if( message )
       timer->end_message = strdup( MELEE_CD_MSG );
-   new_timer( timer );
    start_timer( timer );
+   new_timer( timer );
 }
 
 void own_timer( TIMER *timer )
@@ -315,7 +323,6 @@ void unown_timer( TIMER *timer )
          break;
    }
    timer->owner = NULL;
-   pause_timer( timer );
    timer->owner_type = TIMER_NO_OWNER;
    return;
 }
@@ -371,7 +378,7 @@ void timer_monitor( void )
          }
          timer->counter = 0;
       }
-      if( ( timer->duration -= 1 ) == 0 )
+      if( ( timer->duration -= 1 ) < 1 )
          end_timer( timer );
    }
    DetachIterator( &Iter );
@@ -435,7 +442,7 @@ inline void set_timer_owner( TIMER *timer, void *owner, TIMER_OWNER_TYPES type )
    own_timer( timer );
    id = get_owner_id( timer );
    if( timer->db_loaded )
-      if( !quick_query( "UPDATE `timers` SET owner=%d, owner_type=%d WHERE owner=%d AND owner_type=%d AND key='%s';", id, timer->owner_type,
+      if( !quick_query( "UPDATE `timers` SET owner=%d, owner_type=%d WHERE owner=%d AND owner_type=%d AND timerkey='%s';", id, timer->owner_type,
          old_id, old_type, format_string_for_sql( timer->key ) ) )
          bug( "%s: cannot update database with new timer owner.", __FUNCTION__ );
 }
@@ -447,34 +454,34 @@ inline void set_timer_key( TIMER *timer, const char *key )
    FREE( timer->key );
    timer->key = strdup( key );
    if( timer->db_loaded )
-      if( !quick_query( "UPDATE `timers` SET key='%s' WHERE owner=%d AND owner_type=%d AND key='%s';", format_string_for_sql( timer->key ),
+      if( !quick_query( "UPDATE `timers` SET timerkey='%s' WHERE owner=%d AND owner_type=%d AND timerkey='%s';", format_string_for_sql( timer->key ),
          get_owner_id( timer ), timer->owner_type, oldkey ) )
          bug( "%s: cannot update database with new timer key.", __FUNCTION__ );
 }
 
-inline void set_timer_duration( TIMER *timer, sh_int duration )
+inline void set_timer_duration( TIMER *timer, int duration )
 {
    timer->duration = duration;
    if( timer->db_loaded )
-      if( !quick_query( "UPDATE `timers` SET duration=%d WHERE owner=%d AND owner_type=%d AND key='%s';", timer->duration, get_owner_id( timer ),
+      if( !quick_query( "UPDATE `timers` SET duration=%d WHERE owner=%d AND owner_type=%d AND timerkey='%s';", timer->duration, get_owner_id( timer ),
          timer->owner_type, format_string_for_sql( timer->key ) ) )
          bug( "%s: cannot update database with new timer duration.", __FUNCTION__ );
 }
 
-inline void set_timer_frequency( TIMER *timer, sh_int frequency )
+inline void set_timer_frequency( TIMER *timer, int frequency )
 {
    timer->frequency = frequency;
    if( timer->db_loaded )
-      if( !quick_query( "UPDATE `timers` SET frequency=%d WHERE owner=%d AND owner_type=%d AND key='%s';", timer->frequency, get_owner_id( timer ),
+      if( !quick_query( "UPDATE `timers` SET frequency=%d WHERE owner=%d AND owner_type=%d AND timerkey='%s';", timer->frequency, get_owner_id( timer ),
          timer->owner_type, format_string_for_sql( timer->key ) ) )
          bug( "%s: cannot update database with new timer frequency.", __FUNCTION__ );
 }
 
-inline void set_timer_counter( TIMER *timer, sh_int counter )
+inline void set_timer_counter( TIMER *timer, int counter )
 {
    timer->counter = counter;
    if( timer->db_loaded )
-      if( !quick_query( "UPDATE `timers` SET counter=%d WHERE owner=%d AND owner_type=%d AND key='%s';", timer->counter, get_owner_id( timer ),
+      if( !quick_query( "UPDATE `timers` SET counter=%d WHERE owner=%d AND owner_type=%d AND timerkey='%s';", timer->counter, get_owner_id( timer ),
          timer->owner_type, format_string_for_sql( timer->key ) ) )
          bug( "%s: cannot update database with new timer counter.", __FUNCTION__ );
 
@@ -487,7 +494,7 @@ inline void set_timer_update_message( TIMER *timer, const char *update_message )
    timer->update_message = strdup( update_message );
    mud_printf( buf, "%s", format_string_for_sql( timer->update_message ) );
    if( timer->db_loaded )
-      if( !quick_query( "UPDATE `timers` SET update_message='%s' WHERE owner=%d AND owner_type=%d AND key='%s';", buf, get_owner_id( timer ),
+      if( !quick_query( "UPDATE `timers` SET update_message='%s' WHERE owner=%d AND owner_type=%d AND timerkey='%s';", buf, get_owner_id( timer ),
          timer->owner_type, format_string_for_sql( timer->key ) ) )
          bug( "%s: cannot update database with new timer update_message.", __FUNCTION__ );
 
@@ -500,7 +507,7 @@ inline void set_timer_end_message( TIMER *timer, const char *end_message )
    timer->end_message = strdup( end_message );
    mud_printf( buf, "%s", format_string_for_sql( timer->end_message ) );
    if( timer->db_loaded )
-      if( !quick_query( "UPDATE `timers` SET end_message='%s' WHERE owner=%d AND owner_type=%d AND key='%s';", buf, get_owner_id( timer ),
+      if( !quick_query( "UPDATE `timers` SET end_message='%s' WHERE owner=%d AND owner_type=%d AND timerkey='%s';", buf, get_owner_id( timer ),
          timer->owner_type, format_string_for_sql( timer->key ) ) )
          bug( "%s: cannot update database with new timer frequency.", __FUNCTION__ );
 
@@ -510,7 +517,7 @@ inline void set_timer_type( TIMER *timer, char timer_type )
 {
    timer->timer_type = timer_type;
    if( timer->db_loaded )
-      if( !quick_query( "UPDATE `timers` SET frequency=%d WHERE owner=%d AND owner_type=%d AND key='%s';", (int)timer->timer_type, get_owner_id( timer ),
+      if( !quick_query( "UPDATE `timers` SET frequency=%d WHERE owner=%d AND owner_type=%d AND timerkey='%s';", (int)timer->timer_type, get_owner_id( timer ),
          timer->owner_type, format_string_for_sql( timer->key ) ) )
          bug( "%s: cannot update database with new timer timer_type.", __FUNCTION__ );
 
@@ -523,7 +530,7 @@ inline void set_timer_active( TIMER *timer, bool active )
    {
       if( !active )
       {
-         if( !quick_query( "UPDATE `timers` SET active=%d, time=%d WHERE owner=%d AND owner_type=%d AND key='%s';",
+         if( !quick_query( "UPDATE `timers` SET active=%d, time=%d WHERE owner=%d AND owner_type=%d AND timerkey='%s';",
             timer->active, timer->duration, get_owner_id( timer ), timer->owner_type, format_string_for_sql( timer->key ) ) )
             bug( "%s: cannot update database with new timer active state.", __FUNCTION__ );
       }
@@ -531,8 +538,8 @@ inline void set_timer_active( TIMER *timer, bool active )
       {
          time_t now;
          time(&now);
-         int expire_time = now + ( timer->duration * 4 );
-         if( !quick_query( "UPDATE `timers` SET active=%d, time=%d WHERE owner=%d AND owner_type=%d AND key='%s';",
+         int expire_time = now + ( timer->duration / PULSES_PER_SECOND );
+         if( !quick_query( "UPDATE `timers` SET active=%d, time=%d WHERE owner=%d AND owner_type=%d AND timerkey='%s';",
             timer->active, expire_time, get_owner_id( timer ), timer->owner_type, format_string_for_sql( timer->key ) ) )
             bug( "%s: cannot update database with new timer active state.", __FUNCTION__ );
       }

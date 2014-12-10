@@ -110,4 +110,4 @@ end
 function uiScore( entity )
 end
 
-
+-- frame specific methods --
