@@ -535,7 +535,9 @@ typedef struct  stat_instance   STAT_INSTANCE;
 typedef struct  damage_data     DAMAGE;
 typedef struct  timer           TIMER;
 typedef struct  character_sheet CHAR_SHEET;
-
+typedef struct  element_framework ELEMENT_FRAMEWORK;
+typedef struct  element_info	ELEMENT_INFO;
+typedef struct  composition	COMPOSITION;
 /* the actual structures */
 struct dSocket
 {
