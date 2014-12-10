@@ -201,21 +201,27 @@ void delete_event( EVENT_DATA *event )
       bug( "%s: could not delete event from database.", __FUNCTION__ );
 }
 
-void load_game_events( void )
-{
-
-}
-
-void load_instance_events( ENTITY_INSTANCE *instance )
+void load_events( ENTITY_INSTANCE *instance )
 {
    EVENT_DATA *event;
    LLIST *list;
    MYSQL_ROW row;
    ITERATOR Iter;
-   int pulses;
+   int owner, ownertype, pulses;
+
+   if( instance )
+   {
+      owner = instance->tag->id;
+      ownertype = EVENT_OWNER_INSTANCE;
+   }
+   else
+   {
+      owner = -1;
+      ownertype = EVENT_OWNER_LUA;
+   }
 
    list = AllocList();
-   if( !db_query_list_row( list, quick_format( "SELECT * FROM `events` WHERE ownertype=%d AND owner=%d;", EVENT_OWNER_INSTANCE, instance->tag->id ) ) )
+   if( !db_query_list_row( list, quick_format( "SELECT * FROM `events` WHERE ownertype=%d AND owner=%d;", ownertype, owner) ) )
    {
       FreeList( list );
       return;

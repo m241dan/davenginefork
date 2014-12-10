@@ -71,8 +71,7 @@ bool (*get_event_func( sh_int ownertype, sh_int type ))( EVENT_DATA *event );
 
 void new_event( EVENT_DATA *event );
 void delete_event( EVENT_DATA *event );
-void load_game_events( void );
-void load_instance_events( ENTITY_INSTANCE *instance );
+void load_events( ENTITY_INSTANCE *instance );
 int  db_load_event( EVENT_DATA *event, MYSQL_ROW *row );
 
 /* utility funcs */

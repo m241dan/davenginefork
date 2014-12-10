@@ -254,7 +254,7 @@ ENTITY_INSTANCE *load_eInstance_by_query( const char *query )
    load_entity_vars( instance );
    load_entity_stats( instance );
    load_instance_timers( instance );
-   load_instance_events( instance );
+   load_events( instance );
    if( instance->framework->f_primary_dmg_received_stat )
       instance->primary_dmg_received_stat = get_stat_from_instance_by_id( instance, instance->framework->f_primary_dmg_received_stat->tag->id );
    if( !instance->isPlayer )
