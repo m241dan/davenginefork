@@ -232,6 +232,7 @@ int main(int argc, char **argv)
 
    log_string( "Loading Mud Timers" );
    load_mud_timers();
+   load_events( NULL );
 /*
    log_string( "Loading Workspaces" );
    if( load_workspaces() != RET_SUCCESS )
