@@ -31,7 +31,7 @@ typedef enum
 typedef enum
 {
    GLOBAL_EVENT_LUA_CALLBACK = 1, MAX_GLOBAL_EVENT
-} GLOBAL_EVENTS;
+} LUA_EVENTS;
 
 /* Socket events are given a type value here.
  * Each value should be unique and explicit,
@@ -60,12 +60,24 @@ struct event_data
    sh_int             ownertype;        /* type of owner (unlinking req)       */
    char             * lua_cypher;
    LLIST            * lua_args;
+   int		      time_key;
 
 };
 
 /* functions which can be accessed outside event-handler.c */
 EVENT_DATA *alloc_event          ( void );
 void free_event                  ( EVENT_DATA *event );
+bool (*get_event_func( sh_int ownertype, sh_int type ))( EVENT_DATA *event );
+
+void new_event( EVENT_DATA *event );
+void delete_event( EVENT_DATA *event );
+void load_game_events( void );
+void load_instance_events( ENTITY_INSTANCE *instance );
+int  db_load_event( EVENT_DATA *event, MYSQL_ROW *row );
+
+/* utility funcs */
+int get_event_owner_id( EVENT_DATA *event );
+const char *stringify_cypher( const char *lua_cyper, LLIST *list );
 
 EVENT_DATA *event_isset_socket   ( D_SOCKET *dSock, int type );
 EVENT_DATA *event_isset_instance ( ENTITY_INSTANCE *instance, int type );
@@ -81,7 +93,7 @@ void strip_event_socket          ( D_SOCKET *dSock, int type );
 void strip_event_instance        ( ENTITY_INSTANCE *instance, int type );
 
 /* quick event creation */
-extern inline EVENT_DATA *decay_event	( void );
+	extern inline EVENT_DATA *decay_event	( void );
 extern inline EVENT_DATA *respawn_event	( void );
 
 /* all events should be defined here */

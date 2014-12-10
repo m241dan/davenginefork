@@ -87,11 +87,11 @@ int free_eInstance( ENTITY_INSTANCE *eInstance )
 
    for( x = 0; x < MAX_INSTANCE_EVENT; x++ )
       strip_event_instance( eInstance, x );
+   FreeList( eInstance->events );
 
    free_damage_list( eInstance->damages_sent );
    free_damage_list( eInstance->damages_received );
 
-   FreeList( eInstance->events );
 
    socket_uncontrol_entity( eInstance );
    account_uncontrol_entity( eInstance );

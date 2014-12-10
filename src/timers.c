@@ -141,7 +141,7 @@ void new_timer( TIMER *timer )
    if( timer->active )
    {
       time(&now);
-      expire_time = now + ( timer->duration / 4 );
+      expire_time = now + ( timer->duration / PULSES_PER_SECOND );
    }
    else
       expire_time = timer->duration;
@@ -242,7 +242,7 @@ void db_load_timer( TIMER *timer, MYSQL_ROW *row )
       if( ( duration = expiration - now ) < 1 )
          timer->duration = 0;
       else
-         timer->duration = duration * 4;
+         timer->duration = duration * PULSES_PER_SECOND;
    }
    else
       timer->duration = expiration;
@@ -538,7 +538,7 @@ inline void set_timer_active( TIMER *timer, bool active )
       {
          time_t now;
          time(&now);
-         int expire_time = now + ( timer->duration / 4 );
+         int expire_time = now + ( timer->duration / PULSES_PER_SECOND );
          if( !quick_query( "UPDATE `timers` SET active=%d, time=%d WHERE owner=%d AND owner_type=%d AND timerkey='%s';",
             timer->active, expire_time, get_owner_id( timer ), timer->owner_type, format_string_for_sql( timer->key ) ) )
             bug( "%s: cannot update database with new timer active state.", __FUNCTION__ );
