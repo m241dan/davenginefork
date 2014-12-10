@@ -625,6 +625,7 @@ typedef struct buffer_type
 #include "lua_account.h"
 #include "lua_nanny.h"
 #include "lua_socket.h"
+#include "elements.h"
 
 /******************************
  * End of new structures      *
