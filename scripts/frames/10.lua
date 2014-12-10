@@ -1,25 +1,41 @@
+-- NOT NOISE ---
+-- ONLY HARD SCRIPTS IN THIS SPACE --
+-- END NOT NOISE --
 function onInstanceInit( frame, instance )
    frame:inherits( "onInstanceInit", "fi", frame:getInheritance(), instance )
    --- autowrite init ---
    --- end autowrite init ---
 end
 
-function onEntityEnter( room, entity )
+function onDeath( frame, dead_person )
+   frame:inherits( "onDeath", "fi", frame:getInheritance(), dead_person )
+   -- write specific for this frame under here --
 end
 
-function onEntityLeave( room, entity )
+function onSpawn( frame, spawning_person )
+   frame:inherits( "onSpawn", "fi", frame:getInheritance(), spawning_person )
+   -- write specific for this frame under here --
 end
 
-function onEntityEntering( room, entity )
+-- NOT NOISE --
+-- ONLY SPEC SCRIPTS AFTER THIS POINT --
+-- END NOT NOISE --
+function onEntityEnter( room, enterer )
 end
 
-function onEntityLeaving( room, entity )
+function onEntityLeave( room, leaver )
 end
 
-function onGreetEntity( greeter, entity )
+function onEntering( room, enterer )
 end
 
-function onFarewellEntity( farewell, entity )
+function onLeaving( room, leaver )
+end
+
+function onGreet( greeter, enterer )
+end
+
+function onFarewell( waver, leaver )
 end
 
 function onSay( entity, sayer )
@@ -80,4 +96,34 @@ end
 function inventoryToCorpse( instance, corpse )
 end
 
+-- UI Stuff --
+function uiPrompt( entity )
+end
+
+function uiLook( looker, looking_at )
+end
+
+function uiInventory( entity )
+end
+
+function uiScore( entity )
+end
+
+function onEntityEnter( room, entity )
+end
+
+function onEntityLeave( room, entity )
+end
+
+function onEntityEntering( room, entity )
+end
+
+function onEntityLeaving( room, entity )
+end
+
+function onGreetEntity( greeter, entity )
+end
+
+function onFarewellEntity( farewell, entity )
+end
 

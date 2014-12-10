@@ -211,7 +211,7 @@ void load_instance_events( ENTITY_INSTANCE *instance )
    EVENT_DATA *event;
    LLIST *list;
    MYSQL_ROW row;
-   ITERATOR list;
+   ITERATOR Iter;
    int pulses;
 
    list = AllocList();
@@ -235,10 +235,10 @@ void load_instance_events( ENTITY_INSTANCE *instance )
 int db_load_event( EVENT_DATA *event, MYSQL_ROW *row )
 {
    time_t now;
-   char temp_string_two[MAX_BUFFER], temp_string[MAX_BUFFER], reversed_cypher, cypher[MAX_BUFFER];
+   char temp_string[MAX_BUFFER], reversed_cypher[MAX_BUFFER], cypher[MAX_BUFFER];
    char *cypher_ptr = cypher;
    int id, time_key, counter = 0;
-   if( !strcmp( (*row)[counter], "null" )
+   if( !strcmp( (*row)[counter], "null" ) )
       counter++;
    else
       event->argument = strdup( (*row)[counter++] );
@@ -254,11 +254,43 @@ int db_load_event( EVENT_DATA *event, MYSQL_ROW *row )
    if( strcmp( (*row)[counter], "null" ) )
    {
       mud_printf( cypher, "%s", (*row)[counter++] );
-      while( cypher_ptr && cypher_ptr != '\0' )
+      while( cypher_ptr && cypher_ptr[0] != '\0' )
       {
-         cypher_ptr = one_arg_delim( cypher_ptr, temp_string, ',' );
-         mud_printf( temp_string_two, "%s, %s", temp_string, reversed_cypher );
-         memcpy( reversed_cypher, temp_string_two, MAX_BUFFER );
+         cypher_ptr = one_arg_delim( cypher_ptr, temp_string, ' ' );
+         strcat( temp_string, reversed_cypher );
+         memcpy( reversed_cypher, temp_string, MAX_BUFFER );
+      }
+      cypher_ptr = reversed_cypher;
+      CREATE( event->lua_cypher, char, MAX_BUFFER );
+      while( cypher_ptr && cypher_ptr[0] != '\0' )
+      {
+         char *String;
+         int *Integer;
+
+         cypher_ptr = one_arg_delim( cypher_ptr, temp_string, ' ' );
+         switch( tolower( temp_string[0] ) )
+         {
+            default:
+               bug( "%s: bad cypher.", __FUNCTION__ );
+               continue;
+            case 's':
+               String = strdup( temp_string+1 );
+               AttachToList( String, event->lua_args );
+               strcat( event->lua_cypher, "s" );
+               break;
+            case 'i':
+               CREATE( Integer, int, 1 );
+               *Integer = atoi( temp_string+1 );
+               AttachToList( Integer, event->lua_args );
+               strcat( event->lua_cypher, "i" );
+               break;
+            case 'n':
+               CREATE( Integer, int, 1 );
+               *Integer = atoi( temp_string+1 );
+               AttachToList( Integer, event->lua_args );
+               strcat( event->lua_cypher, "n" );
+               break;
+         }
       }
 
    }
@@ -307,14 +339,14 @@ const char *stringify_cypher( const char *lua_cypher, LLIST *list )
             strcat( buf, quick_format( "s%s", (const char *)content ) );
             break;
          case 'i':
-            strcat( buf, quick_format( "i%d", ((ENTITY_INSTANCE *)content)->tag->id ) );
+            strcat( buf, quick_format( "i%d", *((int *)content) ) );
             break;
          case 'n':
             strcat( buf, quick_format( "n%d", *((int *)content) ) );
             break;
       }
       if( counter < size )
-         strcat( buf, ", " );
+         strcat( buf, " " );
    }
    DetachIterator( &Iter );
    return buf;

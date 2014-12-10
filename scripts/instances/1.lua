@@ -16,7 +16,6 @@ end
 -- NOT NOISE --
 -- ONLY SPEC SCRIPTS AFTER THIS POINT --
 -- END NOT NOISE --
-
 function onEntityEnter( room, enterer )
 end
 
@@ -93,4 +92,16 @@ end
 function inventoryToCorpse( instance, corpse )
 end
 
+-- UI Stuff --
+function uiPrompt( entity )
+end
+
+function uiLook( looker, looking_at )
+end
+
+function uiInventory( entity )
+end
+
+function uiScore( entity )
+end
 
