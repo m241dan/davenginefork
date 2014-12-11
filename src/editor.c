@@ -169,7 +169,7 @@ void editor_eFramework_info( D_SOCKET *socket )
       mud_printf( tempstring, "Framework ID: %d", frame->tag->id );
 
    if( frame->inherits )
-      mudcat( tempstring, quick_format( "| Inherits from %s ID: %d", chase_name( frame->inherits ), frame->inherits->tag->id ) );
+      mudcat( tempstring, quick_format( " | Inherits from ID: %d", frame->inherits->tag->id ) );
 
    text_to_olc( olc, "/%s\\\r\n", print_header( tempstring, "-", space_after_pipes ) );
    text_to_olc( olc, "%s", return_framework_strings( frame, border, socket->account->pagewidth ) );
