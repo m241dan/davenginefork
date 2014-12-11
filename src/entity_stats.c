@@ -253,6 +253,24 @@ inline void delete_stat_from_instance( STAT_INSTANCE *stat, ENTITY_INSTANCE *ins
    free_stat( stat );
 }
 
+void load_new_stats( ENTITY_INSTANCE *instance )
+{
+   ENTITY_FRAMEWORK *framework;
+   STAT_FRAMEWORK *fstat;
+   ITERATOR Iter;
+
+   framework = instance->framework;
+   while( framework )
+   {
+      AttachIterator( &Iter, framework->stats );
+      while( ( fstat = (STAT_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
+         if( !get_stat_from_instance_by_id( instance, fstat->tag->id ) )
+            stat_instantiate( instance, fstat );
+      DetachIterator( &Iter );
+      framework = framework->inherits;
+   }
+}
+
 
 bool inherited_frame_has_any_stats( ENTITY_FRAMEWORK *frame )
 {
