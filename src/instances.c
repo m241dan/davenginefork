@@ -345,19 +345,12 @@ inline void full_load_project( PROJECT *project )
 void full_load_instance( ENTITY_INSTANCE *instance )
 {
    ENTITY_INSTANCE *instance_to_contain;
-   STAT_FRAMEWORK *fstat;
    MYSQL_ROW row;
    LLIST *list;
    ITERATOR Iter;
    int id_to_load;
 
-   /* check for any new stats */
-   AttachIterator( &Iter, instance->framework->stats );
-   while( ( fstat = (STAT_FRAMEWORK *)NextInList( &Iter ) ) != NULL )
-      if( !get_stat_from_instance_by_id( instance, fstat->tag->id ) )
-         stat_instantiate( instance, fstat );
-   DetachIterator( &Iter );
-
+   load_new_stats( instance );
    if( instance->framework->f_primary_dmg_received_stat )
       instance->primary_dmg_received_stat = get_stat_from_instance_by_id( instance, instance->framework->f_primary_dmg_received_stat->tag->id );
 
