@@ -139,27 +139,70 @@ void boot_eFramework_editor( INCEPTION *olc, ENTITY_FRAMEWORK *frame )
    return;
 }
 
+void editor_eFramework_info( D_SOCKET *socket )
+{
+   ENTITY_FRAMEWORK *frame;
+   INCEPTION *olc;
+   char tempstring[MAX_BUFFER];
+   const char *border = "|";
+   int space_after_pipes;
+
+   if( !socket->account || !socket->account->olc )
+   {
+      text_to_socket( socket, "You have a NULL account or olc...\r\n" );
+      return;
+   }
+   olc = socket->account->olc;
+   if( ( frame = (ENTITY_FRAMEWORK *)socket->account->olc->editing ) == NULL )
+   {
+      bug( "%s: not editing anything...", __FUNCTION__ );
+      return;
+   }
+
+   space_after_pipes = socket->account->pagewidth - ( strlen( border ) * 2 );
+   if( !strcmp( frame->tag->created_by, "null" ) )
+      mud_printf( tempstring, "Potential Framework ID: %d", get_potential_id( frame->tag->type ) );
+   else
+      mud_printf( tempstring, "Framework ID: %d", frame->tag->id );
+
+   if( frame->inherits )
+      mudcat( tempstring, quick_format( " | Inherits from %s ID: %d", chase_name( frame->inherits ), frame->inherits->tag->id ) );
+
+   text_to_olc( olc, "/%s\\\r\n", print_header( tempstring, "-", space_after_pipes ) );
+   text_to_olc( olc, "%s", return_framework_strings( frame, border, socket->account->pagewidth ) );
+   text_to_olc( olc, "\\%s/\r\n", print_bar( "-", space_after_pipes ) );
+
+   if( SizeOfList( frame->fixed_contents ) > 0 || inherited_frame_has_any_fixed_possession( frame ) )
+   {
+      text_to_olc( olc, "/%s\\\r\n", print_header( "Fixed Contents", "-", space_after_pipes ) );
+      text_to_olc( olc, "%s", return_framework_fixed_content( frame, border, socket->account->pagewidth ) );
+      text_to_olc( olc, "\\%s/\r\n", print_bar( "-", space_after_pipes ) );
+   }
+
+   if( SizeOfList( frame->specifications ) > 0 || inherited_frame_has_any_spec( frame ) )
+      text_to_olc( olc, "%s", return_framework_specs( frame, socket->account->pagewidth ) );
+
+   if( SizeOfList( frame->stats ) > 0 || inherited_frame_has_any_stats( frame ) )
+      text_to_olc( olc, "%s", return_framework_stats( frame, socket->account->pagewidth ) );
+
+   return;
+}
+
 int editor_eFramework_prompt( D_SOCKET *dsock, bool commands )
 {
    ENTITY_FRAMEWORK *frame;
-   BUFFER *buf = buffer_new( MAX_OUTPUT );
+   INCEPTION *olc;
    char tempstring[MAX_BUFFER];
-   int space_after_pipes;
    int ret = RET_SUCCESS;
 
    if( !dsock->account || !dsock->account->olc )
    {
-      text_to_socket( dsock, "You have a NULL account or NULL olc...\r\n" );
-      return ret;
+      text_to_buffer( dsock, "Bad Prompt:>> " );
+      return RET_SUCCESS;
    }
 
-   if( ( frame = (ENTITY_FRAMEWORK *)dsock->account->olc->editing ) == NULL )
-   {
-      bug( "%s: being called with nothing to edit.", __FUNCTION__ );
-      return ret;
-   }
-
-   space_after_pipes = dsock->account->pagewidth - 2;
+   olc = dsock->account->olc;
+   frame = (ENTITY_FRAMEWORK *)olc->editing;
 
    if( !strcmp( frame->tag->created_by, "null" ) )
       mud_printf( tempstring, "Potential Framework ID: %d", get_potential_id( frame->tag->type ) );
@@ -167,28 +210,10 @@ int editor_eFramework_prompt( D_SOCKET *dsock, bool commands )
       mud_printf( tempstring, "Framework ID: %d", frame->tag->id );
 
    if( frame->inherits )
-      strcat( tempstring, fit_string_to_space( quick_format( " | Inherits from %s ID: %d", chase_name( frame->inherits ), frame->inherits->tag->id ), space_after_pipes ) );
+      mudcat( tempstring, quick_format( " | Inherits from %s ID: %d", chase_name( frame->inherits ), frame->inherits->tag->id ) );
 
-   bprintf( buf, "/%s\\\r\n", print_header( tempstring, "-", space_after_pipes ) );
-
-   bprintf( buf, "%s", return_framework_strings( frame, "|~|", dsock->account->pagewidth ) );
-
-   if( SizeOfList( frame->specifications ) > 0 || inherited_frame_has_any_spec( frame ) )
-      bprintf( buf, "%s", return_framework_specs_and_stats( frame, "|", dsock->account->pagewidth ) );
-
-   if( SizeOfList( frame->fixed_contents ) > 0 || inherited_frame_has_any_fixed_possession( frame ) )
-      bprintf( buf, "%s", return_framework_fixed_content( frame, "|", dsock->account->pagewidth ) );
-
-   bprintf( buf, "|%s|\r\n", print_bar( "-", space_after_pipes ) );
-
-   if( commands )
-   {
-      print_commands( dsock->account->olc, dsock->account->olc->editor_commands, buf, 0, dsock->account->pagewidth );
-      bprintf( buf, "\\%s/\r\n", print_bar( "-", space_after_pipes ) );
-   }
-
-   text_to_buffer( dsock, buf->data );
-   buffer_free( buf );
+   text_to_olc( olc, "Type: /info || /commands for help.\r\n" );
+   text_to_olc( olc, "%s ||>\r\n", tempstring );
    return ret;
 }
 
@@ -209,7 +234,7 @@ const char *return_framework_strings( ENTITY_FRAMEWORK *frame, const char *borde
       space_after_border ),
       border );
 
-   strcat( buf, tempstring );
+   mudcat( buf, tempstring );
 
    mud_printf( tempstring, "%s%s%s\r\n", border,
       fit_string_to_space(
@@ -217,7 +242,7 @@ const char *return_framework_strings( ENTITY_FRAMEWORK *frame, const char *borde
       space_after_border ),
       border );
 
-   strcat( buf, tempstring );
+   mudcat( buf, tempstring );
 
 
    mud_printf( tempstring, "%s%s%s\r\n", border,
@@ -226,7 +251,7 @@ const char *return_framework_strings( ENTITY_FRAMEWORK *frame, const char *borde
       space_after_border ),
       border );
 
-   strcat( buf, tempstring );
+   mudcat( buf, tempstring );
 
    mud_printf( tempstring, "%s%s%s\r\n", border,
       fit_string_to_space(
@@ -234,7 +259,7 @@ const char *return_framework_strings( ENTITY_FRAMEWORK *frame, const char *borde
       space_after_border ),
       border );
 
-   strcat( buf, tempstring );
+   mudcat( buf, tempstring );
 
    source = 0;
    if( ( fstat = get_primary_dmg_stat_from_framework( frame, &source ) ) != NULL )
@@ -245,7 +270,7 @@ const char *return_framework_strings( ENTITY_FRAMEWORK *frame, const char *borde
          space_after_border ),
          border );
 
-      strcat( buf, tempstring );
+      mudcat( buf, tempstring );
    }
 
    source = 0;
@@ -257,7 +282,7 @@ const char *return_framework_strings( ENTITY_FRAMEWORK *frame, const char *borde
       space_after_border ),
       border );
 
-      strcat( buf, tempstring );
+      mudcat( buf, tempstring );
    }
 
    source = 0;
@@ -299,7 +324,7 @@ const char *return_framework_strings( ENTITY_FRAMEWORK *frame, const char *borde
       space_after_border ),
       border );
 
-      strcat( buf, tempstring );
+      mudcat( buf, tempstring );
    }
 
    buf[strlen( buf )] = '\0';
@@ -309,24 +334,12 @@ const char *return_framework_strings( ENTITY_FRAMEWORK *frame, const char *borde
 const char *return_framework_fixed_content( ENTITY_FRAMEWORK *frame, const char *border, int width )
 {
    static char buf[MAX_BUFFER];
-   char tempstring[MAX_BUFFER];
-   int space_after_border;
 
    memset( &buf[0], 0, sizeof( buf ) );
-   space_after_border = width - ( strlen( border ) * 2 );
 
-   mud_printf( tempstring, "%s%s%s\r\n", border, print_bar( "-", space_after_border ), border );
-   strcat( buf, tempstring );
-
-   mud_printf( tempstring, "%s%s%s\r\n", border, print_header( "Fixed Possessions", " ", space_after_border ), border );
-   strcat( buf, tempstring );
-
-   mud_printf( tempstring, "%s%s%s\r\n", border, print_bar( "-", space_after_border ), border );
-   strcat( buf, tempstring );
-
-   strcat( buf, return_fixed_content_list( frame->fixed_contents, border, width, FALSE ) );
+   mudcat( buf, return_fixed_content_list( frame->fixed_contents, border, width, FALSE ) );
    while( ( frame = frame->inherits ) != NULL )
-      strcat( buf, return_fixed_content_list( frame->fixed_contents, border, width, TRUE ) );
+      mudcat( buf, return_fixed_content_list( frame->fixed_contents, border, width, TRUE ) );
 
    buf[strlen( buf )] = '\0';
    return buf;
@@ -348,11 +361,108 @@ const char *return_fixed_content_list( LLIST *fixed_list, const char *border, in
    {
       mud_printf( tempstring, "%s%s%s\r\n", border,
       fit_string_to_space( quick_format( "(%-7d) %s, %s%s", fixed_content->tag->id, chase_name( fixed_content ), chase_short_descr( fixed_content ), inherited ? " (inherited)" : "" ), space_after_border ), border );
-      strcat( buf, tempstring );
+      mudcat( buf, tempstring );
    }
    DetachIterator( &Iter );
 
    buf[strlen( buf )] = '\0';
+   return buf;
+}
+
+const char *return_framework_specs( ENTITY_FRAMEWORK *frame, int width )
+{
+   const char *const spec_from_table[] = {
+      "", "", "( inherited )"
+   };
+   SPECIFICATION *spec;
+   LLIST *spec_strings;
+   ITERATOR Iter;
+   char *spec_string;
+   static char buf[MAX_BUFFER];
+   int x, longest, spec_string_len, spec_from;
+   int num_column, column_count = 0;
+   /* going to get three spec to space */
+
+   spec_strings = AllocList();
+   mud_printf( buf, "%s\r\n", print_header( "Specifications", "-", width ) );
+
+   for( longest = 0, x = MAX_SPEC; x >= 0; x--)
+   {
+      spec_from = 0;
+      if( ( spec = frame_has_spec_detailed_by_type( frame, x, &spec_from ) ) == NULL )
+         continue;
+      CREATE( spec_string, char, MAX_BUFFER );
+      mud_printf( spec_string, "%s : %d%s", spec_table[spec->type], spec->value, spec_from_table[spec_from] );
+      if( ( spec_string_len = strlen( spec_string ) ) > longest )
+         longest = spec_string_len;
+      AttachToList( spec_string, spec_strings );
+   }
+
+   num_column = floor( (double)width / (double)longest );
+
+   AttachIterator( &Iter, spec_strings );
+   while( ( spec_string = (char *)NextInList( &Iter ) ) != NULL )
+   {
+      mudcat( buf, fit_string_to_space( spec_string, longest ) );
+      if( ++column_count >= num_column )
+      {
+         mudcat( buf, "\r\n" );
+         column_count = 0;
+      }
+   }
+   DetachIterator( &Iter );
+   if( column_count != 0 )
+      mudcat( buf, "\r\n" );
+
+   FreeList( spec_strings );
+   return buf;
+}
+
+const char *return_framework_stats( ENTITY_FRAMEWORK *frame, int width )
+{
+   const char *const stat_from_table[] = {
+      "", "( inherited )"
+   };
+   STAT_FRAMEWORK *sframe;
+   LLIST *stat_strings;
+   ITERATOR Iter;
+   char *stat_string;
+   static char buf[MAX_BUFFER];
+   int x, longest, stat_string_len, stat_from;
+   int num_column, column_count = 0;
+
+   stat_strings = AllocList();
+   mud_printf( buf, "%s\r\n", print_header( "Stats", "-", width ) );
+
+   for( longest = 0, ( x = get_potential_id( ENTITY_STAT_FRAMEWORK_IDS ) - 1 ); x >= 0; x-- )
+   {
+      stat_from = 0;
+      if( ( sframe = get_stat_from_framework_by_id( frame, x, &stat_from ) ) == NULL )
+         continue;
+      CREATE( stat_string, char, MAX_BUFFER );
+      mud_printf( stat_string, "%s", sframe->name, stat_from_table[stat_from] );
+      if( ( stat_string_len = strlen( stat_string ) ) > longest )
+         longest = stat_string_len;
+      AttachToList( stat_string, stat_strings );
+   }
+
+   num_column = floor( (double)width / (double)longest );
+
+   AttachIterator( &Iter, stat_strings );
+   while( ( stat_string = (char *)NextInList( &Iter ) ) != NULL )
+   {
+      mudcat( buf, fit_string_to_space( stat_string, longest ) );
+      if( ++column_count >= num_column )
+      {
+         mudcat( buf, "\r\n" );
+         column_count = 0;
+      }
+   }
+   DetachIterator( &Iter );
+   if( column_count != 0 )
+      mudcat( buf, "\r\n" );
+
+   FreeList( stat_strings );
    return buf;
 }
 
@@ -376,13 +486,13 @@ const char *return_framework_specs_and_stats( ENTITY_FRAMEWORK *frame, const cha
    mud_printf( buf, "%s%s%s\r\n", border, print_bar( "-", space_after_border ), border );
    space_after_border = width - ( strlen( border ) * 3 );
    mud_printf( tempstring, "%s%s", border, print_header( "Specifications", " ", space_after_border / 2 ) );
-   strcat( buf, tempstring );
-   strcat( buf, border );
+   mudcat( buf, tempstring );
+   mudcat( buf, border );
    mud_printf( tempstring, " %s%s\r\n", print_header( "Stats", " ", space_after_border / 2 ), border );
-   strcat( buf, tempstring );
+   mudcat( buf, tempstring );
    space_after_border = width - ( strlen( border ) * 2 );
    mud_printf( tempstring, "%s%s%s\r\n", border, print_bar( "-", space_after_border ), border );
-   strcat( buf, tempstring );
+   mudcat( buf, tempstring );
 
    /* later when stats are in it will look like ;x < MAX_SPEC || y < MAX_STAT; */
    MAX_STAT = get_potential_id( ENTITY_STAT_FRAMEWORK_IDS );
@@ -402,16 +512,16 @@ const char *return_framework_specs_and_stats( ENTITY_FRAMEWORK *frame, const cha
          mud_printf( tempstring, "%s%s", border, fit_string_to_space( quick_format( " %s : %d%s", spec_table[spec->type], spec->value, spec_from_table[spec_from] ), ( space_after_border / 2 ) - 1 ) );
       else
          mud_printf( tempstring, "%s%s", border, print_header( " ", " ", ( space_after_border / 2 ) - 1 ) );
-      strcat( buf, tempstring );
+      mudcat( buf, tempstring );
 
-      strcat( buf, border );
+      mudcat( buf, border );
 
       if( fstat )
          mud_printf( tempstring, " %s%s\r\n", print_header( quick_format( " %s %s", fstat->name, stat_from_table[stat_from] ), " ", ( space_after_border / 2 ) - 1 ), border );
       else
          mud_printf( tempstring, " %s%s\r\n", print_header( " ", " ", ( space_after_border / 2 ) - 1 ), border );
 
-      strcat( buf, tempstring );
+      mudcat( buf, tempstring );
 
    }
    buf[strlen( buf )] = '\0';
@@ -1001,7 +1111,7 @@ const char *return_project_workspaces_string( PROJECT *project, const char *bord
    while( ( wSpace = (WORKSPACE *)NextInList( &Iter ) ) != NULL )
    {
       mud_printf( tempstring, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " %s %s", wSpace->Public ? "Public :" : "Private:", wSpace->name ), space_after_border ), border );
-      strcat( buf, tempstring );
+      mudcat( buf, tempstring );
    }
    DetachIterator( &Iter );
 
@@ -1270,6 +1380,11 @@ void boot_instance_editor( INCEPTION *olc, ENTITY_INSTANCE *instance )
    return;
 }
 
+void editor_instance_info( D_SOCKET *socket )
+{
+
+}
+
 int editor_instance_prompt( D_SOCKET *dsock, bool commands )
 {
    INCEPTION *olc;
@@ -1289,7 +1404,7 @@ int editor_instance_prompt( D_SOCKET *dsock, bool commands )
    else
       mud_printf( tempstring, "Instance ID: %d", instance->tag->id );
 
-   strcat( tempstring, quick_format( "| Framework ID: %d", instance->framework->tag->id ) );
+   mudcat( tempstring, quick_format( "| Framework ID: %d", instance->framework->tag->id ) );
 
    text_to_olc( olc, "/%s\\\r\n", print_header( tempstring, "-", dsock->account->pagewidth - 2 ) );
    text_to_olc( olc, "%s%s%s\r\n", border, fit_string_to_space( quick_format( " Name(framework)  : %s", instance_name( instance ) ), space_after_border ), border );
@@ -1344,13 +1459,13 @@ const char *return_instance_contents_string( ENTITY_INSTANCE *instance, const ch
    space_after_border = width - ( strlen( border ) * 2 );
 
    mud_printf( tempstring, "%s%s%s\r\n", border, print_header( "Instance Contents", "-", space_after_border ), border );
-   strcat( buf, tempstring );
+   mudcat( buf, tempstring );
 
    AttachIterator( &Iter, instance->contents );
    while( ( content = (ENTITY_INSTANCE *)NextInList( &Iter ) ) != NULL )
    {
       mud_printf( tempstring, "%s%s%s\r\n", border, fit_string_to_space( quick_format( "(%-7d) %s, %s", content->tag->id, instance_name( content ), instance_short_descr( content ) ), space_after_border ), border );
-      strcat( buf, tempstring );
+      mudcat( buf, tempstring );
    }
    DetachIterator( &Iter );
 
@@ -1377,17 +1492,17 @@ const char *return_instance_spec_and_stats( ENTITY_INSTANCE *instance, const cha
    space_after_border = width - ( strlen( border ) * 3 );
 
    mud_printf( tempstring, "%s%s", border, print_header( "Specifications", " ", space_after_border / 2 ) );
-   strcat( buf, tempstring );
+   mudcat( buf, tempstring );
 
-   strcat( buf, border );
+   mudcat( buf, border );
 
    mud_printf( tempstring, " %s%s\r\n", print_header( "Stats", " ", space_after_border / 2 ), border );
-   strcat( buf, tempstring );
+   mudcat( buf, tempstring );
 
    space_after_border = width - ( strlen( border ) * 2 );
 
    mud_printf( tempstring, "%s%s%s\r\n", border, print_bar( "-", space_after_border ), border );
-   strcat( buf, tempstring );
+   mudcat( buf, tempstring );
 
    MAX_STAT = get_potential_id( ENTITY_STAT_FRAMEWORK_IDS );
 
@@ -1408,15 +1523,15 @@ const char *return_instance_spec_and_stats( ENTITY_INSTANCE *instance, const cha
          mud_printf( tempstring, "%s%s", border, fit_string_to_space( quick_format( " %s : %d%s", spec_table[spec->type], spec->value, spec_from_table[spec_from] ), ( space_after_border / 2 ) - 1 ) );
       else
          mud_printf( tempstring, "%s%s", border, print_header( " ", " ", ( space_after_border / 2 ) - 1 ) );
-      strcat( buf, tempstring );
+      mudcat( buf, tempstring );
 
-      strcat( buf, border );
+      mudcat( buf, border );
 
       if( stat )
          mud_printf( tempstring, " %s%s\r\n", fit_string_to_space( quick_format( "%s:  P: %d M: %d T: %d", stat->framework->name, stat->perm_stat, stat->mod_stat, ( stat->perm_stat + stat->mod_stat ) ), ( space_after_border / 2 ) - 1) , border );
       else
          mud_printf( tempstring, " %s%s\r\n", print_header( " ", " ", ( space_after_border / 2 ) - 1 ), border );
-      strcat( buf, tempstring );
+      mudcat( buf, tempstring );
 
    }
    buf[strlen( buf )] = '\0';

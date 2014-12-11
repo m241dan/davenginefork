@@ -41,6 +41,8 @@ void instantiate_entity_stats_from_framework( ENTITY_INSTANCE *entity );
 void clear_stat_list( LLIST *list );
 extern inline void delete_stat_from_instance( STAT_INSTANCE *stat, ENTITY_INSTANCE *instance );
 
+bool inherited_frame_has_any_stats( ENTITY_FRAMEWORK *frame );
+
 STAT_FRAMEWORK *get_stat_framework_by_query( const char *query );
 
 extern inline STAT_FRAMEWORK *get_stat_framework_by_id( int id );

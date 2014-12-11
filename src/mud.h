@@ -21,6 +21,7 @@
 #include <regex.h>
 #include <sys/time.h>
 #include <time.h>
+#include <math.h>
 
 #include "llist.h"
 #include "stack.h"
@@ -723,7 +724,8 @@ void  recycle_sockets         ( void );
 void *lookup_address          ( void *arg );
 void socket_control_entity( D_SOCKET *socket, ENTITY_INSTANCE *entity );
 void socket_uncontrol_entity( ENTITY_INSTANCE *entity );
-
+void  get_info		      ( D_SOCKET *socket );
+void  get_commands	      ( D_SOCKET *socket );
 
 /*
  * interpret.c
