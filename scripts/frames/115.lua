@@ -4,6 +4,31 @@
 function onInstanceInit( frame, instance )
    frame:inherits( "onInstanceInit", "fi", frame:getInheritance(), instance )
    --- autowrite init ---
+   instance:setStatPerm( "Tier", 1 )
+   instance:setStatPerm( "Strength", 0 )
+   instance:setStatPerm( "Dexterity", 0 )
+   instance:setStatPerm( "Intelligence", 0 )
+   instance:setStatPerm( "Constitution", 0 )
+   instance:setStatPerm( "Wisdom", 0 )
+   instance:setStatPerm( "Charisma", 0 )
+   instance:setStatPerm( "Health", 0 )
+   instance:setStatMod( "Health", 0 )
+   instance:setStatPerm( "Luck", 0 )
+   instance:setStatPerm( "Evasiveness", 0 )
+   instance:setStatPerm( "Accuracy", 0 )
+   instance:setStatPerm( "Energy", 0 )
+   instance:setStatMod( "Energy", 0 )
+   instance:setStatPerm( "Spirit", 0 )
+   instance:setStatMod( "Spirit", 0 )
+   instance:setStatPerm( "Stamina", 0 )
+   instance:setStatMod( "Stamina", 0 )
+   instance:setStatPerm( "PowerLevel", 0 )
+   instance:setStatPerm( "Damroll", 0 )
+   instance:setStatPerm( "Hitroll", 0 )
+   instance:setStatPerm( "Experience", 0 )
+   instance:setStatPerm( "HP_Regen", 0 )
+   instance:setStatPerm( "Mana_Regen", 0 )
+   instance:setStatPerm( "Stamina_Regen", 0 )
    --- end autowrite init ---
 end
 
@@ -113,5 +138,6 @@ end
 
 function uiScore( entity )
 end
+
 
 

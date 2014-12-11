@@ -4,30 +4,31 @@
 function onInstanceInit( frame, instance )
    frame:inherits( "onInstanceInit", "fi", frame:getInheritance(), instance )
    --- autowrite init ---
-   instance:setStatPerm( "Stamina_Regen", 40 )
-   instance:setStatPerm( "Mana_Regen", 186 )
-   instance:setStatPerm( "HP_Regen", 24 )
-   instance:setStatPerm( "Experience", 1 )
-   instance:setStatPerm( "Hitroll", 1 )
-   instance:setStatPerm( "Damroll", 1 )
-   instance:setStatPerm( "PowerLevel", 10 )
-   instance:setStatPerm( "Stamina", 116 )
-   instance:setStatMod( "Stamina", 116 )
-   instance:setStatPerm( "Spirit", 8 )
-   instance:setStatMod( "Spirit", 8 )
-   instance:setStatPerm( "Energy", 630 )
-   instance:setStatMod( "Energy", 630 )
-   instance:setStatPerm( "Accuracy", 15 )
-   instance:setStatPerm( "Evasiveness", 15 )
-   instance:setStatPerm( "Luck", 15 )
+   instance:setStatPerm( "Tier", 1 )
+   instance:setStatPerm( "Strength", 15 )
+   instance:setStatPerm( "Dexterity", 15 )
+   instance:setStatPerm( "Intelligence", 15 )
+   instance:setStatPerm( "Constitution", 15 )
+   instance:setStatPerm( "Wisdom", 15 )
+   instance:setStatPerm( "Charisma", 15 )
    instance:setStatPerm( "Health", 58 )
    instance:setStatMod( "Health", 58 )
-   instance:setStatPerm( "Charisma", 15 )
-   instance:setStatPerm( "Wisdom", 15 )
-   instance:setStatPerm( "Constitution", 15 )
-   instance:setStatPerm( "Intelligence", 15 )
-   instance:setStatPerm( "Dexterity", 15 )
-   instance:setStatPerm( "Strength", 15 )
+   instance:setStatPerm( "Luck", 15 )
+   instance:setStatPerm( "Evasiveness", 15 )
+   instance:setStatPerm( "Accuracy", 15 )
+   instance:setStatPerm( "Energy", 630 )
+   instance:setStatMod( "Energy", 630 )
+   instance:setStatPerm( "Spirit", 8 )
+   instance:setStatMod( "Spirit", 8 )
+   instance:setStatPerm( "Stamina", 116 )
+   instance:setStatMod( "Stamina", 116 )
+   instance:setStatPerm( "PowerLevel", 10 )
+   instance:setStatPerm( "Damroll", 1 )
+   instance:setStatPerm( "Hitroll", 1 )
+   instance:setStatPerm( "Experience", 1 )
+   instance:setStatPerm( "HP_Regen", 24 )
+   instance:setStatPerm( "Mana_Regen", 186 )
+   instance:setStatPerm( "Stamina_Regen", 40 )
    --- end autowrite init ---
 end
 
@@ -133,6 +134,7 @@ end
 
 function uiScore( entity )
 end
+
 
 
 

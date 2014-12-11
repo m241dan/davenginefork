@@ -129,3 +129,4 @@ end
 -- UI Stuff --
 function uiPrompt( entity )
    entity:echoAt( string.format( "<HP: %d/%d KI: %d/%d MV: %d/%d\nPL: %d/%d>\n", entity:getStatMod( "Health" ), entity:getStatPerm( "Health" ), entity:getStatMod( "Energy" ), entity
+end

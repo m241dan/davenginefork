@@ -561,7 +561,6 @@ inline void set_perm_stat( STAT_INSTANCE *stat, int value )
 
 inline void add_perm_stat( STAT_INSTANCE *stat, int value )
 {
-   /* no lua for the moment */
    lua_set_stat( stat, urange( stat->framework->softfloor, value + stat->perm_stat, stat->framework->softcap ), get_stat_effective_perm( stat ) );
    stat->perm_stat += value;
    if( !quick_query( "UPDATE `entity_stats` SET perm_stat=%d WHERE statFrameworkID=%d AND owner=%d;", value, stat->framework->tag->id, stat->owner->tag->id ) )

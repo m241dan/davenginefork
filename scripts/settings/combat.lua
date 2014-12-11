@@ -16,12 +16,21 @@ end
 -- calculate any factors effecting melee cooldowns
 function meleeCooldown( attacker )
 --    need a -slightly- random cooldown here for a default.
+
+--   local haste = attacker:getStatValue( "haste" )
+--   return ( automelee_delay - ( haste * automelee_delay ) )
+
    return automelee_delay
 end
 
 -- design the duration/frequency parts of the damage object
 function prepMeleeTimer( attacker, timer )
-   timer:setDuration( 1 )
+--   local double_atk_chance = attacker:getStatValue( "double attack" );
+   local duration = 1
+
+--   if( math.random(100) < double_atk_chance ) then duration = 2 end
+   
+   timer:setDuration( duration )
    timer:setFrequency( 1 )
    timer:setCounter( 0 )
 end
@@ -44,14 +53,28 @@ function prepMeleeDamage( attacker, damage )
 --    attacker strength and tier versus defenders strength and tier will determine it. to keep things fun and flowing nicely
 --       we will give the attackers a slightly higher bonus on purpose. might even do something even "faster paced" for pvp later.
 --    want to keep everything, "slightly random", but evenly for everyone, so need to make sure we have random rolls on everything.
-   if( attacker:isBuilder() ) then damage:setAmount( 100 ) return end
-   damage:setAmount( 1 )
+   local atk_tier = attacker:getStatValue( "tier" )
+   local atk_strength = attacker:getStatValue( "Strength" )
+   damage:setAmount( atk_strength * ( atk_tier * 1.5 ) )
 end
 
 -- analyze the damage object sent to the defender
 -- calculator any the actual damage that the object does
 -- note that any elemental damage will be handled by C
 function onReceiveDamage( defender, damage )
+   local dmgsrc = damage:getDmgSrcType()
+   local current_amount = damage:getAmount()
+
+   if( dmgsrc == DMG_MELEE ) then
+      local def_tier = defender:getStatValue( "tier" )
+      local def_strength = attacker:getStatValue( "Strength" )
+      local new_amount = current - ( def_tier * def_strength )
+
+      -- everybody gets 1
+      if( new_amount < 1 ) then new_amount = 1 end
+      damage:setAmount( new_amount )
+      return
+   end
 end
 
 -- return order attacker -> defender -> room
