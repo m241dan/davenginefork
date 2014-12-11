@@ -1963,7 +1963,7 @@ int show_ent_mobiles_to_ent( ENTITY_INSTANCE *entity, ENTITY_INSTANCE *viewing )
       if( entity == mob )
          continue;
       if( entity->builder )
-         text_to_entity( entity, "(ID:%d) %s.\r\n", mob->tag->id, instance_long_descr( mob ) );
+         text_to_entity( entity, "(ID:%d) %s\r\n", mob->tag->id, instance_long_descr( mob ) );
       else
          text_to_entity( entity, "%s\r\n", instance_long_descr( mob ) );
    }
