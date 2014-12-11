@@ -483,7 +483,6 @@ void print_commands( void *extra, LLIST *commands, BUFFER *buf, int sublevel, in
    ITERATOR Iter;
    COMMAND *com;
 
-   bprintf( buf, "/%s\\\r\n", print_header( "Commands", "-", pagewidth - 2 ) );
    AttachIterator( &Iter, commands );
    while( ( com = (COMMAND *)NextInList( &Iter ) ) != NULL )
    {
@@ -492,7 +491,6 @@ void print_commands( void *extra, LLIST *commands, BUFFER *buf, int sublevel, in
          print_commands( extra, com->sub_commands, buf, ( sublevel + 1 ), pagewidth );
    }
    DetachIterator( &Iter );
-   bprintf( buf, "\\%s/\r\n", print_bar( "-", pagewidth - 2 ) );
 
    return;
 }

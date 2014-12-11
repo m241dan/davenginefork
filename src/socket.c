@@ -1315,6 +1315,7 @@ void get_commands( D_SOCKET *socket )
    BUFFER *buf = buffer_new( MAX_BUFFER );
    int space = socket->account ? socket->account->pagewidth - 2 : DEFAULT_PAGEWIDTH - 2;
 
+   bprintf( buf, "/%s\\\r\n", print_header( "Commands", "-", space ) );
    switch( socket->state )
    {
       case STATE_NANNY:
@@ -1338,5 +1339,6 @@ void get_commands( D_SOCKET *socket )
          print_commands( socket->controlling, socket->controlling->commands, buf, 0, socket->account->pagewidth );
          break;
    }
+   bprintf( buf, "\\%s/\r\n", print_bar( "-", space ) );
    text_to_buffer( socket, buf->data );
 }

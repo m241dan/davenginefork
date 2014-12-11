@@ -136,6 +136,9 @@ void boot_eFramework_editor( INCEPTION *olc, ENTITY_FRAMEWORK *frame )
    init_eFramework_editor( olc, frame );
    olc->editing_state = STATE_EFRAME_EDITOR;
    change_socket_state( olc->account->socket, olc->editing_state );
+   editor_eFramework_info( olc->account->socket );
+   get_commands( olc->account->socket );
+   text_to_olc( olc, "Type -> /info || /commands for help.\r\n" );
    return;
 }
 
@@ -166,11 +169,11 @@ void editor_eFramework_info( D_SOCKET *socket )
       mud_printf( tempstring, "Framework ID: %d", frame->tag->id );
 
    if( frame->inherits )
-      mudcat( tempstring, quick_format( " | Inherits from %s ID: %d", chase_name( frame->inherits ), frame->inherits->tag->id ) );
+      mudcat( tempstring, quick_format( "| Inherits from %s ID: %d", chase_name( frame->inherits ), frame->inherits->tag->id ) );
 
    text_to_olc( olc, "/%s\\\r\n", print_header( tempstring, "-", space_after_pipes ) );
    text_to_olc( olc, "%s", return_framework_strings( frame, border, socket->account->pagewidth ) );
-   text_to_olc( olc, "\\%s/\r\n", print_bar( "-", space_after_pipes ) );
+   text_to_olc( olc, "\\%s/\r\n\r\n", print_bar( "-", space_after_pipes ) );
 
    if( SizeOfList( frame->fixed_contents ) > 0 || inherited_frame_has_any_fixed_possession( frame ) )
    {
@@ -184,6 +187,8 @@ void editor_eFramework_info( D_SOCKET *socket )
 
    if( SizeOfList( frame->stats ) > 0 || inherited_frame_has_any_stats( frame ) )
       text_to_olc( olc, "%s", return_framework_stats( frame, socket->account->pagewidth ) );
+
+   text_to_olc( olc, "\r\n" );
 
    return;
 }
@@ -210,10 +215,9 @@ int editor_eFramework_prompt( D_SOCKET *dsock, bool commands )
       mud_printf( tempstring, "Framework ID: %d", frame->tag->id );
 
    if( frame->inherits )
-      mudcat( tempstring, quick_format( " | Inherits from %s ID: %d", chase_name( frame->inherits ), frame->inherits->tag->id ) );
+      mudcat( tempstring, quick_format( "\r\nInherits  ID: %d", frame->inherits->tag->id ) );
 
-   text_to_olc( olc, "Type: /info || /commands for help.\r\n" );
-   text_to_olc( olc, "%s ||>\r\n", tempstring );
+   text_to_olc( olc, "%s ||> ", tempstring );
    return ret;
 }
 
@@ -372,7 +376,7 @@ const char *return_fixed_content_list( LLIST *fixed_list, const char *border, in
 const char *return_framework_specs( ENTITY_FRAMEWORK *frame, int width )
 {
    const char *const spec_from_table[] = {
-      "", "", "( inherited )"
+      "", "", "( i )"
    };
    SPECIFICATION *spec;
    LLIST *spec_strings;
@@ -392,7 +396,7 @@ const char *return_framework_specs( ENTITY_FRAMEWORK *frame, int width )
       if( ( spec = frame_has_spec_detailed_by_type( frame, x, &spec_from ) ) == NULL )
          continue;
       CREATE( spec_string, char, MAX_BUFFER );
-      mud_printf( spec_string, "%s : %d%s", spec_table[spec->type], spec->value, spec_from_table[spec_from] );
+      mud_printf( spec_string, "%s : %d%s ", spec_table[spec->type], spec->value, spec_from_table[spec_from] );
       if( ( spec_string_len = strlen( spec_string ) ) > longest )
          longest = spec_string_len;
       AttachToList( spec_string, spec_strings );
@@ -421,7 +425,7 @@ const char *return_framework_specs( ENTITY_FRAMEWORK *frame, int width )
 const char *return_framework_stats( ENTITY_FRAMEWORK *frame, int width )
 {
    const char *const stat_from_table[] = {
-      "", "( inherited )"
+      "", "( i )"
    };
    STAT_FRAMEWORK *sframe;
    LLIST *stat_strings;
@@ -440,7 +444,7 @@ const char *return_framework_stats( ENTITY_FRAMEWORK *frame, int width )
       if( ( sframe = get_stat_from_framework_by_id( frame, x, &stat_from ) ) == NULL )
          continue;
       CREATE( stat_string, char, MAX_BUFFER );
-      mud_printf( stat_string, "%s", sframe->name, stat_from_table[stat_from] );
+      mud_printf( stat_string, "%s%s ", sframe->name, stat_from_table[stat_from] );
       if( ( stat_string_len = strlen( stat_string ) ) > longest )
          longest = stat_string_len;
       AttachToList( stat_string, stat_strings );
