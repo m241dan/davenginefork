@@ -21,6 +21,7 @@
 #include <regex.h>
 #include <sys/time.h>
 #include <time.h>
+#include <math.h>
 
 #include "llist.h"
 #include "stack.h"
@@ -535,7 +536,9 @@ typedef struct  stat_instance   STAT_INSTANCE;
 typedef struct  damage_data     DAMAGE;
 typedef struct  timer           TIMER;
 typedef struct  character_sheet CHAR_SHEET;
-
+typedef struct  element_framework ELEMENT_FRAMEWORK;
+typedef struct  element_info	ELEMENT_INFO;
+typedef struct  composition	COMPOSITION;
 /* the actual structures */
 struct dSocket
 {
@@ -625,6 +628,7 @@ typedef struct buffer_type
 #include "lua_account.h"
 #include "lua_nanny.h"
 #include "lua_socket.h"
+#include "elements.h"
 
 /******************************
  * End of new structures      *
@@ -720,7 +724,8 @@ void  recycle_sockets         ( void );
 void *lookup_address          ( void *arg );
 void socket_control_entity( D_SOCKET *socket, ENTITY_INSTANCE *entity );
 void socket_uncontrol_entity( ENTITY_INSTANCE *entity );
-
+void  get_info		      ( D_SOCKET *socket );
+void  get_commands	      ( D_SOCKET *socket );
 
 /*
  * interpret.c

@@ -7,10 +7,13 @@ int free_editor( INCEPTION *olc );
 int init_eFramework_editor( INCEPTION *olc, ENTITY_FRAMEWORK *frame );
 void boot_eFramework_editor( INCEPTION *olc, ENTITY_FRAMEWORK *frame );
 
+void editor_eFramework_info( D_SOCKET *dsock );
 int editor_eFramework_prompt( D_SOCKET *dsock, bool commands );
 const char *return_framework_strings( ENTITY_FRAMEWORK *frame, const char *border, int width );
 const char *return_framework_fixed_content( ENTITY_FRAMEWORK *frame, const char *border, int width );
 const char *return_fixed_content_list( LLIST *fixed_list, const char *border, int width, bool inherited );
+const char *return_framework_specs( ENTITY_FRAMEWORK *frame, int width );
+const char *return_framework_stats( ENTITY_FRAMEWORK *frame, int width );
 const char *return_framework_specs_and_stats( ENTITY_FRAMEWORK *frame, const char *border, int width );
 
 void eFramework_name( void *passed, char *arg );
@@ -54,6 +57,7 @@ void workspace_done( void *passed, char *arg );
 int init_instance_editor( INCEPTION *olc, ENTITY_INSTANCE *instance );
 void boot_instance_editor( INCEPTION *olc, ENTITY_INSTANCE *instance );
 
+void editor_instance_info( D_SOCKET *dsock );
 int editor_instance_prompt( D_SOCKET *dsock, bool commands );
 const char *return_instance_contents_string( ENTITY_INSTANCE *instance, const char *border, int width );
 const char *return_instance_spec_and_stats( ENTITY_INSTANCE *intance, const char *border, int width );

@@ -1894,6 +1894,8 @@ void framework_iedit( void *passed, char *arg )
    }
 
    boot_eFramework_editor( olc, inherited_to_edit );
+   if( olc->using_workspace )
+      add_frame_to_workspace( inherited_to_edit, olc->using_workspace );
    text_to_olc( olc, "You begin to edit %s.\r\n", chase_name( inherited_to_edit ) );
    return;
 }

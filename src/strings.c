@@ -14,6 +14,42 @@
 /*
  * Checks if aStr is a prefix of bStr.
  */
+size_t mudcat( char *dst, const char *src  )
+{
+   register char *d = dst;
+   register const char *s = src;
+   register size_t n = MAX_BUFFER;
+   size_t dlen;
+
+   if( !src )
+   {
+      bug( "%s: NULL src string passed!", __FUNCTION__ );
+      return 0;
+   }
+
+   /*
+    * Find the end of dst and adjust bytes left but don't go past end
+    */
+   while( n-- != 0 && *d != '\0' )
+      d++;
+   dlen = d - dst;
+   n = MAX_BUFFER - dlen;
+
+   if( n == 0 )
+      return ( dlen + strlen( s ) );
+   while( *s != '\0' )
+   {
+      if( n != 1 )
+      {
+         *d++ = *s;
+         n--;
+      }
+      s++;
+   }
+   *d = '\0';
+   return ( dlen + ( s - src ) );   /* count does not include NUL */
+}
+
 bool is_prefix(const char *aStr, const char *bStr)
 {
   /* NULL strings never compares */
@@ -455,6 +491,7 @@ void print_commands( void *extra, LLIST *commands, BUFFER *buf, int sublevel, in
          print_commands( extra, com->sub_commands, buf, ( sublevel + 1 ), pagewidth );
    }
    DetachIterator( &Iter );
+
    return;
 }
 
@@ -500,7 +537,7 @@ char *strip_nl( const char *str )
 
 const char *handle_pagewidth( int width, const char *txt )
 {
-   static char buf[MAX_BUFFER * 2];
+   static char buf[MAX_OUTPUT];
    bool color = FALSE;
    char *ptr;
    int x;

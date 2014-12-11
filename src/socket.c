@@ -349,6 +349,10 @@ void GameLoop(int control)
       {
         if( is_prefix( dsock->next_command, "/help" ) )
            get_help( dsock, dsock->next_command );
+        else if( is_prefix( dsock->next_command, "/info" ) )
+           get_info( dsock );
+        else if( is_prefix( dsock->next_command, "/commands" ) )
+           get_commands( dsock );
         else
         {
            switch(dsock->state)
@@ -774,7 +778,7 @@ bool text_to_socket(D_SOCKET *dsock, const char *txt)
  */
 void text_to_buffer(D_SOCKET *dsock, const char *txt)
 {
-  static char output[8 * MAX_BUFFER];
+  static char output[MAX_OUTPUT];
   bool underline = FALSE, bold = FALSE;
   int iPtr = 0, last = -1, j, k;
   int length = strlen(txt);
@@ -1088,7 +1092,7 @@ bool flush_output(D_SOCKET *dsock)
            olc_prompt( dsock, TRUE );
            break;
         case STATE_EFRAME_EDITOR:
-           editor_eFramework_prompt( dsock, TRUE );
+           editor_eFramework_prompt( dsock, FALSE );
            break;
         case STATE_PROJECT_EDITOR:
            editor_project_prompt( dsock, TRUE );
@@ -1285,4 +1289,56 @@ void socket_uncontrol_entity( ENTITY_INSTANCE *entity )
    socket->controlling = NULL;
    entity->socket = NULL;
    return;
+}
+
+void get_info( D_SOCKET *socket )
+{
+   switch( socket->state )
+   {
+      default:
+         text_to_buffer( socket, "No information for this state.\r\n" );
+         return;
+      case STATE_OLC:
+         text_to_buffer( socket, "Almost...\r\n" );
+         return;
+      case STATE_EFRAME_EDITOR:
+         editor_eFramework_info( socket );
+         return;
+      case STATE_EINSTANCE_EDITOR:
+         editor_instance_info( socket );
+         return;
+   }
+}
+
+void get_commands( D_SOCKET *socket )
+{
+   BUFFER *buf = buffer_new( MAX_BUFFER );
+   int space = socket->account ? socket->account->pagewidth - 2 : DEFAULT_PAGEWIDTH - 2;
+
+   bprintf( buf, "/%s\\\r\n", print_header( "Commands", "-", space ) );
+   switch( socket->state )
+   {
+      case STATE_NANNY:
+         bprintf( buf, "%s\r\n", fit_string_to_space( "In a nanny, there are no commands only interpreted input." , space ) );
+         break;
+      case STATE_ACCOUNT:
+         print_commands( socket->account, socket->account->commands, buf, 0, socket->account->pagewidth );
+         break;
+      case STATE_OLC:
+         print_commands( socket->account->olc, socket->account->olc->commands, buf, 0, socket->account->pagewidth );
+         break;
+      case STATE_EFRAME_EDITOR:
+      case STATE_EINSTANCE_EDITOR:
+      case STATE_WORKSPACE_EDITOR:
+      case STATE_SFRAME_EDITOR:
+      case STATE_PROJECT_EDITOR:
+         print_commands( socket->account->olc, socket->account->olc->editor_commands, buf, 0, socket->account->pagewidth );
+         break;
+      case STATE_BUILDER:
+      case STATE_PLAYING:
+         print_commands( socket->controlling, socket->controlling->commands, buf, 0, socket->account->pagewidth );
+         break;
+   }
+   bprintf( buf, "\\%s/\r\n", print_bar( "-", space ) );
+   text_to_buffer( socket, buf->data );
 }

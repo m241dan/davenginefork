@@ -254,6 +254,17 @@ inline void delete_stat_from_instance( STAT_INSTANCE *stat, ENTITY_INSTANCE *ins
 }
 
 
+bool inherited_frame_has_any_stats( ENTITY_FRAMEWORK *frame )
+{
+   if( !frame->inherits )
+      return FALSE;
+   while( ( frame = frame->inherits ) != NULL )
+      if( SizeOfList( frame->stats ) > 0 )
+         return TRUE;
+
+   return FALSE;
+}
+
 STAT_FRAMEWORK *get_stat_framework_by_query( const char *query )
 {
    STAT_FRAMEWORK *fstat;

@@ -10,6 +10,7 @@ STRING *new_string( const char *arg );
 void free_string( STRING *string );
 void change_string( STRING *string, char *change );
 
+size_t mudcat( char *dst, const char *src );
 int    number_arg             ( char *fStr, char *bStr );
 int    number_arg_single      ( char *string );
 char   *one_arg               ( char *fStr, char *bStr );
