@@ -771,7 +771,7 @@ bool autowrite_init( ENTITY_INSTANCE *instance )
    FILE *fp;
    char *script;
    ITERATOR Iter;
-   char script_buf[MAX_BUFFER * 4], line[MAX_BUFFER];
+   char script_buf[MAX_BUFFER * 8], line[MAX_BUFFER];
    MODE mode;
 
 

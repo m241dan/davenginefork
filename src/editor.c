@@ -882,6 +882,28 @@ void eFramework_addSpec( void *passed, char *arg )
 
 }
 
+void eFramework_remSpec( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_FRAMEWORK *frame = (ENTITY_FRAMEWORK *)olc->editing;
+   SPECIFICATION *spec;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "What spec do you want to remove?\r\n" );
+      return;
+   }
+
+   if( ( spec = spec_list_has_by_name( frame->specifications, arg ) ) == NULL )
+   {
+      text_to_olc( olc, "This framework does not that Spec.\r\n" );
+      return;
+   }
+   rem_spec_from_framework( spec, frame );
+   text_to_olc( olc, "Spec removed.\r\n" );
+   return;
+}
+
 void eFramework_done( void *passed, char *arg )
 {
    INCEPTION *olc = (INCEPTION *)passed;
@@ -1739,6 +1761,28 @@ void instance_addspec( void *passed, char *arg )
    add_spec_to_instance( spec, instance );
    update_tag( instance->tag, olc->account->name );
    text_to_olc( olc, "%s added to %s with the value of %s.\r\n", spec_table[spec_type], instance_name( instance ), itos( spec->value ) );
+   return;
+}
+
+void instance_remspec( void *passed, char *arg )
+{
+   INCEPTION *olc = (INCEPTION *)passed;
+   ENTITY_INSTANCE *instance = (ENTITY_INSTANCE *)olc->editing;
+   SPECIFICATION *spec;
+
+   if( !arg || arg[0] == '\0' )
+   {
+      text_to_olc( olc, "What Spec do you want to remove?\r\n" );
+      return;
+   }
+
+   if( ( spec = spec_list_has_by_name( instance->specifications, arg ) ) == NULL )
+   {
+      text_to_olc( olc, "This instance does not have that Spec.\r\n" );
+      return;
+   }
+   rem_spec_from_instance( spec, instance );
+   text_to_olc( olc, "Spec removed.\r\n" );
    return;
 }
 

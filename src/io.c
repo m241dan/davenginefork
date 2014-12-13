@@ -356,7 +356,7 @@ void copy_flat_file( FILE *dest, FILE *src )
 
 const char *fread_file( FILE *fp )
 {
-   static char buf[MAX_BUFFER];
+   static char buf[MAX_BUFFER*8];
    int c, count = 0;
 
    memset( &buf[0], 0, sizeof( buf ) );
