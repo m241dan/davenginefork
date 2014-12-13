@@ -4,7 +4,6 @@
 function onInstanceInit( frame, instance )
    frame:inherits( "onInstanceInit", "fi", frame:getInheritance(), instance )
    --- autowrite init ---
-   instance:setStatPerm( "Tier", 1 )
    instance:setStatPerm( "Strength", 0 )
    instance:setStatPerm( "Dexterity", 0 )
    instance:setStatPerm( "Intelligence", 0 )
@@ -29,6 +28,7 @@ function onInstanceInit( frame, instance )
    instance:setStatPerm( "HP_Regen", 0 )
    instance:setStatPerm( "Mana_Regen", 0 )
    instance:setStatPerm( "Stamina_Regen", 0 )
+   instance:setStatPerm( "Tier", 1 )
    --- end autowrite init ---
 end
 
@@ -45,7 +45,6 @@ end
 -- NOT NOISE --
 -- ONLY SPEC SCRIPTS AFTER THIS POINT --
 -- END NOT NOISE --
-
 function onEntityEnter( room, enterer )
 end
 

@@ -4,30 +4,31 @@
 function onInstanceInit( frame, instance )
    frame:inherits( "onInstanceInit", "fi", frame:getInheritance(), instance )
    --- autowrite init ---
-   instance:setStatPerm( "Stamina_Regen", 1 )
-   instance:setStatPerm( "Mana_Regen", 1 )
-   instance:setStatPerm( "HP_Regen", 1 )
-   instance:setStatPerm( "Experience", 1 )
-   instance:setStatPerm( "Hitroll", 1 )
-   instance:setStatPerm( "Damroll", 1 )
-   instance:setStatPerm( "PowerLevel", 10 )
-   instance:setStatPerm( "Stamina", 200 )
-   instance:setStatMod( "Stamina", 200 )
-   instance:setStatPerm( "Spirit", 5 )
-   instance:setStatMod( "Spirit", 5 )
-   instance:setStatPerm( "Energy", 1000 )
-   instance:setStatMod( "Energy", 1000 )
-   instance:setStatPerm( "Accuracy", 5 )
-   instance:setStatPerm( "Evasiveness", 5 )
-   instance:setStatPerm( "Luck", 7 )
-   instance:setStatPerm( "Health", 100 )
-   instance:setStatMod( "Health", 100 )
-   instance:setStatPerm( "Charisma", 7 )
-   instance:setStatPerm( "Wisdom", 7 )
-   instance:setStatPerm( "Constitution", 7 )
-   instance:setStatPerm( "Intelligence", 7 )
-   instance:setStatPerm( "Dexterity", 7 )
-   instance:setStatPerm( "Strength", 7 )
+   instance:setStatPerm( "Strength", 0 )
+   instance:setStatPerm( "Dexterity", 0 )
+   instance:setStatPerm( "Intelligence", 0 )
+   instance:setStatPerm( "Constitution", 0 )
+   instance:setStatPerm( "Wisdom", 0 )
+   instance:setStatPerm( "Charisma", 0 )
+   instance:setStatPerm( "Health", 0 )
+   instance:setStatMod( "Health", 0 )
+   instance:setStatPerm( "Luck", 0 )
+   instance:setStatPerm( "Evasiveness", 0 )
+   instance:setStatPerm( "Accuracy", 0 )
+   instance:setStatPerm( "Energy", 0 )
+   instance:setStatMod( "Energy", 0 )
+   instance:setStatPerm( "Spirit", 0 )
+   instance:setStatMod( "Spirit", 0 )
+   instance:setStatPerm( "Stamina", 0 )
+   instance:setStatMod( "Stamina", 0 )
+   instance:setStatPerm( "PowerLevel", 0 )
+   instance:setStatPerm( "Damroll", 0 )
+   instance:setStatPerm( "Hitroll", 0 )
+   instance:setStatPerm( "Experience", 0 )
+   instance:setStatPerm( "HP_Regen", 0 )
+   instance:setStatPerm( "Mana_Regen", 0 )
+   instance:setStatPerm( "Stamina_Regen", 0 )
+   instance:setStatPerm( "Tier", 0 )
    --- end autowrite init ---
 end
 
@@ -44,17 +45,13 @@ end
 -- NOT NOISE --
 -- ONLY SPEC SCRIPTS AFTER THIS POINT --
 -- END NOT NOISE --
-
 function onEntityEnter( room, enterer )
-   enterer:echoAt( "%s says, 'I am %s!'", enterer:getShort(), enterer:getShort() )
 end
 
 function onEntityLeave( room, leaver )
 end
 
 function onEntering( room, enterer )
-   enterer:interp( "say I am the first Icer!" )
-   room:echo( "The First Icer flexes his muscles" )
 end
 
 function onLeaving( room, leaver )
@@ -73,6 +70,7 @@ function onGive( entity, giver )
 end
 
 function dodgeChance( attacker, dodger )
+   return 0
 end
 
 function parryChance( attacker, parryr )
@@ -128,5 +126,15 @@ end
 
 -- UI Stuff --
 function uiPrompt( entity )
-   entity:echoAt( string.format( "<HP: %d/%d KI: %d/%d MV: %d/%d\nPL: %d/%d>\n", entity:getStatMod( "Health" ), entity:getStatPerm( "Health" ), entity:getStatMod( "Energy" ), entity
+   entity:echoAt( string.format( "<PowerLevel: %d/%d>\n", entity:getStatMod( "Powerlevel" ), entity:getStatPerm( "PowerLevel" ) ) )
 end
+
+function uiLook( looker, looking_at )
+end
+
+function uiInventory( entity )
+end
+
+function uiScore( entity )
+entity:echoAt( string.format( "\n%s, The Elite Warrior\n", entity:getShort() ) )
+entity:

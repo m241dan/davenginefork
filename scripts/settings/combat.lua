@@ -77,6 +77,7 @@ function onReceiveDamage( defender, damage )
    end
 end
 
+
 -- return order attacker -> defender -> room
 function combatMessage( attacker, defender, damage, status )
    local atk_msg

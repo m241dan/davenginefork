@@ -16,7 +16,6 @@ end
 -- NOT NOISE --
 -- ONLY SPEC SCRIPTS AFTER THIS POINT --
 -- END NOT NOISE --
-
 function onEntityEnter( room, enterer )
 end
 
@@ -106,5 +105,3 @@ end
 function uiScore( entity )
 end
 
-
--- instance specific methods --

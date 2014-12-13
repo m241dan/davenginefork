@@ -816,6 +816,25 @@ void text_to_buffer(D_SOCKET *dsock, const char *txt)
     { 'C',  "36",  eBOLD },
     { 'w',  "37",  eTHIN },
     { 'W',  "37",  eBOLD },
+/* 
+ *30 BLACK(cant see)
+ * 30 dark grey
+ * 31 dark red
+ * 31 red
+ * 32 dark green
+ * 32 green
+ * 33 dark yellow
+ * 33 yellow
+ * 34 dark blue
+ * 34 blue
+ * 35 dark purple
+ * 35 bright purple(pink)
+ * 36 dark cyan
+ * 36 bright cyan(baby blue)
+ * 37 dark white(plain)
+ * 37 bright white
+ */
+
 
     /* the end tag */
     { '\0',  "",   eTHIN }

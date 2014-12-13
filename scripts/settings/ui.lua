@@ -1,6 +1,7 @@
 -- UI Stuff --
 function uiPrompt( entity )
-   entity:echoAt( "Prompt:=>\n" )
+--   entity:echoAt( string.format( "<Life: %d/%d Energy: %d/%d Move: %d/%d>\n" ) ) )
+   entity:echoAt( string.format( "<PowerLevel: %d/%d>\n", entity:getStatMod( "Powerlevel" ), entity:getStatPerm( "PowerLevel" ) ) )
 end
 
 function uiLook( looker, looking_at )
@@ -41,7 +42,11 @@ function uiInventory( entity )
 end
 
 function uiScore( entity )
-   entity:echoAt( "Your score is... nothing yet!\n" )
+entity:echoAt( string.format( "\n%s, The Elite Warrior\n", entity:getShort() ) )
+entity:echoAt( string.format( "%s has no title!\n", entity:getShort() ) )
+entity:echoAt( "-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n" ) 
+entity:echoAt( string.format( "| Str: %d (%d)\t\t| Dam: %d (%d)\t\t| Zenni: 100435\n", entity:getStatMod( "Strength" ), entity:getStatPerm( "Strength" ), entity:getStatMod( "Damroll" ), entity:getStatPerm( "Damroll" ) ) )
+entity:echoAt( "-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n" )
 end
 
 
