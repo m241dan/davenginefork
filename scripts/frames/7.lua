@@ -100,14 +100,19 @@ end
 
 -- UI Stuff --
 function uiPrompt( entity )
+   local this
 end
 
 function uiLook( looker, looking_at )
+   local that
 end
 
 function uiInventory( entity )
+   local And
 end
 
 function uiScore( entity )
+   local there
 end
+
 
