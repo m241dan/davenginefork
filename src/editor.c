@@ -443,6 +443,8 @@ const char *return_framework_stats( ENTITY_FRAMEWORK *frame, int width )
       stat_from = 0;
       if( ( sframe = get_stat_from_framework_by_id( frame, x, &stat_from ) ) == NULL )
          continue;
+      if( sframe == frame->f_primary_dmg_received_stat )
+         continue;
       CREATE( stat_string, char, MAX_BUFFER );
       mud_printf( stat_string, "%s%s ", sframe->name, stat_from_table[stat_from] );
       if( ( stat_string_len = strlen( stat_string ) ) > longest )
@@ -1497,6 +1499,70 @@ const char *return_instance_contents_string( ENTITY_INSTANCE *instance, const ch
 
    buf[strlen( buf )] = '\0';
    return buf;
+}
+
+const char *return_instance_specs( ENTITY_INSTANCE *instance, int width )
+{
+   const char *const spec_from_table[] = {
+      "", "( f )", "( i )"
+   };
+   SPECIFICATION *spec;
+   LLIST *spec_strings;
+   char *spec_string;
+   static char buf[MAX_BUFFER];
+   int x, longest, spec_string_len, spec_from;
+   int num_column, column_count = 0;
+
+   spec_strings = AllocList();
+
+   mud_printf( buf, "%s\r\n", print_header( "Stats", "-", width ) );
+
+   for( longest = 0; x = MAX_SPEC; x >= 0; x-- )
+   {
+      spec_from = 0;
+      if( ( spec = has_spec_detailed_by_type( instance, x, &spec_from ) ) == NULL )
+         continue;
+      CREATE( spec_string, char, MAX_BUFFER );
+      mud_printf( spec_string, "%s : %d%s ", spec_table[spec->type], spec->value, spec_from_table[spec_from] );
+      if( ( spec_string_len = strlen( spec_string ) ) > longest )
+         longest = spec_string_len;
+      AttachToList( spec_string, spec_strings );
+   }
+
+   num_column = floor( (double)width / (double)longest );
+
+   AttachIterator( &Iter, spec_strings );
+   while( ( spec_string = (char *)NextInList( &Iter ) ) != NULL )
+   {
+      mudcat( buf, fit_string_To_space( spec_string, longest ) );
+      if( ++column_count >= num_column )
+      {
+         mudcat( buf, "\r\n" );
+         column_count = 0;
+      }
+   }
+   DetachIterator( &Iter );
+   if( !column_count != 0 )
+      mudcat( buf, "\r\n" );
+
+   FreeList( spec_strings );
+   return buf;
+}
+
+const char *return_instance_stats( ENTITY_INSTANCE *instance, int width )
+{
+   STAT_INSTANCE *stat;
+   LLIST *stat_strings;
+   char *stat_string;
+   static char buf[MAX_BUFFER];
+   int x, longest, stat_string_len, stat_from;
+   int num_column, column_count = 0;
+
+   mud_printf( buf, "%s\r\n", print_header( "Stats", "-", width ) );
+   for( longest = 0, ( x = get_potential_id( ENTITY_STAT_FRAMEWORK_IDS ) - 1 ); x >= 0; x-- )
+   {
+      
+   }
 }
 
 const char *return_instance_spec_and_stats( ENTITY_INSTANCE *instance, const char *border, int width )

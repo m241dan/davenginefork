@@ -126,7 +126,6 @@ end
 
 -- UI Stuff --
 function uiPrompt( entity )
-   entity:echoAt( string.format( "<PowerLevel: %d/%d>\n", entity:getStatMod( "Powerlevel" ), entity:getStatPerm( "PowerLevel" ) ) )
 end
 
 function uiLook( looker, looking_at )
@@ -136,5 +135,4 @@ function uiInventory( entity )
 end
 
 function uiScore( entity )
-entity:echoAt( string.format( "\n%s, The Elite Warrior\n", entity:getShort() ) )
-entity:
+end
